@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import SearchBox from "../components/SearchBox";
+import { calculateAIScore } from "./api/search/lib/aiScoring";
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -103,7 +104,8 @@ useEffect(() => {
   }
 
   function smartDecisionText(p: Product) {
-    const score = getScore(p);
+    const ai = calculateAIScore(p, sortedProducts)
+    const score = ai.score;
 
     if (score >= 85) {
       return "QuantAI recommends buying this now. The price looks competitive, the rating is strong, and the store signal is reliable compared with other results.";
@@ -280,19 +282,7 @@ useEffect(() => {
             <div className="rounded-2xl bg-white/5 border border-white/10 p-3">Live prices</div>
             <div className="rounded-2xl bg-white/5 border border-white/10 p-3">AI score</div>
             <div className="rounded-2xl bg-white/5 border border-white/10 p-3">Best decision</div>
-            <div className="mt-5 grid grid-cols-3 gap-3 text-xs text-white/70">
-  <div className="rounded-2xl bg-white/10 border border-white/10 px-4 py-3 hover:bg-white/10 hover:scale-105 transition-all duration-300">
-    🔒 Secure product research
-  </div>
-
-  <div className="rounded-2xl bg-white/10 border border-white/10 px-4 py-3 hover:bg-white/10 hover:scale-105 transition-all duration-300">
-    ⚡ Real-time decision engine
-  </div>
-
-  <div className="rounded-2xl bg-white/10 border border-white/10 px-4 py-3 hover:bg-white/10 hover:scale-105 transition-all duration-300">
-    🧠 AI-powered buying logic
-  </div>
-</div>
+            
           </div>
         </div>
 
@@ -522,15 +512,28 @@ onChange={(e) => setQuestion(e.target.value)}
   />
 
   <button
-  onClick={() => {
-    if (question.toLowerCase().includes("cheap")) {
-      setAiReply("QuantAI found cheaper alternatives with similar ratings.")
-    } else if (question.toLowerCase().includes("buy")) {
-      setAiReply("QuantAI recommends buying this product now based on price, rating, and store trust.")
-    } else {
-      setAiReply("QuantAI is analyzing your request. Try asking about price, quality, or alternatives.")
-    }
-  }}
+  onClick={async () => {
+  try {
+    setAiReply("QuantAI is thinking...");
+
+    const res = await fetch("/api/ai-chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        question,
+        products: sortedProducts,
+      }),
+    });
+
+    const data = await res.json();
+
+    setAiReply(data.reply);
+  } catch (error) {
+    setAiReply("QuantAI could not analyze this request.");
+  }
+}}
   className="bg-cyan-400 text-black px-6 rounded-2xl font-black"
 >
     Ask AI
@@ -547,12 +550,13 @@ onChange={(e) => setQuestion(e.target.value)}
 
       <section className="max-w-6xl mx-auto px-6 mt-10 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {sortedProducts.map((p) => {
-          const score = getScore(p);
+          const ai = calculateAIScore(p, sortedProducts);
+const score = ai.score;
 
           return (
             <div
   key={p.id}
-  className="group rounded-[28px] bg-white/5 border border-white/10 backdrop-blur-xl p-5 hover:-translate-y-2 hover:scale-[1.02] hover:border-cyan-400/40 hover:shadow-[0_0_40px_rgba(34,211,238,0.25)] transition-all duration-500 animate-[fadeIn_0.6s_ease]"
+  className="group rounded-[30px] bg-gradient-to-br from-white/10 to-white/5 border border-white/10 backdrop-blur-xl p-5 shadow-[0_20px_80px_rgba(0,0,0,0.35)] hover:-translate-y-2 hover:scale-[1.02] hover:border-cyan-300/40 hover:shadow-[0_0_45px_rgba(34,211,238,0.18)] transition-all duration-300"
 >
               {p.image && (
                 <div className="bg-white rounded-2xl p-3 mb-4">
@@ -566,7 +570,7 @@ onChange={(e) => setQuestion(e.target.value)}
               <div className="flex justify-between items-end mt-4">
                 <p className="text-3xl font-black">€{p.price}</p>
                 <span className={`px-3 py-1 rounded-full border text-xs font-black ${decisionStyle(score)}`}>
-                  {decision(score)}
+                  {ai.label}
                 </span>
               </div>
 
@@ -586,14 +590,14 @@ onChange={(e) => setQuestion(e.target.value)}
   </p>
 
   <p className="text-3xl font-black">
-    {score}%
+    {ai.score}%
   </p>
 
 </div>
               </div>
 
               <p className="text-white/60 text-sm mt-4">
-                {whyImportant(p)}
+                {ai.reason}
               </p>
 
               <div className="flex gap-2 mt-5">
