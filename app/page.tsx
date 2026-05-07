@@ -347,7 +347,7 @@ useEffect(() => {
           {saved.map((item) => (
   <div
     key={item.link}
-    className="rounded-3xl bg-black/20 border border-cyan-400/20 backdrop-blur-xl p-5 hover:scale-[1.02] transition-all duration-300"
+    className="w-full flex flex-col gap-4 rounded-3xl bg-black/20 border border-cyan-400/20 backdrop-blur-xl p-5"
   >
     <div className="flex flex-col gap-4">
       {item.image && (
