@@ -1,7 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { SignInButton, UserButton, useUser } from "@clerk/nextjs";
+import SearchBox from "../components/SearchBox";
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 type Product = {
   id: number;
   title: string;
@@ -21,8 +27,18 @@ export default function Home() {
   const [maxPrice, setMaxPrice] = useState("");
   const [saved, setSaved] = useState<Product[]>([]);
   const [question, setQuestion] = useState("")
-const [aiReply, setAiReply] = useState("")
+const [aiReply, setAiReply] = useState("");
+async function testSupabase() {
+ 
+  const { data, error } = await supabase
+    .from("products")
+    .select("*");
 
+  setProducts(data || []);
+}
+useEffect(() => {
+  testSupabase();
+}, []);
   function ratingValue(rating: number | string) {
     const n = Number(rating);
     return Number.isFinite(n) ? n : 0;
@@ -147,11 +163,36 @@ const [aiReply, setAiReply] = useState("")
     setLoading(false);
   }
 
-  function saveProduct(product: Product) {
-    if (!saved.some((p) => p.link === product.link)) {
-      setSaved([...saved, product]);
-    }
+  async function saveProduct(product: Product) {
+  if (saved.some((p) => p.link === product.link)) {
+    return;
   }
+
+  setSaved([...saved, product]);
+
+  try {
+    const res = await fetch("/api/search/save-product", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        product_id: product.id,
+        title: product.title,
+        price: product.price,
+        image: product.image,
+        link: product.link,
+        ai_score: product.rating,
+      }),
+    });
+
+    const data = await res.json();
+
+    console.log(data);
+  } catch (e) {
+    console.error(e);
+  }
+}
 
   return (
     <main className="min-h-screen bg-[#050713] text-white relative overflow-hidden">
@@ -187,7 +228,7 @@ const [aiReply, setAiReply] = useState("")
   {isSignedIn ? (
   <UserButton />
 ) : (
-  <SignInButton mode="modal">
+  <SignInButton mode="modal" forceRedirectUrl="/dashboard">
     <button className="px-4 py-2 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 transition">
       Login
     </button>
@@ -301,7 +342,7 @@ const [aiReply, setAiReply] = useState("")
        💾 Saved Products
       </h3>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+      <div className="flex flex-col gap-4 mt-6">
         
           {saved.map((item) => (
   <div
@@ -317,7 +358,7 @@ const [aiReply, setAiReply] = useState("")
         />
       )}
 
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         <p className="font-bold line-clamp-2">{item.title}</p>
         <p className="text-emerald-300 font-black mt-1">€{item.price}</p>
         <p className="text-white/50 text-sm">{item.store}</p>
@@ -673,9 +714,13 @@ onChange={(e) => setQuestion(e.target.value)}
         <p>✓ Faster search engine</p>
       </div>
 
-      <button className="w-full py-3 rounded-2xl bg-gradient-to-r from-cyan-400 to-purple-500 text-white font-black hover:scale-105 transition-all duration-300">
-        Upgrade to Pro
-      </button>
+      <a
+  href="https://buy.stripe.com/test_14k8wQ8uQ5xM9DWcMM"
+  target="_blank"
+  className="block w-full py-3 rounded-2xl bg-gradient-to-r from-cyan-400 to-purple-500 text-center font-bold"
+>
+  Upgrade to Pro
+</a>
     </div>
 
     {/* BUSINESS */}
@@ -708,6 +753,9 @@ onChange={(e) => setQuestion(e.target.value)}
     </div>
 
   </div>
+  <div className="mt-10">
+  <SearchBox />
+</div>
 </section></main>
   );
 }
