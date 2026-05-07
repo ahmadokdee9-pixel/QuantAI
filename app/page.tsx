@@ -278,12 +278,28 @@ useEffect(() => {
               Analyze with AI            </button>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 mt-4 text-xs text-white/60">
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-3">Live prices</div>
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-3">AI score</div>
-            <div className="rounded-2xl bg-white/5 border border-white/10 p-3">Best decision</div>
-            
-          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
+  <div className="rounded-2xl bg-white/10 border border-white/10 p-4">
+    <p className="text-white/50 text-xs">Products analyzed</p>
+    <h3 className="text-2xl font-black text-cyan-300 mt-1">12K+</h3>
+  </div>
+
+  <div className="rounded-2xl bg-white/10 border border-white/10 p-4">
+    <p className="text-white/50 text-xs">AI accuracy</p>
+    <h3 className="text-2xl font-black text-emerald-300 mt-1">94%</h3>
+  </div>
+
+  <div className="rounded-2xl bg-white/10 border border-white/10 p-4">
+    <p className="text-white/50 text-xs">User savings</p>
+    <h3 className="text-2xl font-black text-violet-300 mt-1">€48K</h3>
+  </div>
+
+  <div className="rounded-2xl bg-white/10 border border-white/10 p-4">
+    <p className="text-white/50 text-xs">Live alerts</p>
+    <h3 className="text-2xl font-black text-pink-300 mt-1">230</h3>
+  </div>
+</div>
+          
         </div>
 
         {loading && (
