@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import SearchBox from "../components/SearchBox";
 import { calculateAIScore } from "./api/search/lib/aiScoring";
+import Link from "next/link";
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -237,9 +238,12 @@ useEffect(() => {
   </SignInButton>
 )}
 
-  <button className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-purple-500 text-white font-bold hover:scale-105 transition-all duration-300 shadow-lg shadow-cyan-500/30">
-    Get Started
-  </button>
+  <Link
+  href="/dashboard"
+  className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-bold hover:opacity-90 transition"
+>
+  Get Started
+</Link>
 
 </div>
       </nav>
