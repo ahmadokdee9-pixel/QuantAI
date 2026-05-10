@@ -1,0 +1,150 @@
+import type { ProductCategorySlug, CategoryWeightProfile } from "./types";
+
+const DEFAULT_WEIGHTS: CategoryWeightProfile = {
+  price: 0.18,
+  rating: 0.16,
+  reviewDepth: 0.12,
+  retailerTrust: 0.14,
+  delivery: 0.08,
+  popularity: 0.1,
+  pricePerformance: 0.14,
+  discountQuality: 0.08,
+};
+
+const PROFILES: Record<ProductCategorySlug, Partial<CategoryWeightProfile>> = {
+  electronics: {
+    rating: 0.19,
+    retailerTrust: 0.16,
+    reviewDepth: 0.14,
+    pricePerformance: 0.15,
+    price: 0.16,
+    delivery: 0.07,
+    popularity: 0.08,
+    discountQuality: 0.05,
+  },
+  fashion: {
+    retailerTrust: 0.18,
+    rating: 0.17,
+    reviewDepth: 0.13,
+    price: 0.16,
+    delivery: 0.07,
+    popularity: 0.12,
+    pricePerformance: 0.1,
+    discountQuality: 0.07,
+  },
+  home: {
+    price: 0.2,
+    delivery: 0.1,
+    retailerTrust: 0.15,
+    rating: 0.15,
+    reviewDepth: 0.11,
+    popularity: 0.09,
+    pricePerformance: 0.12,
+    discountQuality: 0.08,
+  },
+  beauty: {
+    rating: 0.19,
+    reviewDepth: 0.15,
+    retailerTrust: 0.16,
+    price: 0.14,
+    delivery: 0.06,
+    popularity: 0.12,
+    pricePerformance: 0.1,
+    discountQuality: 0.08,
+  },
+  sports: {
+    rating: 0.17,
+    retailerTrust: 0.14,
+    pricePerformance: 0.16,
+    reviewDepth: 0.12,
+    price: 0.17,
+    delivery: 0.08,
+    popularity: 0.1,
+    discountQuality: 0.06,
+  },
+  toys: {
+    retailerTrust: 0.16,
+    rating: 0.16,
+    price: 0.18,
+    reviewDepth: 0.12,
+    delivery: 0.08,
+    popularity: 0.12,
+    pricePerformance: 0.1,
+    discountQuality: 0.08,
+  },
+  general: {},
+};
+
+function matchCategory(text: string): ProductCategorySlug {
+  const t = text.toLowerCase();
+  if (
+    /laptop|phone|iphone|android|tablet|gpu|graphics|monitor|tv|oled|qled|headphone|earbud|camera|drone|console|playstation|xbox|nintendo|router|ssd|ram|keyboard|mouse|speaker|smartwatch|charger|cable|usb|hdmi|pc\b|macbook|ipad/i.test(
+      t
+    )
+  ) {
+    return "electronics";
+  }
+  if (
+    /shoe|sneaker|boot|dress|shirt|jacket|coat|jeans|pants|skirt|handbag|wallet|watch\b|sunglass|jewelry|ring\b|necklace|apparel|fashion|clothing/i.test(
+      t
+    )
+  ) {
+    return "fashion";
+  }
+  if (
+    /furniture|sofa|couch|bed\b|mattress|desk|chair|table|lamp|rug|curtain|kitchen|dining|shelf|storage|home decor|garden|patio/i.test(
+      t
+    )
+  ) {
+    return "home";
+  }
+  if (/perfume|skincare|makeup|cosmetic|shampoo|serum|cream|lipstick|beauty/i.test(t)) {
+    return "beauty";
+  }
+  if (
+    /bike|bicycle|treadmill|dumbbell|yoga|fitness|golf|tennis|soccer|football|basketball|running|sport/i.test(
+      t
+    )
+  ) {
+    return "sports";
+  }
+  if (/toy|lego|doll|puzzle|board game|plush|kids|child/i.test(t)) {
+    return "toys";
+  }
+  return "general";
+}
+
+export function inferProductCategory(searchQuery: string, productTitle: string): ProductCategorySlug {
+  const combined = `${searchQuery} ${productTitle}`;
+  return matchCategory(combined);
+}
+
+export function inferSearchCategory(searchQuery: string): ProductCategorySlug {
+  return matchCategory(searchQuery);
+}
+
+export function getCategoryWeights(slug: ProductCategorySlug): CategoryWeightProfile {
+  const patch = PROFILES[slug] ?? {};
+  const merged: CategoryWeightProfile = { ...DEFAULT_WEIGHTS, ...patch };
+  const sum =
+    merged.price +
+    merged.rating +
+    merged.reviewDepth +
+    merged.retailerTrust +
+    merged.delivery +
+    merged.popularity +
+    merged.pricePerformance +
+    merged.discountQuality;
+  if (sum <= 0) return DEFAULT_WEIGHTS;
+  const f = 1 / sum;
+  return {
+    price: merged.price * f,
+    rating: merged.rating * f,
+    reviewDepth: merged.reviewDepth * f,
+    retailerTrust: merged.retailerTrust * f,
+    delivery: merged.delivery * f,
+    popularity: merged.popularity * f,
+    pricePerformance: merged.pricePerformance * f,
+    discountQuality: merged.discountQuality * f,
+  };
+}

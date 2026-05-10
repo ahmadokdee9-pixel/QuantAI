@@ -1,4 +1,5 @@
 import { calculateAIScore } from "@/app/api/search/lib/aiScoring";
+import type { IntelligenceSignals, ProductCategorySlug } from "@/lib/intelligence/types";
 import {
   getStoreTrustScore,
   TRUSTED_SUBSTRINGS,
@@ -19,6 +20,19 @@ export type QuantProduct = {
   oldPrice: number | null;
   priceTrend: "down" | "up" | "stable";
   extensions: string[];
+  /** Server-enriched composite intelligence score (0–100). */
+  qiComposite?: number;
+  qiModelLayer?: number;
+  qiReason?: string;
+  qiSignals?: IntelligenceSignals;
+  qiRank?: number;
+  qiCategory?: ProductCategorySlug;
+  qiTrendProjection?: string;
+  qiTrendNote?: string;
+  /** Adaptive headline verdict from the narrative engine. */
+  qiVerdict?: string;
+  /** One-line purchase-psychology read. */
+  qiPsychology?: string;
 };
 
 export { getStoreTrustScore };
@@ -49,7 +63,11 @@ export function getHeuristicScore(p: QuantProduct): number {
   return Math.min(100, Math.round(score));
 }
 
-export function getCompositeScore(p: QuantProduct, list: QuantProduct[]): number {
+/** Prefer server composite when present (single source of truth). */
+export function getFinalComposite(p: QuantProduct, list: QuantProduct[]): number {
+  if (p.qiComposite != null && Number.isFinite(p.qiComposite)) {
+    return Math.min(100, Math.max(0, Math.round(p.qiComposite)));
+  }
   const h = getHeuristicScore(p);
   const ai = calculateAIScore(p, list).score;
   const trust = getStoreTrustScore(p.store);
@@ -61,19 +79,30 @@ export function getCompositeScore(p: QuantProduct, list: QuantProduct[]): number
   return Math.min(100, Math.round(raw));
 }
 
+export function getCompositeScore(p: QuantProduct, list: QuantProduct[]): number {
+  return getFinalComposite(p, list);
+}
+
 export function sortByCompositeRank(list: QuantProduct[]): QuantProduct[] {
   return [...list].sort(
-    (a, b) => getCompositeScore(b, list) - getCompositeScore(a, list)
+    (a, b) => getFinalComposite(b, list) - getFinalComposite(a, list)
   );
 }
 
-/** Model-layer AI score (same formula used on cards). */
+/** Model-layer score: server `qiModelLayer` when present, else legacy heuristic. */
 export function sortByBestAIScore(list: QuantProduct[]): QuantProduct[] {
   const copy = [...list];
-  return copy.sort(
-    (a, b) =>
-      calculateAIScore(b, list).score - calculateAIScore(a, list).score
-  );
+  return copy.sort((a, b) => {
+    const ba =
+      b.qiModelLayer != null && Number.isFinite(b.qiModelLayer)
+        ? b.qiModelLayer
+        : calculateAIScore(b, list).score;
+    const aa =
+      a.qiModelLayer != null && Number.isFinite(a.qiModelLayer)
+        ? a.qiModelLayer
+        : calculateAIScore(a, list).score;
+    return ba - aa;
+  });
 }
 
 export function sortByTrust(list: QuantProduct[]): QuantProduct[] {
@@ -120,11 +149,12 @@ export function getProfessionalBadge(
   const trust = getStoreTrustScore(p.store);
   const r = ratingValue(p.rating);
   const ai = calculateAIScore(p, list);
+  const comp = getFinalComposite(p, list);
 
   if (rankByComposite === 0 && list.length > 0) {
-    return { key: "ai_pick", label: "AI Pick" };
+    return { key: "ai_pick", label: "Top Pick" };
   }
-  if (ai.label === "Best Value" || (p.price <= medianPrice && r >= 4.2)) {
+  if (ai.label === "Best Value" || (p.price <= medianPrice && r >= 4.2 && comp >= 72)) {
     return { key: "best_value", label: "Best Value" };
   }
   if (r >= maxR - 0.05 && r >= 4.0 && list.length > 1) {
@@ -153,44 +183,44 @@ export function getProsAndCons(
   const cons: string[] = [];
 
   if (p.price <= avgPrice * 0.92) {
-    pros.push("Priced below the average for this search");
+    pros.push("Ask under basket average—value headroom without begging for excuses.");
   } else if (p.price > avgPrice * 1.12) {
-    cons.push("Priced above the median of current results");
+    cons.push("Priced above tray median—needs ratings or trust to carry the premium.");
   }
 
   if (r >= 4.5) {
-    pros.push("Strong customer rating signal");
+    pros.push("Star stack is strong for this set—social proof cooperates with the ask.");
   } else if (r > 0 && r < 4) {
-    cons.push("Weaker rating vs. other options in this set");
+    cons.push("Stars trail neighbors—quality doubt is the main drag.");
   }
 
   if (trust >= 85) {
-    pros.push("Retailer matches high-trust patterns we weight heavily");
+    pros.push("Store fingerprint looks low-friction versus typical web sellers.");
   } else if (trust < 60) {
-    cons.push("Less familiar retailer—double-check policies at checkout");
+    cons.push("Store fingerprint is thin—earn the discount with policy homework.");
   }
 
   if (p.reviewsCount != null && p.reviewsCount >= 100) {
-    pros.push(`Many reviews (${p.reviewsCount.toLocaleString()})—more signal on quality`);
+    pros.push(`${p.reviewsCount.toLocaleString()} reviews—crowd signal is loud enough to trust.`);
   } else if (p.reviewsCount != null && p.reviewsCount < 20 && r > 0) {
-    cons.push("Fewer reviews—ratings may be less stable");
+    cons.push("Few voices in reviews—treat stars as provisional.");
   }
 
   if (p.priceTrend === "down") {
-    pros.push("Listed below a previous reference price in this feed");
+    pros.push("Feed anchor implies a markdown—momentum can favor a disciplined buy.");
   } else if (p.priceTrend === "up") {
-    cons.push("Listed above a previous reference price in this feed");
+    cons.push("Feed anchor moved up—patience may buy you a cleaner entry.");
   }
 
   if (p.shipping) {
-    pros.push(`Shipping: ${p.shipping}`);
+    pros.push(`Shipping cue: ${p.shipping}`);
   }
 
   if (pros.length === 0) {
-    pros.push("Fits your current filters and search context");
+    pros.push("Neutral cross-signals—open the intelligence deck for the full read.");
   }
   if (cons.length === 0 && pros.length > 3) {
-    cons.push("Always verify final price with shipping and tax");
+    cons.push("Reconcile tax, shipping, and live checkout price before you commit.");
   }
 
   return { pros: pros.slice(0, 4), cons: cons.slice(0, 3) };
@@ -201,6 +231,9 @@ export function getWhyQuantAIRecommends(
   list: QuantProduct[],
   composite: number
 ): string {
+  if (p.qiReason && p.qiReason.trim()) {
+    return `${p.qiReason.trim()} (${composite} QI, this search only).`;
+  }
   const avgPrice =
     list.length > 0
       ? list.reduce((a, x) => a + x.price, 0) / list.length
@@ -209,16 +242,16 @@ export function getWhyQuantAIRecommends(
   const r = ratingValue(p.rating);
   const parts: string[] = [];
   parts.push(
-    `Composite rank ${composite}/100 blends price fit, ratings, retailer trust, and relative value in this result set.`
+    `QI ${composite}/100 blends price fit, stars, trust, delivery text, discounts, and category priors for this tray.`
   );
   if (p.price <= avgPrice) {
-    parts.push("Price sits at or under the current average for these listings.");
+    parts.push("Ask is not fighting the average—headroom exists if reviews behave.");
   }
   if (r >= 4.3) {
-    parts.push("Ratings suggest consistent buyer satisfaction.");
+    parts.push("Sentiment skews constructive.");
   }
   if (trust >= 85) {
-    parts.push("Store signal aligns with retailers we treat as lower-friction.");
+    parts.push("Seller pattern reads calmer than the open-web baseline.");
   }
-  return parts.join(" ");
+  return parts.slice(0, 2).join(" ");
 }

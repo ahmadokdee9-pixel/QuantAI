@@ -13,6 +13,13 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!supabaseAdmin) {
+      return NextResponse.json(
+        { error: "Database is not configured." },
+        { status: 503 }
+      );
+    }
+
     const body = await req.json();
 
     const {

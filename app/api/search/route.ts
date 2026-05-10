@@ -1,7 +1,13 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { fetchShoppingProducts } from "./lib/fetchShopping";
+import { enrichProductsWithIntelligence } from "@/lib/intelligence/enrichProducts";
+import {
+  mergeRecommendationMemory,
+  memoryPatchFromSearch,
+  recordSearchHistory,
+} from "@/lib/intelligence/persistence";
 import { enforceLimit, searchRatelimit } from "@/lib/rate-limit";
+import { fetchShoppingProducts } from "./lib/fetchShopping";
 
 async function handleSearch(q: string | null | undefined) {
   const query = q?.trim();
@@ -33,7 +39,19 @@ async function handleSearch(q: string | null | undefined) {
     return NextResponse.json({ error: result.error }, { status: result.status });
   }
 
-  return NextResponse.json({ products: result.products });
+  const products = enrichProductsWithIntelligence(result.products, query);
+  const { topCategory } = memoryPatchFromSearch(query);
+
+  void recordSearchHistory(userId, query, products.length);
+  void mergeRecommendationMemory(userId, query, topCategory);
+
+  return NextResponse.json({
+    products,
+    meta: {
+      category: topCategory,
+      intelligenceVersion: 1,
+    },
+  });
 }
 
 export async function GET(req: Request) {

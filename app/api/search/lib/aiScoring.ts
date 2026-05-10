@@ -54,9 +54,9 @@ export function calculateAIScore(
     label,
     reason:
       score >= 90
-        ? "Excellent balance between price and quality."
+        ? "Strong price-to-quality balance with supportive trust cues in this basket."
         : score >= 80
-          ? "Highly rated and recommended."
-          : "Consider comparing alternatives before buying.",
+          ? "Solid rating signal—still run tradeoff analysis on shipping and returns."
+          : "Signals are mixed; Compare mode will sharpen purchase clarity before checkout.",
   };
 }

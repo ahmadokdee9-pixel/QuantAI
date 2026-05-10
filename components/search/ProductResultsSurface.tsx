@@ -3,13 +3,12 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { AlertCircle, GitCompare, Sparkles, X } from "lucide-react";
+import { AlertCircle, BarChart3, GitCompare, Loader2, Sparkles, X } from "lucide-react";
 import type { ResultsFiltersState } from "@/lib/resultsFilters";
-import {
-  getCompositeScore,
-  sortByCompositeRank,
-} from "@/lib/shoppingScore";
+import { getFinalComposite, ratingValue, sortByCompositeRank } from "@/lib/shoppingScore";
 import type { QuantProduct } from "@/lib/shoppingScore";
+import IntelligenceEducationStrip from "./IntelligenceEducationStrip";
+import ProductIntelligenceDrawer from "./ProductIntelligenceDrawer";
 import ProductResultCard from "./ProductResultCard";
 import ResultsToolbar from "./ResultsToolbar";
 
@@ -27,6 +26,7 @@ type Props = {
   savedLinks: Set<string>;
   resultsKey: number;
   searchError: string | null;
+  addToWatchlist?: (p: QuantProduct) => void;
 };
 
 function ResultSkeleton() {
@@ -63,13 +63,24 @@ export default function ProductResultsSurface({
   savedLinks,
   resultsKey,
   searchError,
+  addToWatchlist,
 }: Props) {
   const reduceMotion = useReducedMotion();
   const anchorRef = useRef<HTMLDivElement>(null);
   const prevLoading = useRef(false);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [detailProduct, setDetailProduct] = useState<QuantProduct | null>(null);
   const [compareLinks, setCompareLinks] = useState<string[]>([]);
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
+  const [verdictLoading, setVerdictLoading] = useState(false);
+  const [verdictError, setVerdictError] = useState<string | null>(null);
+  const [verdict, setVerdict] = useState<{
+    winnerTitle: string;
+    winnerLink: string;
+    verdict: string;
+    rationale: string[];
+    confidence: string;
+  } | null>(null);
+  const [verdictSource, setVerdictSource] = useState<string | null>(null);
 
   const compositeRanked = useMemo(
     () => sortByCompositeRank(sortedProducts),
@@ -97,7 +108,15 @@ export default function ProductResultsSurface({
     }
   }, [loading, products.length, resultsKey, reduceMotion]);
 
+  useEffect(() => {
+    if (sortedProducts.length > 0) return;
+    queueMicrotask(() => setDetailProduct(null));
+  }, [sortedProducts.length]);
+
   const toggleCompare = (link: string) => {
+    setVerdict(null);
+    setVerdictError(null);
+    setVerdictSource(null);
     setCompareLinks((prev) => {
       if (prev.includes(link)) {
         return prev.filter((l) => l !== link);
@@ -107,10 +126,48 @@ export default function ProductResultsSurface({
     });
   };
 
-  const compareProducts = useMemo(
-    () => sortedProducts.filter((p) => compareLinks.includes(p.link)),
-    [sortedProducts, compareLinks]
-  );
+  async function runCompareVerdict() {
+    if (compareProducts.length === 0) return;
+    setVerdictLoading(true);
+    setVerdictError(null);
+    try {
+      const res = await fetch("/api/search/compare-verdict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ products: compareProducts }),
+      });
+      const data = (await res.json()) as {
+        verdict?: {
+          winnerTitle: string;
+          winnerLink: string;
+          verdict: string;
+          rationale: string[];
+          confidence: string;
+        };
+        source?: string;
+        error?: string;
+        retryAfter?: number;
+      };
+      if (res.status === 429) {
+        const wait = data.retryAfter ? ` Retry in ~${data.retryAfter}s.` : "";
+        setVerdictError((data.error || "Too many requests.") + wait);
+        return;
+      }
+      if (!res.ok || !data.verdict) {
+        setVerdictError(data.error || "Could not load AI verdict.");
+        return;
+      }
+      setVerdict(data.verdict);
+      setVerdictSource(data.source ?? null);
+    } catch {
+      setVerdictError("Could not load AI verdict.");
+    } finally {
+      setVerdictLoading(false);
+    }
+  }
+
+  const compareProducts = sortedProducts.filter((p) => compareLinks.includes(p.link));
 
   if (loading && products.length === 0) {
     return (
@@ -212,6 +269,8 @@ export default function ProductResultsSurface({
         onClearFilters={onClearFilters}
       />
 
+      <IntelligenceEducationStrip />
+
       {aiTopPicks.length > 0 && (
         <motion.div
           initial={reduceMotion ? false : { opacity: 0, y: 12 }}
@@ -219,15 +278,18 @@ export default function ProductResultsSurface({
           transition={transition}
           className="mb-10"
         >
-          <div className="mb-4 flex items-center gap-2">
-            <Sparkles className="size-4 text-cyan-300" strokeWidth={1.5} aria-hidden />
-            <h2 className="text-sm font-semibold tracking-tight text-white/95">
-              AI recommended for this search
-            </h2>
+          <div className="mb-4 flex items-start gap-2.5">
+            <Sparkles className="mt-0.5 size-4 shrink-0 text-cyan-300" strokeWidth={1.5} aria-hidden />
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold tracking-tight text-white/95">QuantAI top picks</h2>
+              <p className="mt-0.5 text-[11px] font-normal leading-snug text-slate-500">
+                Highest QI composite in this snapshot—your fastest path to purchase clarity.
+              </p>
+            </div>
           </div>
           <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory [-webkit-overflow-scrolling:touch]">
             {aiTopPicks.map((p, idx) => {
-              const comp = getCompositeScore(p, sortedProducts);
+              const comp = getFinalComposite(p, sortedProducts);
               return (
                 <motion.div
                   key={p.link}
@@ -258,7 +320,7 @@ export default function ProductResultsSurface({
                   <div className="mt-3 flex items-center justify-between">
                     <span className="text-lg font-semibold tabular-nums text-white">€{p.price}</span>
                     <span className="rounded-full border border-white/15 bg-black/35 px-2 py-0.5 text-[11px] font-semibold text-cyan-100">
-                      Composite {comp}
+                      QI composite {comp}
                     </span>
                   </div>
                 </motion.div>
@@ -275,40 +337,130 @@ export default function ProductResultsSurface({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 16 }}
             transition={{ type: "spring", stiffness: 400, damping: 32 }}
-            className="fixed bottom-4 left-4 right-4 z-40 mx-auto max-w-4xl rounded-2xl border border-white/15 bg-[#070d18]/95 p-4 shadow-[0_32px_100px_-16px_rgba(0,0,0,0.92)] backdrop-blur-2xl md:left-1/2 md:-translate-x-1/2 md:right-auto"
+            className="fixed bottom-4 left-4 right-4 z-40 mx-auto max-w-5xl rounded-2xl border border-cyan-400/20 bg-[#050912]/96 p-4 shadow-[0_32px_120px_-20px_rgba(34,211,238,0.18)] backdrop-blur-2xl md:left-1/2 md:-translate-x-1/2 md:right-auto"
             role="region"
             aria-label="Product compare"
           >
-            <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
               <span className="flex items-center gap-2 text-sm font-semibold text-white/90">
                 <GitCompare className="size-4 text-cyan-300" aria-hidden />
-                Quick compare ({compareProducts.length}/3)
+                <BarChart3 className="size-4 text-violet-300/80" aria-hidden />
+                Compare lab · {compareProducts.length}/3
               </span>
-              <button
-                type="button"
-                onClick={() => setCompareLinks([])}
-                className="rounded-full p-1.5 text-slate-400 transition hover:bg-white/10 hover:text-white"
-                aria-label="Clear compare"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {compareProducts.map((p) => (
-                <motion.div
-                  key={p.link}
-                  layout
-                  className="rounded-xl border border-white/10 bg-white/[0.05] p-3 text-xs"
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void runCompareVerdict()}
+                  disabled={verdictLoading}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/35 bg-cyan-400/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-cyan-100 transition hover:bg-cyan-400/25 disabled:opacity-50"
                 >
-                  <p className="font-medium text-white/90 line-clamp-2">{p.title}</p>
-                  <p className="mt-1 text-slate-500">{p.store}</p>
-                  <p className="mt-2 text-sm font-semibold text-emerald-300">€{p.price}</p>
-                </motion.div>
-              ))}
+                  {verdictLoading ? (
+                    <>
+                      <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                      Verdict
+                    </>
+                  ) : (
+                    "QuantAI verdict"
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCompareLinks([]);
+                    setVerdict(null);
+                    setVerdictError(null);
+                  }}
+                  className="rounded-full p-1.5 text-slate-400 transition hover:bg-white/10 hover:text-white"
+                  aria-label="Clear compare"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
             </div>
+            <div className="grid gap-3 lg:grid-cols-3">
+              {compareProducts.map((p) => {
+                const qi = getFinalComposite(p, sortedProducts);
+                const trust = p.store;
+                return (
+                  <motion.div
+                    key={p.link}
+                    layout
+                    className="rounded-xl border border-white/[0.08] bg-gradient-to-b from-white/[0.06] to-black/40 p-3 text-xs"
+                  >
+                    <p className="font-medium text-white/90 line-clamp-2 leading-snug">{p.title}</p>
+                    <p className="mt-1 text-slate-500">{trust}</p>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <div className="rounded-lg border border-white/[0.06] bg-black/30 px-2 py-1.5">
+                        <p className="text-[9px] uppercase tracking-wider text-slate-500">Price</p>
+                        <p className="text-sm font-semibold tabular-nums text-emerald-300">€{p.price}</p>
+                      </div>
+                      <div className="rounded-lg border border-white/[0.06] bg-black/30 px-2 py-1.5">
+                        <p className="text-[9px] uppercase tracking-wider text-slate-500">QI</p>
+                        <p className="text-sm font-semibold tabular-nums text-cyan-200">{qi}</p>
+                      </div>
+                      <div className="rounded-lg border border-white/[0.06] bg-black/30 px-2 py-1.5">
+                        <p className="text-[9px] uppercase tracking-wider text-slate-500">Rating</p>
+                        <p className="text-sm font-semibold text-amber-200/90">
+                          {ratingValue(p.rating) > 0 ? ratingValue(p.rating).toFixed(1) : "—"}
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-white/[0.06] bg-black/30 px-2 py-1.5">
+                        <p className="text-[9px] uppercase tracking-wider text-slate-500">Trend</p>
+                        <p className="text-[11px] font-medium capitalize text-slate-300">
+                          {p.qiTrendProjection ?? p.priceTrend}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+            {verdictError && (
+              <p className="mt-3 text-xs text-rose-200/90" role="alert">
+                {verdictError}
+              </p>
+            )}
+            {verdict && (
+              <div className="mt-4 rounded-xl border border-violet-400/25 bg-violet-500/[0.08] p-3 text-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-semibold text-violet-100">QuantAI verdict</p>
+                  {verdictSource && (
+                    <span className="rounded-full border border-white/10 bg-black/30 px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-400">
+                      {verdictSource}
+                    </span>
+                  )}
+                </div>
+                <p className="mt-2 text-[13px] leading-relaxed text-slate-100/95">{verdict.verdict}</p>
+                <p className="mt-1 text-[11px] text-slate-400">
+                  Winner:{" "}
+                  <a
+                    href={verdict.winnerLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-cyan-200 underline-offset-2 hover:underline"
+                  >
+                    {verdict.winnerTitle}
+                  </a>
+                  <span className="mx-1 text-slate-600">·</span>
+                  Decision confidence · {verdict.confidence}
+                </p>
+                <ul className="mt-2 list-disc space-y-1 pl-4 text-slate-400">
+                  {verdict.rationale.map((r) => (
+                    <li key={r}>{r}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ProductIntelligenceDrawer
+        product={detailProduct}
+        list={sortedProducts}
+        open={detailProduct != null}
+        onClose={() => setDetailProduct(null)}
+      />
 
       <AnimatePresence mode="popLayout">
         <motion.div
@@ -328,12 +480,12 @@ export default function ProductResultsSurface({
                 list={sortedProducts}
                 index={index}
                 rank={rank}
-                expandedId={expandedId}
-                setExpandedId={setExpandedId}
                 compareLinks={compareLinks}
                 toggleCompare={toggleCompare}
                 saveProduct={saveProduct}
                 savedLinks={savedLinks}
+                addToWatchlist={addToWatchlist}
+                onOpenIntelligence={setDetailProduct}
               />
             );
           })}

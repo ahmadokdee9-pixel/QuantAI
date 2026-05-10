@@ -44,8 +44,8 @@ export default function ResultsToolbar({
             onChange={(e) => setSort(e.target.value)}
             className="rounded-2xl border border-white/12 bg-white/[0.07] px-4 py-2.5 text-[13px] font-medium text-white/92 outline-none transition hover:border-cyan-400/28 focus:border-cyan-400/45 focus:ring-2 focus:ring-cyan-400/15"
           >
-            <option value="value">Best value (composite)</option>
-            <option value="ai">Best AI score</option>
+            <option value="value">Best value (QI composite)</option>
+            <option value="ai">Best model layer</option>
             <option value="cheap">Lowest price</option>
             <option value="trust">Most trusted store</option>
           </select>

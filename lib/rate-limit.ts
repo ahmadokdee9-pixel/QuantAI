@@ -28,6 +28,14 @@ export const aiChatRatelimit = redis
     })
   : null;
 
+export const compareVerdictRatelimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(30, "1 h"),
+      prefix: "quantai:compare-verdict",
+    })
+  : null;
+
 export async function enforceLimit(
   limiter: Ratelimit | null,
   identifier: string

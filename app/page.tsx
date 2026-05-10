@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import SearchBox from "../components/SearchBox";
 import LandingNav from "../components/landing/LandingNav";
@@ -13,6 +13,7 @@ import {
   defaultResultsFilters,
 } from "@/lib/resultsFilters";
 import {
+  getFinalComposite,
   getHeuristicScore,
   sortByBestAIScore,
   sortByCompositeRank,
@@ -30,23 +31,65 @@ import {
   TrendingUp,
 } from "lucide-react";
 
+type SearchHistoryRow = {
+  id?: string;
+  query: string;
+  result_count?: number;
+  created_at?: string;
+};
+
 export default function Home() {
   const { isSignedIn } = useUser();
   const [query, setQuery] = useState("");
   const [products, setProducts] = useState<QuantProduct[]>([]);
   const [loading, setLoading] = useState(false);
   const [sort, setSort] = useState("value");
-  const [filters, setFilters] = useState(defaultResultsFilters);
+  const [filters, setFilters] = useState(defaultResultsFilters());
   const [saved, setSaved] = useState<QuantProduct[]>([]);
   const [question, setQuestion] = useState("");
   const [aiReply, setAiReply] = useState("");
   const [searchError, setSearchError] = useState<string | null>(null);
   const [resultsKey, setResultsKey] = useState(0);
+  const [searchHistory, setSearchHistory] = useState<SearchHistoryRow[]>([]);
 
   const savedLinks = useMemo(
     () => new Set(saved.map((s) => s.link)),
     [saved]
   );
+
+  const refreshSearchHistory = useCallback(async () => {
+    if (!isSignedIn) return;
+    try {
+      const res = await fetch("/api/intelligence/search-history", { credentials: "same-origin" });
+      const data = (await res.json()) as { items?: SearchHistoryRow[] };
+      if (res.ok && Array.isArray(data.items)) {
+        setSearchHistory(data.items);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [isSignedIn]);
+
+  useEffect(() => {
+    if (!isSignedIn) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/intelligence/search-history", {
+          credentials: "same-origin",
+        });
+        const data = (await res.json()) as { items?: SearchHistoryRow[] };
+        if (!cancelled && res.ok && Array.isArray(data.items)) {
+          setSearchHistory(data.items);
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isSignedIn]);
 
   function decision(score: number) {
     if (score >= 85) return "Buy now";
@@ -84,8 +127,7 @@ export default function Home() {
   }
 
   function smartDecisionText(p: QuantProduct) {
-    const ai = calculateAIScore(p, sortedProducts);
-    const score = ai.score;
+    const score = getFinalComposite(p, sortedProducts);
 
     if (score >= 85) {
       return "QuantAI recommends buying this now. The price looks competitive, the rating is strong, and the store signal is reliable compared with other results.";
@@ -126,12 +168,17 @@ export default function Home() {
 
   const best = sortedProducts[0];
 
-  async function search() {
-    if (!query.trim()) return;
+  async function search(overrideQuery?: string) {
+    const q = (overrideQuery ?? query).trim();
+    if (!q) return;
 
     if (!isSignedIn) {
       setSearchError("Sign in to run a live product search.");
       return;
+    }
+
+    if (overrideQuery != null) {
+      setQuery(overrideQuery);
     }
 
     setResultsKey((k) => k + 1);
@@ -142,7 +189,7 @@ export default function Home() {
 
     try {
       const res = await fetch(
-        `/api/search?q=${encodeURIComponent(query)}`,
+        `/api/search?q=${encodeURIComponent(q)}`,
         { credentials: "same-origin" }
       );
       const data = (await res.json()) as {
@@ -169,6 +216,7 @@ export default function Home() {
 
       if (data.products && data.products.length > 0) {
         setProducts(data.products);
+        void refreshSearchHistory();
       } else {
         setSearchError("No products found for this query.");
       }
@@ -190,7 +238,10 @@ export default function Home() {
       return;
     }
 
-    const aiScore = calculateAIScore(product, sortedProducts).score;
+    const aiScore =
+      product.qiComposite != null && Number.isFinite(product.qiComposite)
+        ? product.qiComposite
+        : calculateAIScore(product, sortedProducts).score;
 
     setSaved([...saved, product]);
 
@@ -220,6 +271,43 @@ export default function Home() {
       console.error(e);
       setSearchError("Could not save this product.");
       setSaved(saved.filter((p) => p.link !== product.link));
+    }
+  }
+
+  async function addToWatchlist(product: QuantProduct) {
+    if (!isSignedIn) {
+      setSearchError("Sign in to use the watchlist foundation.");
+      return;
+    }
+    try {
+      const res = await fetch("/api/intelligence/watchlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          product: {
+            title: product.title,
+            link: product.link,
+            price: product.price,
+            store: product.store,
+            image: product.image,
+            qiComposite: product.qiComposite,
+          },
+          targetPrice: null,
+        }),
+      });
+      const data = (await res.json()) as { error?: string; duplicate?: boolean };
+      if (!res.ok) {
+        setSearchError(data.error || "Watchlist is not available yet.");
+        return;
+      }
+      if (data.duplicate) {
+        setSearchError(null);
+        return;
+      }
+      setSearchError(null);
+    } catch {
+      setSearchError("Could not add to watchlist.");
     }
   }
 
@@ -277,14 +365,14 @@ export default function Home() {
                     <input
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && search()}
+                      onKeyDown={(e) => e.key === "Enter" && void search()}
                       placeholder="Search products — e.g. OLED TV, noise-canceling headphones…"
                       className="min-w-0 flex-1 bg-transparent py-3 text-[15px] font-normal text-white placeholder:text-slate-500 outline-none"
                     />
                   </div>
                   <button
                     type="button"
-                    onClick={search}
+                    onClick={() => void search()}
                     disabled={loading}
                     className="group relative inline-flex min-h-[52px] items-center justify-center gap-2 overflow-hidden rounded-2xl px-7 text-[15px] font-semibold text-slate-950 shadow-[0_0_40px_-8px_rgba(34,211,238,0.55)] transition enabled:hover:brightness-[1.03] enabled:hover:shadow-[0_0_48px_-6px_rgba(34,211,238,0.5)] disabled:opacity-60"
                   >
@@ -343,6 +431,27 @@ export default function Home() {
                 </div>
               </div>
             </div>
+
+            {isSignedIn && searchHistory.length > 0 && (
+              <div className="mx-auto mt-8 max-w-3xl text-left">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 mb-2">
+                  Recent searches
+                </p>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {searchHistory.slice(0, 10).map((h) => (
+                    <button
+                      key={h.id ?? `${h.query}-${h.created_at}`}
+                      type="button"
+                      onClick={() => void search(h.query)}
+                      className="max-w-[220px] truncate rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-slate-300 transition hover:border-cyan-400/30 hover:text-white"
+                      title={h.query}
+                    >
+                      {h.query}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {searchError && !loading && (
               <p
@@ -434,7 +543,7 @@ export default function Home() {
               >
                 <div className="pointer-events-none absolute -right-20 -top-20 size-64 rounded-full bg-cyan-400/10 blur-3xl" />
                 <p className="relative text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300/90 mb-4">
-                  Best AI pick
+                  Top pick (QI)
                 </p>
                 <div className="relative grid gap-8 md:grid-cols-[minmax(0,200px)_1fr_minmax(0,160px)] md:items-center">
                   {best.image && (
@@ -455,12 +564,12 @@ export default function Home() {
                       €{best.price}
                     </p>
                     <p
-                      className={`mt-4 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${decisionStyle(getHeuristicScore(best))}`}
+                      className={`mt-4 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${decisionStyle(getFinalComposite(best, sortedProducts))}`}
                     >
-                      {decision(getHeuristicScore(best))}
+                      {decision(getFinalComposite(best, sortedProducts))}
                     </p>
                     <p className="mt-4 max-w-xl text-sm font-normal leading-relaxed text-slate-400">
-                      {whyImportant(best)}
+                      {best.qiReason?.trim() || whyImportant(best)}
                     </p>
                     <div className="mt-6 flex flex-wrap gap-3">
                       <a
@@ -482,10 +591,10 @@ export default function Home() {
                   </div>
                   <div className="rounded-2xl border border-white/[0.08] bg-black/30 p-6 text-center backdrop-blur-md">
                     <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
-                      AI score
+                      QI composite
                     </p>
                     <p className="mt-2 text-4xl font-semibold tabular-nums text-white/95">
-                      {getHeuristicScore(best)}
+                      {getFinalComposite(best, sortedProducts)}
                       <span className="text-lg font-medium text-slate-500">/100</span>
                     </p>
                   </div>
@@ -596,6 +705,8 @@ export default function Home() {
 
                         const data = (await res.json()) as {
                           reply?: string;
+                          highlights?: string[];
+                          caution?: string;
                           error?: string;
                           detail?: string;
                           retryAfter?: number;
@@ -618,7 +729,14 @@ export default function Home() {
                           return;
                         }
 
-                        setAiReply(data.reply || data.error || "No reply returned.");
+                        let out = data.reply || data.error || "No reply returned.";
+                        if (data.highlights?.length) {
+                          out += `\n\n${data.highlights.map((h) => `• ${h}`).join("\n")}`;
+                        }
+                        if (data.caution?.trim()) {
+                          out += `\n\nCaution: ${data.caution.trim()}`;
+                        }
+                        setAiReply(out);
                       } catch {
                         setAiReply("QuantAI could not analyze this request.");
                       }
@@ -656,6 +774,7 @@ export default function Home() {
             savedLinks={savedLinks}
             resultsKey={resultsKey}
             searchError={searchError}
+            addToWatchlist={addToWatchlist}
           />
         )}
 
