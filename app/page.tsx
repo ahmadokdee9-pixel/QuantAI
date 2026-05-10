@@ -1,15 +1,10 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { useMemo, useState } from "react";
 import { SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import SearchBox from "../components/SearchBox";
 import { calculateAIScore } from "./api/search/lib/aiScoring";
 import Link from "next/link";
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 type Product = {
   id: number;
   title: string;
@@ -28,19 +23,9 @@ export default function Home() {
   const [sort, setSort] = useState("best");
   const [maxPrice, setMaxPrice] = useState("");
   const [saved, setSaved] = useState<Product[]>([]);
-  const [question, setQuestion] = useState("")
-const [aiReply, setAiReply] = useState("");
-async function testSupabase() {
- 
-  const { data, error } = await supabase
-    .from("products")
-    .select("*");
-
-  setProducts(data || []);
-}
-useEffect(() => {
-  testSupabase();
-}, []);
+  const [question, setQuestion] = useState("");
+  const [aiReply, setAiReply] = useState("");
+  const [searchError, setSearchError] = useState<string | null>(null);
   function ratingValue(rating: number | string) {
     const n = Number(rating);
     return Number.isFinite(n) ? n : 0;
@@ -146,56 +131,97 @@ useEffect(() => {
   async function search() {
     if (!query.trim()) return;
 
-    setLoading(true);
-    setProducts([]);
-
-    try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-      const data = await res.json();
-
-      if (data.products) {
-        setProducts(data.products);
-      } else {
-        alert(data.error || "No products found");
-      }
-    } catch (e) {
-      alert("Search failed");
-      console.error(e);
+    if (!isSignedIn) {
+      setSearchError("Sign in to run a live product search.");
+      return;
     }
 
-    setLoading(false);
+    setLoading(true);
+    setProducts([]);
+    setSearchError(null);
+
+    try {
+      const res = await fetch(
+        `/api/search?q=${encodeURIComponent(query)}`,
+        { credentials: "same-origin" }
+      );
+      const data = (await res.json()) as {
+        products?: Product[];
+        error?: string;
+        retryAfter?: number;
+      };
+
+      if (res.status === 401) {
+        setSearchError(data.error || "Please sign in to search.");
+        return;
+      }
+
+      if (res.status === 429) {
+        const wait = data.retryAfter ? ` Retry in ~${data.retryAfter}s.` : "";
+        setSearchError((data.error || "Too many searches.") + wait);
+        return;
+      }
+
+      if (!res.ok) {
+        setSearchError(data.error || "Search failed. Try again.");
+        return;
+      }
+
+      if (data.products && data.products.length > 0) {
+        setProducts(data.products);
+      } else {
+        setSearchError("No products found for this query.");
+      }
+    } catch (e) {
+      setSearchError("Search failed. Check your connection and try again.");
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function saveProduct(product: Product) {
-  if (saved.some((p) => p.link === product.link)) {
-    return;
+    if (!isSignedIn) {
+      setSearchError("Sign in to save products to your account.");
+      return;
+    }
+
+    if (saved.some((p) => p.link === product.link)) {
+      return;
+    }
+
+    const aiScore = calculateAIScore(product, sortedProducts).score;
+
+    setSaved([...saved, product]);
+
+    try {
+      const res = await fetch("/api/search/save-product", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          product_id: product.id,
+          title: product.title,
+          price: product.price,
+          image: product.image,
+          link: product.link,
+          ai_score: aiScore,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        setSearchError(data.error || "Could not save this product.");
+        setSaved(saved.filter((p) => p.link !== product.link));
+      }
+    } catch (e) {
+      console.error(e);
+      setSearchError("Could not save this product.");
+      setSaved(saved.filter((p) => p.link !== product.link));
+    }
   }
-
-  setSaved([...saved, product]);
-
-  try {
-    const res = await fetch("/api/search/save-product", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        product_id: product.id,
-        title: product.title,
-        price: product.price,
-        image: product.image,
-        link: product.link,
-        ai_score: product.rating,
-      }),
-    });
-
-    const data = await res.json();
-
-    console.log(data);
-  } catch (e) {
-    console.error(e);
-  }
-}
 
   return (
     <main className="min-h-screen bg-[#050713] text-white relative overflow-hidden">
@@ -319,6 +345,18 @@ useEffect(() => {
     </p>
   </div>
 )}
+
+        {searchError && !loading && (
+          <p className="mt-6 max-w-xl mx-auto text-center text-amber-200 text-sm rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-3">
+            {searchError}
+          </p>
+        )}
+
+        {!isSignedIn && (
+          <p className="mt-4 text-center text-white/50 text-sm">
+            Sign in to run live shopping search and use the AI assistant.
+          </p>
+        )}
       </section>
 
       {products.length > 0 && (
@@ -534,6 +572,11 @@ onChange={(e) => setQuestion(e.target.value)}
   <button
   onClick={async () => {
   try {
+    if (!isSignedIn) {
+      setAiReply("Sign in to ask the AI assistant.");
+      return;
+    }
+
     setAiReply("QuantAI is thinking...");
 
     const res = await fetch("/api/ai-chat", {
@@ -541,16 +584,33 @@ onChange={(e) => setQuestion(e.target.value)}
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "same-origin",
       body: JSON.stringify({
         question,
         products: sortedProducts,
       }),
     });
 
-    const data = await res.json();
+    const data = (await res.json()) as {
+      reply?: string;
+      error?: string;
+      detail?: string;
+      retryAfter?: number;
+    };
 
-    setAiReply(data.reply);
-  } catch (error) {
+    if (res.status === 429) {
+      const wait = data.retryAfter ? ` Try again in ~${data.retryAfter}s.` : "";
+      setAiReply((data.error || "Too many requests.") + wait);
+      return;
+    }
+
+    if (!res.ok) {
+      setAiReply(data.error || data.detail || "QuantAI could not analyze this request.");
+      return;
+    }
+
+    setAiReply(data.reply || data.error || "No reply returned.");
+  } catch {
     setAiReply("QuantAI could not analyze this request.");
   }
 }}

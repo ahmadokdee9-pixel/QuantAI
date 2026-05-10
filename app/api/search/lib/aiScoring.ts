@@ -1,4 +1,13 @@
-export function calculateAIScore(product: any, products: any[]) {
+export type ScorableProduct = {
+  price: number | string;
+  rating?: number | string;
+  store?: string;
+};
+
+export function calculateAIScore(
+  product: ScorableProduct,
+  products: ScorableProduct[]
+) {
   let score = 50;
   score += Math.floor(Math.random() * 8);
 
@@ -7,14 +16,14 @@ export function calculateAIScore(product: any, products: any[]) {
   );
 
   const avgPrice =
-    products.reduce((acc, p) => {
-      return (
-        acc +
-        Number(
-          String(p.price).replace(/[^\d.]/g, "") || 0
-        )
-      );
-    }, 0) / products.length;
+    products.length > 0
+      ? products.reduce((acc, p) => {
+          return (
+            acc +
+            Number(String(p.price).replace(/[^\d.]/g, "") || 0)
+          );
+        }, 0) / products.length
+      : price;
 
   if (price < avgPrice) {
     score += 15;
