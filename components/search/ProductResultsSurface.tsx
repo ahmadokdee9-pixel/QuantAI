@@ -4,6 +4,9 @@ import type { Dispatch, SetStateAction } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { AlertCircle, BarChart3, GitCompare, Loader2, Sparkles, X } from "lucide-react";
+import MultiStoreDealAdvisor from "@/components/deals/MultiStoreDealAdvisor";
+import { analyzeDealCluster } from "@/lib/deals";
+import type { DealClusterDTO } from "@/lib/deals/types";
 import type { ResultsFiltersState } from "@/lib/resultsFilters";
 import { getFinalComposite, ratingValue, sortByCompositeRank } from "@/lib/shoppingScore";
 import type { QuantProduct } from "@/lib/shoppingScore";
@@ -15,6 +18,7 @@ import ResultsToolbar from "./ResultsToolbar";
 type Props = {
   products: QuantProduct[];
   sortedProducts: QuantProduct[];
+  dealClusters?: DealClusterDTO[];
   loading: boolean;
   sort: string;
   setSort: (v: string) => void;
@@ -64,6 +68,7 @@ export default function ProductResultsSurface({
   resultsKey,
   searchError,
   addToWatchlist,
+  dealClusters = [],
 }: Props) {
   const reduceMotion = useReducedMotion();
   const anchorRef = useRef<HTMLDivElement>(null);
@@ -94,6 +99,16 @@ export default function ProductResultsSurface({
   }, [compositeRanked]);
 
   const aiTopPicks = useMemo(() => compositeRanked.slice(0, 3), [compositeRanked]);
+
+  const filteredDealClusters = useMemo(() => {
+    if (!dealClusters.length) return [];
+    const allow = new Set(sortedProducts.map((p) => p.link));
+    return dealClusters.flatMap((c) => {
+      const next = c.listings.filter((p) => allow.has(p.link));
+      if (next.length < 2) return [];
+      return [analyzeDealCluster(c.id, next)];
+    });
+  }, [dealClusters, sortedProducts]);
 
   const transition = reduceMotion
     ? { duration: 0 }
@@ -253,8 +268,11 @@ export default function ProductResultsSurface({
     );
   }
 
+  const advisorPad =
+    filteredDealClusters.length > 0 ? "pb-[min(36rem,48vh)] sm:pb-56" : "pb-24";
+
   return (
-    <section className="relative mx-auto max-w-7xl px-4 sm:px-6 pb-24" ref={anchorRef}>
+    <section className={`relative mx-auto max-w-7xl px-4 sm:px-6 ${advisorPad}`} ref={anchorRef}>
       <div className="pointer-events-none absolute inset-x-0 -top-8 h-56 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(34,211,238,0.12),transparent_65%)]" />
 
       <ResultsToolbar
@@ -491,6 +509,14 @@ export default function ProductResultsSurface({
           })}
         </motion.div>
       </AnimatePresence>
+
+      {filteredDealClusters.length > 0 && (
+        <MultiStoreDealAdvisor
+          clusters={filteredDealClusters}
+          sortedProducts={sortedProducts}
+          compareBarActive={compareProducts.length > 0}
+        />
+      )}
     </section>
   );
 }

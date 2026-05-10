@@ -12,6 +12,7 @@ import {
   countActiveFilters,
   defaultResultsFilters,
 } from "@/lib/resultsFilters";
+import type { DealClusterDTO } from "@/lib/deals/types";
 import {
   getFinalComposite,
   getHeuristicScore,
@@ -42,6 +43,7 @@ export default function Home() {
   const { isSignedIn } = useUser();
   const [query, setQuery] = useState("");
   const [products, setProducts] = useState<QuantProduct[]>([]);
+  const [dealClusters, setDealClusters] = useState<DealClusterDTO[]>([]);
   const [loading, setLoading] = useState(false);
   const [sort, setSort] = useState("value");
   const [filters, setFilters] = useState(defaultResultsFilters());
@@ -185,6 +187,7 @@ export default function Home() {
     setFilters(defaultResultsFilters());
     setLoading(true);
     setProducts([]);
+    setDealClusters([]);
     setSearchError(null);
 
     try {
@@ -194,6 +197,7 @@ export default function Home() {
       );
       const data = (await res.json()) as {
         products?: QuantProduct[];
+        dealClusters?: DealClusterDTO[];
         error?: string;
         retryAfter?: number;
       };
@@ -216,6 +220,9 @@ export default function Home() {
 
       if (data.products && data.products.length > 0) {
         setProducts(data.products);
+        setDealClusters(
+          Array.isArray(data.dealClusters) ? data.dealClusters : []
+        );
         void refreshSearchHistory();
       } else {
         setSearchError("No products found for this query.");
@@ -763,6 +770,7 @@ export default function Home() {
             key={resultsKey}
             products={products}
             sortedProducts={sortedProducts}
+            dealClusters={dealClusters}
             loading={loading}
             sort={sort}
             setSort={setSort}
