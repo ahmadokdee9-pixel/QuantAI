@@ -6,6 +6,19 @@ import SearchBox from "../components/SearchBox";
 import LandingNav from "../components/landing/LandingNav";
 import MarketingSections from "../components/landing/MarketingSections";
 import { calculateAIScore } from "./api/search/lib/aiScoring";
+import ProductResultsSurface from "../components/search/ProductResultsSurface";
+import {
+  applyResultsFilters,
+  countActiveFilters,
+  defaultResultsFilters,
+} from "@/lib/resultsFilters";
+import {
+  getHeuristicScore,
+  sortByBestAIScore,
+  sortByCompositeRank,
+  sortByTrust,
+  type QuantProduct,
+} from "@/lib/shoppingScore";
 import {
   ArrowRight,
   Bell,
@@ -17,58 +30,23 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-type Product = {
-  id: number;
-  title: string;
-  store: string;
-  price: number;
-  rating: number | string;
-  link: string;
-  image: string;
-};
-
 export default function Home() {
   const { isSignedIn } = useUser();
   const [query, setQuery] = useState("");
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<QuantProduct[]>([]);
   const [loading, setLoading] = useState(false);
-  const [sort, setSort] = useState("best");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [saved, setSaved] = useState<Product[]>([]);
+  const [sort, setSort] = useState("value");
+  const [filters, setFilters] = useState(defaultResultsFilters);
+  const [saved, setSaved] = useState<QuantProduct[]>([]);
   const [question, setQuestion] = useState("");
   const [aiReply, setAiReply] = useState("");
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [resultsKey, setResultsKey] = useState(0);
 
-  function ratingValue(rating: number | string) {
-    const n = Number(rating);
-    return Number.isFinite(n) ? n : 0;
-  }
-
-  function getScore(p: Product) {
-    let score = 50;
-    const rating = ratingValue(p.rating);
-
-    if (p.price < 300) score += 20;
-    else if (p.price < 800) score += 14;
-    else if (p.price < 1500) score += 8;
-
-    if (rating >= 4.7) score += 25;
-    else if (rating >= 4.4) score += 18;
-    else if (rating >= 4) score += 10;
-
-    const store = p.store.toLowerCase();
-    if (
-      store.includes("amazon") ||
-      store.includes("bol") ||
-      store.includes("coolblue") ||
-      store.includes("mediamarkt") ||
-      store.includes("apple")
-    ) {
-      score += 12;
-    }
-
-    return Math.min(100, Math.round(score));
-  }
+  const savedLinks = useMemo(
+    () => new Set(saved.map((s) => s.link)),
+    [saved]
+  );
 
   function decision(score: number) {
     if (score >= 85) return "Buy now";
@@ -87,8 +65,8 @@ export default function Home() {
     return "text-rose-200 border-rose-400/25 bg-rose-400/[0.1]";
   }
 
-  function whyImportant(p: Product) {
-    const score = getScore(p);
+  function whyImportant(p: QuantProduct) {
+    const score = getHeuristicScore(p);
 
     if (score >= 85) {
       return "This is a strong buy right now. The product has a strong balance of price, rating, and store reliability.";
@@ -105,7 +83,7 @@ export default function Home() {
     return "This option looks weak compared with other available results. Better to avoid or wait.";
   }
 
-  function smartDecisionText(p: Product) {
+  function smartDecisionText(p: QuantProduct) {
     const ai = calculateAIScore(p, sortedProducts);
     const score = ai.score;
 
@@ -124,23 +102,27 @@ export default function Home() {
     return "QuantAI does not recommend this option right now. The score is weak compared with other products in the search results.";
   }
 
-  const sortedProducts = useMemo(() => {
-    let list = [...products];
+  const filteredForSort = applyResultsFilters(products, filters);
+  const sortedList = [...filteredForSort];
+  let sortedProducts: QuantProduct[];
+  switch (sort) {
+    case "ai":
+      sortedProducts = sortByBestAIScore(sortedList);
+      break;
+    case "cheap":
+      sortedList.sort((a, b) => a.price - b.price);
+      sortedProducts = sortedList;
+      break;
+    case "trust":
+      sortedProducts = sortByTrust(sortedList);
+      break;
+    case "value":
+    default:
+      sortedProducts = sortByCompositeRank(sortedList);
+      break;
+  }
 
-    if (maxPrice) {
-      list = list.filter((p) => p.price <= Number(maxPrice));
-    }
-
-    if (sort === "cheap") {
-      list.sort((a, b) => a.price - b.price);
-    } else if (sort === "rating") {
-      list.sort((a, b) => ratingValue(b.rating) - ratingValue(a.rating));
-    } else {
-      list.sort((a, b) => getScore(b) - getScore(a));
-    }
-
-    return list;
-  }, [products, sort, maxPrice]);
+  const activeFilterCount = countActiveFilters(filters);
 
   const best = sortedProducts[0];
 
@@ -152,6 +134,8 @@ export default function Home() {
       return;
     }
 
+    setResultsKey((k) => k + 1);
+    setFilters(defaultResultsFilters());
     setLoading(true);
     setProducts([]);
     setSearchError(null);
@@ -162,7 +146,7 @@ export default function Home() {
         { credentials: "same-origin" }
       );
       const data = (await res.json()) as {
-        products?: Product[];
+        products?: QuantProduct[];
         error?: string;
         retryAfter?: number;
       };
@@ -196,7 +180,7 @@ export default function Home() {
     }
   }
 
-  async function saveProduct(product: Product) {
+  async function saveProduct(product: QuantProduct) {
     if (!isSignedIn) {
       setSearchError("Sign in to save products to your account.");
       return;
@@ -360,18 +344,6 @@ export default function Home() {
               </div>
             </div>
 
-            {loading && (
-              <div className="mt-10 flex flex-col items-center gap-4">
-                <div className="relative size-14">
-                  <div className="absolute inset-0 rounded-full border-2 border-cyan-400/15" />
-                  <div className="absolute inset-0 rounded-full border-2 border-t-cyan-300 border-r-violet-400 border-b-transparent border-l-transparent animate-spin" />
-                </div>
-                <p className="text-sm font-medium text-cyan-200/80">
-                  QuantAI is scanning live prices, ratings, and store signals…
-                </p>
-              </div>
-            )}
-
             {searchError && !loading && (
               <p
                 role="alert"
@@ -399,36 +371,9 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Results: controls + saved */}
-        {products.length > 0 && (
+        {products.length > 0 && saved.length > 0 && (
           <div className="mx-auto max-w-6xl px-4 sm:px-6 pb-6 space-y-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-                className="rounded-2xl border border-white/[0.1] bg-white/[0.05] px-4 py-3 text-sm font-medium text-white/90 backdrop-blur-xl outline-none transition hover:border-white/15 focus:border-cyan-400/35"
-              >
-                <option value="best">Best AI score</option>
-                <option value="cheap">Lowest price</option>
-                <option value="rating">Highest rating</option>
-              </select>
-
-              <input
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                type="number"
-                placeholder="Max price (€)"
-                className="min-w-[160px] rounded-2xl border border-white/[0.1] bg-white/[0.05] px-4 py-3 text-sm font-medium text-white placeholder:text-slate-500 backdrop-blur-xl outline-none transition hover:border-white/15 focus:border-cyan-400/35"
-              />
-
-              <div className="rounded-2xl border border-white/[0.1] bg-white/[0.04] px-4 py-3 text-sm font-medium text-slate-300 backdrop-blur-xl">
-                Saved in session:{" "}
-                <span className="text-cyan-200/90 tabular-nums">{saved.length}</span>
-              </div>
-            </div>
-
-            {saved.length > 0 && (
-              <section className={`${glassCard} p-6 sm:p-8`}>
+            <section className={`${glassCard} p-6 sm:p-8`}>
                 <div className="flex items-center justify-between gap-4 mb-6">
                   <h2 className="text-lg font-semibold tracking-tight text-white/95">
                     Saved products
@@ -478,7 +423,6 @@ export default function Home() {
                   ))}
                 </div>
               </section>
-            )}
           </div>
         )}
 
@@ -511,9 +455,9 @@ export default function Home() {
                       €{best.price}
                     </p>
                     <p
-                      className={`mt-4 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${decisionStyle(getScore(best))}`}
+                      className={`mt-4 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${decisionStyle(getHeuristicScore(best))}`}
                     >
-                      {decision(getScore(best))}
+                      {decision(getHeuristicScore(best))}
                     </p>
                     <p className="mt-4 max-w-xl text-sm font-normal leading-relaxed text-slate-400">
                       {whyImportant(best)}
@@ -541,7 +485,7 @@ export default function Home() {
                       AI score
                     </p>
                     <p className="mt-2 text-4xl font-semibold tabular-nums text-white/95">
-                      {getScore(best)}
+                      {getHeuristicScore(best)}
                       <span className="text-lg font-medium text-slate-500">/100</span>
                     </p>
                   </div>
@@ -694,105 +638,25 @@ export default function Home() {
           </>
         )}
 
-        {sortedProducts.length > 0 && (
-          <section className="mx-auto max-w-6xl px-4 sm:px-6 pb-16">
-            <div className="mb-8 flex items-end justify-between gap-4">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-                  Results
-                </p>
-                <h2 className="mt-1 text-xl font-semibold tracking-tight text-white/95">
-                  Ranked for your query
-                </h2>
-              </div>
-            </div>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {sortedProducts.map((p) => {
-                const ai = calculateAIScore(p, sortedProducts);
-                const score = ai.score;
-
-                return (
-                  <article
-                    key={p.id}
-                    className="group relative flex flex-col overflow-hidden rounded-[1.75rem] border border-white/[0.08] bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-5 shadow-[0_28px_80px_-36px_rgba(0,0,0,0.85)] backdrop-blur-xl transition duration-500 hover:-translate-y-1 hover:border-cyan-400/25 hover:shadow-[0_36px_90px_-32px_rgba(34,211,238,0.14)]"
-                  >
-                    <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/25 to-transparent opacity-0 transition group-hover:opacity-100" />
-                    {p.image && (
-                      <div className="mb-4 rounded-2xl border border-white/[0.06] bg-white p-3 transition group-hover:shadow-lg">
-                        <img
-                          src={p.image}
-                          alt=""
-                          className="h-40 w-full object-contain transition duration-500 group-hover:scale-[1.02]"
-                        />
-                      </div>
-                    )}
-                    <h3 className="font-semibold text-base leading-snug tracking-tight text-white/95 line-clamp-2">
-                      {p.title}
-                    </h3>
-                    <p className="mt-1 text-xs font-medium text-slate-500">{p.store}</p>
-                    <div className="mt-4 flex items-end justify-between gap-3">
-                      <p className="text-2xl font-semibold tabular-nums text-white/95">
-                        €{p.price}
-                      </p>
-                      <span
-                        className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${decisionStyle(score)}`}
-                      >
-                        {ai.label}
-                      </span>
-                    </div>
-                    <div
-                      className={`mt-4 rounded-2xl border px-4 py-3 ${
-                        score >= 85
-                          ? "border-emerald-400/20 bg-emerald-400/[0.08]"
-                          : score >= 70
-                            ? "border-cyan-400/20 bg-cyan-400/[0.08]"
-                            : score >= 55
-                              ? "border-amber-400/20 bg-amber-400/[0.08]"
-                              : "border-rose-400/20 bg-rose-400/[0.08]"
-                      }`}
-                    >
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
-                        AI confidence
-                      </p>
-                      <p
-                        className={`mt-1 text-2xl font-semibold tabular-nums ${
-                          score >= 85
-                            ? "text-emerald-200"
-                            : score >= 70
-                              ? "text-cyan-200"
-                              : score >= 55
-                                ? "text-amber-200"
-                                : "text-rose-200"
-                        }`}
-                      >
-                        {ai.score}%
-                      </p>
-                    </div>
-                    <p className="mt-3 flex-1 text-xs font-normal leading-relaxed text-slate-500">
-                      {ai.reason}
-                    </p>
-                    <div className="mt-5 flex gap-2">
-                      <a
-                        href={p.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex flex-1 items-center justify-center rounded-full bg-white py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
-                      >
-                        View offer
-                      </a>
-                      <button
-                        type="button"
-                        onClick={() => saveProduct(p)}
-                        className="rounded-full border border-cyan-400/35 bg-cyan-400/15 px-4 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/25"
-                      >
-                        Save
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
+        {(loading ||
+          products.length > 0 ||
+          (searchError != null && !loading)) && (
+          <ProductResultsSurface
+            key={resultsKey}
+            products={products}
+            sortedProducts={sortedProducts}
+            loading={loading}
+            sort={sort}
+            setSort={setSort}
+            filters={filters}
+            setFilters={setFilters}
+            activeFilterCount={activeFilterCount}
+            onClearFilters={() => setFilters(defaultResultsFilters())}
+            saveProduct={saveProduct}
+            savedLinks={savedLinks}
+            resultsKey={resultsKey}
+            searchError={searchError}
+          />
         )}
 
         <MarketingSections />

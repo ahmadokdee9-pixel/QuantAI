@@ -1,13 +1,52 @@
-export type ShoppingProduct = {
-  id: number;
-  title: string;
-  store: string;
-  price: number;
-  displayPrice: string;
-  rating: number | string;
-  link: string;
-  image: string;
-};
+import {
+  computePriceTrend,
+  type QuantProduct,
+} from "@/lib/shoppingScore";
+
+function extractNumberFromPrice(val: unknown): number | null {
+  if (val == null) return null;
+  const n = Number(String(val).replace(/[^\d.]/g, ""));
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function parseReviews(row: Record<string, unknown>): number | null {
+  const r = row.reviews;
+  if (typeof r === "number" && Number.isFinite(r)) return Math.round(r);
+  if (typeof r === "string") {
+    const n = parseInt(r.replace(/\D/g, ""), 10);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+function parseExtensions(row: Record<string, unknown>): string[] {
+  const ex = row.extensions;
+  if (!Array.isArray(ex)) return [];
+  return ex
+    .map((x) => (typeof x === "string" ? x : String(x)))
+    .filter(Boolean)
+    .slice(0, 6);
+}
+
+function parseShipping(row: Record<string, unknown>): string | null {
+  const d = row.delivery;
+  if (typeof d === "string" && d.trim()) return d.trim();
+  const snippet = row.snippet;
+  if (typeof snippet === "string" && /ship|delivery|pickup|free/i.test(snippet)) {
+    return snippet.trim().slice(0, 120);
+  }
+  return null;
+}
+
+function parseAvailability(row: Record<string, unknown>, extensions: string[]): string | null {
+  if (row.second_hand === true) return "Used / second-hand";
+  if (row.condition && typeof row.condition === "string") return String(row.condition);
+  const first = extensions[0];
+  if (first && /in stock|out of stock|preorder|used/i.test(first)) return first;
+  return null;
+}
+
+export type ShoppingProduct = QuantProduct;
 
 export async function fetchShoppingProducts(
   q: string
@@ -57,17 +96,29 @@ export async function fetchShoppingProducts(
   }
 
   const raw = (data.shopping_results as unknown[]) || [];
-  const products: ShoppingProduct[] = raw.slice(0, 12).map((item: unknown, index: number) => {
+  const products: ShoppingProduct[] = raw.slice(0, 20).map((item: unknown, index: number) => {
     const row = item as Record<string, unknown>;
+    const price = Number(row.extracted_price) || 0;
+    const oldRaw =
+      row.extracted_old_price ?? row.old_price_extracted ?? row.old_price;
+    const oldPrice = extractNumberFromPrice(oldRaw);
+    const extensions = parseExtensions(row);
+
     return {
       id: index + 1,
       title: String(row.title || "Unknown product"),
-      store: String(row.source || "Unknown store"),
-      price: Number(row.extracted_price) || 0,
+      store: String(row.source || row.store || "Unknown store"),
+      price,
       displayPrice: String(row.price || ""),
       rating: (row.rating as number | string) ?? "N/A",
       link: String(row.link || row.product_link || "#"),
       image: String(row.thumbnail || ""),
+      reviewsCount: parseReviews(row),
+      shipping: parseShipping(row),
+      availability: parseAvailability(row, extensions),
+      oldPrice,
+      priceTrend: computePriceTrend(price, oldPrice),
+      extensions,
     };
   });
 
