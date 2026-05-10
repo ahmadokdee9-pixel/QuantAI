@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
+import { Loader2, Search } from "lucide-react";
 
 type ShoppingHit = {
   title: string;
@@ -76,39 +77,53 @@ export default function SearchBox() {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        <input
-          className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white"
-          placeholder="Search products (e.g. wireless earbuds)..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-        />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+        <div className="relative flex min-h-[48px] flex-1 items-center gap-3 rounded-2xl border border-white/[0.08] bg-black/25 px-4 transition focus-within:border-cyan-400/30">
+          <Search className="size-4 shrink-0 text-cyan-300/45" strokeWidth={1.5} aria-hidden />
+          <input
+            className="min-w-0 flex-1 bg-transparent py-2 text-sm font-normal text-white placeholder:text-slate-500 outline-none"
+            placeholder="Try another product query…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          />
+        </div>
 
         <button
           type="button"
           onClick={handleSearch}
-          className="rounded-xl bg-cyan-400 px-5 py-3 text-black font-bold shrink-0"
+          disabled={loading}
+          className="inline-flex min-h-[48px] shrink-0 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 to-violet-500 px-6 text-sm font-semibold text-slate-950 transition enabled:hover:brightness-105 disabled:opacity-60"
         >
-          {loading ? "Searching..." : "Search"}
+          {loading ? (
+            <>
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+              Searching
+            </>
+          ) : (
+            "Search"
+          )}
         </button>
       </div>
 
       {error && (
-        <p className="text-sm text-amber-200 rounded-xl border border-amber-400/25 bg-amber-500/10 px-3 py-2">
+        <p
+          role="alert"
+          className="text-sm font-medium text-amber-100/95 rounded-2xl border border-amber-400/25 bg-amber-500/[0.08] px-3 py-2.5"
+        >
           {error}
         </p>
       )}
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {results.map((item, index) => (
           <div
             key={`${item.link ?? item.title}-${index}`}
-            className="rounded-xl border border-white/10 bg-white/5 p-4 text-left"
+            className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 text-left transition hover:border-white/12"
           >
-            <h3 className="text-white font-bold">{item.title}</h3>
+            <h3 className="text-sm font-semibold text-white/90">{item.title}</h3>
 
-            <p className="text-gray-300 text-sm mt-2">
+            <p className="text-xs font-normal text-slate-500 mt-2 leading-relaxed">
               {item.store}
               {item.displayPrice
                 ? ` · ${item.displayPrice}`
@@ -124,8 +139,8 @@ export default function SearchBox() {
               <a
                 href={item.link}
                 target="_blank"
-                rel="noreferrer"
-                className="inline-block mt-3 text-cyan-300 text-sm font-semibold hover:text-cyan-200"
+                rel="noopener noreferrer"
+                className="inline-block mt-3 text-xs font-semibold text-cyan-300/90 hover:text-cyan-200 transition"
               >
                 View offer →
               </a>

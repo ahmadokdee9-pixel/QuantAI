@@ -1,29 +1,29 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #030712;
+  --foreground: #f1f5f9;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-quantai), ui-sans-serif, system-ui, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #030712;
+    --foreground: #f1f5f9;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
 }
+
 @keyframes aiGridMove {
   0% {
     background-position: 0 0, 0 0;
@@ -34,15 +34,46 @@ body {
 }
 
 .ai-grid-motion {
-  animation: aiGridMove 18s linear infinite;
-}@keyframes fadeIn {
+  animation: aiGridMove 22s linear infinite;
+}
+
+@keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(25px);
+    transform: translateY(12px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes aurora-shift {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(1) translate(0, 0);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(1.05) translate(2%, -1%);
+  }
+}
+
+@keyframes soft-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.animate-aurora {
+  animation: aurora-shift 14s ease-in-out infinite;
+}
+
+.animate-soft-pulse {
+  animation: soft-pulse 5s ease-in-out infinite;
 }
