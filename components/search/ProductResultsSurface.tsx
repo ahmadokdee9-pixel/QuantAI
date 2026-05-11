@@ -54,7 +54,7 @@ type Props = {
 
 function ResultSkeleton() {
   return (
-    <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-7 sm:grid-cols-2 xl:grid-cols-3">
       {Array.from({ length: 8 }).map((_, i) => (
         <div
           key={i}
@@ -408,7 +408,7 @@ export default function ProductResultsSurface({
           initial={reduceMotion ? false : { opacity: 0.88, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 360, damping: 34 }}
-          className="intel-panel-shimmer relative z-0 mb-10 min-w-0 overflow-hidden rounded-[1.75rem]"
+          className="intel-panel-shimmer relative z-0 mb-12 min-w-0 overflow-hidden rounded-[1.75rem]"
         >
           <div className="relative z-[1] min-w-0">
             <GlobalIntelligencePanel intel={searchIntelligence} displayLevel={intelligenceLevel} />
@@ -421,10 +421,10 @@ export default function ProductResultsSurface({
           initial={reduceMotion ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={transition}
-          className="mb-10"
+          className="mb-12"
         >
-          <div className="mb-4 flex items-start gap-2.5">
-            <Sparkles className="mt-0.5 size-4 shrink-0 text-cyan-300" strokeWidth={1.5} aria-hidden />
+          <div className="mb-5 flex items-start gap-2.5">
+            <Sparkles className="mt-0.5 size-4 shrink-0 text-slate-500" strokeWidth={1.5} aria-hidden />
             <div className="min-w-0">
               <h2 className="text-sm font-semibold tracking-tight text-white/[0.96]">Neural top lane</h2>
               <p className="cockpit-body mt-1 text-[11px] leading-relaxed text-slate-500">
@@ -445,7 +445,7 @@ export default function ProductResultsSurface({
                   whileHover={
                     reduceMotion ? undefined : { y: -3, transition: { type: "spring", stiffness: 400, damping: 28 } }
                   }
-                  className="min-w-[min(100%,280px)] max-w-[280px] shrink-0 snap-start rounded-2xl border border-cyan-400/25 bg-gradient-to-br from-cyan-400/[0.12] via-white/[0.05] to-violet-500/[0.1] p-4 shadow-[0_24px_64px_-28px_rgba(34,211,238,0.2)] backdrop-blur-xl"
+                  className="min-w-[min(100%,280px)] max-w-[280px] shrink-0 snap-start rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.06] via-white/[0.03] to-black/35 p-4 shadow-[0_20px_50px_-30px_rgba(0,0,0,0.55)] backdrop-blur-xl"
                 >
                   <div className="flex gap-3">
                     {p.image && (
@@ -454,7 +454,7 @@ export default function ProductResultsSurface({
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="cockpit-label text-[10px] text-cyan-200/80">Pick #{idx + 1}</p>
+                      <p className="cockpit-label text-[10px] text-slate-500/90">Pick #{idx + 1}</p>
                       <p className="cockpit-body mt-1 line-clamp-2 text-[13px] font-semibold leading-snug text-white/[0.96]">
                         {p.title}
                       </p>
@@ -465,7 +465,7 @@ export default function ProductResultsSurface({
                     <span className="text-lg font-semibold tabular-nums tracking-tight text-white">
                       {formatListingPrice(p.price, sym)}
                     </span>
-                    <span className="shrink-0 rounded-full border border-cyan-400/25 bg-cyan-500/12 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-cyan-100">
+                    <span className="shrink-0 rounded-full border border-white/[0.1] bg-black/30 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-slate-300">
                       QI {comp}
                     </span>
                   </div>
@@ -641,7 +641,7 @@ export default function ProductResultsSurface({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: reduceMotion ? 0 : 0.22 }}
-          className="grid min-w-0 gap-6 sm:grid-cols-2 xl:grid-cols-3"
+          className="grid min-w-0 gap-7 sm:grid-cols-2 xl:grid-cols-3"
         >
           {sortedProducts.map((p, index) => {
             const rank = rankByLink.get(p.link) ?? index;

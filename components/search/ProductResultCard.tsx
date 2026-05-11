@@ -41,17 +41,17 @@ import {
 function badgeChipClass(key: string): string {
   switch (key) {
     case "ai_pick":
-      return "border-cyan-400/40 bg-gradient-to-r from-cyan-400/20 to-violet-500/15 text-cyan-100 shadow-[0_0_20px_-4px_rgba(34,211,238,0.4)]";
+      return "border-cyan-400/22 bg-cyan-500/[0.08] text-cyan-100/85";
     case "best_value":
-      return "border-emerald-400/35 bg-emerald-400/10 text-emerald-100";
+      return "border-emerald-400/22 bg-emerald-400/[0.07] text-emerald-100/80";
     case "top_rated":
-      return "border-amber-400/35 bg-amber-400/10 text-amber-100";
+      return "border-amber-400/22 bg-amber-400/[0.07] text-amber-100/80";
     case "budget_pick":
-      return "border-sky-400/35 bg-sky-400/10 text-sky-100";
+      return "border-sky-400/22 bg-sky-400/[0.07] text-sky-100/80";
     case "premium_choice":
-      return "border-violet-400/35 bg-violet-400/10 text-violet-100";
+      return "border-violet-400/22 bg-violet-400/[0.07] text-violet-100/80";
     default:
-      return "border-white/15 bg-white/[0.06] text-slate-200";
+      return "border-white/12 bg-white/[0.04] text-slate-300/85";
   }
 }
 
@@ -91,23 +91,23 @@ function qiCenterLabelClass(tier: ReturnType<typeof qiConfidenceTier>): string {
 function TrendIcon({ trend }: { trend: QuantProduct["priceTrend"] }) {
   if (trend === "down") {
     return (
-      <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-emerald-300">
-        <ArrowDownRight className="size-3" strokeWidth={2} aria-hidden />
+      <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-emerald-200/70">
+        <ArrowDownRight className="size-3 opacity-80" strokeWidth={2} aria-hidden />
         Below reference
       </span>
     );
   }
   if (trend === "up") {
     return (
-      <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-rose-300">
-        <ArrowUpRight className="size-3" strokeWidth={2} aria-hidden />
+      <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-rose-200/65">
+        <ArrowUpRight className="size-3 opacity-80" strokeWidth={2} aria-hidden />
         Above reference
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-slate-500">
-      <Minus className="size-3" strokeWidth={2} aria-hidden />
+    <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-slate-500/85">
+      <Minus className="size-3 opacity-70" strokeWidth={2} aria-hidden />
       Flat vs reference
     </span>
   );
@@ -127,7 +127,7 @@ type Props = {
 };
 
 const btnRow =
-  "min-h-[2.5rem] shrink-0 rounded-full text-[11px] font-semibold tracking-tight transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400/50";
+  "min-h-[2.625rem] shrink-0 rounded-full text-[11px] font-semibold tracking-tight transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400/40";
 
 function CardProductImage({ src, reduceMotion }: { src: string; reduceMotion: boolean | null }) {
   const [loaded, setLoaded] = useState(false);
@@ -206,13 +206,6 @@ export default function ProductResultCard({
     ? { duration: 0 }
     : { type: "spring" as const, stiffness: 400, damping: 34 };
 
-  const mktChipClass =
-    mkt.tone === "high"
-      ? "border-emerald-400/28 bg-emerald-500/[0.11] text-emerald-100/95"
-      : mkt.tone === "mid"
-        ? "border-cyan-400/22 bg-cyan-500/[0.09] text-cyan-100/90"
-        : "border-amber-400/28 bg-amber-500/[0.11] text-amber-100/90";
-
   return (
     <MagneticSurface className="h-full min-w-0" strength={0.08}>
       <motion.article
@@ -230,17 +223,17 @@ export default function ProductResultCard({
         }
         className={`qi-product-card-shell group relative flex h-full min-w-0 flex-col overflow-hidden rounded-[1.55rem] p-px ${
           scoreNorm >= 78
-            ? "bg-gradient-to-br from-cyan-400/22 via-white/[0.12] to-violet-500/20"
-            : "bg-gradient-to-br from-white/[0.14] via-cyan-400/10 to-violet-500/16"
+            ? "bg-gradient-to-br from-cyan-400/14 via-white/[0.08] to-violet-500/12"
+            : "bg-gradient-to-br from-white/[0.1] via-cyan-400/6 to-violet-500/10"
         }`}
       >
-        <div className="qi-product-card-inner relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.48rem] border border-white/[0.08] bg-gradient-to-b from-white/[0.1] via-white/[0.04] to-[#040912]/98 backdrop-blur-2xl transition-[border-color,box-shadow] duration-500 group-hover:border-cyan-400/25">
-          <div className="pointer-events-none absolute -right-20 -top-20 size-48 rounded-full bg-cyan-400/12 blur-3xl opacity-0 transition duration-700 group-hover:opacity-100" />
-          <div className="pointer-events-none absolute -bottom-24 -left-16 size-44 rounded-full bg-violet-500/12 blur-3xl opacity-0 transition duration-700 group-hover:opacity-50" />
+        <div className="qi-product-card-inner relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.48rem] border border-white/[0.07] bg-gradient-to-b from-white/[0.08] via-white/[0.03] to-[#040912]/98 backdrop-blur-2xl transition-[border-color,box-shadow] duration-500 group-hover:border-cyan-400/18">
+          <div className="pointer-events-none absolute -right-20 -top-20 size-48 rounded-full bg-cyan-400/8 blur-3xl opacity-0 transition duration-700 group-hover:opacity-100" />
+          <div className="pointer-events-none absolute -bottom-24 -left-16 size-44 rounded-full bg-violet-500/8 blur-3xl opacity-0 transition duration-700 group-hover:opacity-45" />
 
-          <div className="relative z-[2] flex items-start justify-between gap-2 px-4 pt-4 sm:px-5">
+          <div className="relative z-[2] flex items-start justify-between gap-2 px-4 pt-4 sm:px-5 sm:pt-5">
             <span
-              className={`max-w-[min(100%,12rem)] truncate rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${badgeChipClass(badge.key)}`}
+              className={`max-w-[min(100%,12rem)] truncate rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${badgeChipClass(badge.key)}`}
             >
               {badge.label}
             </span>
@@ -249,17 +242,17 @@ export default function ProductResultCard({
               onClick={() => toggleCompare(p.link)}
               disabled={!inCompare && compareLinks.length >= 3}
               aria-pressed={inCompare}
-              className={`shrink-0 rounded-full border px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] transition active:scale-[0.98] ${
+              className={`shrink-0 rounded-full border px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] transition active:scale-[0.98] ${
                 inCompare
-                  ? "border-cyan-400/45 bg-cyan-400/18 text-cyan-100 shadow-[0_0_20px_-6px_rgba(34,211,238,0.45)]"
-                  : "border-white/12 bg-black/40 text-slate-400 hover:border-white/22 hover:bg-white/[0.06] hover:text-slate-200 disabled:opacity-40"
+                  ? "border-cyan-400/28 bg-cyan-400/12 text-cyan-100/90"
+                  : "border-white/10 bg-black/35 text-slate-500 hover:border-white/16 hover:bg-white/[0.05] hover:text-slate-300 disabled:opacity-40"
               }`}
             >
               Compare
             </button>
           </div>
 
-          <div className="relative z-[2] mx-4 mt-3.5 min-w-0 sm:mx-5">
+          <div className="relative z-[2] mx-4 mt-4 min-w-0 sm:mx-5">
             {p.image ? (
               <CardProductImage key={`${p.link}-${p.image}`} src={p.image} reduceMotion={reduceMotion} />
             ) : (
@@ -275,40 +268,40 @@ export default function ProductResultCard({
             )}
           </div>
 
-          <div className="relative z-[2] flex min-h-0 min-w-0 flex-1 flex-col px-4 pb-4 pt-3.5 sm:px-5 sm:pb-5 sm:pt-4">
-            <h3 className="text-[14px] font-semibold leading-snug tracking-tight text-white/[0.96] line-clamp-2 sm:text-[15px] sm:leading-snug">
+          <div className="relative z-[2] flex min-h-0 min-w-0 flex-1 flex-col px-4 pb-4 pt-4 sm:px-5 sm:pb-5 sm:pt-5">
+            <h3 className="text-[15px] font-semibold leading-[1.45] tracking-tight text-white/[0.97] line-clamp-2 sm:text-[16px]">
               {p.title}
             </h3>
 
-            <div className="mt-2.5 flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] leading-snug text-slate-400/95">
-              <span className="inline-flex min-w-0 max-w-full items-center gap-1.5 font-medium text-slate-300">
+            <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[11px] leading-relaxed text-slate-500/90">
+              <span className="inline-flex min-w-0 max-w-full items-center gap-1.5 font-medium text-slate-400/95">
                 <span
-                  className="flex size-6 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-gradient-to-br from-white/[0.1] to-black/45 text-[9px] font-bold tracking-tight text-cyan-100/90"
+                  className="flex size-6 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.04] text-[9px] font-bold tracking-tight text-slate-300/90"
                   aria-hidden
                 >
                   {retailerMonogram(p.store)}
                 </span>
-                <Store className="size-3 shrink-0 opacity-70" strokeWidth={1.5} aria-hidden />
+                <Store className="size-3 shrink-0 opacity-55" strokeWidth={1.5} aria-hidden />
                 <span className="min-w-0 truncate">{p.store}</span>
               </span>
-              <span className="inline-flex shrink-0 items-center gap-1 tabular-nums">
-                <Shield className="size-3 text-cyan-400/55" strokeWidth={1.5} aria-hidden />
-                <span className="text-slate-500">Trust</span>{" "}
-                <span className="text-slate-200">{trust}</span>
+              <span className="inline-flex shrink-0 items-center gap-1 tabular-nums text-slate-500/85">
+                <Shield className="size-3 text-slate-500/70" strokeWidth={1.5} aria-hidden />
+                <span className="text-slate-500/80">Trust</span>{" "}
+                <span className="text-slate-300/95">{trust}</span>
               </span>
             </div>
 
-            <div className="mt-3.5 flex min-w-0 flex-wrap items-end justify-between gap-3 border-t border-white/[0.07] pt-3.5">
+            <div className="mt-5 flex min-w-0 flex-wrap items-end justify-between gap-4 border-t border-white/[0.06] pt-5">
               <div className="min-w-0 flex-1">
                 {p.displayPrice ? (
-                  <p className="cockpit-label text-[10px] tracking-[0.14em] text-slate-500">
+                  <p className="cockpit-label text-[10px] tracking-[0.1em] text-slate-500/75">
                     {p.displayPrice}
                   </p>
                 ) : (
-                  <p className="cockpit-label text-[10px] text-slate-600">Listed price</p>
+                  <p className="cockpit-label text-[10px] tracking-[0.1em] text-slate-600/90">Listed price</p>
                 )}
-                <div className="mt-1 flex flex-wrap items-baseline gap-1.5">
-                  <p className="text-[1.35rem] font-semibold tabular-nums tracking-tight text-white sm:text-xl">
+                <div className="mt-1.5 flex flex-wrap items-baseline gap-2">
+                  <p className="text-[1.45rem] font-semibold tabular-nums tracking-tight text-white sm:text-[1.55rem]">
                     {formatListingPrice(p.price, sym)}
                   </p>
                   {p.oldPrice != null && p.oldPrice > p.price && (
@@ -317,14 +310,14 @@ export default function ProductResultCard({
                     </span>
                   )}
                 </div>
-                <div className="mt-1">
+                <div className="mt-1.5">
                   <TrendIcon trend={p.priceTrend} />
                 </div>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
-                <div className="relative size-[3.65rem] shrink-0">
+                <div className="relative size-[3.5rem] shrink-0 opacity-95">
                   <svg
-                    className="size-[3.65rem] -rotate-90"
+                    className="size-[3.5rem] -rotate-90"
                     viewBox="0 0 54 54"
                     role="img"
                     aria-label={`QI score ${Math.round(scoreNorm)} of 100`}
@@ -341,8 +334,8 @@ export default function ProductResultCard({
                       cy="27"
                       r={ringR}
                       fill="none"
-                      className="stroke-white/[0.07]"
-                      strokeWidth="4.5"
+                      className="stroke-white/[0.06]"
+                      strokeWidth="4"
                     />
                     <motion.circle
                       cx="27"
@@ -350,7 +343,7 @@ export default function ProductResultCard({
                       r={ringR}
                       fill="none"
                       stroke={`url(#${ringGradId})`}
-                      strokeWidth="4.5"
+                      strokeWidth="4"
                       strokeLinecap="round"
                       strokeDasharray={ringC}
                       initial={reduceMotion ? false : { strokeDashoffset: ringC }}
@@ -363,83 +356,85 @@ export default function ProductResultCard({
                     />
                   </svg>
                   <span
-                    className={`pointer-events-none absolute inset-0 flex items-center justify-center text-[12px] font-bold tabular-nums ${qiCenterLabelClass(qiTier)}`}
+                    className={`pointer-events-none absolute inset-0 flex items-center justify-center text-[11px] font-bold tabular-nums ${qiCenterLabelClass(qiTier)}`}
                   >
                     {Math.round(scoreNorm)}
                   </span>
                 </div>
                 <div className="max-w-[5.5rem] text-right">
-                  <p className="text-[9px] font-semibold uppercase leading-tight tracking-[0.1em] text-slate-500">
+                  <p className="text-[9px] font-semibold uppercase leading-tight tracking-[0.08em] text-slate-500/80">
                     {p.qiComposite != null ? "QI composite" : "Model layer"}
                   </p>
-                  <p className="text-[10px] font-medium leading-tight text-slate-400">/ 100</p>
+                  <p className="text-[10px] font-medium leading-tight text-slate-500/80">/ 100</p>
                 </div>
               </div>
             </div>
 
-            <div className="mt-3 flex min-w-0 flex-wrap gap-1.5 text-[10px] leading-snug">
+            <div className="mt-4 flex min-w-0 flex-wrap gap-2 text-[10px] leading-relaxed">
               <span
-                className="rounded-full border border-cyan-400/22 bg-cyan-500/[0.09] px-2 py-0.5 font-medium tabular-nums text-cyan-50/95"
+                className="rounded-full border border-white/[0.08] bg-black/25 px-2 py-0.5 font-medium tabular-nums text-slate-400/95"
                 title="Heuristic delivery confidence from listing + trust"
               >
                 Delivery · {delPct}%
               </span>
               <span
-                className="rounded-full border border-violet-400/22 bg-violet-500/[0.09] px-2 py-0.5 font-medium tabular-nums text-violet-50/95"
+                className="rounded-full border border-white/[0.08] bg-black/25 px-2 py-0.5 font-medium tabular-nums text-slate-400/95"
                 title="Availability language confidence"
               >
                 Stock · {stockPct}%
               </span>
-              <span className={`max-w-[min(100%,14rem)] truncate rounded-full border px-2 py-0.5 ${mktChipClass}`}>
+              <span
+                className={`max-w-[min(100%,14rem)] truncate rounded-full border border-white/[0.08] bg-black/22 px-2 py-0.5 text-slate-400/95 ${mkt.tone === "high" ? "text-emerald-200/75" : mkt.tone === "mid" ? "text-cyan-200/70" : "text-amber-200/75"}`}
+              >
                 {mkt.label}
               </span>
               {ratingValue(p.rating) > 0 && (
-                <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-white/10 bg-black/30 px-2 py-0.5 text-amber-200/90">
-                  <Star className="size-2.5 shrink-0" strokeWidth={1.5} aria-hidden />
+                <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-white/[0.08] bg-black/25 px-2 py-0.5 text-slate-400/95">
+                  <Star className="size-2.5 shrink-0 text-amber-200/55" strokeWidth={1.5} aria-hidden />
                   {ratingValue(p.rating).toFixed(1)}
                   {p.reviewsCount != null && (
-                    <span className="truncate text-slate-500">({p.reviewsCount.toLocaleString()})</span>
+                    <span className="truncate text-slate-500/85">({p.reviewsCount.toLocaleString()})</span>
                   )}
                 </span>
               )}
               {shipEst && (
-                <span className="inline-flex max-w-[min(100%,11rem)] items-center gap-1 truncate rounded-full border border-white/10 bg-black/25 px-2 py-0.5 text-slate-400">
-                  <Truck className="size-2.5 shrink-0" strokeWidth={1.5} aria-hidden />
+                <span className="inline-flex max-w-[min(100%,11rem)] items-center gap-1 truncate rounded-full border border-white/[0.08] bg-black/22 px-2 py-0.5 text-slate-500/90">
+                  <Truck className="size-2.5 shrink-0 opacity-70" strokeWidth={1.5} aria-hidden />
                   {shipEst}
                 </span>
               )}
               {p.availability && (
-                <span className="rounded-full border border-emerald-400/22 bg-emerald-400/10 px-2 py-0.5 text-emerald-100/90">
+                <span className="rounded-full border border-white/[0.08] bg-black/25 px-2 py-0.5 text-slate-400/95">
                   {p.availability}
                 </span>
               )}
               {riskHint && (
-                <span className="max-w-full rounded-full border border-amber-400/28 bg-amber-500/[0.1] px-2 py-0.5 text-amber-50/95">
+                <span className="max-w-full rounded-full border border-amber-400/18 bg-amber-500/[0.07] px-2 py-0.5 text-amber-100/75">
                   {riskHint}
                 </span>
               )}
               {ltHint && (
-                <span className="max-w-full rounded-full border border-white/10 bg-white/[0.05] px-2 py-0.5 text-slate-300">
+                <span className="max-w-full rounded-full border border-white/[0.08] bg-black/22 px-2 py-0.5 text-slate-400/90">
                   {ltHint}
                 </span>
               )}
             </div>
 
-            <p className="cockpit-body mt-3 text-[11.5px] leading-relaxed text-slate-400/95 line-clamp-2 sm:text-xs">
+            <p className="cockpit-body mt-4 text-[11.5px] leading-relaxed text-slate-500/90 line-clamp-2 sm:text-xs">
               {p.qiReason?.trim() || ai.reason}
             </p>
 
             <button
               type="button"
               onClick={() => setIntelOpen((o) => !o)}
-              className="mt-3 flex w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-white/[0.08] bg-black/30 px-3 py-2.5 text-left transition hover:border-cyan-400/25 hover:bg-cyan-500/[0.06]"
+              className="mt-4 flex w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-white/[0.07] bg-black/28 px-3 py-2.5 text-left transition hover:border-white/[0.12] hover:bg-white/[0.04]"
               aria-expanded={intelOpen}
             >
-              <span className="cockpit-label text-[10px] tracking-[0.14em] text-slate-500 group-hover:text-slate-400">
+              <span className="cockpit-label text-[10px] tracking-[0.1em] text-slate-500/90 group-hover:text-slate-400">
                 Signal depth
               </span>
               <ChevronDown
-                className={`size-4 shrink-0 text-cyan-300/75 transition duration-300 ${intelOpen ? "rotate-180" : ""}`}
+                className={`size-4 shrink-0 text-slate-500 transition duration-300 ${intelOpen ? "rotate-180" : ""}`}
                 strokeWidth={2}
                 aria-hidden
               />
@@ -453,19 +448,19 @@ export default function ProductResultCard({
                   transition={{ duration: reduceMotion ? 0 : 0.3, ease: [0.22, 1, 0.36, 1] }}
                   className="overflow-hidden"
                 >
-                  <div className="mt-2 space-y-3 rounded-2xl border border-cyan-400/18 bg-gradient-to-b from-cyan-500/[0.08] via-black/20 to-transparent px-3.5 py-3.5 sm:px-4 sm:py-4">
-                    <div className="space-y-1.5">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-cyan-200/85">
+                  <div className="mt-2 space-y-4 rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.04] via-black/25 to-transparent px-3.5 py-4 sm:px-4 sm:py-5">
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">
                         Model read
                       </p>
                       <p className="cockpit-body text-[12px] leading-relaxed text-slate-200/95">
-                        <span className="font-semibold text-cyan-100/95">{ai.label}</span>
+                        <span className="font-semibold text-slate-200/95">{ai.label}</span>
                         <span className="text-slate-500"> — </span>
                         {ai.reason}
                       </p>
                     </div>
-                    <div className="space-y-1.5 border-t border-white/[0.06] pt-3">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    <div className="space-y-2 border-t border-white/[0.06] pt-4">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-500/90">
                         QI narrative
                       </p>
                       <p className="cockpit-body text-[12px] leading-relaxed text-slate-400">
@@ -473,11 +468,11 @@ export default function ProductResultCard({
                           "Composite index blends price position, review strength, and retailer trust for this result set."}
                       </p>
                     </div>
-                    <div className="flex flex-wrap gap-2 border-t border-white/[0.05] pt-3">
-                      <span className="rounded-full border border-white/12 bg-white/[0.06] px-2.5 py-1 text-[10px] font-semibold tracking-wide text-slate-200">
+                    <div className="flex flex-wrap gap-2 border-t border-white/[0.05] pt-4">
+                      <span className="rounded-full border border-white/[0.08] bg-black/30 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-slate-400">
                         Rank #{rank + 1}
                       </span>
-                      <span className="rounded-full border border-cyan-400/15 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-semibold tabular-nums text-cyan-100/90">
+                      <span className="rounded-full border border-white/[0.08] bg-black/30 px-2.5 py-1 text-[10px] font-semibold tabular-nums text-slate-400">
                         Trust {trust}
                       </span>
                     </div>
@@ -490,14 +485,14 @@ export default function ProductResultCard({
               type="button"
               onClick={() => onOpenIntelligence(p)}
               whileTap={{ scale: 0.99 }}
-              className="mt-3 flex w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-cyan-400/28 bg-gradient-to-r from-cyan-400/[0.14] to-violet-500/[0.12] py-2.5 text-[11px] font-semibold text-cyan-50/98 shadow-[0_0_28px_-12px_rgba(34,211,238,0.28)] transition hover:border-cyan-400/40 hover:from-cyan-400/[0.18] hover:to-violet-500/[0.15]"
+              className="mt-4 flex w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-cyan-400/18 bg-gradient-to-r from-cyan-400/[0.08] to-violet-500/[0.07] py-2.5 text-[11px] font-semibold text-slate-100/95 transition hover:border-cyan-400/26 hover:from-cyan-400/[0.11] hover:to-violet-500/[0.09]"
             >
-              <Sparkles className="size-3.5 text-cyan-200/90" strokeWidth={1.5} aria-hidden />
+              <Sparkles className="size-3.5 text-slate-400" strokeWidth={1.5} aria-hidden />
               QuantAI Verdict &amp; tradeoffs
               <PanelRight className="size-3.5 opacity-80" strokeWidth={1.5} aria-hidden />
             </motion.button>
 
-            <div className="mt-3.5 flex min-w-0 flex-wrap items-stretch justify-center gap-2 sm:gap-2.5">
+            <div className="mt-4 flex min-w-0 flex-wrap items-stretch justify-center gap-2 sm:gap-2.5">
               <motion.button
                 type="button"
                 onClick={() => {
@@ -511,7 +506,7 @@ export default function ProductResultCard({
                 }}
                 whileHover={reduceMotion ? undefined : { scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className={`${btnRow} inline-flex min-w-0 flex-[1_1_5.5rem] items-center justify-center gap-1.5 border border-white/12 bg-white/[0.06] px-3 text-slate-200 hover:border-cyan-400/28 hover:bg-white/[0.09]`}
+                className={`${btnRow} inline-flex min-w-0 flex-[1_1_5.5rem] items-center justify-center gap-1.5 border border-white/[0.1] bg-white/[0.05] px-3 text-slate-300 hover:border-white/[0.14] hover:bg-white/[0.07]`}
               >
                 {cardCopyFlash ? (
                   <Check className="size-3.5 text-emerald-300" aria-hidden />
@@ -526,7 +521,7 @@ export default function ProductResultCard({
                 rel="noopener noreferrer"
                 whileHover={reduceMotion ? undefined : { scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className={`${btnRow} relative flex min-w-[7.5rem] flex-[1.1_1_7rem] items-center justify-center overflow-hidden bg-gradient-to-r from-white via-slate-50 to-white px-4 text-slate-900 shadow-[0_8px_28px_-12px_rgba(255,255,255,0.25)] hover:brightness-[1.03]`}
+                className={`${btnRow} relative flex min-w-[7.5rem] flex-[1.1_1_7rem] items-center justify-center overflow-hidden bg-gradient-to-r from-white via-slate-50 to-white px-4 text-slate-900 shadow-[0_10px_28px_-16px_rgba(15,23,42,0.45)] hover:brightness-[1.02]`}
               >
                 <span
                   className="absolute inset-0 bg-gradient-to-r from-cyan-200/0 via-cyan-200/20 to-violet-200/0 opacity-0 transition group-hover:opacity-100"
@@ -540,7 +535,7 @@ export default function ProductResultCard({
                   onClick={() => addToWatchlist(p)}
                   whileHover={reduceMotion ? undefined : { scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className={`${btnRow} border border-violet-400/32 bg-violet-500/14 px-3.5 text-violet-100 hover:bg-violet-500/22`}
+                  className={`${btnRow} border border-violet-400/22 bg-violet-500/10 px-3.5 text-violet-100/90 hover:bg-violet-500/16`}
                   title="Add to watchlist"
                 >
                   Watch
@@ -552,7 +547,7 @@ export default function ProductResultCard({
                 disabled={savedLinks.has(p.link)}
                 whileHover={reduceMotion ? undefined : { scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className={`${btnRow} border border-cyan-400/38 bg-gradient-to-br from-cyan-400/22 to-cyan-600/8 px-4 text-cyan-50 shadow-[0_0_22px_-10px_rgba(34,211,238,0.35)] hover:border-cyan-300/50 disabled:opacity-45`}
+                className={`${btnRow} border border-cyan-400/22 bg-cyan-500/[0.1] px-4 text-cyan-50/95 hover:border-cyan-400/30 hover:bg-cyan-500/[0.14] disabled:opacity-45`}
               >
                 {savedLinks.has(p.link) ? "Saved" : "Save"}
               </motion.button>

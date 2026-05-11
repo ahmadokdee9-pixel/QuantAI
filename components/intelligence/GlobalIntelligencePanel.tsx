@@ -28,16 +28,16 @@ function finalTone(kind: SearchIntelligenceDTO["finalRecommendation"]): string {
     case "buy_now":
     case "best_trusted_option":
     case "smart_long_term_buy":
-      return "from-emerald-500/20 via-cyan-500/10 to-transparent border-emerald-400/30";
+      return "from-emerald-500/12 via-cyan-500/6 to-transparent border-emerald-400/18";
     case "wait":
-      return "from-rose-500/15 via-violet-500/10 to-transparent border-rose-400/30";
+      return "from-rose-500/10 via-violet-500/6 to-transparent border-rose-400/18";
     case "risky_deal":
     case "cheapest_but_risky":
-      return "from-amber-500/18 via-orange-500/8 to-transparent border-amber-400/35";
+      return "from-amber-500/10 via-orange-500/5 to-transparent border-amber-400/22";
     case "premium_but_overpriced":
-      return "from-violet-500/15 to-transparent border-violet-400/30";
+      return "from-violet-500/10 to-transparent border-violet-400/18";
     default:
-      return "from-cyan-500/12 to-transparent border-cyan-400/25";
+      return "from-cyan-500/8 to-transparent border-cyan-400/16";
   }
 }
 
@@ -89,41 +89,41 @@ export default function GlobalIntelligencePanel({ intel, displayLevel = "full" }
       initial={reduceMotion ? false : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 380, damping: 32 }}
-      className="mb-10 space-y-6"
+      className="mb-12 space-y-8"
       aria-label="Global shopping intelligence"
     >
       <div
-        className={`relative overflow-hidden rounded-[1.75rem] border bg-gradient-to-br p-5 sm:p-7 backdrop-blur-[28px] ${finalTone(intel.finalRecommendation)}`}
+        className={`relative overflow-hidden rounded-[1.75rem] border bg-gradient-to-br p-6 sm:p-8 backdrop-blur-[28px] ${finalTone(intel.finalRecommendation)}`}
       >
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_20%_0%,rgba(34,211,238,0.12),transparent_55%)]" />
-        <div className="relative flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_20%_0%,rgba(34,211,238,0.06),transparent_58%)]" />
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between lg:gap-10">
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/95">
-                <Globe2 className="size-3.5" aria-hidden />
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-300/95">
+                <Globe2 className="size-3.5 text-slate-500" aria-hidden />
                 Live global synthesis
               </span>
-              <span className="rounded-full border border-white/10 bg-black/25 px-2 py-0.5 text-[10px] font-medium text-slate-400">
+              <span className="rounded-full border border-white/[0.08] bg-black/22 px-2 py-0.5 text-[10px] font-medium text-slate-500/90">
                 {intel.basketRegionBias === "unknown" || intel.basketRegionBias === "mixed"
                   ? "Region mix · inferred from store names"
                   : `Store-name bias · ${intel.basketRegionBias.toUpperCase()}`}
               </span>
             </div>
-            <h3 className="cockpit-display mt-3 text-xl text-white sm:text-[1.65rem]">
+            <h3 className="cockpit-display mt-5 text-xl text-white sm:text-[1.65rem]">
               {intel.finalHeadline}
             </h3>
-            <p className="cockpit-body mt-2 max-w-3xl text-sm text-slate-300/95">{intel.finalBody}</p>
-            <p className="cockpit-body mt-3 max-w-3xl text-[11px] leading-relaxed text-slate-500">
+            <p className="cockpit-body mt-3 max-w-3xl text-sm leading-relaxed text-slate-400/95">{intel.finalBody}</p>
+            <p className="cockpit-body mt-4 max-w-3xl text-[11px] leading-relaxed text-slate-500/85">
               Confidence reflects signal alignment in this tray—not a promise of market truth. Sparse listings or uneven
               stores increase uncertainty; cross-check price and seller before you commit.
             </p>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-5 flex flex-wrap gap-2.5">
               {intel.globalDeal && (
                 <a
                   href={intel.globalDeal.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-500/20"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/22 bg-emerald-500/[0.07] px-3 py-1.5 text-xs font-semibold text-emerald-100/90 transition hover:bg-emerald-500/12"
                 >
                   Best global pick · {intel.globalDeal.store}
                   <ArrowRight className="size-3.5" aria-hidden />
@@ -134,7 +134,7 @@ export default function GlobalIntelligencePanel({ intel, displayLevel = "full" }
                   href={intel.localDeal.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-50 transition hover:bg-cyan-500/18"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/18 bg-cyan-500/[0.06] px-3 py-1.5 text-xs font-semibold text-cyan-50/90 transition hover:bg-cyan-500/12"
                 >
                   <MapPin className="size-3.5" aria-hidden />
                   Local lean · {intel.localDeal.store}
@@ -145,7 +145,7 @@ export default function GlobalIntelligencePanel({ intel, displayLevel = "full" }
                   href={intel.cheapestReliable.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-white/20"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-slate-300/95 transition hover:border-white/[0.14]"
                 >
                   Cheapest reliable · {intel.cheapestReliable.store}
                 </a>
@@ -155,7 +155,7 @@ export default function GlobalIntelligencePanel({ intel, displayLevel = "full" }
                   href={intel.mostTrustedListing.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-violet-400/25 bg-violet-500/10 px-3 py-1.5 text-xs font-semibold text-violet-100 transition hover:bg-violet-500/18"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-violet-400/18 bg-violet-500/[0.06] px-3 py-1.5 text-xs font-semibold text-violet-100/90 transition hover:bg-violet-500/12"
                 >
                   <Shield className="size-3.5" aria-hidden />
                   Most trusted · {intel.mostTrustedListing.store}
@@ -164,16 +164,16 @@ export default function GlobalIntelligencePanel({ intel, displayLevel = "full" }
             </div>
           </div>
           <div className="w-full shrink-0 lg:w-64">
-            <p className="cockpit-overline text-slate-500">AI confidence radar</p>
-            <div className="mt-3 flex justify-center lg:justify-start">
+            <p className="cockpit-overline text-slate-500/85">AI confidence radar</p>
+            <div className="mt-4 flex justify-center lg:justify-start">
               <ConfidenceTriRadar values={radarVals} reduceMotion={!!reduceMotion} />
             </div>
-            <p className="mt-4 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500/80">
               {tierLabel(intel.confidenceTier)}
             </p>
-            <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-black/40">
+            <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-black/45">
               <motion.div
-                className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-violet-400 to-emerald-400"
+                className="h-full rounded-full bg-gradient-to-r from-cyan-500/80 via-slate-400/70 to-emerald-500/75"
                 initial={reduceMotion ? false : { width: 0 }}
                 animate={{ width: `${confPct}%` }}
                 transition={{ duration: reduceMotion ? 0 : 0.85, ease: [0.22, 1, 0.36, 1] }}
@@ -198,10 +198,10 @@ export default function GlobalIntelligencePanel({ intel, displayLevel = "full" }
 
       {!showDeepLayers && (
         <div className="cockpit-glass-panel relative overflow-hidden p-5 sm:p-6">
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-transparent to-violet-500/10" />
-          <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/[0.04] via-transparent to-white/[0.03]" />
+          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-200/90">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
                 Intelligence locked
               </p>
               <p className="mt-1 max-w-xl text-sm font-medium text-white/90">
@@ -211,7 +211,7 @@ export default function GlobalIntelligencePanel({ intel, displayLevel = "full" }
             </div>
             <Link
               href="/pricing"
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-[0_0_28px_-6px_rgba(34,211,238,0.45)] transition hover:brightness-105"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-[0_12px_36px_-14px_rgba(15,23,42,0.55)] transition hover:brightness-[1.02]"
             >
               View plans
               <ArrowRight className="size-4" aria-hidden />
@@ -222,10 +222,10 @@ export default function GlobalIntelligencePanel({ intel, displayLevel = "full" }
 
       {showDeepLayers && (
         <>
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="cockpit-glass-panel p-4">
+      <div className="grid gap-5 lg:grid-cols-3">
+        <div className="cockpit-glass-panel p-5">
           <div className="flex items-center gap-2 text-xs font-semibold text-white/90">
-            <BarChart3 className="size-4 text-cyan-300" aria-hidden />
+            <BarChart3 className="size-4 text-slate-500" aria-hidden />
             Price intelligence lane
           </div>
           <p className="mt-3 text-2xl font-semibold tabular-nums text-white">
@@ -254,12 +254,12 @@ export default function GlobalIntelligencePanel({ intel, displayLevel = "full" }
           </div>
         </div>
 
-        <div className="cockpit-glass-panel p-4">
+        <div className="cockpit-glass-panel p-5">
           <div className="flex items-center gap-2 text-xs font-semibold text-white/90">
-            <Shield className="size-4 text-violet-300" aria-hidden />
+            <Shield className="size-4 text-slate-500" aria-hidden />
             Market pulse
           </div>
-          <ul className="mt-3 space-y-1.5 text-[11px] text-slate-400">
+          <ul className="mt-4 space-y-2 text-[11px] leading-relaxed text-slate-400/95">
             <li className={intel.marketIntel.aggressiveFakeDiscount ? "text-amber-200" : ""}>
               {intel.marketIntel.aggressiveFakeDiscount ? "●" : "○"} Fake-discount stress in tray
             </li>
@@ -275,25 +275,25 @@ export default function GlobalIntelligencePanel({ intel, displayLevel = "full" }
           </ul>
         </div>
 
-        <div className="cockpit-glass-panel p-4">
+        <div className="cockpit-glass-panel p-5">
           <div className="flex items-center gap-2 text-xs font-semibold text-white/90">
-            <Users className="size-4 text-emerald-300" aria-hidden />
+            <Users className="size-4 text-slate-500" aria-hidden />
             Human fit window
           </div>
-          <p className="mt-2 text-[11px] leading-relaxed text-slate-400">{intel.whoShouldBuy}</p>
-          <p className="mt-2 text-[11px] leading-relaxed text-rose-100/70">{intel.whoShouldAvoid}</p>
-          <p className="mt-2 text-[11px] leading-relaxed text-slate-500">{intel.timingNote}</p>
+          <p className="mt-3 text-[11px] leading-relaxed text-slate-400/95">{intel.whoShouldBuy}</p>
+          <p className="mt-3 text-[11px] leading-relaxed text-rose-100/60">{intel.whoShouldAvoid}</p>
+          <p className="mt-3 text-[11px] leading-relaxed text-slate-500/90">{intel.timingNote}</p>
         </div>
       </div>
 
-      <div className="cockpit-glass-panel bg-black/20 p-4">
+      <div className="cockpit-glass-panel bg-black/20 p-5">
         <div className="flex items-center justify-between gap-2">
           <p className="text-xs font-semibold text-white/90">Retailer trust graph</p>
-          <span className="text-[10px] text-slate-500">Price fit · Trust · Marketplace safety</span>
+          <span className="text-[10px] text-slate-500/85">Price fit · Trust · Marketplace safety</span>
         </div>
-        <div className="mt-3 overflow-x-auto">
-          <div className="min-w-[520px] space-y-1">
-            <div className="grid grid-cols-[1.4fr_repeat(3,minmax(0,1fr))] gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+        <div className="mt-4 overflow-x-auto">
+          <div className="min-w-[520px] space-y-2">
+            <div className="grid grid-cols-[1.4fr_repeat(3,minmax(0,1fr))] gap-2 text-[9px] font-semibold uppercase tracking-[0.1em] text-slate-500/85">
               <span>Store</span>
               <span>Price fit</span>
               <span>Trust</span>
@@ -302,7 +302,7 @@ export default function GlobalIntelligencePanel({ intel, displayLevel = "full" }
             {heatRows.map((row) => (
               <div
                 key={row.store}
-                className="grid grid-cols-[1.4fr_repeat(3,minmax(0,1fr))] gap-1 rounded-lg border border-white/[0.05] bg-white/[0.02] px-2 py-1.5 text-[11px]"
+                className="grid grid-cols-[1.4fr_repeat(3,minmax(0,1fr))] gap-2 rounded-lg border border-white/[0.06] bg-white/[0.025] px-2.5 py-2 text-[11px] leading-relaxed"
               >
                 <span className="truncate font-medium text-slate-200">{row.store}</span>
                 <HeatCell v={row.priceFit} />
@@ -314,28 +314,28 @@ export default function GlobalIntelligencePanel({ intel, displayLevel = "full" }
         </div>
       </div>
 
-      <div className="cockpit-glass-panel p-4">
-        <div className="mb-3 flex items-center gap-2">
-          <Sparkles className="size-4 text-violet-300" aria-hidden />
+      <div className="cockpit-glass-panel p-5">
+        <div className="mb-4 flex items-center gap-2">
+          <Sparkles className="size-4 text-violet-300/80" aria-hidden />
           <p className="text-xs font-semibold text-white/90">Persona reasoning stream</p>
         </div>
-        <div className="flex gap-3 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch]">
+        <div className="flex gap-4 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch]">
           {intel.personaCards.map((card, i) => (
             <motion.div
               key={card.id}
               initial={reduceMotion ? false : { opacity: 0, x: 12 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: reduceMotion ? 0 : i * 0.04 }}
-              className="min-w-[240px] max-w-[260px] shrink-0 rounded-xl border border-white/[0.08] bg-gradient-to-b from-white/[0.06] to-black/30 p-3"
+              className="min-w-[240px] max-w-[260px] shrink-0 rounded-xl border border-white/[0.07] bg-gradient-to-b from-white/[0.04] to-black/35 p-4"
             >
               <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-white/95">{card.title}</p>
-                <span className="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-cyan-100">
+                <p className="text-sm font-semibold text-white/92">{card.title}</p>
+                <span className="rounded-full border border-white/[0.1] bg-black/30 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-slate-300">
                   {card.fitScore}
                 </span>
               </div>
-              <p className="mt-1 text-[11px] font-medium text-cyan-200/85">{card.verdict}</p>
-              <p className="mt-2 text-[11px] leading-relaxed text-slate-500">{card.body}</p>
+              <p className="mt-2 text-[11px] font-medium text-slate-300/90">{card.verdict}</p>
+              <p className="mt-2.5 text-[11px] leading-relaxed text-slate-500/90">{card.body}</p>
               {card.suggestedLink && card.suggestedStore && (
                 <a
                   href={card.suggestedLink}
@@ -352,14 +352,14 @@ export default function GlobalIntelligencePanel({ intel, displayLevel = "full" }
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="cockpit-glass-panel p-4">
+      <div className="grid gap-5 lg:grid-cols-2">
+        <div className="cockpit-glass-panel p-5">
           <p className="text-xs font-semibold text-white/90">Opportunity spectrum</p>
-          <p className="mt-2 text-[12px] leading-relaxed text-slate-400">{intel.opportunityCostNote}</p>
+          <p className="mt-3 text-[12px] leading-relaxed text-slate-400/95">{intel.opportunityCostNote}</p>
         </div>
-        <div className="cockpit-glass-panel p-4">
+        <div className="cockpit-glass-panel p-5">
           <p className="text-xs font-semibold text-white/90">Upgrade projection</p>
-          <p className="mt-2 text-[12px] leading-relaxed text-slate-400">
+          <p className="mt-3 text-[12px] leading-relaxed text-slate-400/95">
             {intel.upgradeWorthItNote ??
               "No strong upgrade signal for this query—QuantAI did not detect a clear spec cliff worth paying for yet."}
           </p>
@@ -401,35 +401,35 @@ function ConfidenceTriRadar({
       <svg width="132" height="124" viewBox="0 0 100 100" role="img" aria-label="Tri-axis confidence radar">
         <defs>
           <linearGradient id="qi-radar-fill" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="rgba(34,211,238,0.45)" />
-            <stop offset="50%" stopColor="rgba(167,139,250,0.35)" />
-            <stop offset="100%" stopColor="rgba(52,211,153,0.35)" />
+            <stop offset="0%" stopColor="rgba(34,211,238,0.22)" />
+            <stop offset="50%" stopColor="rgba(148,163,184,0.18)" />
+            <stop offset="100%" stopColor="rgba(52,211,153,0.2)" />
           </linearGradient>
         </defs>
-        <polygon points={shell} fill="none" stroke="rgba(148,163,184,0.2)" strokeWidth="0.9" />
+        <polygon points={shell} fill="none" stroke="rgba(148,163,184,0.14)" strokeWidth="0.75" />
         <motion.polygon
           points={fill}
           fill="url(#qi-radar-fill)"
-          stroke="rgba(34,211,238,0.55)"
-          strokeWidth="0.9"
-          initial={reduceMotion ? false : { opacity: 0, scale: 0.92 }}
+          stroke="rgba(148,163,184,0.28)"
+          strokeWidth="0.75"
+          initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }}
           animate={
             reduceMotion
               ? { opacity: 1, scale: 1 }
-              : { opacity: 1, scale: [1, 1.035, 1] }
+              : { opacity: 1, scale: [1, 1.012, 1] }
           }
           transition={
             reduceMotion
               ? { duration: 0 }
               : {
                   opacity: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
-                  scale: { duration: 3.4, repeat: Infinity, ease: "easeInOut" },
+                  scale: { duration: 5.5, repeat: Infinity, ease: "easeInOut" },
                 }
           }
           style={{ transformOrigin: "50px 52px" }}
         />
       </svg>
-      <div className="pointer-events-none absolute inset-x-0 bottom-1 flex justify-between px-1 text-[8px] font-semibold uppercase tracking-wider text-slate-500">
+      <div className="pointer-events-none absolute inset-x-0 bottom-1 flex justify-between px-1 text-[8px] font-semibold uppercase tracking-[0.14em] text-slate-500/75">
         <span className="w-8 text-center leading-tight">Signal</span>
         <span className="w-8 text-center leading-tight">Calm</span>
         <span className="w-8 text-center leading-tight">Band</span>
@@ -440,10 +440,10 @@ function ConfidenceTriRadar({
 
 function HeatCell({ v }: { v: number }) {
   const hue =
-    v >= 0.72 ? "bg-emerald-500/55" : v >= 0.48 ? "bg-amber-400/45" : v >= 0.32 ? "bg-orange-500/40" : "bg-rose-500/45";
+    v >= 0.72 ? "bg-emerald-500/45" : v >= 0.48 ? "bg-amber-400/38" : v >= 0.32 ? "bg-orange-500/32" : "bg-rose-500/38";
   return (
     <div className="flex items-center gap-1.5">
-      <div className={`h-2 flex-1 rounded-full ${hue}`} style={{ opacity: 0.35 + v * 0.55 }} />
+      <div className={`h-1.5 flex-1 rounded-full ${hue}`} style={{ opacity: 0.28 + v * 0.42 }} />
       <CheckCircle2 className="size-3 shrink-0 text-slate-600" aria-hidden />
     </div>
   );

@@ -19,39 +19,39 @@ export default function AmbientBackdrop() {
         className={`cosmic-constellation absolute inset-0 [mask-image:radial-gradient(ellipse_90%_70%_at_50%_30%,black,transparent)] ${!reduce ? "cosmic-constellation-motion" : ""}`}
       />
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.09] neural-mesh-slow [mask-image:radial-gradient(ellipse_85%_65%_at_50%_35%,black,transparent)]"
+        className="pointer-events-none absolute inset-0 opacity-[0.055] neural-mesh-slow [mask-image:radial-gradient(ellipse_85%_65%_at_50%_35%,black,transparent)]"
         aria-hidden
       />
       <div
-        className="absolute inset-0 opacity-[0.92]"
+        className="absolute inset-0 opacity-[0.88]"
         style={{
           background: `
-            radial-gradient(ellipse 100% 70% at 50% -15%, rgba(34, 211, 238, 0.2), transparent 52%),
-            radial-gradient(ellipse 70% 55% at 100% 20%, rgba(139, 92, 246, 0.14), transparent 48%),
-            radial-gradient(ellipse 60% 50% at 0% 75%, rgba(52, 211, 153, 0.08), transparent 42%),
-            radial-gradient(ellipse 50% 40% at 80% 90%, rgba(56, 189, 248, 0.05), transparent 40%)
+            radial-gradient(ellipse 100% 70% at 50% -15%, rgba(34, 211, 238, 0.11), transparent 54%),
+            radial-gradient(ellipse 70% 55% at 100% 20%, rgba(139, 92, 246, 0.08), transparent 50%),
+            radial-gradient(ellipse 60% 50% at 0% 75%, rgba(52, 211, 153, 0.045), transparent 44%),
+            radial-gradient(ellipse 50% 40% at 80% 90%, rgba(56, 189, 248, 0.035), transparent 42%)
           `,
         }}
       />
       {!reduce && (
         <>
           <motion.div
-            className="absolute -top-48 left-1/2 h-[min(85vh,900px)] w-[min(120vw,980px)] -translate-x-1/2 rounded-full bg-gradient-to-b from-cyan-400/22 via-violet-500/10 to-transparent blur-[100px]"
-            animate={{ opacity: [0.42, 0.68, 0.42], scale: [1, 1.03, 1] }}
-            transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -top-48 left-1/2 h-[min(85vh,900px)] w-[min(120vw,980px)] -translate-x-1/2 rounded-full bg-gradient-to-b from-cyan-400/14 via-violet-500/7 to-transparent blur-[100px]"
+            animate={{ opacity: [0.32, 0.48, 0.32], scale: [1, 1.02, 1] }}
+            transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
-            className="absolute bottom-0 right-[-20%] h-[55vh] w-[70vw] max-w-[900px] rounded-full bg-gradient-to-tl from-violet-600/12 to-transparent blur-[90px]"
-            animate={{ opacity: [0.22, 0.38, 0.22], x: [0, -10, 0] }}
-            transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute bottom-0 right-[-20%] h-[55vh] w-[70vw] max-w-[900px] rounded-full bg-gradient-to-tl from-violet-600/8 to-transparent blur-[90px]"
+            animate={{ opacity: [0.14, 0.24, 0.14], x: [0, -8, 0] }}
+            transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
           />
         </>
       )}
       {reduce && (
-        <div className="absolute -top-40 left-1/2 h-[520px] w-[min(90vw,720px)] -translate-x-1/2 rounded-full bg-gradient-to-b from-cyan-500/14 via-violet-500/8 to-transparent blur-3xl" />
+        <div className="absolute -top-40 left-1/2 h-[520px] w-[min(90vw,720px)] -translate-x-1/2 rounded-full bg-gradient-to-b from-cyan-500/10 via-violet-500/6 to-transparent blur-3xl" />
       )}
       <div
-        className="absolute inset-0 opacity-[0.22] bg-[linear-gradient(rgba(148,163,184,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.045)_1px,transparent_1px)] bg-[size:56px_56px] [mask-image:radial-gradient(ellipse_78%_62%_at_50%_22%,black,transparent)] ai-grid-motion"
+        className="absolute inset-0 opacity-[0.14] bg-[linear-gradient(rgba(148,163,184,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.035)_1px,transparent_1px)] bg-[size:56px_56px] [mask-image:radial-gradient(ellipse_78%_62%_at_50%_22%,black,transparent)] ai-grid-motion"
       />
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#020617]/92" />
     </div>
