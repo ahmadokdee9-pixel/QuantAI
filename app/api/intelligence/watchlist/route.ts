@@ -1,5 +1,8 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { countWatchlistItems } from "@/lib/intelligence/persistence";
+import { planDefinition } from "@/lib/subscription/plans";
+import { subscriptionTierFromClerkUser } from "@/lib/subscription/resolveTier";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 /** Foundation route for price-drop / availability alerts (persist when DB tables exist). */
@@ -33,6 +36,22 @@ export async function POST(req: Request) {
   }
   if (!supabaseAdmin) {
     return NextResponse.json({ error: "Watchlist storage is not configured." }, { status: 503 });
+  }
+
+  const user = await currentUser();
+  const tier = subscriptionTierFromClerkUser(user);
+  const plan = planDefinition(tier);
+  if (plan.watchlistMax != null) {
+    const n = await countWatchlistItems(userId);
+    if (n !== null && n >= plan.watchlistMax) {
+      return NextResponse.json(
+        {
+          error: `Watchlist limit (${plan.watchlistMax}) reached. Upgrade for a larger watchlist.`,
+          code: "PLAN_WATCHLIST_LIMIT",
+        },
+        { status: 403 }
+      );
+    }
   }
 
   try {

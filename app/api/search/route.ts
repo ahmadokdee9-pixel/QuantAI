@@ -1,7 +1,8 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { enrichProductsWithIntelligence } from "@/lib/intelligence/enrichProducts";
 import {
+  countSearchesTodayUtc,
   mergeRecommendationMemory,
   memoryPatchFromSearch,
   recordSearchHistory,
@@ -9,6 +10,9 @@ import {
 import { buildDealClusters } from "@/lib/deals";
 import { buildSearchIntelligence } from "@/lib/intelligence/searchDecisionEngine";
 import { enforceLimit, searchRatelimit } from "@/lib/rate-limit";
+import { entitlementsForTier } from "@/lib/subscription/entitlements";
+import { planDefinition } from "@/lib/subscription/plans";
+import { subscriptionTierFromClerkUser } from "@/lib/subscription/resolveTier";
 import { fetchShoppingProducts } from "./lib/fetchShopping";
 
 async function handleSearch(q: string | null | undefined) {
@@ -22,6 +26,21 @@ async function handleSearch(q: string | null | undefined) {
     return NextResponse.json(
       { error: "Sign in to run a product search." },
       { status: 401 }
+    );
+  }
+
+  const user = await currentUser();
+  const tier = subscriptionTierFromClerkUser(user);
+  const plan = planDefinition(tier);
+  const usedToday = await countSearchesTodayUtc(userId);
+  if (usedToday !== null && usedToday >= plan.searchesPerDay) {
+    return NextResponse.json(
+      {
+        error: `Daily search limit reached (${plan.searchesPerDay}) for your plan. Upgrade for more.`,
+        code: "PLAN_SEARCH_LIMIT",
+        entitlements: entitlementsForTier(tier),
+      },
+      { status: 429 }
     );
   }
 
@@ -53,6 +72,7 @@ async function handleSearch(q: string | null | undefined) {
     products,
     dealClusters,
     searchIntelligence,
+    entitlements: entitlementsForTier(tier),
     meta: {
       category: topCategory,
       intelligenceVersion: 3,

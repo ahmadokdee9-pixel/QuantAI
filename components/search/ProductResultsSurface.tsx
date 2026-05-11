@@ -9,6 +9,7 @@ import GlobalIntelligencePanel from "@/components/intelligence/GlobalIntelligenc
 import { analyzeDealCluster } from "@/lib/deals";
 import type { DealClusterDTO } from "@/lib/deals/types";
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
+import type { SearchIntelligenceLevel } from "@/lib/subscription/plans";
 import type { ResultsFiltersState } from "@/lib/resultsFilters";
 import { getFinalComposite, ratingValue, sortByCompositeRank } from "@/lib/shoppingScore";
 import type { QuantProduct } from "@/lib/shoppingScore";
@@ -22,6 +23,7 @@ type Props = {
   sortedProducts: QuantProduct[];
   dealClusters?: DealClusterDTO[];
   searchIntelligence?: SearchIntelligenceDTO | null;
+  intelligenceLevel?: SearchIntelligenceLevel;
   loading: boolean;
   sort: string;
   setSort: (v: string) => void;
@@ -70,6 +72,7 @@ export default function ProductResultsSurface({
   addToWatchlist,
   dealClusters = [],
   searchIntelligence = null,
+  intelligenceLevel = "full",
 }: Props) {
   const reduceMotion = useReducedMotion();
   const anchorRef = useRef<HTMLDivElement>(null);
@@ -292,7 +295,7 @@ export default function ProductResultsSurface({
 
       {searchIntelligence && (
         <div className="mb-10">
-          <GlobalIntelligencePanel intel={searchIntelligence} />
+          <GlobalIntelligencePanel intel={searchIntelligence} displayLevel={intelligenceLevel} />
         </div>
       )}
 

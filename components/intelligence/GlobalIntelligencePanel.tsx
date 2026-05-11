@@ -14,9 +14,13 @@ import {
   Users,
 } from "lucide-react";
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
+import type { SearchIntelligenceLevel } from "@/lib/subscription/plans";
+import Link from "next/link";
 
 type Props = {
   intel: SearchIntelligenceDTO;
+  /** Free plan shows condensed synthesis; Pro/Premium see full layers. */
+  displayLevel?: SearchIntelligenceLevel;
 };
 
 function finalTone(kind: SearchIntelligenceDTO["finalRecommendation"]): string {
@@ -44,8 +48,9 @@ function tierLabel(t: SearchIntelligenceDTO["confidenceTier"]): string {
   return "Verify manually";
 }
 
-export default function GlobalIntelligencePanel({ intel }: Props) {
+export default function GlobalIntelligencePanel({ intel, displayLevel = "full" }: Props) {
   const reduceMotion = useReducedMotion();
+  const showDeepLayers = displayLevel !== "summary";
   const confPct = Math.max(8, 100 - intel.buyerUncertaintyScore);
   const radarVals = useMemo(() => {
     const clarity = Math.max(10, 100 - intel.buyerUncertaintyScore);
@@ -187,6 +192,32 @@ export default function GlobalIntelligencePanel({ intel }: Props) {
         </div>
       </div>
 
+      {!showDeepLayers && (
+        <div className="cockpit-glass-panel relative overflow-hidden p-5 sm:p-6">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-transparent to-violet-500/10" />
+          <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-200/90">
+                Intelligence locked
+              </p>
+              <p className="mt-1 max-w-xl text-sm font-medium text-white/90">
+                Upgrade to Pro or Power Buyer for retailer trust graphs, persona reasoning, and full
+                global deal synthesis on every search.
+              </p>
+            </div>
+            <Link
+              href="/pricing"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-[0_0_28px_-6px_rgba(34,211,238,0.45)] transition hover:brightness-105"
+            >
+              View plans
+              <ArrowRight className="size-4" aria-hidden />
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {showDeepLayers && (
+        <>
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="cockpit-glass-panel p-4">
           <div className="flex items-center gap-2 text-xs font-semibold text-white/90">
@@ -330,6 +361,8 @@ export default function GlobalIntelligencePanel({ intel }: Props) {
           </p>
         </div>
       </div>
+        </>
+      )}
     </motion.section>
   );
 }

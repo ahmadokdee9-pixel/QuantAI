@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import AmbientBackdrop from "../components/cockpit/AmbientBackdrop";
 import SearchBox from "../components/SearchBox";
 import LandingNav from "../components/landing/LandingNav";
 import MarketingSections from "../components/landing/MarketingSections";
+import PricingCards from "../components/subscription/PricingCards";
 import { calculateAIScore } from "./api/search/lib/aiScoring";
 import ProductResultsSurface from "../components/search/ProductResultsSurface";
 import {
@@ -14,6 +16,8 @@ import {
   defaultResultsFilters,
 } from "@/lib/resultsFilters";
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
+import type { SearchEntitlementsDTO } from "@/lib/subscription/entitlements";
+import type { QuantPlanTier } from "@/lib/subscription/plans";
 import type { DealClusterDTO } from "@/lib/deals/types";
 import {
   getFinalComposite,
@@ -56,6 +60,9 @@ export default function Home() {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [resultsKey, setResultsKey] = useState(0);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryRow[]>([]);
+  const [subscriptionTier, setSubscriptionTier] = useState<QuantPlanTier | null>(null);
+  const [searchEntitlements, setSearchEntitlements] = useState<SearchEntitlementsDTO | null>(null);
+  const bootedSearchFromUrl = useRef(false);
 
   const savedLinks = useMemo(
     () => new Set(saved.map((s) => s.link)),
@@ -86,6 +93,53 @@ export default function Home() {
         const data = (await res.json()) as { items?: SearchHistoryRow[] };
         if (!cancelled && res.ok && Array.isArray(data.items)) {
           setSearchHistory(data.items);
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isSignedIn]);
+
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q")?.trim();
+    if (q) startTransition(() => setQuery(q));
+  }, []);
+
+  useEffect(() => {
+    if (!isSignedIn || bootedSearchFromUrl.current) return;
+    const q = new URLSearchParams(window.location.search).get("q")?.trim();
+    if (!q) return;
+    bootedSearchFromUrl.current = true;
+    startTransition(() => setQuery(q));
+    void search(q);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bootstrap once when auth resolves
+  }, [isSignedIn]);
+
+  useEffect(() => {
+    if (!isSignedIn) {
+      startTransition(() => {
+        setSubscriptionTier(null);
+        setSearchEntitlements(null);
+      });
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/billing/subscription", { credentials: "same-origin" });
+        const data = (await res.json()) as {
+          tier?: string;
+          entitlements?: SearchEntitlementsDTO;
+        };
+        if (cancelled || !res.ok) return;
+        if (typeof data.tier === "string") {
+          setSubscriptionTier(data.tier as QuantPlanTier);
+        }
+        if (data.entitlements && typeof data.entitlements === "object") {
+          setSearchEntitlements(data.entitlements);
         }
       } catch {
         /* ignore */
@@ -203,8 +257,10 @@ export default function Home() {
         products?: QuantProduct[];
         dealClusters?: DealClusterDTO[];
         searchIntelligence?: SearchIntelligenceDTO | null;
+        entitlements?: SearchEntitlementsDTO;
         error?: string;
         retryAfter?: number;
+        code?: string;
       };
 
       if (res.status === 401) {
@@ -215,6 +271,10 @@ export default function Home() {
       if (res.status === 429) {
         const wait = data.retryAfter ? ` Retry in ~${data.retryAfter}s.` : "";
         setSearchError((data.error || "Too many searches.") + wait);
+        if (data.entitlements) setSearchEntitlements(data.entitlements);
+        if (data.code === "PLAN_SEARCH_LIMIT") {
+          void refreshSearchHistory();
+        }
         return;
       }
 
@@ -233,6 +293,10 @@ export default function Home() {
             ? data.searchIntelligence
             : null
         );
+        if (data.entitlements) {
+          setSearchEntitlements(data.entitlements);
+          if (data.entitlements.tier) setSubscriptionTier(data.entitlements.tier);
+        }
         void refreshSearchHistory();
       } else {
         setSearchError("No products found for this query.");
@@ -280,8 +344,12 @@ export default function Home() {
       });
 
       if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        setSearchError(data.error || "Could not save this product.");
+        const data = (await res.json()) as { error?: string; code?: string };
+        const msg =
+          data.code === "PLAN_SAVED_LIMIT"
+            ? `${data.error || "Saved limit reached."} Upgrade on the pricing page.`
+            : data.error || "Could not save this product.";
+        setSearchError(msg);
         setSaved(saved.filter((p) => p.link !== product.link));
       }
     } catch (e) {
@@ -313,9 +381,13 @@ export default function Home() {
           targetPrice: null,
         }),
       });
-      const data = (await res.json()) as { error?: string; duplicate?: boolean };
+      const data = (await res.json()) as { error?: string; duplicate?: boolean; code?: string };
       if (!res.ok) {
-        setSearchError(data.error || "Watchlist is not available yet.");
+        setSearchError(
+          data.code === "PLAN_WATCHLIST_LIMIT"
+            ? `${data.error || "Watchlist limit reached."} See pricing to upgrade.`
+            : data.error || "Watchlist is not available yet."
+        );
         return;
       }
       if (data.duplicate) {
@@ -788,6 +860,9 @@ export default function Home() {
             sortedProducts={sortedProducts}
             dealClusters={dealClusters}
             searchIntelligence={searchIntelligence}
+            intelligenceLevel={
+              searchEntitlements?.intelligenceLevel ?? (isSignedIn ? "summary" : "full")
+            }
             loading={loading}
             sort={sort}
             setSort={setSort}
@@ -818,106 +893,18 @@ export default function Home() {
               Scale from curious to power buyer
             </h2>
             <p className="mt-4 text-base text-slate-500 font-normal leading-relaxed">
-              Start free, upgrade when you want deeper alerts, faster analysis, and premium
-              decision tooling.
+              Start free, upgrade when you want deeper alerts, higher limits, and full global intelligence.
             </p>
+            <Link
+              href="/pricing"
+              className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-cyan-300 hover:text-cyan-200"
+            >
+              Open full pricing page
+              <ArrowRight className="size-4" aria-hidden />
+            </Link>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-3 lg:gap-5 lg:items-stretch">
-            <div
-              className={`flex flex-col ${glassCard} p-8 transition duration-500 hover:border-white/15`}
-            >
-              <h3 className="text-lg font-semibold text-white/95">Free</h3>
-              <p className="mt-1 text-sm text-slate-500">For trying QuantAI on real purchases.</p>
-              <p className="mt-8 text-4xl font-semibold tracking-tight text-white/95">
-                €0
-              </p>
-              <ul className="mt-8 space-y-3 text-sm text-slate-400 flex-1">
-                <li className="flex gap-2">
-                  <CheckIcon /> Live AI search (signed in)
-                </li>
-                <li className="flex gap-2">
-                  <CheckIcon /> Product scores & ranking
-                </li>
-                <li className="flex gap-2">
-                  <CheckIcon /> Save products to your account
-                </li>
-              </ul>
-              <button
-                type="button"
-                className="mt-8 w-full rounded-full border border-white/12 py-3 text-sm font-semibold text-white/80 transition hover:bg-white/[0.06]"
-              >
-                Current plan
-              </button>
-            </div>
-
-            <div
-              className={`relative flex flex-col ${glassCard} border-cyan-400/25 p-8 shadow-[0_40px_100px_-40px_rgba(34,211,238,0.2)] transition duration-500 hover:border-cyan-400/40 lg:scale-[1.02] lg:z-[1]`}
-            >
-              <span className="absolute right-6 top-6 rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-950">
-                Most popular
-              </span>
-              <h3 className="text-lg font-semibold text-white/95">Pro</h3>
-              <p className="mt-1 text-sm text-slate-500">For people who buy often—and hate regret.</p>
-              <p className="mt-8 text-4xl font-semibold tracking-tight text-white/95">
-                €19
-                <span className="text-base font-medium text-slate-500">/mo</span>
-              </p>
-              <ul className="mt-8 space-y-3 text-sm text-slate-300 flex-1">
-                <li className="flex gap-2">
-                  <CheckIcon /> Advanced AI analysis
-                </li>
-                <li className="flex gap-2">
-                  <CheckIcon /> Real-time smart alerts
-                </li>
-                <li className="flex gap-2">
-                  <CheckIcon /> Unlimited saved products
-                </li>
-                <li className="flex gap-2">
-                  <CheckIcon /> Priority search throughput
-                </li>
-              </ul>
-              <a
-                href="https://buy.stripe.com/test_14k8wQ8uQ5xM9DWcMM"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-8 flex w-full items-center justify-center rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-500 py-3 text-sm font-semibold text-slate-950 shadow-[0_0_32px_-6px_rgba(34,211,238,0.45)] transition hover:brightness-105"
-              >
-                Upgrade to Pro
-              </a>
-            </div>
-
-            <div
-              className={`flex flex-col ${glassCard} p-8 transition duration-500 hover:border-white/15`}
-            >
-              <h3 className="text-lg font-semibold text-white/95">Business</h3>
-              <p className="mt-1 text-sm text-slate-500">Teams that standardize how they buy.</p>
-              <p className="mt-8 text-4xl font-semibold tracking-tight text-white/95">
-                €99
-                <span className="text-base font-medium text-slate-500">/mo</span>
-              </p>
-              <ul className="mt-8 space-y-3 text-sm text-slate-400 flex-1">
-                <li className="flex gap-2">
-                  <CheckIcon /> Team dashboards
-                </li>
-                <li className="flex gap-2">
-                  <CheckIcon /> Market analytics
-                </li>
-                <li className="flex gap-2">
-                  <CheckIcon /> API access
-                </li>
-                <li className="flex gap-2">
-                  <CheckIcon /> Priority support
-                </li>
-              </ul>
-              <button
-                type="button"
-                className="mt-8 w-full rounded-full bg-white py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
-              >
-                Contact sales
-              </button>
-            </div>
-          </div>
+          <PricingCards currentTier={subscriptionTier} />
 
           <div className="mx-auto mt-14 max-w-3xl">
             <div className={`${glassCard} p-6 sm:p-8`}>
@@ -930,7 +917,21 @@ export default function Home() {
         </section>
 
         <footer className="border-t border-white/[0.06] py-10 text-center">
-          <p className="text-xs font-medium text-slate-600">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-slate-500">
+            <Link href="/pricing" className="hover:text-cyan-300">
+              Pricing
+            </Link>
+            <Link href="/dashboard" className="hover:text-cyan-300">
+              Dashboard
+            </Link>
+            <Link href="/#how-it-works" className="hover:text-cyan-300">
+              How it works
+            </Link>
+            <Link href="/billing" className="hover:text-cyan-300">
+              Billing
+            </Link>
+          </div>
+          <p className="mt-6 text-xs font-medium text-slate-600">
             © {new Date().getFullYear()} QuantAI · Shopping intelligence, not financial advice.
           </p>
           <p className="mt-2 text-[11px] text-slate-600/80 max-w-md mx-auto">
@@ -942,18 +943,3 @@ export default function Home() {
   );
 }
 
-function CheckIcon() {
-  return (
-    <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-400/20 text-emerald-300">
-      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
-        <path
-          d="M2 5l2 2 4-4"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </span>
-  );
-}

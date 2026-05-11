@@ -2,7 +2,10 @@
  * Future-facing capability flags for subscriptions, alerts, premium reports,
  * and affiliate surfaces. Wire Stripe / partner IDs here when ready.
  */
-export type SubscriptionTier = "free" | "pro" | "business";
+import type { QuantPlanTier } from "@/lib/subscription/plans";
+
+/** @deprecated Use QuantPlanTier from lib/subscription/plans */
+export type SubscriptionTier = QuantPlanTier;
 
 export type AlertChannel = "email" | "push" | "webhook";
 
@@ -25,7 +28,7 @@ export interface AffiliateAttribution {
 }
 
 export function planAllowsPremiumReports(tier: SubscriptionTier): boolean {
-  return tier === "pro" || tier === "business";
+  return tier === "pro" || tier === "premium";
 }
 
 export function planAllowsUnlimitedWatchlist(tier: SubscriptionTier): boolean {

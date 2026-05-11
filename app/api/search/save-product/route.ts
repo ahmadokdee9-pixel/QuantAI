@@ -1,5 +1,8 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { countSavedProducts } from "@/lib/intelligence/persistence";
+import { planDefinition } from "@/lib/subscription/plans";
+import { subscriptionTierFromClerkUser } from "@/lib/subscription/resolveTier";
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 
 export async function POST(req: Request) {
@@ -18,6 +21,22 @@ export async function POST(req: Request) {
         { error: "Database is not configured." },
         { status: 503 }
       );
+    }
+
+    const user = await currentUser();
+    const tier = subscriptionTierFromClerkUser(user);
+    const plan = planDefinition(tier);
+    if (plan.savedProductsMax != null) {
+      const n = await countSavedProducts(userId);
+      if (n !== null && n >= plan.savedProductsMax) {
+        return NextResponse.json(
+          {
+            error: `Saved product limit (${plan.savedProductsMax}) reached. Upgrade to save more.`,
+            code: "PLAN_SAVED_LIMIT",
+          },
+          { status: 403 }
+        );
+      }
     }
 
     const body = await req.json();

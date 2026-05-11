@@ -80,3 +80,56 @@ export async function mergeRecommendationMemory(
 export function memoryPatchFromSearch(query: string): { topCategory: string } {
   return { topCategory: inferSearchCategory(query) };
 }
+
+function utcDayStartIso(): string {
+  const d = new Date();
+  d.setUTCHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+/** Returns null if Supabase is unavailable or count fails (caller should fail-open). */
+export async function countSearchesTodayUtc(userId: string): Promise<number | null> {
+  const db = getAdmin();
+  if (!db) return null;
+  try {
+    const { count, error } = await db
+      .from("search_history")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .gte("created_at", utcDayStartIso());
+    if (error) return null;
+    return count ?? 0;
+  } catch {
+    return null;
+  }
+}
+
+export async function countSavedProducts(userId: string): Promise<number | null> {
+  const db = getAdmin();
+  if (!db) return null;
+  try {
+    const { count, error } = await db
+      .from("saved_products")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId);
+    if (error) return null;
+    return count ?? 0;
+  } catch {
+    return null;
+  }
+}
+
+export async function countWatchlistItems(userId: string): Promise<number | null> {
+  const db = getAdmin();
+  if (!db) return null;
+  try {
+    const { count, error } = await db
+      .from("shopping_watchlist")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId);
+    if (error) return null;
+    return count ?? 0;
+  } catch {
+    return null;
+  }
+}

@@ -6,11 +6,11 @@ import { Menu, Sparkles, X } from "lucide-react";
 import { useState } from "react";
 
 const links = [
-  { href: "#features", label: "AI picks" },
-  { href: "#alerts", label: "Alerts" },
-  { href: "#how-it-works", label: "How it works" },
-  { href: "#compare", label: "Compare" },
-  { href: "#pricing", label: "Pricing" },
+  { href: "/#features", label: "AI picks" },
+  { href: "/#alerts", label: "Alerts" },
+  { href: "/#how-it-works", label: "How it works" },
+  { href: "/#compare", label: "Compare" },
+  { href: "/pricing", label: "Plans" },
 ] as const;
 
 export default function LandingNav() {

@@ -57,7 +57,7 @@ export default function MarketingSections() {
             </p>
           </div>
           <Link
-            href="#pricing"
+            href="/pricing"
             className="inline-flex items-center gap-2 self-start rounded-full border border-white/12 bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-white/90 backdrop-blur-xl transition hover:border-cyan-400/35 hover:bg-cyan-400/[0.08] hover:text-white"
           >
             View plans
