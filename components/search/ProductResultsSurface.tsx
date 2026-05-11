@@ -426,46 +426,47 @@ export default function ProductResultsSurface({
           <div className="mb-4 flex items-start gap-2.5">
             <Sparkles className="mt-0.5 size-4 shrink-0 text-cyan-300" strokeWidth={1.5} aria-hidden />
             <div className="min-w-0">
-              <h2 className="text-sm font-semibold tracking-tight text-white/95">Neural top lane</h2>
-              <p className="mt-0.5 text-[11px] font-normal leading-snug text-slate-500">
+              <h2 className="text-sm font-semibold tracking-tight text-white/[0.96]">Neural top lane</h2>
+              <p className="cockpit-body mt-1 text-[11px] leading-relaxed text-slate-500">
                 Highest composite signal in this tray—fastest path from browse to conviction.
               </p>
             </div>
           </div>
-          <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory [-webkit-overflow-scrolling:touch]">
+          <div className="flex min-w-0 gap-4 overflow-x-auto pb-2 pt-0.5 snap-x snap-mandatory [-webkit-overflow-scrolling:touch]">
             {aiTopPicks.map((p, idx) => {
               const comp = getFinalComposite(p, sortedProducts);
+              const sym = currencySymbolFromListing(p);
               return (
                 <motion.div
                   key={p.link}
-                  initial={reduceMotion ? false : { opacity: 0, x: 18 }}
+                  initial={reduceMotion ? false : { opacity: 0, x: 14 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ ...transition, delay: idx * 0.06 }}
+                  transition={{ ...transition, delay: idx * 0.05 }}
                   whileHover={
-                    reduceMotion ? undefined : { y: -2, transition: { duration: 0.2 } }
+                    reduceMotion ? undefined : { y: -3, transition: { type: "spring", stiffness: 400, damping: 28 } }
                   }
-                  className="min-w-[260px] max-w-[280px] snap-start rounded-2xl border border-cyan-400/28 bg-gradient-to-br from-cyan-400/[0.14] via-white/[0.05] to-violet-500/[0.1] p-4 shadow-[0_24px_60px_-28px_rgba(34,211,238,0.22)] backdrop-blur-xl"
+                  className="min-w-[min(100%,280px)] max-w-[280px] shrink-0 snap-start rounded-2xl border border-cyan-400/25 bg-gradient-to-br from-cyan-400/[0.12] via-white/[0.05] to-violet-500/[0.1] p-4 shadow-[0_24px_64px_-28px_rgba(34,211,238,0.2)] backdrop-blur-xl"
                 >
                   <div className="flex gap-3">
                     {p.image && (
-                      <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-white p-1.5">
-                        <img src={p.image} alt="" className="size-full object-contain" />
+                      <div className="size-[4.25rem] shrink-0 overflow-hidden rounded-xl border border-white/[0.08] bg-gradient-to-b from-white to-slate-100 p-1.5">
+                        <img src={p.image} alt="" className="size-full object-contain object-center" loading="lazy" />
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-cyan-200/85">
-                        #{idx + 1} pick
-                      </p>
-                      <p className="mt-0.5 line-clamp-2 text-[13px] font-medium leading-snug text-white/95">
+                      <p className="cockpit-label text-[10px] text-cyan-200/80">Pick #{idx + 1}</p>
+                      <p className="cockpit-body mt-1 line-clamp-2 text-[13px] font-semibold leading-snug text-white/[0.96]">
                         {p.title}
                       </p>
-                      <p className="mt-1 text-xs text-slate-400">{p.store}</p>
+                      <p className="cockpit-body mt-1 text-[11px] text-slate-500">{p.store}</p>
                     </div>
                   </div>
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="text-lg font-semibold tabular-nums text-white">€{p.price}</span>
-                    <span className="rounded-full border border-white/15 bg-black/35 px-2 py-0.5 text-[11px] font-semibold text-cyan-100">
-                      QI composite {comp}
+                  <div className="mt-3.5 flex min-w-0 items-center justify-between gap-2 border-t border-white/[0.06] pt-3">
+                    <span className="text-lg font-semibold tabular-nums tracking-tight text-white">
+                      {formatListingPrice(p.price, sym)}
+                    </span>
+                    <span className="shrink-0 rounded-full border border-cyan-400/25 bg-cyan-500/12 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-cyan-100">
+                      QI {comp}
                     </span>
                   </div>
                 </motion.div>
@@ -479,26 +480,26 @@ export default function ProductResultsSurface({
         {compareProducts.length > 0 && (
           <motion.div
             id="quantai-compare-lab"
-            initial={reduceMotion ? false : { opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 16 }}
-            transition={{ type: "spring", stiffness: 400, damping: 32 }}
-            className="fixed bottom-4 left-4 right-4 z-40 mx-auto max-w-5xl rounded-2xl border border-cyan-400/20 bg-[#050912]/96 p-4 shadow-[0_32px_120px_-20px_rgba(34,211,238,0.18)] backdrop-blur-2xl md:left-1/2 md:-translate-x-1/2 md:right-auto max-md:max-h-[min(70vh,28rem)] max-md:overflow-y-auto"
+            initial={reduceMotion ? false : { opacity: 0, y: 28, scale: 0.985 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 18, scale: 0.99 }}
+            transition={{ type: "spring", stiffness: 380, damping: 34, mass: 0.85 }}
+            className="fixed bottom-4 left-4 right-4 z-40 mx-auto max-w-5xl rounded-3xl border border-cyan-400/22 bg-[#050a14]/97 p-4 shadow-[0_36px_100px_-24px_rgba(34,211,238,0.2),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-2xl sm:p-5 md:left-1/2 md:-translate-x-1/2 md:right-auto max-md:max-h-[min(70vh,28rem)] max-md:overflow-y-auto"
             role="region"
             aria-label="Product compare"
           >
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <span className="flex items-center gap-2 text-sm font-semibold text-white/90">
-                <GitCompare className="size-4 text-cyan-300" aria-hidden />
-                <BarChart3 className="size-4 text-violet-300/80" aria-hidden />
-                Compare lab · {compareProducts.length}/3
+            <div className="mb-4 flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] pb-3">
+              <span className="cockpit-display flex min-w-0 items-center gap-2 text-sm text-white/92">
+                <GitCompare className="size-4 shrink-0 text-cyan-300" aria-hidden />
+                <BarChart3 className="size-4 shrink-0 text-violet-300/80" aria-hidden />
+                <span className="truncate">Compare lab · {compareProducts.length}/3</span>
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => void runCompareVerdict()}
                   disabled={verdictLoading}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/35 bg-cyan-400/15 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-cyan-100 transition hover:bg-cyan-400/25 disabled:opacity-50"
+                  className="inline-flex min-h-[2.25rem] items-center gap-1.5 rounded-full border border-cyan-400/35 bg-cyan-400/15 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-cyan-100 transition hover:bg-cyan-400/22 disabled:opacity-50"
                 >
                   {verdictLoading ? (
                     <>
@@ -520,7 +521,7 @@ export default function ProductResultsSurface({
                       }
                     })();
                   }}
-                  className="rounded-full border border-white/12 bg-white/[0.06] px-3 py-1.5 text-[11px] font-semibold text-slate-200 transition hover:bg-white/10"
+                  className="rounded-full border border-white/12 bg-white/[0.07] px-3 py-1.5 text-[11px] font-semibold text-slate-200 transition hover:bg-white/12"
                 >
                   {compareExportFlash ? "Copied" : "Export compare"}
                 </button>
@@ -531,15 +532,15 @@ export default function ProductResultsSurface({
                     setVerdict(null);
                     setVerdictError(null);
                   }}
-                  className="rounded-full p-1.5 text-slate-400 transition hover:bg-white/10 hover:text-white"
+                  className="rounded-full p-2 text-slate-400 transition hover:bg-white/10 hover:text-white"
                   aria-label="Clear compare"
                 >
                   <X className="size-4" />
                 </button>
               </div>
             </div>
-            <div className="grid gap-3 lg:grid-cols-3">
-              {compareProducts.map((p) => {
+            <div className="grid min-w-0 gap-3 sm:gap-4 lg:grid-cols-3">
+              {compareProducts.map((p, cIdx) => {
                 const qi = getFinalComposite(p, sortedProducts);
                 const trust = p.store;
                 const sym = currencySymbolFromListing(p);
@@ -547,30 +548,35 @@ export default function ProductResultsSurface({
                   <motion.div
                     key={p.link}
                     layout
-                    className="rounded-xl border border-white/[0.08] bg-gradient-to-b from-white/[0.06] to-black/40 p-3 text-xs"
+                    initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ ...transition, delay: cIdx * 0.04 }}
+                    className="min-w-0 rounded-2xl border border-white/[0.09] bg-gradient-to-b from-white/[0.08] to-black/45 p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:p-4"
                   >
-                    <p className="font-medium text-white/90 line-clamp-2 leading-snug">{p.title}</p>
-                    <p className="mt-1 text-slate-500">{trust}</p>
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      <div className="rounded-lg border border-white/[0.06] bg-black/30 px-2 py-1.5">
-                        <p className="text-[9px] uppercase tracking-wider text-slate-500">Price</p>
-                        <p className="text-sm font-semibold tabular-nums text-emerald-300">
+                    <p className="cockpit-body text-[12px] font-semibold leading-snug text-white/[0.95] line-clamp-2">
+                      {p.title}
+                    </p>
+                    <p className="cockpit-body mt-1.5 text-[11px] text-slate-500">{trust}</p>
+                    <div className="mt-3.5 grid grid-cols-2 gap-2 sm:gap-2.5">
+                      <div className="rounded-xl border border-white/[0.07] bg-black/35 px-2.5 py-2">
+                        <p className="cockpit-label text-[9px] text-slate-500">Price</p>
+                        <p className="mt-0.5 text-sm font-semibold tabular-nums text-emerald-200/95">
                           {formatListingPrice(p.price, sym)}
                         </p>
                       </div>
-                      <div className="rounded-lg border border-white/[0.06] bg-black/30 px-2 py-1.5">
-                        <p className="text-[9px] uppercase tracking-wider text-slate-500">QI</p>
-                        <p className="text-sm font-semibold tabular-nums text-cyan-200">{qi}</p>
+                      <div className="rounded-xl border border-white/[0.07] bg-black/35 px-2.5 py-2">
+                        <p className="cockpit-label text-[9px] text-slate-500">QI</p>
+                        <p className="mt-0.5 text-sm font-semibold tabular-nums text-cyan-100">{qi}</p>
                       </div>
-                      <div className="rounded-lg border border-white/[0.06] bg-black/30 px-2 py-1.5">
-                        <p className="text-[9px] uppercase tracking-wider text-slate-500">Rating</p>
-                        <p className="text-sm font-semibold text-amber-200/90">
+                      <div className="rounded-xl border border-white/[0.07] bg-black/35 px-2.5 py-2">
+                        <p className="cockpit-label text-[9px] text-slate-500">Rating</p>
+                        <p className="mt-0.5 text-sm font-semibold text-amber-200/90">
                           {ratingValue(p.rating) > 0 ? ratingValue(p.rating).toFixed(1) : "—"}
                         </p>
                       </div>
-                      <div className="rounded-lg border border-white/[0.06] bg-black/30 px-2 py-1.5">
-                        <p className="text-[9px] uppercase tracking-wider text-slate-500">Trend</p>
-                        <p className="text-[11px] font-medium capitalize text-slate-300">
+                      <div className="rounded-xl border border-white/[0.07] bg-black/35 px-2.5 py-2">
+                        <p className="cockpit-label text-[9px] text-slate-500">Trend</p>
+                        <p className="cockpit-body mt-0.5 text-[11px] font-medium capitalize text-slate-300">
                           {p.qiTrendProjection ?? p.priceTrend}
                         </p>
                       </div>
@@ -585,32 +591,34 @@ export default function ProductResultsSurface({
               </p>
             )}
             {verdict && (
-              <div className="mt-4 rounded-xl border border-violet-400/25 bg-violet-500/[0.08] p-3 text-xs">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-semibold text-violet-100">QuantAI verdict</p>
+              <div className="mt-4 rounded-2xl border border-violet-400/28 bg-gradient-to-b from-violet-500/[0.1] to-black/30 p-4 text-xs sm:p-4">
+                <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+                  <p className="cockpit-display text-sm text-violet-100">QuantAI verdict</p>
                   {verdictSource && (
-                    <span className="rounded-full border border-white/10 bg-black/30 px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-400">
+                    <span className="shrink-0 rounded-full border border-white/10 bg-black/35 px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-400">
                       {verdictSource}
                     </span>
                   )}
                 </div>
-                <p className="mt-2 text-[13px] leading-relaxed text-slate-100/95">{verdict.verdict}</p>
-                <p className="mt-1 text-[11px] text-slate-400">
+                <p className="cockpit-body mt-3 text-[13px] leading-relaxed text-slate-100/95">{verdict.verdict}</p>
+                <p className="cockpit-body mt-2 text-[11px] leading-relaxed text-slate-400">
                   Winner:{" "}
                   <a
                     href={verdict.winnerLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-medium text-cyan-200 underline-offset-2 hover:underline"
+                    className="font-semibold text-cyan-200 underline-offset-2 hover:underline"
                   >
                     {verdict.winnerTitle}
                   </a>
                   <span className="mx-1 text-slate-600">·</span>
-                  Decision confidence · {verdict.confidence}
+                  Confidence · {verdict.confidence}
                 </p>
-                <ul className="mt-2 list-disc space-y-1 pl-4 text-slate-400">
+                <ul className="cockpit-body mt-3 list-disc space-y-1.5 pl-4 text-[12px] leading-relaxed text-slate-400">
                   {verdict.rationale.map((r) => (
-                    <li key={r}>{r}</li>
+                    <li key={r} className="[overflow-wrap:anywhere]">
+                      {r}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -633,7 +641,7 @@ export default function ProductResultsSurface({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: reduceMotion ? 0 : 0.22 }}
-          className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3"
+          className="grid min-w-0 gap-6 sm:grid-cols-2 xl:grid-cols-3"
         >
           {sortedProducts.map((p, index) => {
             const rank = rankByLink.get(p.link) ?? index;

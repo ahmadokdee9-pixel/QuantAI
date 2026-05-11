@@ -8,6 +8,7 @@ import {
   Check,
   ChevronDown,
   Copy,
+  ImageIcon,
   Minus,
   PanelRight,
   Shield,
@@ -54,6 +55,39 @@ function badgeChipClass(key: string): string {
   }
 }
 
+function qiConfidenceTier(score: number): "high" | "good" | "mid" | "low" {
+  if (score >= 78) return "high";
+  if (score >= 62) return "good";
+  if (score >= 45) return "mid";
+  return "low";
+}
+
+function qiRingGradientStops(tier: ReturnType<typeof qiConfidenceTier>): [string, string, string] {
+  switch (tier) {
+    case "high":
+      return ["#34d399", "#22d3ee", "#a5f3fc"];
+    case "good":
+      return ["#22d3ee", "#67e8f9", "#a78bfa"];
+    case "mid":
+      return ["#fbbf24", "#f472b6", "#a78bfa"];
+    default:
+      return ["#fb7185", "#94a3b8", "#64748b"];
+  }
+}
+
+function qiCenterLabelClass(tier: ReturnType<typeof qiConfidenceTier>): string {
+  switch (tier) {
+    case "high":
+      return "text-emerald-100";
+    case "good":
+      return "text-cyan-100";
+    case "mid":
+      return "text-amber-100";
+    default:
+      return "text-slate-200";
+  }
+}
+
 function TrendIcon({ trend }: { trend: QuantProduct["priceTrend"] }) {
   if (trend === "down") {
     return (
@@ -92,6 +126,47 @@ type Props = {
   onOpenIntelligence: (p: QuantProduct) => void;
 };
 
+const btnRow =
+  "min-h-[2.5rem] shrink-0 rounded-full text-[11px] font-semibold tracking-tight transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400/50";
+
+function CardProductImage({ src, reduceMotion }: { src: string; reduceMotion: boolean | null }) {
+  const [loaded, setLoaded] = useState(false);
+  const [err, setErr] = useState(false);
+  if (err) {
+    return (
+      <div
+        className="flex aspect-[4/3] max-h-[8.5rem] min-h-[6.75rem] w-full flex-col items-center justify-center gap-2 rounded-[1.05rem] border border-dashed border-white/[0.12] bg-gradient-to-br from-slate-900/80 via-[#0a1220]/95 to-slate-900/90 text-center"
+        aria-hidden
+      >
+        <ImageIcon className="size-8 text-slate-600" strokeWidth={1.25} />
+        <span className="text-[10px] font-medium uppercase tracking-wider text-slate-600">No preview</span>
+      </div>
+    );
+  }
+  return (
+    <div className="relative aspect-[4/3] max-h-[8.5rem] min-h-[6.75rem] w-full overflow-hidden rounded-[1.05rem] border border-white/[0.09] bg-gradient-to-b from-white/[0.14] to-slate-900/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]">
+      {!loaded && (
+        <div className="qi-image-shimmer absolute inset-0 z-[1] rounded-[inherit]" aria-hidden />
+      )}
+      <motion.img
+        src={src}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        onLoad={() => setLoaded(true)}
+        onError={() => setErr(true)}
+        className="relative z-[2] mx-auto h-full w-full max-h-[8.25rem] object-contain object-center p-2.5 drop-shadow-[0_14px_28px_rgba(0,0,0,0.38)]"
+        initial={false}
+        animate={{ opacity: loaded ? 1 : 0 }}
+        transition={{ duration: reduceMotion ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
+        whileHover={
+          reduceMotion ? undefined : { scale: 1.03, transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] } }
+        }
+      />
+    </div>
+  );
+}
+
 export default function ProductResultCard({
   product: p,
   list,
@@ -107,11 +182,12 @@ export default function ProductResultCard({
   const reduceMotion = useReducedMotion();
   const ringGradId = useId().replace(/:/g, "");
   const [intelOpen, setIntelOpen] = useState(false);
-  const [imgErr, setImgErr] = useState(false);
   const [cardCopyFlash, setCardCopyFlash] = useState(false);
   const ai = calculateAIScore(p, list);
   const score = p.qiComposite != null && Number.isFinite(p.qiComposite) ? p.qiComposite : ai.score;
   const scoreNorm = Math.min(100, Math.max(0, Number(score) || 0));
+  const qiTier = qiConfidenceTier(scoreNorm);
+  const [g0, g1, g2] = qiRingGradientStops(qiTier);
   const badge = getProfessionalBadge(p, list, rank);
   const trust = getStoreTrustScore(p.store);
   const inCompare = compareLinks.includes(p.link);
@@ -122,352 +198,368 @@ export default function ProductResultCard({
   const mkt = marketplaceVerifiedLabel(p);
   const riskHint = riskHintFromProduct(p);
   const ltHint = longTermValueHint(p, list);
-  const ringR = 21;
+  const ringR = 22;
   const ringC = 2 * Math.PI * ringR;
   const ringDash = ringC * (1 - scoreNorm / 100);
 
   const transition = reduceMotion
     ? { duration: 0 }
-    : { type: "spring" as const, stiffness: 420, damping: 34 };
+    : { type: "spring" as const, stiffness: 400, damping: 34 };
 
   const mktChipClass =
     mkt.tone === "high"
-      ? "border-emerald-400/25 bg-emerald-500/10 text-emerald-100/90"
+      ? "border-emerald-400/28 bg-emerald-500/[0.11] text-emerald-100/95"
       : mkt.tone === "mid"
-        ? "border-cyan-400/20 bg-cyan-500/8 text-cyan-100/85"
-        : "border-amber-400/25 bg-amber-500/10 text-amber-100/90";
+        ? "border-cyan-400/22 bg-cyan-500/[0.09] text-cyan-100/90"
+        : "border-amber-400/28 bg-amber-500/[0.11] text-amber-100/90";
 
   return (
-    <MagneticSurface className="h-full" strength={0.09}>
+    <MagneticSurface className="h-full min-w-0" strength={0.08}>
       <motion.article
         layout
-        initial={reduceMotion ? false : { opacity: 0, y: 22 }}
+        initial={reduceMotion ? false : { opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ ...transition, delay: Math.min(index * 0.035, 0.4) }}
+        transition={{ ...transition, delay: Math.min(index * 0.032, 0.38) }}
         whileHover={
           reduceMotion
             ? undefined
             : {
-                y: -3,
-                transition: { type: "spring", stiffness: 400, damping: 28 },
+                y: -4,
+                transition: { type: "spring", stiffness: 380, damping: 26 },
               }
         }
-        className={`cockpit-card-lift group relative flex h-full flex-col overflow-hidden rounded-[1.5rem] p-px bg-gradient-to-br from-white/[0.14] via-cyan-400/10 to-violet-500/16 ${
+        className={`qi-product-card-shell group relative flex h-full min-w-0 flex-col overflow-hidden rounded-[1.55rem] p-px ${
           scoreNorm >= 78
-            ? "shadow-[0_28px_85px_-28px_rgba(34,211,238,0.22)]"
-            : "shadow-[0_24px_70px_-32px_rgba(0,0,0,0.88)]"
+            ? "bg-gradient-to-br from-cyan-400/22 via-white/[0.12] to-violet-500/20"
+            : "bg-gradient-to-br from-white/[0.14] via-cyan-400/10 to-violet-500/16"
         }`}
       >
-      <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.45rem] border border-white/[0.07] bg-gradient-to-b from-white/[0.08] to-[#060b14]/98 backdrop-blur-2xl transition-[box-shadow,border-color] duration-500 group-hover:border-cyan-400/22 group-hover:shadow-[0_32px_90px_-28px_rgba(34,211,238,0.18)]">
-        <div className="pointer-events-none absolute -right-16 -top-16 size-44 rounded-full bg-cyan-400/10 blur-3xl opacity-0 transition duration-700 group-hover:opacity-100" />
-        <div className="pointer-events-none absolute -bottom-20 -left-12 size-40 rounded-full bg-violet-500/10 blur-3xl opacity-0 transition duration-700 group-hover:opacity-50" />
+        <div className="qi-product-card-inner relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.48rem] border border-white/[0.08] bg-gradient-to-b from-white/[0.1] via-white/[0.04] to-[#040912]/98 backdrop-blur-2xl transition-[border-color,box-shadow] duration-500 group-hover:border-cyan-400/25">
+          <div className="pointer-events-none absolute -right-20 -top-20 size-48 rounded-full bg-cyan-400/12 blur-3xl opacity-0 transition duration-700 group-hover:opacity-100" />
+          <div className="pointer-events-none absolute -bottom-24 -left-16 size-44 rounded-full bg-violet-500/12 blur-3xl opacity-0 transition duration-700 group-hover:opacity-50" />
 
-        <div className="flex items-start justify-between gap-2 px-4 pt-4">
-          <span
-            className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${badgeChipClass(badge.key)}`}
-          >
-            {badge.label}
-          </span>
-          <button
-            type="button"
-            onClick={() => toggleCompare(p.link)}
-            disabled={!inCompare && compareLinks.length >= 3}
-            aria-pressed={inCompare}
-            className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition active:scale-95 ${
-              inCompare
-                ? "border-cyan-400/45 bg-cyan-400/18 text-cyan-100 shadow-[0_0_20px_-6px_rgba(34,211,238,0.45)]"
-                : "border-white/12 bg-black/35 text-slate-400 hover:border-white/22 hover:text-slate-200 disabled:opacity-40"
-            }`}
-          >
-            Compare
-          </button>
-        </div>
-
-        {p.image && !imgErr && (
-          <div className="mx-4 mt-3 overflow-hidden rounded-[1.05rem] border border-white/[0.08] bg-gradient-to-b from-white/[0.12] to-white p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
-            <motion.img
-              src={p.image}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              onError={() => setImgErr(true)}
-              className="mx-auto h-[7.25rem] w-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.35)]"
-              whileHover={
-                reduceMotion
-                  ? undefined
-                  : { scale: 1.045, transition: { duration: 0.34, ease: [0.22, 1, 0.36, 1] } }
-              }
-            />
+          <div className="relative z-[2] flex items-start justify-between gap-2 px-4 pt-4 sm:px-5">
+            <span
+              className={`max-w-[min(100%,12rem)] truncate rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${badgeChipClass(badge.key)}`}
+            >
+              {badge.label}
+            </span>
+            <button
+              type="button"
+              onClick={() => toggleCompare(p.link)}
+              disabled={!inCompare && compareLinks.length >= 3}
+              aria-pressed={inCompare}
+              className={`shrink-0 rounded-full border px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] transition active:scale-[0.98] ${
+                inCompare
+                  ? "border-cyan-400/45 bg-cyan-400/18 text-cyan-100 shadow-[0_0_20px_-6px_rgba(34,211,238,0.45)]"
+                  : "border-white/12 bg-black/40 text-slate-400 hover:border-white/22 hover:bg-white/[0.06] hover:text-slate-200 disabled:opacity-40"
+              }`}
+            >
+              Compare
+            </button>
           </div>
-        )}
 
-        <div className="flex min-h-0 flex-1 flex-col px-4 pb-4 pt-3">
-          <h3 className="text-[14px] font-semibold leading-snug tracking-tight text-white/95 line-clamp-2">
-            {p.title}
-          </h3>
-
-          <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[11px] text-slate-400">
-            <span className="inline-flex min-w-0 items-center gap-1.5 font-medium text-slate-300">
-              <span
-                className="flex size-6 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-gradient-to-br from-white/[0.08] to-black/40 text-[9px] font-bold tracking-tight text-cyan-100/90"
+          <div className="relative z-[2] mx-4 mt-3.5 min-w-0 sm:mx-5">
+            {p.image ? (
+              <CardProductImage key={`${p.link}-${p.image}`} src={p.image} reduceMotion={reduceMotion} />
+            ) : (
+              <div
+                className="flex aspect-[4/3] max-h-[8.5rem] min-h-[6.75rem] w-full flex-col items-center justify-center gap-2 rounded-[1.05rem] border border-dashed border-white/[0.12] bg-gradient-to-br from-slate-900/80 via-[#0a1220]/95 to-slate-900/90 text-center"
                 aria-hidden
               >
-                {retailerMonogram(p.store)}
-              </span>
-              <Store className="size-3 shrink-0 opacity-70" strokeWidth={1.5} aria-hidden />
-              <span className="truncate">{p.store}</span>
-            </span>
-            <span className="inline-flex shrink-0 items-center gap-1 tabular-nums">
-              <Shield className="size-3 text-cyan-400/55" strokeWidth={1.5} aria-hidden />
-              <span className="text-slate-400">Trust</span>{" "}
-              <span className="text-slate-200">{trust}</span>
-            </span>
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-end justify-between gap-3 border-t border-white/[0.06] pt-3">
-            <div className="min-w-0">
-              {p.displayPrice ? (
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                  {p.displayPrice}
-                </p>
-              ) : (
-                <p className="text-[10px] text-slate-600">Listed price</p>
-              )}
-              <div className="mt-0.5 flex flex-wrap items-baseline gap-1.5">
-                <p className="text-xl font-semibold tabular-nums tracking-tight text-white">
-                  {formatListingPrice(p.price, sym)}
-                </p>
-                {p.oldPrice != null && p.oldPrice > p.price && (
-                  <span className="text-xs text-slate-500 line-through tabular-nums">
-                    {formatListingPrice(p.oldPrice, sym)}
-                  </span>
-                )}
-              </div>
-              <div className="mt-0.5">
-                <TrendIcon trend={p.priceTrend} />
-              </div>
-            </div>
-            <div className="flex shrink-0 items-center gap-2.5">
-              <div className="relative size-[3.35rem] shrink-0">
-                <svg
-                  className="size-[3.35rem] -rotate-90"
-                  viewBox="0 0 52 52"
-                  aria-hidden
-                >
-                  <defs>
-                    <linearGradient id={ringGradId} x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#22d3ee" />
-                      <stop offset="55%" stopColor="#a78bfa" />
-                      <stop offset="100%" stopColor="#34d399" />
-                    </linearGradient>
-                  </defs>
-                  <circle
-                    cx="26"
-                    cy="26"
-                    r={ringR}
-                    fill="none"
-                    className="stroke-white/[0.08]"
-                    strokeWidth="4"
-                  />
-                  <circle
-                    cx="26"
-                    cy="26"
-                    r={ringR}
-                    fill="none"
-                    stroke={`url(#${ringGradId})`}
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                    strokeDasharray={ringC}
-                    strokeDashoffset={ringDash}
-                    className="transition-[stroke-dashoffset] duration-700 ease-out"
-                  />
-                </svg>
-                <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[11px] font-bold tabular-nums text-cyan-100">
-                  {Math.round(scoreNorm)}
+                <ImageIcon className="size-8 text-slate-600" strokeWidth={1.25} />
+                <span className="text-[10px] font-medium uppercase tracking-wider text-slate-600">
+                  No preview
                 </span>
               </div>
-              <div className="text-right">
-                <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                  {p.qiComposite != null ? "QI composite" : "Model layer"}
-                </p>
-                <p className="text-[10px] font-medium text-cyan-200/80">/ 100 signal</p>
+            )}
+          </div>
+
+          <div className="relative z-[2] flex min-h-0 min-w-0 flex-1 flex-col px-4 pb-4 pt-3.5 sm:px-5 sm:pb-5 sm:pt-4">
+            <h3 className="text-[14px] font-semibold leading-snug tracking-tight text-white/[0.96] line-clamp-2 sm:text-[15px] sm:leading-snug">
+              {p.title}
+            </h3>
+
+            <div className="mt-2.5 flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] leading-snug text-slate-400/95">
+              <span className="inline-flex min-w-0 max-w-full items-center gap-1.5 font-medium text-slate-300">
+                <span
+                  className="flex size-6 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-gradient-to-br from-white/[0.1] to-black/45 text-[9px] font-bold tracking-tight text-cyan-100/90"
+                  aria-hidden
+                >
+                  {retailerMonogram(p.store)}
+                </span>
+                <Store className="size-3 shrink-0 opacity-70" strokeWidth={1.5} aria-hidden />
+                <span className="min-w-0 truncate">{p.store}</span>
+              </span>
+              <span className="inline-flex shrink-0 items-center gap-1 tabular-nums">
+                <Shield className="size-3 text-cyan-400/55" strokeWidth={1.5} aria-hidden />
+                <span className="text-slate-500">Trust</span>{" "}
+                <span className="text-slate-200">{trust}</span>
+              </span>
+            </div>
+
+            <div className="mt-3.5 flex min-w-0 flex-wrap items-end justify-between gap-3 border-t border-white/[0.07] pt-3.5">
+              <div className="min-w-0 flex-1">
+                {p.displayPrice ? (
+                  <p className="cockpit-label text-[10px] tracking-[0.14em] text-slate-500">
+                    {p.displayPrice}
+                  </p>
+                ) : (
+                  <p className="cockpit-label text-[10px] text-slate-600">Listed price</p>
+                )}
+                <div className="mt-1 flex flex-wrap items-baseline gap-1.5">
+                  <p className="text-[1.35rem] font-semibold tabular-nums tracking-tight text-white sm:text-xl">
+                    {formatListingPrice(p.price, sym)}
+                  </p>
+                  {p.oldPrice != null && p.oldPrice > p.price && (
+                    <span className="text-xs text-slate-500 line-through tabular-nums">
+                      {formatListingPrice(p.oldPrice, sym)}
+                    </span>
+                  )}
+                </div>
+                <div className="mt-1">
+                  <TrendIcon trend={p.priceTrend} />
+                </div>
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                <div className="relative size-[3.65rem] shrink-0">
+                  <svg
+                    className="size-[3.65rem] -rotate-90"
+                    viewBox="0 0 54 54"
+                    role="img"
+                    aria-label={`QI score ${Math.round(scoreNorm)} of 100`}
+                  >
+                    <defs>
+                      <linearGradient id={ringGradId} x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor={g0} />
+                        <stop offset="50%" stopColor={g1} />
+                        <stop offset="100%" stopColor={g2} />
+                      </linearGradient>
+                    </defs>
+                    <circle
+                      cx="27"
+                      cy="27"
+                      r={ringR}
+                      fill="none"
+                      className="stroke-white/[0.07]"
+                      strokeWidth="4.5"
+                    />
+                    <motion.circle
+                      cx="27"
+                      cy="27"
+                      r={ringR}
+                      fill="none"
+                      stroke={`url(#${ringGradId})`}
+                      strokeWidth="4.5"
+                      strokeLinecap="round"
+                      strokeDasharray={ringC}
+                      initial={reduceMotion ? false : { strokeDashoffset: ringC }}
+                      animate={{ strokeDashoffset: ringDash }}
+                      transition={
+                        reduceMotion
+                          ? { duration: 0 }
+                          : { duration: 1.05, ease: [0.22, 1, 0.36, 1] }
+                      }
+                    />
+                  </svg>
+                  <span
+                    className={`pointer-events-none absolute inset-0 flex items-center justify-center text-[12px] font-bold tabular-nums ${qiCenterLabelClass(qiTier)}`}
+                  >
+                    {Math.round(scoreNorm)}
+                  </span>
+                </div>
+                <div className="max-w-[5.5rem] text-right">
+                  <p className="text-[9px] font-semibold uppercase leading-tight tracking-[0.1em] text-slate-500">
+                    {p.qiComposite != null ? "QI composite" : "Model layer"}
+                  </p>
+                  <p className="text-[10px] font-medium leading-tight text-slate-400">/ 100</p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="mt-2.5 flex flex-wrap gap-1.5 text-[10px]">
-            <span
-              className="rounded-full border border-cyan-400/20 bg-cyan-500/8 px-2 py-0.5 font-medium tabular-nums text-cyan-100/85"
-              title="Heuristic delivery confidence from listing + trust"
-            >
-              Delivery · {delPct}%
-            </span>
-            <span
-              className="rounded-full border border-violet-400/20 bg-violet-500/8 px-2 py-0.5 font-medium tabular-nums text-violet-100/85"
-              title="Availability language confidence"
-            >
-              Stock · {stockPct}%
-            </span>
-            <span className={`max-w-[min(100%,14rem)] truncate rounded-full border px-2 py-0.5 ${mktChipClass}`}>
-              {mkt.label}
-            </span>
-            {ratingValue(p.rating) > 0 && (
-              <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-white/10 bg-black/25 px-2 py-0.5 text-amber-200/90">
-                <Star className="size-2.5 shrink-0" strokeWidth={1.5} aria-hidden />
-                {ratingValue(p.rating).toFixed(1)}
-                {p.reviewsCount != null && (
-                  <span className="truncate text-slate-500">({p.reviewsCount.toLocaleString()})</span>
-                )}
-              </span>
-            )}
-            {shipEst && (
-              <span className="inline-flex max-w-[min(100%,11rem)] items-center gap-1 truncate rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-slate-400">
-                <Truck className="size-2.5 shrink-0" strokeWidth={1.5} aria-hidden />
-                {shipEst}
-              </span>
-            )}
-            {p.availability && (
-              <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-0.5 text-emerald-200/90">
-                {p.availability}
-              </span>
-            )}
-            {riskHint && (
-              <span className="max-w-full rounded-full border border-amber-400/30 bg-amber-500/10 px-2 py-0.5 text-amber-100/90">
-                {riskHint}
-              </span>
-            )}
-            {ltHint && (
-              <span className="max-w-full rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-slate-300">
-                {ltHint}
-              </span>
-            )}
-          </div>
-
-          <p className="mt-2.5 text-[11px] font-normal leading-relaxed text-slate-400 line-clamp-2">
-            {p.qiReason?.trim() || ai.reason}
-          </p>
-
-          <button
-            type="button"
-            onClick={() => setIntelOpen((o) => !o)}
-            className="mt-2 flex w-full items-center justify-between gap-2 rounded-xl border border-white/[0.07] bg-black/25 px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 transition hover:border-cyan-400/20 hover:text-slate-200"
-            aria-expanded={intelOpen}
-          >
-            <span>Signal depth</span>
-            <ChevronDown
-              className={`size-3.5 shrink-0 text-cyan-300/70 transition ${intelOpen ? "rotate-180" : ""}`}
-              strokeWidth={2}
-              aria-hidden
-            />
-          </button>
-          <AnimatePresence initial={false}>
-            {intelOpen && (
-              <motion.div
-                initial={reduceMotion ? false : { height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }}
-                className="overflow-hidden"
-              >
-                <div className="mt-2 space-y-2 rounded-xl border border-cyan-400/15 bg-gradient-to-b from-cyan-500/[0.06] to-transparent px-3 py-2.5 text-[11px] leading-relaxed text-slate-300">
-                  <p>
-                    <span className="font-semibold text-cyan-100/90">Model read · </span>
-                    <span className="text-cyan-50/90">{ai.label}</span>
-                    <span className="text-slate-500"> — </span>
-                    {ai.reason}
-                  </p>
-                  <p className="text-slate-400">
-                    <span className="font-semibold text-white/80">QI narrative · </span>
-                    {p.qiReason?.trim() ||
-                      "Composite index blends price position, review strength, and retailer trust for this result set."}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5 pt-0.5">
-                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-slate-300">
-                      Rank #{rank + 1} in tray
-                    </span>
-                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-slate-300">
-                      Store trust {trust}
-                    </span>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <motion.button
-            type="button"
-            onClick={() => onOpenIntelligence(p)}
-            whileTap={{ scale: 0.98 }}
-            className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-400/25 bg-gradient-to-r from-cyan-400/[0.12] to-violet-500/[0.1] py-2 text-[11px] font-semibold text-cyan-50/95 shadow-[0_0_24px_-12px_rgba(34,211,238,0.35)] transition hover:border-cyan-400/40 hover:from-cyan-400/[0.16] hover:to-violet-500/[0.14]"
-          >
-            <Sparkles className="size-3.5 text-cyan-200/90" strokeWidth={1.5} aria-hidden />
-            QuantAI Verdict &amp; tradeoffs
-            <PanelRight className="size-3.5 opacity-80" strokeWidth={1.5} aria-hidden />
-          </motion.button>
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            <motion.button
-              type="button"
-              onClick={() => {
-                void (async () => {
-                  const ok = await copyText(buildProductSnapshot(p, list));
-                  if (ok) {
-                    setCardCopyFlash(true);
-                    window.setTimeout(() => setCardCopyFlash(false), 2000);
-                  }
-                })();
-              }}
-              whileHover={reduceMotion ? undefined : { scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white/15 bg-white/[0.05] px-3 py-2 text-[11px] font-semibold text-slate-200 transition hover:border-cyan-400/25 hover:bg-white/[0.08]"
-            >
-              {cardCopyFlash ? (
-                <Check className="size-3.5 text-emerald-300" aria-hidden />
-              ) : (
-                <Copy className="size-3.5 opacity-80" aria-hidden />
-              )}
-              {cardCopyFlash ? "Copied" : "Export card"}
-            </motion.button>
-            <motion.a
-              href={p.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={reduceMotion ? undefined : { scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="relative flex min-w-[108px] flex-1 items-center justify-center overflow-hidden rounded-full bg-gradient-to-r from-white via-slate-50 to-white py-2 text-[12px] font-semibold text-slate-900 shadow-[0_6px_24px_-10px_rgba(255,255,255,0.3)]"
-            >
+            <div className="mt-3 flex min-w-0 flex-wrap gap-1.5 text-[10px] leading-snug">
               <span
-                className="absolute inset-0 bg-gradient-to-r from-cyan-200/0 via-cyan-200/25 to-violet-200/0 opacity-0 transition group-hover:opacity-100"
+                className="rounded-full border border-cyan-400/22 bg-cyan-500/[0.09] px-2 py-0.5 font-medium tabular-nums text-cyan-50/95"
+                title="Heuristic delivery confidence from listing + trust"
+              >
+                Delivery · {delPct}%
+              </span>
+              <span
+                className="rounded-full border border-violet-400/22 bg-violet-500/[0.09] px-2 py-0.5 font-medium tabular-nums text-violet-50/95"
+                title="Availability language confidence"
+              >
+                Stock · {stockPct}%
+              </span>
+              <span className={`max-w-[min(100%,14rem)] truncate rounded-full border px-2 py-0.5 ${mktChipClass}`}>
+                {mkt.label}
+              </span>
+              {ratingValue(p.rating) > 0 && (
+                <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-white/10 bg-black/30 px-2 py-0.5 text-amber-200/90">
+                  <Star className="size-2.5 shrink-0" strokeWidth={1.5} aria-hidden />
+                  {ratingValue(p.rating).toFixed(1)}
+                  {p.reviewsCount != null && (
+                    <span className="truncate text-slate-500">({p.reviewsCount.toLocaleString()})</span>
+                  )}
+                </span>
+              )}
+              {shipEst && (
+                <span className="inline-flex max-w-[min(100%,11rem)] items-center gap-1 truncate rounded-full border border-white/10 bg-black/25 px-2 py-0.5 text-slate-400">
+                  <Truck className="size-2.5 shrink-0" strokeWidth={1.5} aria-hidden />
+                  {shipEst}
+                </span>
+              )}
+              {p.availability && (
+                <span className="rounded-full border border-emerald-400/22 bg-emerald-400/10 px-2 py-0.5 text-emerald-100/90">
+                  {p.availability}
+                </span>
+              )}
+              {riskHint && (
+                <span className="max-w-full rounded-full border border-amber-400/28 bg-amber-500/[0.1] px-2 py-0.5 text-amber-50/95">
+                  {riskHint}
+                </span>
+              )}
+              {ltHint && (
+                <span className="max-w-full rounded-full border border-white/10 bg-white/[0.05] px-2 py-0.5 text-slate-300">
+                  {ltHint}
+                </span>
+              )}
+            </div>
+
+            <p className="cockpit-body mt-3 text-[11.5px] leading-relaxed text-slate-400/95 line-clamp-2 sm:text-xs">
+              {p.qiReason?.trim() || ai.reason}
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setIntelOpen((o) => !o)}
+              className="mt-3 flex w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-white/[0.08] bg-black/30 px-3 py-2.5 text-left transition hover:border-cyan-400/25 hover:bg-cyan-500/[0.06]"
+              aria-expanded={intelOpen}
+            >
+              <span className="cockpit-label text-[10px] tracking-[0.14em] text-slate-500 group-hover:text-slate-400">
+                Signal depth
+              </span>
+              <ChevronDown
+                className={`size-4 shrink-0 text-cyan-300/75 transition duration-300 ${intelOpen ? "rotate-180" : ""}`}
+                strokeWidth={2}
                 aria-hidden
               />
-              <span className="relative">View offer</span>
-            </motion.a>
-            {addToWatchlist && (
-              <motion.button
-                type="button"
-                onClick={() => addToWatchlist(p)}
-                whileHover={reduceMotion ? undefined : { scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                className="rounded-full border border-violet-400/35 bg-violet-500/15 px-2.5 py-2 text-[11px] font-semibold text-violet-100 transition hover:bg-violet-500/25"
-                title="Watchlist foundation"
-              >
-                Watch
-              </motion.button>
-            )}
+            </button>
+            <AnimatePresence initial={false}>
+              {intelOpen && (
+                <motion.div
+                  initial={reduceMotion ? false : { height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: reduceMotion ? 0 : 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-2 space-y-3 rounded-2xl border border-cyan-400/18 bg-gradient-to-b from-cyan-500/[0.08] via-black/20 to-transparent px-3.5 py-3.5 sm:px-4 sm:py-4">
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-cyan-200/85">
+                        Model read
+                      </p>
+                      <p className="cockpit-body text-[12px] leading-relaxed text-slate-200/95">
+                        <span className="font-semibold text-cyan-100/95">{ai.label}</span>
+                        <span className="text-slate-500"> — </span>
+                        {ai.reason}
+                      </p>
+                    </div>
+                    <div className="space-y-1.5 border-t border-white/[0.06] pt-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                        QI narrative
+                      </p>
+                      <p className="cockpit-body text-[12px] leading-relaxed text-slate-400">
+                        {p.qiReason?.trim() ||
+                          "Composite index blends price position, review strength, and retailer trust for this result set."}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 border-t border-white/[0.05] pt-3">
+                      <span className="rounded-full border border-white/12 bg-white/[0.06] px-2.5 py-1 text-[10px] font-semibold tracking-wide text-slate-200">
+                        Rank #{rank + 1}
+                      </span>
+                      <span className="rounded-full border border-cyan-400/15 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-semibold tabular-nums text-cyan-100/90">
+                        Trust {trust}
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <motion.button
               type="button"
-              onClick={() => saveProduct(p)}
-              disabled={savedLinks.has(p.link)}
-              whileHover={reduceMotion ? undefined : { scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              className="rounded-full border border-cyan-400/40 bg-gradient-to-br from-cyan-400/20 to-cyan-500/5 px-3.5 py-2 text-[12px] font-semibold text-cyan-50 shadow-[0_0_20px_-8px_rgba(34,211,238,0.35)] transition hover:border-cyan-300/50 disabled:opacity-45"
+              onClick={() => onOpenIntelligence(p)}
+              whileTap={{ scale: 0.99 }}
+              className="mt-3 flex w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-cyan-400/28 bg-gradient-to-r from-cyan-400/[0.14] to-violet-500/[0.12] py-2.5 text-[11px] font-semibold text-cyan-50/98 shadow-[0_0_28px_-12px_rgba(34,211,238,0.28)] transition hover:border-cyan-400/40 hover:from-cyan-400/[0.18] hover:to-violet-500/[0.15]"
             >
-              {savedLinks.has(p.link) ? "Saved" : "Save"}
+              <Sparkles className="size-3.5 text-cyan-200/90" strokeWidth={1.5} aria-hidden />
+              QuantAI Verdict &amp; tradeoffs
+              <PanelRight className="size-3.5 opacity-80" strokeWidth={1.5} aria-hidden />
             </motion.button>
+
+            <div className="mt-3.5 flex min-w-0 flex-wrap items-stretch justify-center gap-2 sm:gap-2.5">
+              <motion.button
+                type="button"
+                onClick={() => {
+                  void (async () => {
+                    const ok = await copyText(buildProductSnapshot(p, list));
+                    if (ok) {
+                      setCardCopyFlash(true);
+                      window.setTimeout(() => setCardCopyFlash(false), 2000);
+                    }
+                  })();
+                }}
+                whileHover={reduceMotion ? undefined : { scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`${btnRow} inline-flex min-w-0 flex-[1_1_5.5rem] items-center justify-center gap-1.5 border border-white/12 bg-white/[0.06] px-3 text-slate-200 hover:border-cyan-400/28 hover:bg-white/[0.09]`}
+              >
+                {cardCopyFlash ? (
+                  <Check className="size-3.5 text-emerald-300" aria-hidden />
+                ) : (
+                  <Copy className="size-3.5 opacity-85" aria-hidden />
+                )}
+                {cardCopyFlash ? "Copied" : "Export"}
+              </motion.button>
+              <motion.a
+                href={p.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={reduceMotion ? undefined : { scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`${btnRow} relative flex min-w-[7.5rem] flex-[1.1_1_7rem] items-center justify-center overflow-hidden bg-gradient-to-r from-white via-slate-50 to-white px-4 text-slate-900 shadow-[0_8px_28px_-12px_rgba(255,255,255,0.25)] hover:brightness-[1.03]`}
+              >
+                <span
+                  className="absolute inset-0 bg-gradient-to-r from-cyan-200/0 via-cyan-200/20 to-violet-200/0 opacity-0 transition group-hover:opacity-100"
+                  aria-hidden
+                />
+                <span className="relative">View offer</span>
+              </motion.a>
+              {addToWatchlist && (
+                <motion.button
+                  type="button"
+                  onClick={() => addToWatchlist(p)}
+                  whileHover={reduceMotion ? undefined : { scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`${btnRow} border border-violet-400/32 bg-violet-500/14 px-3.5 text-violet-100 hover:bg-violet-500/22`}
+                  title="Add to watchlist"
+                >
+                  Watch
+                </motion.button>
+              )}
+              <motion.button
+                type="button"
+                onClick={() => saveProduct(p)}
+                disabled={savedLinks.has(p.link)}
+                whileHover={reduceMotion ? undefined : { scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`${btnRow} border border-cyan-400/38 bg-gradient-to-br from-cyan-400/22 to-cyan-600/8 px-4 text-cyan-50 shadow-[0_0_22px_-10px_rgba(34,211,238,0.35)] hover:border-cyan-300/50 disabled:opacity-45`}
+              >
+                {savedLinks.has(p.link) ? "Saved" : "Save"}
+              </motion.button>
+            </div>
           </div>
         </div>
-      </div>
-    </motion.article>
+      </motion.article>
     </MagneticSurface>
   );
 }
