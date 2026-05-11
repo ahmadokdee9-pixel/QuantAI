@@ -379,4 +379,93 @@ body {
   .animate-shimmer {
     animation: none !important;
   }
+
+  .cosmic-constellation-motion,
+  .neural-mesh-slow,
+  .intel-panel-shimmer::after {
+    animation: none !important;
+  }
+}
+
+/* Constellation drift — ultra-slow, low amplitude */
+@keyframes constellation-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate(-1.1%, 0.7%) rotate(0.5deg);
+  }
+}
+
+.cosmic-constellation-motion {
+  animation: constellation-drift 88s ease-in-out infinite;
+}
+
+/* Neural mesh — subtle moving grid sheen */
+@keyframes neural-mesh-shift {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+  100% {
+    background-position: 120px 80px, -80px 60px;
+  }
+}
+
+.neural-mesh-slow {
+  background-image:
+    linear-gradient(
+      rgba(34, 211, 238, 0.07) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgba(167, 139, 250, 0.06) 1px, transparent 1px);
+  background-size: 120px 120px, 140px 140px;
+  animation: neural-mesh-shift 48s linear infinite;
+}
+
+/* Cinematic skeleton cards */
+.skeleton-cinematic {
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.055) 0%,
+    rgba(15, 23, 42, 0.35) 48%,
+    rgba(2, 6, 23, 0.55) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.05) inset,
+    0 26px 70px -34px rgba(0, 0, 0, 0.82);
+}
+
+/* Intelligence panel edge shimmer */
+.intel-panel-shimmer {
+  position: relative;
+  isolation: isolate;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .intel-panel-shimmer::after {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      105deg,
+      transparent 0%,
+      transparent 40%,
+      rgba(34, 211, 238, 0.07) 50%,
+      transparent 60%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 12s ease-in-out infinite;
+    opacity: 0.85;
+  }
+}
+
+/* Stream ribbon (search pipeline) depth */
+.stream-ribbon {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 20px 50px -28px rgba(34, 211, 238, 0.12);
 }

@@ -11,6 +11,9 @@ import PricingCards from "../components/subscription/PricingCards";
 import FeedbackLauncher from "../components/feedback/FeedbackLauncher";
 import TrustRibbon from "../components/trust/TrustRibbon";
 import AILoadingPhase from "../components/loading/AILoadingPhase";
+import SearchStreamRibbon from "../components/loading/SearchStreamRibbon";
+import MagneticSurface from "../components/motion/MagneticSurface";
+import { useCockpit } from "../components/cockpit/cockpitContext";
 import { calculateAIScore } from "./api/search/lib/aiScoring";
 import ProductResultsSurface from "../components/search/ProductResultsSurface";
 import {
@@ -50,6 +53,7 @@ type SearchHistoryRow = {
 
 export default function Home() {
   const { isSignedIn } = useUser();
+  const { registerPrimarySearch, pulseIntelligence } = useCockpit();
   const [query, setQuery] = useState("");
   const [products, setProducts] = useState<QuantProduct[]>([]);
   const [dealClusters, setDealClusters] = useState<DealClusterDTO[]>([]);
@@ -152,6 +156,11 @@ export default function Home() {
       cancelled = true;
     };
   }, [isSignedIn]);
+
+  useEffect(() => {
+    if (loading || !searchIntelligence) return;
+    pulseIntelligence();
+  }, [loading, searchIntelligence, pulseIntelligence]);
 
   function decision(score: number) {
     if (score >= 85) return "Buy now";
@@ -455,6 +464,7 @@ export default function Home() {
                       aria-hidden
                     />
                     <input
+                      ref={registerPrimarySearch}
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && void search()}
@@ -462,31 +472,34 @@ export default function Home() {
                       className="min-w-0 flex-1 bg-transparent py-3.5 text-[15px] font-medium tracking-tight text-white placeholder:text-slate-500/90 placeholder:font-normal outline-none"
                     />
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => void search()}
-                    disabled={loading}
-                    className="group relative inline-flex min-h-[56px] shrink-0 items-center justify-center gap-2 overflow-hidden rounded-2xl px-8 text-[15px] font-semibold tracking-tight text-slate-950 shadow-[0_0_56px_-6px_rgba(34,211,238,0.55)] transition enabled:hover:shadow-[0_0_64px_-4px_rgba(167,139,250,0.45)] disabled:opacity-55"
-                  >
-                    <span className="absolute inset-0 bg-gradient-to-r from-cyan-300 via-sky-400 to-violet-500 transition duration-500 group-hover:scale-[1.02]" />
-                    <span className="absolute inset-0 opacity-0 transition group-hover:opacity-100 bg-gradient-to-r from-white/25 via-transparent to-white/10" />
-                    <span className="relative flex items-center gap-2">
-                      {loading ? (
-                        <>
-                          <Loader2 className="size-[1.05rem] animate-spin" aria-hidden />
-                          Thinking
-                        </>
-                      ) : (
-                        <>
-                          Run intelligence
-                          <ArrowRight className="size-4 transition group-hover:translate-x-0.5" aria-hidden />
-                        </>
-                      )}
-                    </span>
-                  </button>
+                  <MagneticSurface className="inline-flex min-h-[56px] shrink-0" strength={0.14}>
+                    <button
+                      type="button"
+                      onClick={() => void search()}
+                      disabled={loading}
+                      className="group relative inline-flex min-h-[56px] w-full items-center justify-center gap-2 overflow-hidden rounded-2xl px-8 text-[15px] font-semibold tracking-tight text-slate-950 shadow-[0_0_56px_-6px_rgba(34,211,238,0.55)] transition enabled:hover:shadow-[0_0_64px_-4px_rgba(167,139,250,0.45)] disabled:opacity-55"
+                    >
+                      <span className="absolute inset-0 bg-gradient-to-r from-cyan-300 via-sky-400 to-violet-500 transition duration-500 group-hover:scale-[1.02]" />
+                      <span className="absolute inset-0 opacity-0 transition group-hover:opacity-100 bg-gradient-to-r from-white/25 via-transparent to-white/10" />
+                      <span className="relative flex items-center gap-2">
+                        {loading ? (
+                          <>
+                            <Loader2 className="size-[1.05rem] animate-spin" aria-hidden />
+                            Thinking
+                          </>
+                        ) : (
+                          <>
+                            Run intelligence
+                            <ArrowRight className="size-4 transition group-hover:translate-x-0.5" aria-hidden />
+                          </>
+                        )}
+                      </span>
+                    </button>
+                  </MagneticSurface>
                 </div>
                 {loading ? (
-                  <div className="relative mt-3 px-0">
+                  <div className="relative mt-3 space-y-3 px-0">
+                    <SearchStreamRibbon active={loading} />
                     <AILoadingPhase />
                   </div>
                 ) : (
@@ -925,7 +938,7 @@ export default function Home() {
           </div>
         </section>
 
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 pb-8">
+        <div className="mx-auto w-full min-w-0 max-w-6xl px-4 sm:px-6 pb-8">
           <TrustRibbon />
         </div>
 
@@ -947,7 +960,7 @@ export default function Home() {
           <p className="mt-6 text-xs font-medium text-slate-600">
             © {new Date().getFullYear()} QuantAI · Shopping intelligence, not financial advice.
           </p>
-          <p className="cockpit-body mt-2 max-w-lg mx-auto text-[11px] text-slate-600/85">
+          <p className="cockpit-body mx-auto mt-2 w-full min-w-0 max-w-xl px-4 text-[11px] leading-relaxed text-slate-600/85 [overflow-wrap:anywhere]">
             Outputs are probabilistic—treat every score as decision support, not a guarantee. Verify listings before
             you pay.
           </p>

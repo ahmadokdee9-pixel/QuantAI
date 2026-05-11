@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion, useReducedMotion } from "framer-motion";
 import { LayoutDashboard, Bookmark, CreditCard, Home, Sparkles } from "lucide-react";
 import AmbientBackdrop from "@/components/cockpit/AmbientBackdrop";
 import FeedbackLauncher from "@/components/feedback/FeedbackLauncher";
@@ -16,6 +17,7 @@ const nav = [
 
 export default function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const reduceMotion = useReducedMotion();
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-[#020617] text-slate-100">
@@ -45,8 +47,14 @@ export default function AppChrome({ children }: { children: React.ReactNode }) {
                         : "text-slate-400 hover:bg-white/[0.06] hover:text-white/92"
                     }`}
                   >
-                    <Icon className="size-3.5 opacity-75" aria-hidden />
-                    {label}
+                    <motion.span
+                      className="inline-flex items-center gap-1.5"
+                      whileHover={reduceMotion ? undefined : { y: -1 }}
+                      transition={{ type: "spring", stiffness: 420, damping: 28 }}
+                    >
+                      <Icon className="size-3.5 opacity-75" aria-hidden />
+                      {label}
+                    </motion.span>
                   </Link>
                 );
               })}

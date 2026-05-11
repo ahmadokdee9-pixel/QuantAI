@@ -4,6 +4,7 @@ import { useState } from "react";
 import { SignInButton, SignUpButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { ArrowRight, Check, Loader2 } from "lucide-react";
+import MagneticSurface from "@/components/motion/MagneticSurface";
 import { QUANT_PLANS, type QuantPlanTier } from "@/lib/subscription/plans";
 
 const glassCard = "cockpit-glass-card";
@@ -46,22 +47,36 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
         const plan = QUANT_PLANS[id];
         const isCurrent = resolvedTier !== null && resolvedTier === id;
         const isPro = id === "pro";
+        const isPremium = id === "premium";
 
         return (
           <div
             key={id}
             className={`relative flex flex-col ${glassCard} p-8 transition duration-500 hover:border-white/15 ${
-              isPro ? "border-cyan-400/25 shadow-[0_40px_100px_-40px_rgba(34,211,238,0.2)] lg:scale-[1.02] lg:z-[1]" : ""
-            }`}
+              isPro
+                ? "border-cyan-400/30 shadow-[0_40px_100px_-40px_rgba(34,211,238,0.22)] ring-1 ring-cyan-400/15 lg:scale-[1.03] lg:z-[1]"
+                : ""
+            } ${isPremium ? "ring-1 ring-white/10" : ""}`}
           >
             {isPro && (
-              <span className="absolute right-6 top-6 rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-950">
+              <span className="absolute right-6 top-6 rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-950 shadow-[0_0_24px_-4px_rgba(34,211,238,0.5)]">
                 Most popular
               </span>
             )}
-            <h3 className="text-lg font-semibold text-white/95">{plan.name}</h3>
-            <p className="mt-1 text-sm text-slate-500">{plan.tagline}</p>
-            <p className="mt-8 text-4xl font-semibold tracking-tight text-white/95">
+            {isPremium && (
+              <span className="absolute left-6 top-6 rounded-full border border-white/15 bg-white/[0.07] px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-100">
+                Best for professionals
+              </span>
+            )}
+            <h3 className="cockpit-display text-lg text-white/95">{plan.name}</h3>
+            <p className="cockpit-body mt-1 text-sm text-slate-500">{plan.tagline}</p>
+            {isPro && (
+              <p className="cockpit-body mt-3 rounded-xl border border-cyan-400/18 bg-cyan-500/[0.07] px-3 py-2 text-[11px] leading-relaxed text-cyan-50/90">
+                <span className="font-semibold text-cyan-100">Power Buyer path: </span>
+                unlocks full global intelligence, deeper compare, and the daily headroom serious shoppers need.
+              </p>
+            )}
+            <p className="mt-8 text-4xl font-semibold tracking-tight text-white/95 tabular-nums">
               {plan.monthlyPriceEur == null ? "—" : `€${plan.monthlyPriceEur}`}
               {plan.monthlyPriceEur != null && (
                 <span className="text-base font-medium text-slate-500">/mo</span>
@@ -173,29 +188,33 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
                     <ArrowRight className="size-4 opacity-80" aria-hidden />
                   </Link>
                 ) : isSignedIn ? (
-                  <button
-                    type="button"
-                    disabled={checkoutPlan !== null}
-                    onClick={() => {
-                      setCheckoutPlan("pro");
-                      void startCheckout("pro").catch(() => {
-                        window.location.href = "/billing?plan=pro";
-                      }).finally(() => setCheckoutPlan(null));
-                    }}
-                    className="cockpit-cta flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-500 py-3 text-sm text-slate-950 shadow-[0_0_32px_-6px_rgba(34,211,238,0.45)] transition enabled:hover:brightness-105 disabled:opacity-70"
-                  >
-                    {checkoutPlan === "pro" ? (
-                      <>
-                        <Loader2 className="size-4 animate-spin" aria-hidden />
-                        Opening checkout…
-                      </>
-                    ) : (
-                      <>
-                        Upgrade to Pro
-                        <ArrowRight className="size-4 opacity-80" aria-hidden />
-                      </>
-                    )}
-                  </button>
+                  <MagneticSurface className="inline-flex w-full" strength={0.12}>
+                    <button
+                      type="button"
+                      disabled={checkoutPlan !== null}
+                      onClick={() => {
+                        setCheckoutPlan("pro");
+                        void startCheckout("pro")
+                          .catch(() => {
+                            window.location.href = "/billing?plan=pro";
+                          })
+                          .finally(() => setCheckoutPlan(null));
+                      }}
+                      className="cockpit-cta flex w-full min-h-[3rem] items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-500 py-3 text-sm text-slate-950 shadow-[0_0_32px_-6px_rgba(34,211,238,0.45)] transition enabled:hover:brightness-105 disabled:opacity-70"
+                    >
+                      {checkoutPlan === "pro" ? (
+                        <>
+                          <Loader2 className="size-4 animate-spin" aria-hidden />
+                          Opening checkout…
+                        </>
+                      ) : (
+                        <>
+                          Upgrade to Pro
+                          <ArrowRight className="size-4 opacity-80" aria-hidden />
+                        </>
+                      )}
+                    </button>
+                  </MagneticSurface>
                 ) : (
                   <SignInButton mode="modal" forceRedirectUrl="/pricing">
                     <button
@@ -217,29 +236,33 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
                     <ArrowRight className="size-4 opacity-70" aria-hidden />
                   </Link>
                 ) : isSignedIn ? (
-                  <button
-                    type="button"
-                    disabled={checkoutPlan !== null}
-                    onClick={() => {
-                      setCheckoutPlan("premium");
-                      void startCheckout("premium").catch(() => {
-                        window.location.href = "/billing?plan=premium";
-                      }).finally(() => setCheckoutPlan(null));
-                    }}
-                    className="cockpit-cta flex w-full items-center justify-center gap-2 rounded-full bg-white py-3 text-sm text-slate-900 transition enabled:hover:bg-slate-100 disabled:opacity-70"
-                  >
-                    {checkoutPlan === "premium" ? (
-                      <>
-                        <Loader2 className="size-4 animate-spin" aria-hidden />
-                        Opening checkout…
-                      </>
-                    ) : (
-                      <>
-                        Go Power Buyer
-                        <ArrowRight className="size-4 opacity-70" aria-hidden />
-                      </>
-                    )}
-                  </button>
+                  <MagneticSurface className="inline-flex w-full" strength={0.1}>
+                    <button
+                      type="button"
+                      disabled={checkoutPlan !== null}
+                      onClick={() => {
+                        setCheckoutPlan("premium");
+                        void startCheckout("premium")
+                          .catch(() => {
+                            window.location.href = "/billing?plan=premium";
+                          })
+                          .finally(() => setCheckoutPlan(null));
+                      }}
+                      className="cockpit-cta flex w-full min-h-[3rem] items-center justify-center gap-2 rounded-full bg-white py-3 text-sm text-slate-900 transition enabled:hover:bg-slate-100 disabled:opacity-70"
+                    >
+                      {checkoutPlan === "premium" ? (
+                        <>
+                          <Loader2 className="size-4 animate-spin" aria-hidden />
+                          Opening checkout…
+                        </>
+                      ) : (
+                        <>
+                          Go Power Buyer
+                          <ArrowRight className="size-4 opacity-70" aria-hidden />
+                        </>
+                      )}
+                    </button>
+                  </MagneticSurface>
                 ) : (
                   <SignInButton mode="modal" forceRedirectUrl="/pricing">
                     <button

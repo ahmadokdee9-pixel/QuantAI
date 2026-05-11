@@ -2,19 +2,21 @@
 
 import type { Dispatch, SetStateAction } from "react";
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { AlertCircle, BarChart3, GitCompare, Loader2, Sparkles, X } from "lucide-react";
 import MultiStoreDealAdvisor from "@/components/deals/MultiStoreDealAdvisor";
 import GlobalIntelligencePanel from "@/components/intelligence/GlobalIntelligencePanel";
 import AILoadingPhase from "@/components/loading/AILoadingPhase";
+import SearchStreamRibbon from "@/components/loading/SearchStreamRibbon";
+import { useCockpit, type CockpitQuickHandlers } from "@/components/cockpit/cockpitContext";
 import ShareSnapshotBar from "@/components/share/ShareSnapshotBar";
 import { analyzeDealCluster } from "@/lib/deals";
 import type { DealClusterDTO } from "@/lib/deals/types";
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
 import type { SearchIntelligenceLevel } from "@/lib/subscription/plans";
 import type { ResultsFiltersState } from "@/lib/resultsFilters";
-import { buildCompareExport, copyText } from "@/lib/share/intelligenceExport";
+import { buildCompareExport, buildTraySummary, copyText } from "@/lib/share/intelligenceExport";
 import { currencySymbolFromListing, formatListingPrice } from "@/lib/commerce/cues";
 import { getFinalComposite, ratingValue, sortByCompositeRank } from "@/lib/shoppingScore";
 import type { QuantProduct } from "@/lib/shoppingScore";
@@ -54,7 +56,10 @@ function ResultSkeleton() {
   return (
     <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="cockpit-glass-panel overflow-hidden p-5">
+        <div
+          key={i}
+          className="cockpit-glass-panel skeleton-cinematic overflow-hidden border-white/[0.07] p-5"
+        >
           <div className="h-40 rounded-2xl animate-shimmer" />
           <div className="mt-4 h-4 w-[82%] rounded-lg bg-white/[0.08]" />
           <div className="mt-2 h-3 w-3/5 rounded bg-white/[0.05]" />
@@ -88,6 +93,7 @@ export default function ProductResultsSurface({
   searchQuery = "",
   onRetrySearch,
 }: Props) {
+  const { registerQuickHandlers, intelligenceEpoch } = useCockpit();
   const reduceMotion = useReducedMotion();
   const anchorRef = useRef<HTMLDivElement>(null);
   const prevLoading = useRef(false);
@@ -110,7 +116,6 @@ export default function ProductResultsSurface({
     () => sortByCompositeRank(sortedProducts),
     [sortedProducts]
   );
-
   const rankByLink = useMemo(() => {
     const m = new Map<string, number>();
     compositeRanked.forEach((p, i) => m.set(p.link, i));
@@ -146,6 +151,72 @@ export default function ProductResultsSurface({
     if (sortedProducts.length > 0) return;
     queueMicrotask(() => setDetailProduct(null));
   }, [sortedProducts.length]);
+
+  const trayCtxRef = useRef({
+    sortedProducts,
+    searchQuery,
+    compositeRanked,
+    saveProduct,
+    addToWatchlist,
+  });
+  useLayoutEffect(() => {
+    trayCtxRef.current = {
+      sortedProducts,
+      searchQuery,
+      compositeRanked,
+      saveProduct,
+      addToWatchlist,
+    };
+  }, [sortedProducts, searchQuery, compositeRanked, saveProduct, addToWatchlist]);
+
+  const trayHandlers = useMemo<CockpitQuickHandlers>(
+    () => ({
+      scrollToTray: () =>
+        document
+          .getElementById("quantai-results-anchor")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      scrollToCompareLab: () =>
+        document
+          .getElementById("quantai-compare-lab")
+          ?.scrollIntoView({ behavior: "smooth", block: "center" }),
+      exportIntelligenceSummary: async () => {
+        const { sortedProducts: list, searchQuery: q } = trayCtxRef.current;
+        if (list.length === 0) return;
+        await copyText(buildTraySummary(q.trim() || "—", list));
+      },
+      saveLeadingPick: () => {
+        const top = trayCtxRef.current.compositeRanked[0];
+        if (top) trayCtxRef.current.saveProduct(top);
+      },
+      watchLeadingPick: () => {
+        const top = trayCtxRef.current.compositeRanked[0];
+        const add = trayCtxRef.current.addToWatchlist;
+        if (top && add) add(top);
+      },
+      primeCompareLane: () => {
+        const ranked = trayCtxRef.current.compositeRanked;
+        const top = ranked[0];
+        const second = ranked[1];
+        if (!top || !second) return;
+        setCompareLinks([top.link, second.link]);
+        window.requestAnimationFrame(() =>
+          document
+            .getElementById("quantai-compare-lab")
+            ?.scrollIntoView({ behavior: "smooth", block: "center" })
+        );
+      },
+    }),
+    [setCompareLinks]
+  );
+
+  useEffect(() => {
+    if (sortedProducts.length === 0) {
+      registerQuickHandlers(null);
+      return () => registerQuickHandlers(null);
+    }
+    registerQuickHandlers(trayHandlers);
+    return () => registerQuickHandlers(null);
+  }, [sortedProducts.length, registerQuickHandlers, trayHandlers]);
 
   const toggleCompare = (link: string) => {
     setVerdict(null);
@@ -206,6 +277,7 @@ export default function ProductResultsSurface({
   if (loading && products.length === 0) {
     return (
       <section
+        id="quantai-results-anchor"
         className="relative mx-auto max-w-7xl px-4 sm:px-6 pb-12"
         aria-busy="true"
         aria-label="Loading search results"
@@ -214,7 +286,10 @@ export default function ProductResultsSurface({
         <div className="sticky top-[3.25rem] z-30 -mx-4 px-4 py-3 sm:-mx-6 sm:px-6 mb-6 border-b border-white/[0.07] bg-[#030712]/75 backdrop-blur-[28px] shadow-[0_20px_50px_-32px_rgba(0,0,0,0.85)]">
           <div className="h-12 max-w-2xl rounded-2xl border border-white/[0.06] bg-gradient-to-r from-white/[0.07] via-white/[0.04] to-white/[0.07] animate-pulse" />
         </div>
-        <AILoadingPhase className="mb-6 max-w-2xl" />
+        <div className="mb-6 space-y-4 max-w-2xl">
+          <SearchStreamRibbon active />
+          <AILoadingPhase />
+        </div>
         <ResultSkeleton />
       </section>
     );
@@ -253,6 +328,7 @@ export default function ProductResultsSurface({
   if (!loading && sortedProducts.length === 0) {
     return (
       <section
+        id="quantai-results-anchor"
         className="relative mx-auto max-w-7xl px-4 sm:px-6 pb-16"
         ref={anchorRef}
         aria-live="polite"
@@ -301,7 +377,11 @@ export default function ProductResultsSurface({
     filteredDealClusters.length > 0 ? "pb-[min(40rem,52vh)] sm:pb-60" : "pb-24";
 
   return (
-    <section className={`relative mx-auto max-w-7xl px-4 sm:px-6 ${advisorPad}`} ref={anchorRef}>
+    <section
+      id="quantai-results-anchor"
+      className={`relative mx-auto max-w-7xl px-4 sm:px-6 ${advisorPad}`}
+      ref={anchorRef}
+    >
       <div className="pointer-events-none absolute inset-x-0 -top-8 h-56 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(34,211,238,0.12),transparent_65%)]" />
 
       <ResultsToolbar
@@ -323,9 +403,17 @@ export default function ProductResultsSurface({
       <IntelligenceEducationStrip />
 
       {searchIntelligence && (
-        <div className="mb-10">
-          <GlobalIntelligencePanel intel={searchIntelligence} displayLevel={intelligenceLevel} />
-        </div>
+        <motion.div
+          key={`gi-${intelligenceEpoch}`}
+          initial={reduceMotion ? false : { opacity: 0.88, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 360, damping: 34 }}
+          className="intel-panel-shimmer relative z-0 mb-10 min-w-0 overflow-hidden rounded-[1.75rem]"
+        >
+          <div className="relative z-[1] min-w-0">
+            <GlobalIntelligencePanel intel={searchIntelligence} displayLevel={intelligenceLevel} />
+          </div>
+        </motion.div>
       )}
 
       {aiTopPicks.length > 0 && (
@@ -390,11 +478,12 @@ export default function ProductResultsSurface({
       <AnimatePresence>
         {compareProducts.length > 0 && (
           <motion.div
+            id="quantai-compare-lab"
             initial={reduceMotion ? false : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 16 }}
             transition={{ type: "spring", stiffness: 400, damping: 32 }}
-            className="fixed bottom-4 left-4 right-4 z-40 mx-auto max-w-5xl rounded-2xl border border-cyan-400/20 bg-[#050912]/96 p-4 shadow-[0_32px_120px_-20px_rgba(34,211,238,0.18)] backdrop-blur-2xl md:left-1/2 md:-translate-x-1/2 md:right-auto"
+            className="fixed bottom-4 left-4 right-4 z-40 mx-auto max-w-5xl rounded-2xl border border-cyan-400/20 bg-[#050912]/96 p-4 shadow-[0_32px_120px_-20px_rgba(34,211,238,0.18)] backdrop-blur-2xl md:left-1/2 md:-translate-x-1/2 md:right-auto max-md:max-h-[min(70vh,28rem)] max-md:overflow-y-auto"
             role="region"
             aria-label="Product compare"
           >

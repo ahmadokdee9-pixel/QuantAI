@@ -49,7 +49,7 @@ export default function MagneticSurface({ children, strength = 0.11, className =
       onMouseLeave={onLeave}
       onBlur={onLeave}
     >
-      <motion.div style={{ x: sx, y: sy }} className="h-full">
+      <motion.div style={{ x: sx, y: sy }} className="flex h-full min-h-[inherit] w-full">
         {children}
       </motion.div>
     </div>

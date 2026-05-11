@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
+import QuantShell from "@/components/shell/QuantShell";
 
 const quantaiSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -25,7 +26,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" className={`${quantaiSans.variable} scroll-smooth`}>
         <body className="min-h-dvh overflow-x-hidden bg-[#020617] font-sans text-slate-100 antialiased selection:bg-cyan-500/30 selection:text-cyan-50">
-          {children}
+          <QuantShell>{children}</QuantShell>
         </body>
       </html>
     </ClerkProvider>

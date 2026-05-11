@@ -15,7 +15,13 @@ export default function AmbientBackdrop() {
         className={`absolute inset-0 cosmic-particles ${!reduce ? "cosmic-drift-slow" : ""}`}
       />
       <div className="cosmic-starfield absolute inset-0" />
-      <div className="cosmic-constellation absolute inset-0 [mask-image:radial-gradient(ellipse_90%_70%_at_50%_30%,black,transparent)]" />
+      <div
+        className={`cosmic-constellation absolute inset-0 [mask-image:radial-gradient(ellipse_90%_70%_at_50%_30%,black,transparent)] ${!reduce ? "cosmic-constellation-motion" : ""}`}
+      />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.09] neural-mesh-slow [mask-image:radial-gradient(ellipse_85%_65%_at_50%_35%,black,transparent)]"
+        aria-hidden
+      />
       <div
         className="absolute inset-0 opacity-[0.92]"
         style={{

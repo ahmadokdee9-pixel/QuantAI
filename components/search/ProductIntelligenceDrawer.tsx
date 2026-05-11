@@ -62,8 +62,11 @@ function BandPill({
   label: string;
   sub: string;
 }) {
+  const reduceMotion = useReducedMotion();
   return (
-    <div
+    <motion.div
+      layout
+      transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 380, damping: 32 }}
       className={`rounded-2xl border px-4 py-3 text-center transition ${
         active
           ? "border-cyan-400/45 bg-gradient-to-br from-cyan-400/20 to-violet-500/15 shadow-[0_0_28px_-10px_rgba(34,211,238,0.45)]"
@@ -74,17 +77,22 @@ function BandPill({
         {label}
       </p>
       <p className="mt-1 text-[11px] font-normal leading-snug text-slate-400">{sub}</p>
-    </div>
+    </motion.div>
   );
 }
 
 function SignalBar({ value }: { value: number }) {
   const v = Math.min(100, Math.max(0, value));
+  const reduceMotion = useReducedMotion();
   return (
     <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
-      <div
+      <motion.div
         className="h-full rounded-full bg-gradient-to-r from-cyan-400/90 to-violet-500/85"
-        style={{ width: `${v}%` }}
+        initial={false}
+        animate={{ width: `${v}%` }}
+        transition={
+          reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 300, damping: 30 }
+        }
       />
     </div>
   );

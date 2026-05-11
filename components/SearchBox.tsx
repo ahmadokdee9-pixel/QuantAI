@@ -76,9 +76,9 @@ export default function SearchBox() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
-        <div className="relative flex min-h-[48px] flex-1 items-center gap-3 rounded-2xl border border-white/[0.08] bg-black/25 px-4 transition focus-within:border-cyan-400/30">
+    <div className="w-full min-w-0 max-w-full space-y-4">
+      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-stretch">
+        <div className="relative flex min-h-[48px] min-w-0 flex-1 items-center gap-3 rounded-2xl border border-white/[0.08] bg-black/25 px-4 transition focus-within:border-cyan-400/30">
           <Search className="size-4 shrink-0 text-cyan-300/45" strokeWidth={1.5} aria-hidden />
           <input
             className="min-w-0 flex-1 bg-transparent py-2 text-sm font-normal text-white placeholder:text-slate-500 outline-none"
