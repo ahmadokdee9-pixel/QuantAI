@@ -47,6 +47,28 @@ function tierLabel(t: SearchIntelligenceDTO["confidenceTier"]): string {
 export default function GlobalIntelligencePanel({ intel }: Props) {
   const reduceMotion = useReducedMotion();
   const confPct = Math.max(8, 100 - intel.buyerUncertaintyScore);
+  const radarVals = useMemo(() => {
+    const clarity = Math.max(10, 100 - intel.buyerUncertaintyScore);
+    const stressFlags = [
+      intel.marketIntel.aggressiveFakeDiscount,
+      intel.marketIntel.ratingInflationRisk,
+      intel.marketIntel.marketplaceVarianceRisk,
+      intel.marketIntel.cheapestNotSafest,
+    ].filter(Boolean).length;
+    const equilibrium = Math.max(18, 100 - stressFlags * 16);
+    const band =
+      intel.priceSpread.max > intel.priceSpread.min
+        ? Math.min(
+            100,
+            40 +
+              (1 -
+                (intel.priceSpread.median - intel.priceSpread.min) /
+                  (intel.priceSpread.max - intel.priceSpread.min)) *
+                60
+          )
+        : 72;
+    return [clarity, equilibrium, band] as const;
+  }, [intel]);
 
   const heatRows = useMemo(() => {
     return intel.trustMatrix.slice(0, 8).map((row) => {
@@ -66,15 +88,15 @@ export default function GlobalIntelligencePanel({ intel }: Props) {
       aria-label="Global shopping intelligence"
     >
       <div
-        className={`relative overflow-hidden rounded-[1.75rem] border bg-gradient-to-br p-5 sm:p-7 backdrop-blur-2xl ${finalTone(intel.finalRecommendation)}`}
+        className={`relative overflow-hidden rounded-[1.75rem] border bg-gradient-to-br p-5 sm:p-7 backdrop-blur-[28px] ${finalTone(intel.finalRecommendation)}`}
       >
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_20%_0%,rgba(34,211,238,0.12),transparent_55%)]" />
         <div className="relative flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/30 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-cyan-200/90">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/95">
                 <Globe2 className="size-3.5" aria-hidden />
-                Global decision
+                Live global synthesis
               </span>
               <span className="rounded-full border border-white/10 bg-black/25 px-2 py-0.5 text-[10px] font-medium text-slate-400">
                 {intel.basketRegionBias === "unknown" || intel.basketRegionBias === "mixed"
@@ -82,10 +104,10 @@ export default function GlobalIntelligencePanel({ intel }: Props) {
                   : `Store-name bias · ${intel.basketRegionBias.toUpperCase()}`}
               </span>
             </div>
-            <h3 className="mt-3 text-xl font-semibold tracking-tight text-white sm:text-2xl">
+            <h3 className="cockpit-display mt-3 text-xl text-white sm:text-[1.65rem]">
               {intel.finalHeadline}
             </h3>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-300">{intel.finalBody}</p>
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-300/95">{intel.finalBody}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               {intel.globalDeal && (
                 <a
@@ -133,7 +155,11 @@ export default function GlobalIntelligencePanel({ intel }: Props) {
             </div>
           </div>
           <div className="w-full shrink-0 lg:w-64">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            <p className="cockpit-overline text-slate-500">AI confidence radar</p>
+            <div className="mt-3 flex justify-center lg:justify-start">
+              <ConfidenceTriRadar values={radarVals} reduceMotion={!!reduceMotion} />
+            </div>
+            <p className="mt-4 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
               {tierLabel(intel.confidenceTier)}
             </p>
             <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-black/40">
@@ -162,10 +188,10 @@ export default function GlobalIntelligencePanel({ intel }: Props) {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 backdrop-blur-xl">
+        <div className="cockpit-glass-panel p-4">
           <div className="flex items-center gap-2 text-xs font-semibold text-white/90">
             <BarChart3 className="size-4 text-cyan-300" aria-hidden />
-            Price spread
+            Price intelligence lane
           </div>
           <p className="mt-3 text-2xl font-semibold tabular-nums text-white">
             €{intel.priceSpread.min.toFixed(0)}
@@ -193,10 +219,10 @@ export default function GlobalIntelligencePanel({ intel }: Props) {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 backdrop-blur-xl">
+        <div className="cockpit-glass-panel p-4">
           <div className="flex items-center gap-2 text-xs font-semibold text-white/90">
             <Shield className="size-4 text-violet-300" aria-hidden />
-            Market signals
+            Market pulse
           </div>
           <ul className="mt-3 space-y-1.5 text-[11px] text-slate-400">
             <li className={intel.marketIntel.aggressiveFakeDiscount ? "text-amber-200" : ""}>
@@ -214,10 +240,10 @@ export default function GlobalIntelligencePanel({ intel }: Props) {
           </ul>
         </div>
 
-        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 backdrop-blur-xl">
+        <div className="cockpit-glass-panel p-4">
           <div className="flex items-center gap-2 text-xs font-semibold text-white/90">
             <Users className="size-4 text-emerald-300" aria-hidden />
-            Who / when
+            Human fit window
           </div>
           <p className="mt-2 text-[11px] leading-relaxed text-slate-400">{intel.whoShouldBuy}</p>
           <p className="mt-2 text-[11px] leading-relaxed text-rose-100/70">{intel.whoShouldAvoid}</p>
@@ -225,9 +251,9 @@ export default function GlobalIntelligencePanel({ intel }: Props) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-white/[0.08] bg-black/25 p-4 backdrop-blur-xl">
+      <div className="cockpit-glass-panel bg-black/20 p-4">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-xs font-semibold text-white/90">Store trust heatmap</p>
+          <p className="text-xs font-semibold text-white/90">Retailer trust graph</p>
           <span className="text-[10px] text-slate-500">Price fit · Trust · Marketplace safety</span>
         </div>
         <div className="mt-3 overflow-x-auto">
@@ -253,10 +279,10 @@ export default function GlobalIntelligencePanel({ intel }: Props) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 backdrop-blur-xl">
+      <div className="cockpit-glass-panel p-4">
         <div className="mb-3 flex items-center gap-2">
           <Sparkles className="size-4 text-violet-300" aria-hidden />
-          <p className="text-xs font-semibold text-white/90">Buyer personas · adaptive read</p>
+          <p className="text-xs font-semibold text-white/90">Persona reasoning stream</p>
         </div>
         <div className="flex gap-3 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch]">
           {intel.personaCards.map((card, i) => (
@@ -292,12 +318,12 @@ export default function GlobalIntelligencePanel({ intel }: Props) {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
-          <p className="text-xs font-semibold text-white/90">Opportunity cost</p>
+        <div className="cockpit-glass-panel p-4">
+          <p className="text-xs font-semibold text-white/90">Opportunity spectrum</p>
           <p className="mt-2 text-[12px] leading-relaxed text-slate-400">{intel.opportunityCostNote}</p>
         </div>
-        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
-          <p className="text-xs font-semibold text-white/90">Upgrade calculus</p>
+        <div className="cockpit-glass-panel p-4">
+          <p className="text-xs font-semibold text-white/90">Upgrade projection</p>
           <p className="mt-2 text-[12px] leading-relaxed text-slate-400">
             {intel.upgradeWorthItNote ??
               "No strong upgrade signal for this query—QuantAI did not detect a clear spec cliff worth paying for yet."}
@@ -305,6 +331,62 @@ export default function GlobalIntelligencePanel({ intel }: Props) {
         </div>
       </div>
     </motion.section>
+  );
+}
+
+function triRadarPoints(values: readonly [number, number, number]): string {
+  const cx = 50;
+  const cy = 52;
+  const maxR = 34;
+  const angles = [-Math.PI / 2, (5 * Math.PI) / 6, Math.PI / 6] as const;
+  return values
+    .map((raw, i) => {
+      const v = Math.max(0, Math.min(100, raw)) / 100;
+      const r = maxR * v;
+      const x = cx + r * Math.cos(angles[i]!);
+      const y = cy + r * Math.sin(angles[i]!);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+}
+
+function ConfidenceTriRadar({
+  values,
+  reduceMotion,
+}: {
+  values: readonly [number, number, number];
+  reduceMotion: boolean;
+}) {
+  const shell = triRadarPoints([100, 100, 100]);
+  const fill = triRadarPoints(values);
+  return (
+    <div className="relative">
+      <svg width="132" height="124" viewBox="0 0 100 100" role="img" aria-label="Tri-axis confidence radar">
+        <defs>
+          <linearGradient id="qi-radar-fill" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="rgba(34,211,238,0.45)" />
+            <stop offset="50%" stopColor="rgba(167,139,250,0.35)" />
+            <stop offset="100%" stopColor="rgba(52,211,153,0.35)" />
+          </linearGradient>
+        </defs>
+        <polygon points={shell} fill="none" stroke="rgba(148,163,184,0.2)" strokeWidth="0.9" />
+        <motion.polygon
+          points={fill}
+          fill="url(#qi-radar-fill)"
+          stroke="rgba(34,211,238,0.55)"
+          strokeWidth="0.9"
+          initial={reduceMotion ? false : { opacity: 0, scale: 0.92 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: reduceMotion ? 0 : 0.55, ease: [0.22, 1, 0.36, 1] }}
+          style={{ transformOrigin: "50px 52px" }}
+        />
+      </svg>
+      <div className="pointer-events-none absolute inset-x-0 bottom-1 flex justify-between px-1 text-[8px] font-semibold uppercase tracking-wider text-slate-500">
+        <span className="w-8 text-center leading-tight">Signal</span>
+        <span className="w-8 text-center leading-tight">Calm</span>
+        <span className="w-8 text-center leading-tight">Band</span>
+      </div>
+    </div>
   );
 }
 

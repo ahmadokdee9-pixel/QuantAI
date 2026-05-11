@@ -18,8 +18,8 @@ export default function LandingNav() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#030712]/75 backdrop-blur-xl backdrop-saturate-150">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 py-3.5 sm:py-4">
+    <header className="sticky top-0 z-50 border-b border-white/[0.07] bg-[#020617]/72 backdrop-blur-[24px] backdrop-saturate-150 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset,0_12px_40px_-28px_rgba(0,0,0,0.65)]">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 py-3.5 sm:py-4">
         <Link
           href="/"
           className="group flex items-center gap-2.5 shrink-0 rounded-xl pr-2 transition"
@@ -31,8 +31,8 @@ export default function LandingNav() {
             <span className="block text-[15px] font-semibold tracking-tight text-white/95">
               QuantAI
             </span>
-            <span className="hidden sm:block text-[11px] font-normal text-white/40 tracking-wide">
-              Quantitative buying intelligence
+            <span className="hidden sm:block text-[10px] font-medium uppercase tracking-[0.18em] text-slate-500">
+              AI shopping cockpit
             </span>
           </div>
         </Link>

@@ -40,12 +40,9 @@ function ResultSkeleton() {
   return (
     <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
       {Array.from({ length: 8 }).map((_, i) => (
-        <div
-          key={i}
-          className="rounded-[1.75rem] border border-white/[0.06] bg-white/[0.03] p-5 overflow-hidden"
-        >
+        <div key={i} className="cockpit-glass-panel overflow-hidden p-5">
           <div className="h-40 rounded-2xl animate-shimmer" />
-          <div className="mt-4 h-4 w-4/5 rounded-lg bg-white/[0.08]" />
+          <div className="mt-4 h-4 w-[82%] rounded-lg bg-white/[0.08]" />
           <div className="mt-2 h-3 w-3/5 rounded bg-white/[0.05]" />
           <div className="mt-4 h-3 w-full rounded bg-white/[0.04]" />
           <div className="mt-2 h-3 w-2/3 rounded bg-white/[0.04]" />
@@ -196,8 +193,8 @@ export default function ProductResultsSurface({
         aria-label="Loading search results"
       >
         <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-cyan-500/8 to-transparent blur-2xl" />
-        <div className="sticky top-[3.25rem] z-30 -mx-4 px-4 py-3 sm:-mx-6 sm:px-6 mb-8 border-b border-white/[0.06] bg-[#030712]/88 backdrop-blur-xl">
-          <div className="h-12 max-w-2xl rounded-2xl bg-white/[0.06] animate-pulse" />
+        <div className="sticky top-[3.25rem] z-30 -mx-4 px-4 py-3 sm:-mx-6 sm:px-6 mb-8 border-b border-white/[0.07] bg-[#030712]/75 backdrop-blur-[28px] shadow-[0_20px_50px_-32px_rgba(0,0,0,0.85)]">
+          <div className="h-12 max-w-2xl rounded-2xl border border-white/[0.06] bg-gradient-to-r from-white/[0.07] via-white/[0.04] to-white/[0.07] animate-pulse" />
         </div>
         <ResultSkeleton />
       </section>
@@ -309,9 +306,9 @@ export default function ProductResultsSurface({
           <div className="mb-4 flex items-start gap-2.5">
             <Sparkles className="mt-0.5 size-4 shrink-0 text-cyan-300" strokeWidth={1.5} aria-hidden />
             <div className="min-w-0">
-              <h2 className="text-sm font-semibold tracking-tight text-white/95">QuantAI top picks</h2>
+              <h2 className="text-sm font-semibold tracking-tight text-white/95">Neural top lane</h2>
               <p className="mt-0.5 text-[11px] font-normal leading-snug text-slate-500">
-                Highest QI composite in this snapshot—your fastest path to purchase clarity.
+                Highest composite signal in this tray—fastest path from browse to conviction.
               </p>
             </div>
           </div>

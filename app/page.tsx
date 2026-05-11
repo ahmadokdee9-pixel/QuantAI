@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { SignInButton, useUser } from "@clerk/nextjs";
+import AmbientBackdrop from "../components/cockpit/AmbientBackdrop";
 import SearchBox from "../components/SearchBox";
 import LandingNav from "../components/landing/LandingNav";
 import MarketingSections from "../components/landing/MarketingSections";
@@ -327,54 +328,54 @@ export default function Home() {
     }
   }
 
-  const glassCard =
-    "rounded-3xl border border-white/[0.08] bg-gradient-to-b from-white/[0.07] to-white/[0.02] shadow-[0_24px_80px_-32px_rgba(0,0,0,0.85)] backdrop-blur-2xl";
+  const glassCard = "cockpit-glass-card";
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#030712] text-slate-100">
-      <div className="pointer-events-none fixed inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_-20%,rgba(56,189,248,0.18),transparent_55%),radial-gradient(ellipse_80%_50%_at_100%_50%,rgba(139,92,246,0.12),transparent_50%),radial-gradient(ellipse_60%_40%_at_0%_80%,rgba(52,211,153,0.08),transparent_45%)]" />
-        <div className="absolute -top-40 left-1/2 h-[520px] w-[min(90vw,720px)] -translate-x-1/2 rounded-full bg-gradient-to-b from-cyan-500/20 via-violet-500/10 to-transparent blur-3xl animate-aurora" />
-        <div
-          className="absolute inset-0 opacity-[0.35] bg-[linear-gradient(rgba(148,163,184,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.06)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_30%,black,transparent)] ai-grid-motion"
-          aria-hidden
-        />
-      </div>
+    <main className="relative min-h-screen overflow-x-hidden bg-[#020617] text-slate-100">
+      <AmbientBackdrop />
 
       <div className="relative z-10">
         <LandingNav />
 
         {/* Hero */}
-        <section className="relative px-4 sm:px-6 pt-10 pb-16 sm:pt-14 sm:pb-24">
-          <div className="mx-auto max-w-6xl text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-1.5 text-[11px] font-medium uppercase tracking-[0.2em] text-cyan-200/90 shadow-[0_0_40px_-12px_rgba(34,211,238,0.35)] backdrop-blur-xl motion-safe:animate-[fadeIn_0.6s_ease-out]">
-              <span className="flex size-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-soft-pulse" />
-              Live shopping intelligence
+        <section className="relative px-4 sm:px-6 pt-12 pb-20 sm:pt-16 sm:pb-28">
+          <div className="mx-auto max-w-7xl text-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-gradient-to-r from-cyan-500/10 via-white/[0.06] to-violet-500/10 px-5 py-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-cyan-100/95 shadow-[0_0_48px_-12px_rgba(34,211,238,0.4)] backdrop-blur-xl motion-safe:animate-[fadeIn_0.6s_ease-out]">
+              <span className="relative flex size-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)]">
+                <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/40" />
+              </span>
+              Neural shopping cockpit
             </div>
 
-            <h1 className="mt-8 text-[2.5rem] sm:text-5xl lg:text-[3.5rem] font-semibold tracking-[-0.03em] leading-[1.08] text-white motion-safe:animate-[fadeIn_0.65s_ease-out]">
-              Buy with clarity.
-              <span className="mt-2 block bg-gradient-to-r from-cyan-200 via-white to-violet-200 bg-clip-text text-transparent font-semibold">
-                Decide like you had a quant desk in your pocket.
+            <h1 className="cockpit-display mt-10 text-[2.65rem] sm:text-5xl lg:text-[3.75rem] text-white motion-safe:animate-[fadeIn_0.65s_ease-out]">
+              <span className="block text-white">The AI decision layer</span>
+              <span className="mt-3 block cockpit-gradient-text font-semibold">
+                for every product on Earth.
               </span>
             </h1>
 
-            <p className="mx-auto mt-6 max-w-2xl text-base sm:text-lg font-normal leading-relaxed text-slate-400 motion-safe:animate-[fadeIn_0.7s_ease-out]">
-              QuantAI searches live listings, scores them as a set, and explains the tradeoffs—so
-              you move from endless tabs to one confident next step.
+            <p className="mx-auto mt-7 max-w-2xl text-base sm:text-lg font-normal leading-relaxed text-slate-400/95 motion-safe:animate-[fadeIn_0.7s_ease-out]">
+              One immersive workspace: live global listings, quantitative scoring, multi-store deal
+              intelligence, and reasoning you can trust—without the noise of ordinary ecommerce.
             </p>
 
-            {/* Search */}
+            {/* Search — hero instrument */}
             <div
-              className={`mx-auto mt-10 max-w-3xl motion-safe:animate-[fadeIn_0.75s_ease-out] p-1 rounded-[1.35rem] bg-gradient-to-br from-white/[0.12] via-white/[0.04] to-transparent shadow-[0_32px_100px_-40px_rgba(34,211,238,0.25)]`}
+              className="cockpit-search-aurora mx-auto mt-12 max-w-3xl motion-safe:animate-[fadeIn_0.75s_ease-out] rounded-[1.5rem] p-px shadow-[0_40px_120px_-48px_rgba(34,211,238,0.35)]"
+              data-loading={loading ? "true" : "false"}
             >
-              <div
-                className={`rounded-[1.25rem] border border-white/[0.08] bg-[#0a0f1f]/80 p-2 sm:p-2.5 backdrop-blur-2xl`}
-              >
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
-                  <div className="relative flex min-h-[52px] flex-1 items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.03] px-4 transition focus-within:border-cyan-400/30 focus-within:shadow-[0_0_0_1px_rgba(34,211,238,0.15)]">
+              <div className="cockpit-hero-scanlines relative overflow-hidden rounded-[1.45rem] border border-white/[0.09] bg-[#060b18]/88 p-2.5 sm:p-3 backdrop-blur-[32px]">
+                {loading && (
+                  <div
+                    className="pointer-events-none absolute inset-0 bg-[conic-gradient(from_180deg_at_50%_50%,transparent_0deg,rgba(34,211,238,0.12)_120deg,transparent_240deg)] animate-spin opacity-60"
+                    style={{ animationDuration: "4s" }}
+                    aria-hidden
+                  />
+                )}
+                <div className="relative flex flex-col gap-2.5 sm:flex-row sm:items-stretch">
+                  <div className="relative flex min-h-[56px] flex-1 items-center gap-3.5 rounded-2xl border border-white/[0.07] bg-black/30 px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition focus-within:border-cyan-400/35 focus-within:shadow-[0_0_0_1px_rgba(34,211,238,0.2),0_0_32px_-8px_rgba(34,211,238,0.15)]">
                     <Search
-                      className="size-5 shrink-0 text-cyan-300/50"
+                      className={`size-5 shrink-0 ${loading ? "text-cyan-300 animate-pulse" : "text-cyan-300/55"}`}
                       strokeWidth={1.5}
                       aria-hidden
                     />
@@ -382,62 +383,68 @@ export default function Home() {
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && void search()}
-                      placeholder="Search products — e.g. OLED TV, noise-canceling headphones…"
-                      className="min-w-0 flex-1 bg-transparent py-3 text-[15px] font-normal text-white placeholder:text-slate-500 outline-none"
+                      placeholder="Command a search — SKU, category, brand, use case…"
+                      className="min-w-0 flex-1 bg-transparent py-3.5 text-[15px] font-medium tracking-tight text-white placeholder:text-slate-500/90 placeholder:font-normal outline-none"
                     />
                   </div>
                   <button
                     type="button"
                     onClick={() => void search()}
                     disabled={loading}
-                    className="group relative inline-flex min-h-[52px] items-center justify-center gap-2 overflow-hidden rounded-2xl px-7 text-[15px] font-semibold text-slate-950 shadow-[0_0_40px_-8px_rgba(34,211,238,0.55)] transition enabled:hover:brightness-[1.03] enabled:hover:shadow-[0_0_48px_-6px_rgba(34,211,238,0.5)] disabled:opacity-60"
+                    className="group relative inline-flex min-h-[56px] shrink-0 items-center justify-center gap-2 overflow-hidden rounded-2xl px-8 text-[15px] font-semibold tracking-tight text-slate-950 shadow-[0_0_56px_-6px_rgba(34,211,238,0.55)] transition enabled:hover:shadow-[0_0_64px_-4px_rgba(167,139,250,0.45)] disabled:opacity-55"
                   >
-                    <span className="absolute inset-0 bg-gradient-to-r from-cyan-300 via-sky-400 to-violet-500 transition group-hover:opacity-95" />
+                    <span className="absolute inset-0 bg-gradient-to-r from-cyan-300 via-sky-400 to-violet-500 transition duration-500 group-hover:scale-[1.02]" />
+                    <span className="absolute inset-0 opacity-0 transition group-hover:opacity-100 bg-gradient-to-r from-white/25 via-transparent to-white/10" />
                     <span className="relative flex items-center gap-2">
                       {loading ? (
                         <>
-                          <Loader2 className="size-4 animate-spin" aria-hidden />
-                          Scanning
+                          <Loader2 className="size-[1.05rem] animate-spin" aria-hidden />
+                          Thinking
                         </>
                       ) : (
                         <>
-                          Analyze
+                          Run intelligence
                           <ArrowRight className="size-4 transition group-hover:translate-x-0.5" aria-hidden />
                         </>
                       )}
                     </span>
                   </button>
                 </div>
+                <p className="relative mt-2 px-1 text-left text-[11px] font-medium text-slate-500">
+                  {loading
+                    ? "Synthesizing listings, trust signals, and cross-store deal clusters…"
+                    : "Press Enter or tap run — results open the live cockpit below."}
+                </p>
 
-                <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
+                <div className="relative mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
                   {[
                     {
                       icon: Radar,
-                      title: "Live listings",
-                      sub: "Fresh results from the open web",
+                      title: "Live global tray",
+                      sub: "Listings fused into one intelligence surface",
                     },
                     {
                       icon: TrendingUp,
-                      title: "Transparent scoring",
-                      sub: "Price, rating & store trust combined",
+                      title: "Quant + QI scoring",
+                      sub: "Price, reviews, trust & delivery as one signal",
                     },
                     {
                       icon: Lock,
-                      title: "Protected search",
-                      sub: "Signed-in access & fair rate limits",
+                      title: "Private by design",
+                      sub: "Signed-in search with fair rate limits",
                     },
                   ].map((item) => (
                     <div
                       key={item.title}
-                      className="flex items-start gap-3 rounded-2xl border border-white/[0.05] bg-black/20 px-4 py-3 text-left"
+                      className="flex items-start gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm transition hover:border-cyan-400/15"
                     >
                       <item.icon
-                        className="size-4 shrink-0 text-cyan-300/70 mt-0.5"
+                        className="size-4 shrink-0 text-cyan-300/75 mt-0.5"
                         strokeWidth={1.5}
                         aria-hidden
                       />
                       <div>
-                        <p className="text-[13px] font-medium text-white/85">{item.title}</p>
+                        <p className="text-[13px] font-semibold tracking-tight text-white/90">{item.title}</p>
                         <p className="text-[11px] font-normal text-slate-500 mt-0.5 leading-snug">
                           {item.sub}
                         </p>

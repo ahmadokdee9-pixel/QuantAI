@@ -31,13 +31,13 @@ export default function ResultsToolbar({
   return (
     <motion.div
       layout
-      className="sticky top-[3.25rem] z-30 -mx-4 px-4 py-3 sm:-mx-6 sm:px-6 mb-8 border-b border-white/[0.08] bg-[#030712]/82 backdrop-blur-2xl backdrop-saturate-150 supports-[backdrop-filter]:bg-[#030712]/60 shadow-[0_20px_50px_-28px_rgba(0,0,0,0.85)]"
+      className="sticky top-[3.25rem] z-30 -mx-4 px-4 py-3.5 sm:-mx-6 sm:px-6 mb-8 border-b border-white/[0.07] bg-[#030712]/78 backdrop-blur-[28px] backdrop-saturate-150 supports-[backdrop-filter]:bg-[#030712]/55 shadow-[0_24px_60px_-32px_rgba(0,0,0,0.9),0_0_48px_-36px_rgba(34,211,238,0.08)]"
     >
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-            <SlidersHorizontal className="size-3.5 opacity-70" aria-hidden />
-            Sort &amp; filter
+          <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+            <SlidersHorizontal className="size-3.5 text-cyan-400/50" aria-hidden />
+            Cockpit controls
           </span>
           <select
             value={sort}
@@ -77,9 +77,9 @@ export default function ResultsToolbar({
           )}
         </div>
 
-        <p className="text-[13px] text-slate-500 lg:text-right">
-          <span className="tabular-nums text-slate-300">{resultCount}</span> listings · Compare
-          up to 3
+        <p className="text-[12px] font-medium text-slate-500 lg:text-right">
+          <span className="tabular-nums text-slate-200">{resultCount}</span> live nodes · Compare lane ·
+          3 max
         </p>
       </div>
 

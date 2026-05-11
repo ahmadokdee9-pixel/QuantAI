@@ -133,23 +133,24 @@ export default function MultiStoreDealAdvisor({
       aria-label="Multi-store deal intelligence"
     >
       <div className="pointer-events-auto mx-auto max-w-7xl px-3 sm:px-6 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <div className="rounded-t-[1.35rem] border border-white/[0.1] border-b-0 bg-gradient-to-b from-[#0a1224]/95 via-[#060b16]/92 to-[#04070f]/95 shadow-[0_-28px_80px_-24px_rgba(34,211,238,0.15)] backdrop-blur-2xl">
+        <div className="rounded-t-[1.45rem] border border-white/[0.11] border-b-0 bg-gradient-to-b from-[#0a1428]/96 via-[#060b18]/94 to-[#03060f]/96 shadow-[0_-32px_90px_-28px_rgba(34,211,238,0.22),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-[32px]">
           <button
             type="button"
             onClick={() => setExpanded((e) => !e)}
-            className="flex w-full items-center justify-between gap-3 rounded-t-[1.35rem] px-4 py-3 text-left transition hover:bg-white/[0.03]"
+            className="flex w-full items-center justify-between gap-3 rounded-t-[1.45rem] px-4 py-3.5 text-left transition hover:bg-white/[0.04]"
           >
             <div className="flex min-w-0 items-center gap-2.5">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-cyan-400/25 bg-cyan-400/10">
-                <Layers className="size-4 text-cyan-200" strokeWidth={1.5} aria-hidden />
+              <span className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-cyan-400/30 bg-gradient-to-br from-cyan-400/20 to-violet-500/15 shadow-[0_0_24px_-6px_rgba(34,211,238,0.45)]">
+                <span className="pointer-events-none absolute inset-0 bg-[conic-gradient(from_90deg,transparent,rgba(34,211,238,0.15),transparent)] motion-safe:animate-spin opacity-70" style={{ animationDuration: "6s" }} aria-hidden />
+                <Layers className="relative size-4 text-cyan-100" strokeWidth={1.5} aria-hidden />
               </span>
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan-200/90">
-                  QuantAI deal advisor
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-100/90">
+                  Live AI reasoning console
                 </p>
-                <p className="truncate text-sm font-medium text-white/95">
-                  {clusters.length} multi-store {clusters.length === 1 ? "match" : "matches"} · same
-                  product, different retailers
+                <p className="truncate text-sm font-semibold tracking-tight text-white/95">
+                  {clusters.length} cross-retailer {clusters.length === 1 ? "cluster" : "clusters"} · unified
+                  deal graph
                 </p>
               </div>
             </div>

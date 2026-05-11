@@ -1,9 +1,11 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { useId, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowDownRight,
   ArrowUpRight,
+  ChevronDown,
   Minus,
   PanelRight,
   Shield,
@@ -88,11 +90,17 @@ export default function ProductResultCard({
   onOpenIntelligence,
 }: Props) {
   const reduceMotion = useReducedMotion();
+  const ringGradId = useId().replace(/:/g, "");
+  const [intelOpen, setIntelOpen] = useState(false);
   const ai = calculateAIScore(p, list);
   const score = p.qiComposite != null && Number.isFinite(p.qiComposite) ? p.qiComposite : ai.score;
+  const scoreNorm = Math.min(100, Math.max(0, Number(score) || 0));
   const badge = getProfessionalBadge(p, list, rank);
   const trust = getStoreTrustScore(p.store);
   const inCompare = compareLinks.includes(p.link);
+  const ringR = 21;
+  const ringC = 2 * Math.PI * ringR;
+  const ringDash = ringC * (1 - scoreNorm / 100);
 
   const transition = reduceMotion
     ? { duration: 0 }
@@ -140,17 +148,17 @@ export default function ProductResultCard({
         </div>
 
         {p.image && (
-          <div className="mx-4 mt-3 overflow-hidden rounded-xl border border-white/[0.07] bg-white p-2.5 shadow-inner">
+          <div className="mx-4 mt-3 overflow-hidden rounded-[1.05rem] border border-white/[0.08] bg-gradient-to-b from-white/[0.12] to-white p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
             <motion.img
               src={p.image}
               alt=""
               loading="lazy"
               decoding="async"
-              className="mx-auto h-28 w-full object-contain"
+              className="mx-auto h-[7.25rem] w-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.35)]"
               whileHover={
                 reduceMotion
                   ? undefined
-                  : { scale: 1.04, transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] } }
+                  : { scale: 1.045, transition: { duration: 0.34, ease: [0.22, 1, 0.36, 1] } }
               }
             />
           </div>
@@ -173,10 +181,10 @@ export default function ProductResultCard({
             </span>
           </div>
 
-          <div className="mt-3 flex flex-wrap items-end justify-between gap-2 border-t border-white/[0.06] pt-3">
+          <div className="mt-3 flex flex-wrap items-end justify-between gap-3 border-t border-white/[0.06] pt-3">
             <div className="min-w-0">
               {p.displayPrice ? (
-                <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                   {p.displayPrice}
                 </p>
               ) : (
@@ -192,11 +200,51 @@ export default function ProductResultCard({
                 <TrendIcon trend={p.priceTrend} />
               </div>
             </div>
-            <div className="shrink-0 text-right">
-              <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">
-                {p.qiComposite != null ? "QI composite" : "AI score"}
-              </p>
-              <p className="text-lg font-semibold tabular-nums text-cyan-200">{score}</p>
+            <div className="flex shrink-0 items-center gap-2.5">
+              <div className="relative size-[3.35rem] shrink-0">
+                <svg
+                  className="size-[3.35rem] -rotate-90"
+                  viewBox="0 0 52 52"
+                  aria-hidden
+                >
+                  <defs>
+                    <linearGradient id={ringGradId} x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#22d3ee" />
+                      <stop offset="55%" stopColor="#a78bfa" />
+                      <stop offset="100%" stopColor="#34d399" />
+                    </linearGradient>
+                  </defs>
+                  <circle
+                    cx="26"
+                    cy="26"
+                    r={ringR}
+                    fill="none"
+                    className="stroke-white/[0.08]"
+                    strokeWidth="4"
+                  />
+                  <circle
+                    cx="26"
+                    cy="26"
+                    r={ringR}
+                    fill="none"
+                    stroke={`url(#${ringGradId})`}
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeDasharray={ringC}
+                    strokeDashoffset={ringDash}
+                    className="transition-[stroke-dashoffset] duration-700 ease-out"
+                  />
+                </svg>
+                <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[11px] font-bold tabular-nums text-cyan-100">
+                  {Math.round(scoreNorm)}
+                </span>
+              </div>
+              <div className="text-right">
+                <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                  {p.qiComposite != null ? "QI composite" : "Model layer"}
+                </p>
+                <p className="text-[10px] font-medium text-cyan-200/80">/ 100 signal</p>
+              </div>
             </div>
           </div>
 
@@ -226,6 +274,53 @@ export default function ProductResultCard({
           <p className="mt-2.5 text-[11px] font-normal leading-relaxed text-slate-400 line-clamp-2">
             {p.qiReason?.trim() || ai.reason}
           </p>
+
+          <button
+            type="button"
+            onClick={() => setIntelOpen((o) => !o)}
+            className="mt-2 flex w-full items-center justify-between gap-2 rounded-xl border border-white/[0.07] bg-black/25 px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 transition hover:border-cyan-400/20 hover:text-slate-200"
+            aria-expanded={intelOpen}
+          >
+            <span>Signal depth</span>
+            <ChevronDown
+              className={`size-3.5 shrink-0 text-cyan-300/70 transition ${intelOpen ? "rotate-180" : ""}`}
+              strokeWidth={2}
+              aria-hidden
+            />
+          </button>
+          <AnimatePresence initial={false}>
+            {intelOpen && (
+              <motion.div
+                initial={reduceMotion ? false : { height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }}
+                className="overflow-hidden"
+              >
+                <div className="mt-2 space-y-2 rounded-xl border border-cyan-400/15 bg-gradient-to-b from-cyan-500/[0.06] to-transparent px-3 py-2.5 text-[11px] leading-relaxed text-slate-300">
+                  <p>
+                    <span className="font-semibold text-cyan-100/90">Model read · </span>
+                    <span className="text-cyan-50/90">{ai.label}</span>
+                    <span className="text-slate-500"> — </span>
+                    {ai.reason}
+                  </p>
+                  <p className="text-slate-400">
+                    <span className="font-semibold text-white/80">QI narrative · </span>
+                    {p.qiReason?.trim() ||
+                      "Composite index blends price position, review strength, and retailer trust for this result set."}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 pt-0.5">
+                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-slate-300">
+                      Rank #{rank + 1} in tray
+                    </span>
+                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-slate-300">
+                      Store trust {trust}
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <motion.button
             type="button"

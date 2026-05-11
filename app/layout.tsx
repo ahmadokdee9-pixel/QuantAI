@@ -7,7 +7,7 @@ const quantaiSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-quantai",
   display: "swap",
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -24,7 +24,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" className={quantaiSans.variable}>
-        <body className="min-h-dvh bg-[#030712] font-sans text-slate-100 antialiased selection:bg-cyan-500/25 selection:text-cyan-50">
+        <body className="min-h-dvh bg-[#020617] font-sans text-slate-100 antialiased selection:bg-cyan-500/30 selection:text-cyan-50">
           {children}
         </body>
       </html>
