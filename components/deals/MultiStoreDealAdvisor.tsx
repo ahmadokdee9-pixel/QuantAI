@@ -3,16 +3,20 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
+  AlertTriangle,
   ArrowUpRight,
   ChevronDown,
   ChevronUp,
   Gauge,
   Layers,
+  Radar,
+  Shield,
   Sparkles,
+  Target,
   Truck,
   Wallet,
 } from "lucide-react";
-import type { DealClusterDTO, ListingDealInsight } from "@/lib/deals/types";
+import type { DealClusterDTO, ListingDealInsight, PrimaryDealAction } from "@/lib/deals/types";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getFinalComposite, getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
 import { scoreDeliverySpeed } from "@/lib/intelligence/deliveryScore";
@@ -59,14 +63,38 @@ function fakeRiskLabel(r: ListingDealInsight["fakeDiscountRisk"]): string {
   return "Low fake-risk";
 }
 
+function primaryActionLabel(a: PrimaryDealAction): string {
+  if (a === "buy_now") return "Buy now";
+  if (a === "wait") return "Wait for better pricing";
+  return "Compare carefully";
+}
+
+function primaryActionStyle(a: PrimaryDealAction): string {
+  if (a === "buy_now") return "border-emerald-400/35 bg-emerald-500/15 text-emerald-100";
+  if (a === "wait") return "border-rose-400/35 bg-rose-500/12 text-rose-100";
+  return "border-amber-400/35 bg-amber-500/12 text-amber-100";
+}
+
+function completenessStyle(c: DealClusterDTO["dataCompleteness"]): string {
+  if (c === "high") return "text-emerald-200/90 border-emerald-400/25";
+  if (c === "medium") return "text-amber-200/90 border-amber-400/25";
+  return "text-rose-200/85 border-rose-400/25";
+}
+
 const pickDefs: { key: keyof DealClusterDTO["picks"]; label: string }[] = [
   { key: "bestOverall", label: "Best overall" },
-  { key: "bestBudget", label: "Best budget" },
+  { key: "bestBudget", label: "Cheapest deal" },
   { key: "mostTrusted", label: "Most trusted" },
   { key: "fastestDelivery", label: "Fastest delivery" },
+  { key: "bestLongTermValue", label: "Best long-term value" },
   { key: "premiumChoice", label: "Premium choice" },
-  { key: "bestLongTermValue", label: "Long-term value" },
+  { key: "riskyButCheap", label: "Risky but cheap" },
+  { key: "waitForBetterPricing", label: "Wait — poor value row" },
 ];
+
+function pickBadgesForLink(cluster: DealClusterDTO, link: string): string[] {
+  return pickDefs.filter(({ key }) => cluster.picks[key] === link).map(({ label }) => label);
+}
 
 export default function MultiStoreDealAdvisor({
   clusters,
@@ -148,36 +176,99 @@ export default function MultiStoreDealAdvisor({
                 transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }}
                 className="overflow-hidden border-t border-white/[0.06]"
               >
-                <div className="max-h-[min(52vh,520px)] overflow-y-auto overscroll-contain px-4 pb-4 pt-3">
-                  {clusters.length > 1 && (
-                    <div className="mb-4 flex gap-2 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch]">
-                      {clusters.map((c) => {
-                        const pr = c.listings.map((x) => x.price);
-                        const lo = Math.min(...pr);
-                        const hi = Math.max(...pr);
-                        return (
-                          <button
-                            key={c.id}
-                            type="button"
-                            onClick={() => setActiveId(c.id)}
-                            className={`shrink-0 rounded-full border px-3.5 py-1.5 text-left text-xs font-medium transition ${
-                              c.id === cluster.id
-                                ? "border-cyan-400/45 bg-cyan-400/15 text-cyan-50"
-                                : "border-white/10 bg-white/[0.04] text-slate-400 hover:border-white/20 hover:text-slate-200"
-                            }`}
-                          >
-                            <span className="line-clamp-1 max-w-[200px]">{c.canonicalTitle}</span>
-                            <span className="mt-0.5 block text-[10px] font-normal text-slate-500">
-                              {c.listings.length} stores · €{lo.toFixed(0)}–€{hi.toFixed(0)}
+                <div className="max-h-[min(60vh,640px)] overflow-y-auto overscroll-contain px-4 pb-4 pt-3">
+                  <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {clusters.map((c) => {
+                      const pr = c.listings.map((x) => x.price);
+                      const lo = Math.min(...pr);
+                      const hi = Math.max(...pr);
+                      const active = c.id === cluster.id;
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => setActiveId(c.id)}
+                          className={`rounded-2xl border px-3 py-3 text-left transition ${
+                            active
+                              ? "border-cyan-400/45 bg-gradient-to-br from-cyan-500/15 to-white/[0.04] shadow-[0_12px_40px_-16px_rgba(34,211,238,0.25)]"
+                              : "border-white/[0.08] bg-white/[0.03] hover:border-white/15"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="line-clamp-2 text-[12px] font-medium leading-snug text-white/95">
+                              {c.canonicalTitle}
+                            </p>
+                            {c.suspiciousDiscountCluster && (
+                              <AlertTriangle
+                                className="size-4 shrink-0 text-amber-300/90"
+                                aria-label="Suspicious discounts in cluster"
+                              />
+                            )}
+                          </div>
+                          <p className="mt-1 text-[10px] text-slate-500">{c.inferredCategoryLabel}</p>
+                          <div className="mt-2 flex items-center gap-2">
+                            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/40">
+                              <div
+                                className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-400 transition-all"
+                                style={{ width: `${c.clusterDealConfidence}%` }}
+                              />
+                            </div>
+                            <span className="text-[10px] font-semibold tabular-nums text-cyan-200/90">
+                              {c.clusterDealConfidence}
                             </span>
-                          </button>
-                        );
-                      })}
+                          </div>
+                          <p className="mt-2 text-[11px] text-slate-400">
+                            <span className="tabular-nums text-white/90">{c.listings.length}</span> stores ·{" "}
+                            <span className="tabular-nums">€{lo.toFixed(0)}–€{hi.toFixed(0)}</span>
+                            <span className="text-slate-600"> · </span>
+                            avg <span className="tabular-nums text-slate-300">€{c.avgPrice.toFixed(0)}</span>
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {cluster.suspiciousDiscountCluster && (
+                    <div className="mb-4 flex gap-2 rounded-xl border border-amber-400/35 bg-amber-500/[0.1] px-3 py-2.5 text-[11px] leading-snug text-amber-100/95">
+                      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-300" aria-hidden />
+                      <p>
+                        <span className="font-semibold">Fake-discount signal in this cluster.</span> At least one
+                        listing shows markdown math that peers do not corroborate—treat headline savings as unproven
+                        until you verify list prices.
+                      </p>
                     </div>
                   )}
 
+                  <div className="mb-4 rounded-2xl border border-white/[0.08] bg-white/[0.04] p-3 backdrop-blur-md">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${primaryActionStyle(cluster.primaryRecommendation)}`}
+                      >
+                        <Target className="size-3.5" aria-hidden />
+                        {primaryActionLabel(cluster.primaryRecommendation)}
+                      </span>
+                      <span
+                        className={`rounded-full border px-2 py-0.5 text-[10px] font-medium capitalize ${completenessStyle(cluster.dataCompleteness)}`}
+                      >
+                        Data · {cluster.dataCompleteness}
+                      </span>
+                      {cluster.bestDiscountPct != null && (
+                        <span className="rounded-full border border-violet-400/25 bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-100">
+                          Best headline discount · {cluster.bestDiscountPct}%
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-2 text-[12px] leading-relaxed text-slate-300">
+                      {cluster.primaryRecommendationReason}
+                    </p>
+                    <p className="mt-2 flex items-start gap-2 text-[11px] leading-relaxed text-slate-500">
+                      <Shield className="mt-0.5 size-3.5 shrink-0 text-slate-500" aria-hidden />
+                      {cluster.retailTrustNote}
+                    </p>
+                  </div>
+
                   <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       <div className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 backdrop-blur-md">
                         <div className="flex items-start gap-2">
                           <Sparkles className="mt-0.5 size-4 shrink-0 text-violet-300" strokeWidth={1.5} />
@@ -188,7 +279,7 @@ export default function MultiStoreDealAdvisor({
                             </p>
                           </div>
                         </div>
-                        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
                           <div className="rounded-xl border border-white/[0.06] bg-black/25 px-3 py-2">
                             <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-500">
                               <Gauge className="size-3" aria-hidden />
@@ -197,28 +288,64 @@ export default function MultiStoreDealAdvisor({
                             <p className="mt-1 text-sm font-semibold tabular-nums text-emerald-200">
                               €{cluster.fairMarketEstimate.toFixed(0)}
                             </p>
-                            <p className="text-[10px] text-slate-500">Peer median in this tray</p>
+                            <p className="text-[10px] text-slate-500">Peer median</p>
                           </div>
                           <div className="rounded-xl border border-white/[0.06] bg-black/25 px-3 py-2">
                             <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-500">
                               <Wallet className="size-3" aria-hidden />
-                              Spread
+                              Min / max
                             </p>
+                            <p className="mt-1 text-sm font-semibold tabular-nums text-white">
+                              €{cluster.minPrice.toFixed(0)} – €{cluster.maxPrice.toFixed(0)}
+                            </p>
+                            <p className="text-[10px] text-slate-500">Across stores</p>
+                          </div>
+                          <div className="rounded-xl border border-white/[0.06] bg-black/25 px-3 py-2">
+                            <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">Spread</p>
                             <p className="mt-1 text-sm font-semibold tabular-nums text-amber-200">
                               {cluster.priceSpreadPct.toFixed(0)}%
                             </p>
-                            <p className="text-[10px] text-slate-500">Store-to-store gap</p>
+                            <p className="text-[10px] text-slate-500">Price ladder</p>
                           </div>
-                          <div className="col-span-2 rounded-xl border border-white/[0.06] bg-black/25 px-3 py-2 sm:col-span-1">
-                            <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+                          <div className="rounded-xl border border-white/[0.06] bg-black/25 px-3 py-2">
+                            <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+                              <Radar className="size-3" aria-hidden />
                               Volatility
                             </p>
-                            <p className="mt-1 text-[11px] leading-snug text-slate-400">
-                              {cluster.volatilityNote}
-                            </p>
+                            <p className="mt-1 text-[11px] leading-snug text-slate-400">{cluster.volatilityNote}</p>
                           </div>
                         </div>
                       </div>
+
+                      {cluster.whenCheapestNotBest && (
+                        <div className="rounded-xl border border-cyan-400/20 bg-cyan-500/[0.06] px-3 py-2.5 text-[11px] leading-relaxed text-cyan-50/95">
+                          <span className="font-semibold text-cyan-200">Cheapest ≠ best here. </span>
+                          {cluster.whenCheapestNotBest}
+                        </div>
+                      )}
+
+                      <details className="group rounded-2xl border border-white/[0.06] bg-black/25 px-3 py-2.5">
+                        <summary className="cursor-pointer list-none text-[11px] font-semibold text-slate-300 marker:content-none [&::-webkit-details-marker]:hidden">
+                          <span className="inline-flex items-center gap-2">
+                            Why these stores are grouped
+                            <ChevronDown className="size-3.5 transition group-open:rotate-180 text-slate-500" />
+                          </span>
+                        </summary>
+                        <p className="mt-2 text-[11px] leading-relaxed text-slate-500">{cluster.groupingRationale}</p>
+                        <p className="mt-2 text-[10px] leading-relaxed text-slate-600">{cluster.matchSignalsSummary}</p>
+                        <p className="mt-2 text-[10px] italic text-slate-600">{cluster.imageSimilarityNote}</p>
+                      </details>
+
+                      <details className="group rounded-2xl border border-white/[0.06] bg-black/25 px-3 py-2.5">
+                        <summary className="cursor-pointer list-none text-[11px] font-semibold text-slate-300 marker:content-none [&::-webkit-details-marker]:hidden">
+                          <span className="inline-flex items-center gap-2">
+                            Hidden risks & uncertainty
+                            <ChevronDown className="size-3.5 transition group-open:rotate-180 text-slate-500" />
+                          </span>
+                        </summary>
+                        <p className="mt-2 text-[11px] leading-relaxed text-slate-500">{cluster.hiddenRisksNote}</p>
+                        <p className="mt-2 text-[11px] leading-relaxed text-slate-500">{cluster.uncertaintyNote}</p>
+                      </details>
 
                       <div>
                         <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
@@ -251,7 +378,7 @@ export default function MultiStoreDealAdvisor({
 
                     <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-black/20">
                       <div className="overflow-x-auto">
-                        <table className="w-full min-w-[640px] text-left text-[11px]">
+                        <table className="w-full min-w-[720px] text-left text-[11px]">
                           <thead>
                             <tr className="border-b border-white/[0.06] bg-white/[0.03] text-[9px] font-semibold uppercase tracking-wider text-slate-500">
                               <th className="px-3 py-2.5">Retailer</th>
@@ -263,6 +390,7 @@ export default function MultiStoreDealAdvisor({
                               <th className="px-3 py-2.5">Reviews</th>
                               <th className="px-3 py-2.5">Verdict</th>
                               <th className="px-3 py-2.5">QI</th>
+                              <th className="px-3 py-2.5">Conf.</th>
                               <th className="px-3 py-2.5">Signal</th>
                             </tr>
                           </thead>
@@ -282,6 +410,7 @@ export default function MultiStoreDealAdvisor({
                                     : "Slower cue");
                               const disc = ins?.discountPct;
                               const savings = ins?.savingsVsFair;
+                              const badges = pickBadgesForLink(cluster, p.link);
                               return (
                                 <motion.tr
                                   key={p.link}
@@ -299,7 +428,19 @@ export default function MultiStoreDealAdvisor({
                                     >
                                       {p.store}
                                     </a>
-                                    <p className="mt-0.5 line-clamp-2 max-w-[180px] text-[10px] font-normal text-slate-500">
+                                    {badges.length > 0 && (
+                                      <div className="mt-1 flex flex-wrap gap-1">
+                                        {badges.slice(0, 3).map((b) => (
+                                          <span
+                                            key={b}
+                                            className="rounded-md border border-cyan-400/25 bg-cyan-400/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-cyan-100/90"
+                                          >
+                                            {b}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+                                    <p className="mt-0.5 line-clamp-2 max-w-[200px] text-[10px] font-normal text-slate-500">
                                       {p.title}
                                     </p>
                                   </td>
@@ -337,17 +478,21 @@ export default function MultiStoreDealAdvisor({
                                   <td className="px-3 py-2.5">
                                     {ins && (
                                       <span
-                                        className={`inline-flex max-w-[140px] flex-col gap-0.5 rounded-lg border px-2 py-1 text-[10px] font-semibold leading-tight ${verdictTone(ins.dealVerdict)}`}
+                                        className={`inline-flex max-w-[150px] flex-col gap-0.5 rounded-lg border px-2 py-1 text-[10px] font-semibold leading-tight ${verdictTone(ins.dealVerdict)}`}
                                       >
                                         {ins.dealVerdict}
                                         <span className="font-normal text-white/70">
                                           {fakeRiskLabel(ins.fakeDiscountRisk)}
                                         </span>
+                                        {ins.tooGoodToBeTrue && (
+                                          <span className="font-normal text-amber-200/90">Too good vs peers</span>
+                                        )}
                                       </span>
                                     )}
                                   </td>
-                                  <td className="px-3 py-2.5 tabular-nums font-medium text-cyan-200/90">
-                                    {comp}
+                                  <td className="px-3 py-2.5 tabular-nums font-medium text-cyan-200/90">{comp}</td>
+                                  <td className="px-3 py-2.5 tabular-nums text-slate-300">
+                                    {ins?.buyerConfidence ?? "—"}
                                   </td>
                                   <td className="px-3 py-2.5 text-[10px] leading-snug text-slate-400">
                                     {ins && (
@@ -360,9 +505,7 @@ export default function MultiStoreDealAdvisor({
                                             {savings >= 0 ? "↓" : "↑"} €{Math.abs(savings).toFixed(0)} vs fair
                                           </span>
                                         )}
-                                        <span className="mt-1 block italic text-slate-500">
-                                          {ins.reasoning}
-                                        </span>
+                                        <span className="mt-1 block italic text-slate-500">{ins.reasoning}</span>
                                       </>
                                     )}
                                   </td>

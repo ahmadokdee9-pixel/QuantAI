@@ -269,7 +269,7 @@ export default function ProductResultsSurface({
   }
 
   const advisorPad =
-    filteredDealClusters.length > 0 ? "pb-[min(36rem,48vh)] sm:pb-56" : "pb-24";
+    filteredDealClusters.length > 0 ? "pb-[min(40rem,52vh)] sm:pb-60" : "pb-24";
 
   return (
     <section className={`relative mx-auto max-w-7xl px-4 sm:px-6 ${advisorPad}`} ref={anchorRef}>

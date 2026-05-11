@@ -12,10 +12,15 @@ export type BuyVsWait = "buy_now" | "compare" | "wait";
 
 export type FakeDiscountRisk = "low" | "medium" | "high";
 
+export type DataCompleteness = "high" | "medium" | "low";
+
+export type PrimaryDealAction = "buy_now" | "compare" | "wait";
+
 export type ListingDealInsight = {
   link: string;
   dealVerdict: DealVerdict;
   dealQualityScore: number;
+  buyerConfidence: number;
   reasoning: string;
   fakeDiscountRisk: FakeDiscountRisk;
   buyVsWait: BuyVsWait;
@@ -23,6 +28,8 @@ export type ListingDealInsight = {
   returnPolicyHint: string;
   stockUrgency: "none" | "low" | "elevated";
   savingsVsFair: number | null;
+  tooGoodToBeTrue: boolean;
+  dataGaps: string[];
 };
 
 export type ClusterPicks = {
@@ -32,6 +39,10 @@ export type ClusterPicks = {
   fastestDelivery: string;
   premiumChoice: string;
   bestLongTermValue: string;
+  /** Lowest price with elevated risk (trust, reviews, or discount hygiene). */
+  riskyButCheap: string;
+  /** Example listing where patience or a different store likely wins. */
+  waitForBetterPricing: string;
 };
 
 export type DealClusterDTO = {
@@ -39,9 +50,27 @@ export type DealClusterDTO = {
   canonicalTitle: string;
   listings: QuantProduct[];
   fairMarketEstimate: number;
+  minPrice: number;
+  maxPrice: number;
+  avgPrice: number;
   priceSpreadPct: number;
+  bestDiscountPct: number | null;
   volatilityNote: string;
   picks: ClusterPicks;
   listingInsights: ListingDealInsight[];
   advisorSummary: string;
+  /** 0–100: how strongly QuantAI believes these rows are the same product. */
+  clusterDealConfidence: number;
+  suspiciousDiscountCluster: boolean;
+  dataCompleteness: DataCompleteness;
+  inferredCategoryLabel: string;
+  retailTrustNote: string;
+  groupingRationale: string;
+  hiddenRisksNote: string;
+  whenCheapestNotBest: string | null;
+  primaryRecommendation: PrimaryDealAction;
+  primaryRecommendationReason: string;
+  uncertaintyNote: string;
+  matchSignalsSummary: string;
+  imageSimilarityNote: string;
 };

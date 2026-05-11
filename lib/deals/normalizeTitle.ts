@@ -32,9 +32,14 @@ const STOP = new Set([
   "size",
 ]);
 
+/** Strip accents for language-insensitive token overlap (pair with normalize). */
+export function foldAsciiTitle(title: string): string {
+  return title.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
 /** Collapse noise for fuzzy matching across retailers. */
 export function normalizeProductTitle(title: string): string {
-  return title
+  return foldAsciiTitle(title)
     .toLowerCase()
     .replace(/[^a-z0-9\s]/gi, " ")
     .replace(/\s+/g, " ")
@@ -82,5 +87,11 @@ export function charOverlapSimilarity(a: string, b: string): number {
 export function combinedTitleSimilarity(a: string, b: string): number {
   const j = titleSimilarity(a, b);
   const c = charOverlapSimilarity(a, b);
-  return Math.max(j, j * 0.65 + c * 0.35);
+  const base = Math.max(j, j * 0.65 + c * 0.35);
+  const af = foldAsciiTitle(a);
+  const bf = foldAsciiTitle(b);
+  const jf = titleSimilarity(af, bf);
+  const cf = charOverlapSimilarity(af, bf);
+  const folded = Math.max(jf, jf * 0.65 + cf * 0.35);
+  return Math.max(base, folded);
 }
