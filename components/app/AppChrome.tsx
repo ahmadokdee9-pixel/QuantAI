@@ -24,17 +24,17 @@ export default function AppChrome({ children }: { children: React.ReactNode }) {
       <AmbientBackdrop />
       <div className="relative z-10">
         <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-[#020617]/78 backdrop-blur-[24px] backdrop-saturate-150 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset]">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <div className="mx-auto flex max-w-6xl min-w-0 flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
             <Link
               href="/dashboard"
-              className="flex items-center gap-2 text-[15px] font-semibold tracking-tight text-white/95"
+              className="flex shrink-0 items-center gap-2 text-[15px] font-semibold tracking-tight text-white/95"
             >
               <span className="flex size-8 items-center justify-center rounded-lg border border-white/10 bg-gradient-to-br from-cyan-400/25 to-violet-500/25 shadow-[0_0_20px_-6px_rgba(34,211,238,0.35)]">
                 <Sparkles className="size-4 text-cyan-200" aria-hidden />
               </span>
               QuantAI
             </Link>
-            <nav className="flex flex-wrap items-center gap-1 text-[13px]">
+            <nav className="qa-scroll-touch flex min-w-0 max-w-full flex-1 flex-nowrap items-center justify-end gap-1 overflow-x-auto overflow-y-visible overscroll-x-contain py-0.5 text-[13px] sm:max-w-none sm:flex-none sm:justify-end sm:overflow-visible sm:py-0">
               {nav.map(({ href, label, icon: Icon }) => {
                 const active = pathname === href || (href !== "/" && pathname.startsWith(href));
                 return (
@@ -63,7 +63,7 @@ export default function AppChrome({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">{children}</main>
-        <div className="fixed bottom-5 right-5 z-50 sm:hidden">
+        <div className="fixed bottom-5 left-5 z-50 sm:hidden">
           <FeedbackLauncher variant="floating" />
         </div>
       </div>

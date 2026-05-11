@@ -1,14 +1,14 @@
 import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function GET() {
   const { userId } = await auth();
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonErr(401, "Unauthorized");
   }
   if (!supabaseAdmin) {
-    return NextResponse.json({ collections: [] });
+    return jsonOk({ collections: [] });
   }
 
   const { data, error } = await supabaseAdmin
@@ -18,18 +18,18 @@ export async function GET() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    return NextResponse.json({ collections: [] });
+    return jsonOk({ collections: [], storageError: error.message });
   }
-  return NextResponse.json({ collections: data ?? [] });
+  return jsonOk({ collections: data ?? [] });
 }
 
 export async function POST(req: Request) {
   const { userId } = await auth();
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonErr(401, "Unauthorized");
   }
   if (!supabaseAdmin) {
-    return NextResponse.json({ error: "Collections storage is not configured." }, { status: 503 });
+    return jsonErr(503, "Collections storage is not configured.");
   }
 
   try {
@@ -42,10 +42,10 @@ export async function POST(req: Request) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return jsonErr(500, error.message);
     }
-    return NextResponse.json({ collection: data });
+    return jsonOk({ collection: data });
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return jsonErr(400, "Invalid JSON");
   }
 }

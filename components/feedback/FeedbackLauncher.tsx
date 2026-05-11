@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { MessageSquarePlus, Send, X } from "lucide-react";
+import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
+import { readApiJson } from "@/lib/api/readJson";
 
 const CATEGORIES = [
   { id: "wrong_recommendation", label: "Wrong recommendation" },
@@ -45,14 +47,14 @@ export default function FeedbackLauncher({ variant = "floating", className = "" 
           context: context.trim() || undefined,
         }),
       });
-      const data = (await res.json()) as { ok?: boolean; note?: string; error?: string };
-      if (!res.ok) {
+      const parsed = await readApiJson<{ ok?: boolean; note?: string; error?: string }>(res);
+      if (!res.ok || isApiFailure(parsed)) {
         setStatus("error");
-        setNote(data.error || "Could not send feedback.");
+        setNote(apiErrorText(parsed, "Could not send feedback."));
         return;
       }
       setStatus("done");
-      setNote(data.note ?? null);
+      setNote(parsed.data?.note ?? null);
       setMessage("");
       setContext("");
     } catch {

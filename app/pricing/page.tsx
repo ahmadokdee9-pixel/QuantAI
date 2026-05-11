@@ -7,6 +7,8 @@ import AmbientBackdrop from "@/components/cockpit/AmbientBackdrop";
 import LandingNav from "@/components/landing/LandingNav";
 import PricingCards from "@/components/subscription/PricingCards";
 import TrustRibbon from "@/components/trust/TrustRibbon";
+import { isApiFailure } from "@/lib/api/apiResult";
+import { readApiJson } from "@/lib/api/readJson";
 import type { QuantPlanTier } from "@/lib/subscription/plans";
 
 export default function PricingPage() {
@@ -22,9 +24,14 @@ export default function PricingPage() {
     void (async () => {
       try {
         const res = await fetch("/api/billing/subscription", { credentials: "same-origin" });
-        const data = (await res.json()) as { tier?: string };
-        if (!cancelled && res.ok && typeof data.tier === "string") {
-          setTier(data.tier as QuantPlanTier);
+        const parsed = await readApiJson<{ tier?: string }>(res);
+        if (
+          !cancelled &&
+          !isApiFailure(parsed) &&
+          parsed.data &&
+          typeof parsed.data.tier === "string"
+        ) {
+          setTier(parsed.data.tier as QuantPlanTier);
         }
       } catch {
         if (!cancelled) setTier("free");

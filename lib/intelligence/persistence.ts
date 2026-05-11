@@ -1,3 +1,4 @@
+import { logDevWarn } from "@/lib/log/devLog";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { inferSearchCategory } from "./categoryContext";
 
@@ -18,13 +19,11 @@ export async function recordSearchHistory(
       query: query.trim().slice(0, 500),
       result_count: resultCount,
     });
-    if (error && process.env.NODE_ENV === "development") {
-      console.warn("[QuantAI] search_history insert:", error.message);
+    if (error) {
+      logDevWarn("search_history", error.message);
     }
   } catch (e) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[QuantAI] search_history failed", e);
-    }
+    logDevWarn("search_history", String(e));
   }
 }
 
@@ -67,13 +66,11 @@ export async function mergeRecommendationMemory(
       },
       { onConflict: "user_id" }
     );
-    if (error && process.env.NODE_ENV === "development") {
-      console.warn("[QuantAI] user_shopping_memory upsert:", error.message);
+    if (error) {
+      logDevWarn("user_shopping_memory", error.message);
     }
   } catch (e) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[QuantAI] memory merge failed", e);
-    }
+    logDevWarn("user_shopping_memory", String(e));
   }
 }
 
@@ -131,5 +128,22 @@ export async function countWatchlistItems(userId: string): Promise<number | null
     return count ?? 0;
   } catch {
     return null;
+  }
+}
+
+/** Persists a compare verdict for dashboard history (best-effort; never throws to callers). */
+export async function recordCompareSession(userId: string, payload: Record<string, unknown>): Promise<void> {
+  const db = getAdmin();
+  if (!db) return;
+  try {
+    const { error } = await db.from("compare_sessions").insert({
+      user_id: userId,
+      payload,
+    });
+    if (error) {
+      logDevWarn("compare_sessions", error.message);
+    }
+  } catch (e) {
+    logDevWarn("compare_sessions", String(e));
   }
 }

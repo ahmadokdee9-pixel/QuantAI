@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
 import { z } from "zod";
+import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
+import { logDevWarn } from "@/lib/log/devLog";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 const FeedbackSchema = z.object({
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
   try {
     parsed = FeedbackSchema.parse(await req.json());
   } catch {
-    return NextResponse.json({ error: "Invalid feedback payload" }, { status: 400 });
+    return jsonErr(400, "Invalid feedback payload");
   }
 
   const { userId } = await auth();
@@ -40,19 +41,17 @@ export async function POST(req: Request) {
   if (supabaseAdmin) {
     const { error } = await supabaseAdmin.from("quantai_feedback").insert(row);
     if (error) {
-      if (process.env.NODE_ENV === "development") {
-        console.warn("[QuantAI feedback]", error.message);
-      }
-      return NextResponse.json({
+      logDevWarn("feedback", error.message);
+      return jsonOk({
         ok: true,
         stored: false,
         note: "Received. Storage table may be missing — feedback was not persisted.",
       });
     }
-    return NextResponse.json({ ok: true, stored: true });
+    return jsonOk({ ok: true, stored: true });
   }
 
-  return NextResponse.json({
+  return jsonOk({
     ok: true,
     stored: false,
     note: "Received locally. Connect Supabase and create table quantai_feedback to archive.",

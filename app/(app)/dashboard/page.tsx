@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -15,9 +15,15 @@ import type { SearchEntitlementsDTO } from "@/lib/subscription/entitlements";
 import type { QuantPlanTier } from "@/lib/subscription/plans";
 import TrustRibbon from "@/components/trust/TrustRibbon";
 import EntitlementBanner from "@/components/subscription/EntitlementBanner";
+import { QuantAnalyticsEvents } from "@/lib/analytics/events";
+import { trackEvent } from "@/lib/analytics/track";
+import { isApiFailure } from "@/lib/api/apiResult";
+import { readApiJson } from "@/lib/api/readJson";
+import { logDevError } from "@/lib/log/devLog";
 
 type HistoryRow = { id?: string; query: string; result_count?: number; created_at?: string };
 type WatchRow = { id?: string; product?: Record<string, unknown>; created_at?: string };
+type CompareHistoryRow = { id: string; payload: Record<string, unknown>; created_at: string };
 type SavedRow = {
   id?: string;
   title: string | null;
@@ -36,7 +42,16 @@ export default function DashboardPage() {
   const [watchlist, setWatchlist] = useState<WatchRow[]>([]);
   const [saved, setSaved] = useState<SavedRow[]>([]);
   const [memoryLine, setMemoryLine] = useState<string | null>(null);
+  const [compareHistory, setCompareHistory] = useState<CompareHistoryRow[]>([]);
   const [err, setErr] = useState<string | null>(null);
+  const dashboardTracked = useRef(false);
+
+  useEffect(() => {
+    if (!dashboardTracked.current) {
+      dashboardTracked.current = true;
+      trackEvent(QuantAnalyticsEvents.DASHBOARD_VIEW, {});
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -44,41 +59,48 @@ export default function DashboardPage() {
       setLoading(true);
       setErr(null);
       try {
-        const [subRes, hRes, wRes, sRes, mRes] = await Promise.all([
+        const [subRes, hRes, wRes, sRes, mRes, cRes] = await Promise.all([
           fetch("/api/billing/subscription", { credentials: "same-origin" }),
           fetch("/api/intelligence/search-history", { credentials: "same-origin" }),
           fetch("/api/intelligence/watchlist", { credentials: "same-origin" }),
           fetch("/api/intelligence/saved-products", { credentials: "same-origin" }),
           fetch("/api/intelligence/user-memory", { credentials: "same-origin" }),
+          fetch("/api/intelligence/compare-history", { credentials: "same-origin" }),
         ]);
 
-        if (!cancelled && subRes.ok) {
-          const s = (await subRes.json()) as {
-            tier?: string;
-            entitlements?: SearchEntitlementsDTO;
-          };
+        const [subP, hP, wP, sP, mP, cP] = await Promise.all([
+          readApiJson<{ tier?: string; entitlements?: SearchEntitlementsDTO }>(subRes),
+          readApiJson<{ items?: HistoryRow[] }>(hRes),
+          readApiJson<{ items?: WatchRow[] }>(wRes),
+          readApiJson<{ items?: SavedRow[] }>(sRes),
+          readApiJson<{ memory?: Record<string, unknown> }>(mRes),
+          readApiJson<{ items?: CompareHistoryRow[] }>(cRes),
+        ]);
+
+        if (subP.notJson) logDevError("dashboard-api", new Error(subP.error ?? "subscription not JSON"));
+        if (!cancelled && !isApiFailure(subP) && subP.data) {
+          const s = subP.data;
           if (typeof s.tier === "string") setTier(s.tier as QuantPlanTier);
           if (s.entitlements) setEntitlements(s.entitlements);
         }
 
-        if (!cancelled && hRes.ok) {
-          const h = (await hRes.json()) as { items?: HistoryRow[] };
+        if (!cancelled && !isApiFailure(hP) && hP.data) {
+          const h = hP.data;
           setHistory(Array.isArray(h.items) ? h.items : []);
         }
 
-        if (!cancelled && wRes.ok) {
-          const w = (await wRes.json()) as { items?: WatchRow[] };
+        if (!cancelled && !isApiFailure(wP) && wP.data) {
+          const w = wP.data;
           setWatchlist(Array.isArray(w.items) ? w.items : []);
         }
 
-        if (!cancelled && sRes.ok) {
-          const sv = (await sRes.json()) as { items?: SavedRow[] };
+        if (!cancelled && !isApiFailure(sP) && sP.data) {
+          const sv = sP.data;
           setSaved(Array.isArray(sv.items) ? sv.items : []);
         }
 
-        if (!cancelled && mRes.ok) {
-          const m = (await mRes.json()) as { memory?: Record<string, unknown> };
-          const mem = m.memory ?? {};
+        if (!cancelled && !isApiFailure(mP) && mP.data) {
+          const mem = mP.data.memory ?? {};
           const last =
             typeof mem.lastQuery === "string"
               ? mem.lastQuery
@@ -86,6 +108,11 @@ export default function DashboardPage() {
                 ? `Recent category signal: ${String(mem.lastCategory)}`
                 : null;
           setMemoryLine(last);
+        }
+
+        if (!cancelled && !isApiFailure(cP) && cP.data) {
+          const c = cP.data;
+          setCompareHistory(Array.isArray(c.items) ? c.items : []);
         }
       } catch {
         if (!cancelled) setErr("Some dashboard data could not be loaded.");
@@ -101,8 +128,8 @@ export default function DashboardPage() {
   const activitySummary = useMemo(() => {
     return [
       { label: "Saved products", value: saved.length, href: "/saved" },
-      { label: "Watchlist", value: watchlist.length, href: "/" },
-      { label: "Recent searches", value: history.length, href: "/" },
+      { label: "Watchlist", value: watchlist.length, href: "/dashboard#watchlist" },
+      { label: "Recent searches", value: history.length, href: "/dashboard#searches" },
     ] as const;
   }, [saved.length, watchlist.length, history.length]);
 
@@ -196,8 +223,99 @@ export default function DashboardPage() {
         ))}
       </section>
 
+      <section id="watchlist" className="cockpit-glass-panel scroll-mt-24 p-6 sm:p-8">
+        <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-white/95">Watchlist</h2>
+            <p className="text-xs text-slate-500">Price-drop alerts foundation — synced when Supabase is live.</p>
+          </div>
+          <Link href="/" className="text-xs font-medium text-cyan-300 hover:underline sm:shrink-0">
+            Add from search
+          </Link>
+        </div>
+        {watchlist.length === 0 ? (
+          <p className="rounded-xl border border-white/[0.06] bg-black/30 px-4 py-8 text-center text-sm text-slate-500">
+            No watchlist items yet. From live results, tap <span className="font-medium text-slate-400">Watch</span> on a
+            card.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {watchlist.slice(0, 12).map((w) => {
+              const p = w.product;
+              const title =
+                p && typeof p.title === "string" ? p.title : "Watched listing";
+              const link = p && typeof p.link === "string" ? p.link : null;
+              return (
+                <li
+                  key={w.id ?? `${title}-${w.created_at ?? ""}`}
+                  className="flex flex-col gap-2 rounded-xl border border-white/[0.06] bg-black/25 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <span className="min-w-0 font-medium leading-snug text-white/90 [overflow-wrap:anywhere]">
+                    {title}
+                  </span>
+                  {link ? (
+                    <a
+                      href={link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 text-xs font-semibold text-cyan-300 hover:underline"
+                    >
+                      Open listing
+                    </a>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+
+      <section id="compare-history" className="cockpit-glass-panel scroll-mt-24 p-6 sm:p-8">
+        <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-white/95">Compare history</h2>
+            <p className="text-xs text-slate-500">Recent QuantAI verdicts from Compare lab (stored per account).</p>
+          </div>
+          <Link href="/" className="text-xs font-medium text-cyan-300 hover:underline sm:shrink-0">
+            Run compare on home
+          </Link>
+        </div>
+        {compareHistory.length === 0 ? (
+          <p className="rounded-xl border border-white/[0.06] bg-black/30 px-4 py-8 text-center text-sm text-slate-500">
+            No compare sessions yet. Add up to three listings to Compare lab and request a verdict.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {compareHistory.slice(0, 10).map((row) => {
+              const v = row.payload.verdict;
+              let headline = "Compare verdict";
+              if (v && typeof v === "object" && v !== null) {
+                const o = v as { winnerTitle?: string; verdict?: string };
+                if (typeof o.winnerTitle === "string") headline = o.winnerTitle;
+                else if (typeof o.verdict === "string") headline = o.verdict.slice(0, 140);
+              }
+              const src =
+                typeof row.payload.source === "string" ? row.payload.source : "";
+              const when = row.created_at ? new Date(row.created_at).toLocaleString() : "";
+              return (
+                <li
+                  key={row.id}
+                  className="rounded-xl border border-white/[0.06] bg-black/25 px-4 py-3 text-sm text-slate-300"
+                >
+                  <p className="font-medium leading-snug text-white/90 [overflow-wrap:anywhere]">{headline}</p>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    {when}
+                    {src ? ` · ${src}` : ""}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+
       <section className="grid gap-6 xl:grid-cols-3">
-        <div className="xl:col-span-2 cockpit-glass-panel p-6">
+        <div id="searches" className="xl:col-span-2 cockpit-glass-panel scroll-mt-24 p-6">
           <div className="mb-6 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-white/95">Recent searches</h2>

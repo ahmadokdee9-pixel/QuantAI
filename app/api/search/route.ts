@@ -13,85 +13,196 @@ import { enforceLimit, searchRatelimit } from "@/lib/rate-limit";
 import { entitlementsForTier } from "@/lib/subscription/entitlements";
 import { planDefinition } from "@/lib/subscription/plans";
 import { subscriptionTierFromClerkUser } from "@/lib/subscription/resolveTier";
+import type { DealClusterDTO } from "@/lib/deals/types";
+import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
+import type { SearchEntitlementsDTO } from "@/lib/subscription/entitlements";
+import type { QuantProduct } from "@/lib/shoppingScore";
 import { fetchShoppingProducts } from "./lib/fetchShopping";
 
-async function handleSearch(q: string | null | undefined) {
-  const query = q?.trim();
-  if (!query) {
-    return NextResponse.json({ error: "Missing query" }, { status: 400 });
-  }
+type SearchDataPayload = {
+  products: QuantProduct[];
+  dealClusters: DealClusterDTO[];
+  meta: Record<string, unknown>;
+  searchIntelligence: SearchIntelligenceDTO | null;
+  entitlements?: SearchEntitlementsDTO;
+};
 
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json(
-      { error: "Sign in to run a product search." },
-      { status: 401 }
-    );
-  }
+function emptySearchData(): Pick<SearchDataPayload, "products" | "dealClusters" | "meta"> {
+  return { products: [], dealClusters: [], meta: {} };
+}
 
-  const user = await currentUser();
-  const tier = subscriptionTierFromClerkUser(user);
-  const plan = planDefinition(tier);
-  const usedToday = await countSearchesTodayUtc(userId);
-  if (usedToday !== null && usedToday >= plan.searchesPerDay) {
-    return NextResponse.json(
+function jsonSearch(
+  body: Record<string, unknown>,
+  init?: ResponseInit
+): NextResponse {
+  return NextResponse.json(body, { status: 200, ...init });
+}
+
+async function handleSearch(q: string | null | undefined): Promise<NextResponse> {
+  const fail = (
+    status: number,
+    error: string,
+    message: string,
+    extras?: Record<string, unknown>
+  ) =>
+    jsonSearch(
       {
-        error: `Daily search limit reached (${plan.searchesPerDay}) for your plan. Upgrade for more.`,
-        code: "PLAN_SEARCH_LIMIT",
-        entitlements: entitlementsForTier(tier),
+        success: false,
+        error,
+        message,
+        data: emptySearchData(),
+        ...extras,
       },
-      { status: 429 }
+      { status }
+    );
+
+  try {
+    const query = q?.trim();
+    if (!query) {
+      return fail(400, "BAD_REQUEST", "Missing query");
+    }
+
+    const { userId } = await auth();
+    const user = userId ? await currentUser() : null;
+    const tier = subscriptionTierFromClerkUser(user);
+    const plan = planDefinition(tier);
+
+    if (userId) {
+      const usedToday = await countSearchesTodayUtc(userId);
+      if (usedToday !== null && usedToday >= plan.searchesPerDay) {
+        return fail(
+          429,
+          "RATE_LIMIT",
+          `Daily search limit reached (${plan.searchesPerDay}) for your plan. Upgrade for more.`,
+          {
+            code: "PLAN_SEARCH_LIMIT",
+            entitlements: entitlementsForTier(tier),
+          }
+        );
+      }
+
+      const limited = await enforceLimit(searchRatelimit, userId);
+      if (!limited.ok) {
+        return jsonSearch(
+          {
+            success: false,
+            error: "RATE_LIMIT",
+            message: "Too many searches. Try again later.",
+            data: emptySearchData(),
+            retryAfter: limited.retryAfter,
+          },
+          {
+            status: 429,
+            headers: { "Retry-After": String(limited.retryAfter) },
+          }
+        );
+      }
+    }
+
+    const result = await fetchShoppingProducts(query);
+    if (!result.ok) {
+      const status =
+        result.status >= 400 && result.status < 600 ? result.status : 502;
+      return fail(status, "SEARCH_FAILED", result.error || "Search upstream failed.");
+    }
+
+    let products: QuantProduct[];
+    try {
+      products = enrichProductsWithIntelligence(result.products, query);
+    } catch (e) {
+      return fail(
+        500,
+        "SEARCH_FAILED",
+        e instanceof Error ? e.message : "Search processing failed."
+      );
+    }
+
+    let dealClusters: DealClusterDTO[];
+    let searchIntelligence: SearchIntelligenceDTO | null;
+    try {
+      dealClusters = buildDealClusters(products);
+      searchIntelligence = buildSearchIntelligence(query, products, dealClusters);
+    } catch (e) {
+      return fail(
+        500,
+        "SEARCH_FAILED",
+        e instanceof Error ? e.message : "Search intelligence failed."
+      );
+    }
+
+    const { topCategory } = memoryPatchFromSearch(query);
+
+    if (userId) {
+      void recordSearchHistory(userId, query, products.length);
+      void mergeRecommendationMemory(userId, query, topCategory);
+    }
+
+    const data: SearchDataPayload = {
+      products,
+      dealClusters,
+      searchIntelligence,
+      entitlements: entitlementsForTier(tier),
+      meta: {
+        category: topCategory,
+        intelligenceVersion: 3,
+      },
+    };
+
+    return jsonSearch({ success: true, data });
+  } catch (e) {
+    return fail(
+      500,
+      "SEARCH_FAILED",
+      e instanceof Error ? e.message : "Search could not complete."
     );
   }
-
-  const limited = await enforceLimit(searchRatelimit, userId);
-  if (!limited.ok) {
-    return NextResponse.json(
-      {
-        error: "Too many searches. Try again later.",
-        retryAfter: limited.retryAfter,
-      },
-      { status: 429, headers: { "Retry-After": String(limited.retryAfter) } }
-    );
-  }
-
-  const result = await fetchShoppingProducts(query);
-  if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: result.status });
-  }
-
-  const products = enrichProductsWithIntelligence(result.products, query);
-  const dealClusters = buildDealClusters(products);
-  const searchIntelligence = buildSearchIntelligence(query, products, dealClusters);
-  const { topCategory } = memoryPatchFromSearch(query);
-
-  void recordSearchHistory(userId, query, products.length);
-  void mergeRecommendationMemory(userId, query, topCategory);
-
-  return NextResponse.json({
-    products,
-    dealClusters,
-    searchIntelligence,
-    entitlements: entitlementsForTier(tier),
-    meta: {
-      category: topCategory,
-      intelligenceVersion: 3,
-    },
-  });
 }
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const q = searchParams.get("q");
-  return handleSearch(q);
+  try {
+    const { searchParams } = new URL(req.url);
+    const q = searchParams.get("q");
+    return await handleSearch(q);
+  } catch (e) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "SEARCH_FAILED",
+        message: e instanceof Error ? e.message : "Search could not complete.",
+        data: emptySearchData(),
+      },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(req: Request) {
+  let q: string | null = null;
   try {
     const body = (await req.json()) as { query?: string; q?: string };
-    const q = body.query ?? body.q ?? null;
-    return handleSearch(q);
+    q = body.query ?? body.q ?? null;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: "BAD_REQUEST",
+        message: "Invalid JSON body",
+        data: emptySearchData(),
+      },
+      { status: 400 }
+    );
+  }
+  try {
+    return await handleSearch(q);
+  } catch (e) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "SEARCH_FAILED",
+        message: e instanceof Error ? e.message : "Search could not complete.",
+        data: emptySearchData(),
+      },
+      { status: 500 }
+    );
   }
 }

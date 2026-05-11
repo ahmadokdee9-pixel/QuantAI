@@ -1,6 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
 import { z } from "zod";
+import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
 import { appUrl, stripePriceId, type QuantStripePlanKey } from "@/lib/stripe/config";
 import { getStripe } from "@/lib/stripe/client";
 
@@ -15,7 +15,7 @@ const BodySchema = z.object({
 export async function POST(req: Request) {
   const { userId } = await auth();
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonErr(401, "Unauthorized");
   }
 
   let body: z.infer<typeof BodySchema>;
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     const json = (await req.json()) as unknown;
     body = BodySchema.parse(json);
   } catch {
-    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+    return jsonErr(400, "Invalid body");
   }
 
   const priceId = stripePriceId(body.plan as QuantStripePlanKey);
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
   const email = user?.primaryEmailAddress?.emailAddress ?? undefined;
 
   if (!stripe || !priceId) {
-    return NextResponse.json({
+    return jsonOk({
       ok: false as const,
       mode: "placeholder" as const,
       redirectUrl: `${appUrl()}/billing?plan=${body.plan}`,
@@ -54,16 +54,16 @@ export async function POST(req: Request) {
     });
 
     if (!session.url) {
-      return NextResponse.json({ error: "No checkout URL returned" }, { status: 500 });
+      return jsonErr(500, "No checkout URL returned");
     }
 
-    return NextResponse.json({
+    return jsonOk({
       ok: true as const,
       mode: "stripe" as const,
       url: session.url,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Stripe error";
-    return NextResponse.json({ error: msg }, { status: 502 });
+    return jsonErr(502, msg);
   }
 }

@@ -8,15 +8,16 @@ const isProtectedRoute = createRouteMatcher([
   "/analytics(.*)",
 ]);
 
-export const proxy = clerkMiddleware(async (auth, req) => {
+export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
     await auth.protect();
   }
 });
 
+/**
+ * Clerk must run on API routes so `auth()` / `currentUser()` work in Route Handlers.
+ * `auth.protect()` only applies to the protected page prefixes above — `/`, `/pricing`, and `/api/search` stay public.
+ */
 export const config = {
-  matcher: [
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    "/(api|trpc)(.*)",
-  ],
+  matcher: ["/(api|trpc)(.*)", "/((?!_next|.*\\..*).*)"],
 };

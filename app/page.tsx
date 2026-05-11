@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import AmbientBackdrop from "../components/cockpit/AmbientBackdrop";
@@ -33,6 +34,15 @@ import {
   sortByTrust,
   type QuantProduct,
 } from "@/lib/shoppingScore";
+import {
+  quantProductFromSavedRow,
+  type SavedProductAPIRow,
+} from "@/lib/commerce/quantProductFromSaved";
+import { QuantAnalyticsEvents } from "@/lib/analytics/events";
+import { trackEvent } from "@/lib/analytics/track";
+import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
+import { readApiJson } from "@/lib/api/readJson";
+import { logDevError } from "@/lib/log/devLog";
 import {
   ArrowRight,
   Bell,
@@ -76,13 +86,25 @@ export default function Home() {
     [saved]
   );
 
+  const refreshSavedFromServer = useCallback(async () => {
+    try {
+      const res = await fetch("/api/intelligence/saved-products", { credentials: "same-origin" });
+      const parsed = await readApiJson<{ items?: SavedProductAPIRow[] }>(res);
+      const body = parsed.data;
+      if (isApiFailure(parsed) || !body) return;
+      startTransition(() => setSaved((body.items ?? []).map(quantProductFromSavedRow)));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   const refreshSearchHistory = useCallback(async () => {
     if (!isSignedIn) return;
     try {
       const res = await fetch("/api/intelligence/search-history", { credentials: "same-origin" });
-      const data = (await res.json()) as { items?: SearchHistoryRow[] };
-      if (res.ok && Array.isArray(data.items)) {
-        setSearchHistory(data.items);
+      const parsed = await readApiJson<{ items?: SearchHistoryRow[] }>(res);
+      if (!isApiFailure(parsed) && parsed.data && Array.isArray(parsed.data.items)) {
+        setSearchHistory(parsed.data.items);
       }
     } catch {
       /* ignore */
@@ -97,9 +119,14 @@ export default function Home() {
         const res = await fetch("/api/intelligence/search-history", {
           credentials: "same-origin",
         });
-        const data = (await res.json()) as { items?: SearchHistoryRow[] };
-        if (!cancelled && res.ok && Array.isArray(data.items)) {
-          setSearchHistory(data.items);
+        const parsed = await readApiJson<{ items?: SearchHistoryRow[] }>(res);
+        if (
+          !cancelled &&
+          !isApiFailure(parsed) &&
+          parsed.data &&
+          Array.isArray(parsed.data.items)
+        ) {
+          setSearchHistory(parsed.data.items);
         }
       } catch {
         /* ignore */
@@ -109,6 +136,11 @@ export default function Home() {
       cancelled = true;
     };
   }, [isSignedIn]);
+
+  useEffect(() => {
+    if (!isSignedIn) return;
+    void refreshSavedFromServer();
+  }, [isSignedIn, refreshSavedFromServer]);
 
   useEffect(() => {
     const q = new URLSearchParams(window.location.search).get("q")?.trim();
@@ -130,6 +162,7 @@ export default function Home() {
       startTransition(() => {
         setSubscriptionTier(null);
         setSearchEntitlements(null);
+        setSaved([]);
       });
       return;
     }
@@ -137,11 +170,12 @@ export default function Home() {
     void (async () => {
       try {
         const res = await fetch("/api/billing/subscription", { credentials: "same-origin" });
-        const data = (await res.json()) as {
+        const parsed = await readApiJson<{
           tier?: string;
           entitlements?: SearchEntitlementsDTO;
-        };
-        if (cancelled || !res.ok) return;
+        }>(res);
+        if (cancelled || isApiFailure(parsed) || !parsed.data) return;
+        const data = parsed.data;
         if (typeof data.tier === "string") {
           setSubscriptionTier(data.tier as QuantPlanTier);
         }
@@ -243,17 +277,13 @@ export default function Home() {
     const q = (overrideQuery ?? query).trim();
     if (!q) return;
 
-    if (!isSignedIn) {
-      setSearchError("Sign in to run a live product search.");
-      return;
-    }
-
     if (overrideQuery != null) {
       setQuery(overrideQuery);
     }
 
     setResultsKey((k) => k + 1);
     setFilters(defaultResultsFilters());
+    trackEvent(QuantAnalyticsEvents.SEARCH_RUN, { queryLength: q.length });
     setLoading(true);
     setProducts([]);
     setDealClusters([]);
@@ -265,57 +295,81 @@ export default function Home() {
         `/api/search?q=${encodeURIComponent(q)}`,
         { credentials: "same-origin" }
       );
-      const data = (await res.json()) as {
-        products?: QuantProduct[];
-        dealClusters?: DealClusterDTO[];
-        searchIntelligence?: SearchIntelligenceDTO | null;
-        entitlements?: SearchEntitlementsDTO;
+      type SearchRoot = {
+        success?: boolean;
+        data?: {
+          products?: QuantProduct[];
+          dealClusters?: DealClusterDTO[];
+          searchIntelligence?: SearchIntelligenceDTO | null;
+          entitlements?: SearchEntitlementsDTO;
+          meta?: Record<string, unknown>;
+        };
+        message?: string;
         error?: string;
         retryAfter?: number;
         code?: string;
+        entitlements?: SearchEntitlementsDTO;
       };
+      const parsed = await readApiJson<SearchRoot>(res);
+      const root = parsed.data;
+      const searchData =
+        root && typeof root === "object" && root.data && typeof root.data === "object"
+          ? root.data
+          : null;
 
       if (res.status === 401) {
-        setSearchError(data.error || "Please sign in to search.");
+        setSearchError(apiErrorText(parsed, "Please sign in to search."));
+        trackEvent(QuantAnalyticsEvents.SEARCH_ERROR, { code: "unauthorized" });
         return;
       }
 
       if (res.status === 429) {
-        const wait = data.retryAfter ? ` Retry in ~${data.retryAfter}s.` : "";
-        setSearchError((data.error || "Too many searches.") + wait);
-        if (data.entitlements) setSearchEntitlements(data.entitlements);
-        if (data.code === "PLAN_SEARCH_LIMIT") {
+        const wait =
+          root && typeof root.retryAfter === "number"
+            ? ` Retry in ~${root.retryAfter}s.`
+            : "";
+        setSearchError(apiErrorText(parsed, "Too many searches.") + wait);
+        const ent429 = root?.entitlements;
+        if (ent429) setSearchEntitlements(ent429);
+        if (root?.code === "PLAN_SEARCH_LIMIT") {
           void refreshSearchHistory();
         }
+        trackEvent(QuantAnalyticsEvents.SEARCH_ERROR, { code: "rate_limit" });
         return;
       }
 
-      if (!res.ok) {
-        setSearchError(data.error || "Search failed. Try again.");
+      if (!res.ok || isApiFailure(parsed)) {
+        setSearchError(apiErrorText(parsed, "Search failed. Try again."));
+        trackEvent(QuantAnalyticsEvents.SEARCH_ERROR, { code: "http", status: res.status });
         return;
       }
 
-      if (data.products && data.products.length > 0) {
-        setProducts(data.products);
+      if (searchData?.products && searchData.products.length > 0) {
+        setProducts(searchData.products);
         setDealClusters(
-          Array.isArray(data.dealClusters) ? data.dealClusters : []
+          Array.isArray(searchData.dealClusters) ? searchData.dealClusters : []
         );
         setSearchIntelligence(
-          data.searchIntelligence && typeof data.searchIntelligence === "object"
-            ? data.searchIntelligence
+          searchData.searchIntelligence && typeof searchData.searchIntelligence === "object"
+            ? searchData.searchIntelligence
             : null
         );
-        if (data.entitlements) {
-          setSearchEntitlements(data.entitlements);
-          if (data.entitlements.tier) setSubscriptionTier(data.entitlements.tier);
+        if (searchData.entitlements) {
+          setSearchEntitlements(searchData.entitlements);
+          if (searchData.entitlements.tier) setSubscriptionTier(searchData.entitlements.tier);
         }
         void refreshSearchHistory();
+        trackEvent(QuantAnalyticsEvents.SEARCH_SUCCESS, {
+          resultCount: searchData.products.length,
+        });
       } else {
         setSearchError("No products found for this query.");
+        trackEvent(QuantAnalyticsEvents.SEARCH_ERROR, { code: "empty" });
       }
     } catch (e) {
       setSearchError("Search failed. Check your connection and try again.");
-      console.error(e);
+      logDevError("search", e);
+      trackEvent(QuantAnalyticsEvents.SEARCH_ERROR, { code: "exception" });
     } finally {
       setLoading(false);
     }
@@ -355,19 +409,44 @@ export default function Home() {
         }),
       });
 
-      if (!res.ok) {
-        const data = (await res.json()) as { error?: string; code?: string };
+      const parsed = await readApiJson<{ error?: string; code?: string }>(res);
+      if (!res.ok || isApiFailure(parsed)) {
+        const data = parsed.data;
         const msg =
-          data.code === "PLAN_SAVED_LIMIT"
-            ? `${data.error || "Saved limit reached."} Upgrade on the pricing page.`
-            : data.error || "Could not save this product.";
+          data?.code === "PLAN_SAVED_LIMIT"
+            ? `${apiErrorText(parsed, "Saved limit reached.")} Upgrade on the pricing page.`
+            : apiErrorText(parsed, "Could not save this product.");
         setSearchError(msg);
         setSaved(saved.filter((p) => p.link !== product.link));
+        trackEvent(QuantAnalyticsEvents.PRODUCT_SAVE_FAIL, {
+          code: data?.code ?? "unknown",
+        });
+      } else {
+        trackEvent(QuantAnalyticsEvents.PRODUCT_SAVE, { link: product.link });
       }
     } catch (e) {
-      console.error(e);
+      logDevError("saveProduct", e);
       setSearchError("Could not save this product.");
       setSaved(saved.filter((p) => p.link !== product.link));
+      trackEvent(QuantAnalyticsEvents.PRODUCT_SAVE_FAIL, { code: "exception" });
+    }
+  }
+
+  async function removeSavedProduct(link: string) {
+    if (!isSignedIn) return;
+    setSaved((prev) => prev.filter((p) => p.link !== link));
+    try {
+      const res = await fetch(
+        `/api/intelligence/saved-products?link=${encodeURIComponent(link)}`,
+        { method: "DELETE", credentials: "same-origin" }
+      );
+      if (!res.ok) {
+        await refreshSavedFromServer();
+      } else {
+        trackEvent(QuantAnalyticsEvents.PRODUCT_REMOVE_SAVE, { link });
+      }
+    } catch {
+      await refreshSavedFromServer();
     }
   }
 
@@ -393,22 +472,30 @@ export default function Home() {
           targetPrice: null,
         }),
       });
-      const data = (await res.json()) as { error?: string; duplicate?: boolean; code?: string };
-      if (!res.ok) {
+      const parsed = await readApiJson<{ error?: string; duplicate?: boolean; code?: string }>(
+        res
+      );
+      const data = parsed.data;
+      if (!res.ok || isApiFailure(parsed)) {
         setSearchError(
-          data.code === "PLAN_WATCHLIST_LIMIT"
-            ? `${data.error || "Watchlist limit reached."} See pricing to upgrade.`
-            : data.error || "Watchlist is not available yet."
+          data?.code === "PLAN_WATCHLIST_LIMIT"
+            ? `${apiErrorText(parsed, "Watchlist limit reached.")} See pricing to upgrade.`
+            : apiErrorText(parsed, "Watchlist is not available yet.")
         );
+        trackEvent(QuantAnalyticsEvents.WATCHLIST_ADD_FAIL, {
+          code: data?.code ?? "http",
+        });
         return;
       }
-      if (data.duplicate) {
+      if (data?.duplicate) {
         setSearchError(null);
         return;
       }
       setSearchError(null);
+      trackEvent(QuantAnalyticsEvents.WATCHLIST_ADD, { link: product.link });
     } catch {
       setSearchError("Could not add to watchlist.");
+      trackEvent(QuantAnalyticsEvents.WATCHLIST_ADD_FAIL, { code: "exception" });
     }
   }
 
@@ -603,7 +690,7 @@ export default function Home() {
                     Saved products
                   </h2>
                   <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
-                    Session list
+                    Synced account
                   </span>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -613,11 +700,16 @@ export default function Home() {
                       className="group flex flex-col rounded-2xl border border-white/[0.06] bg-black/25 p-4 transition hover:border-cyan-400/20 hover:shadow-[0_20px_50px_-28px_rgba(34,211,238,0.12)] sm:flex-row sm:items-center sm:gap-4"
                     >
                       {item.image && (
-                        <img
-                          src={item.image}
-                          alt=""
-                          className="mx-auto size-20 shrink-0 rounded-xl bg-white object-contain p-2 sm:mx-0"
-                        />
+                        <div className="relative mx-auto size-20 shrink-0 overflow-hidden rounded-xl bg-white sm:mx-0">
+                          <Image
+                            src={item.image}
+                            alt=""
+                            fill
+                            sizes="80px"
+                            className="object-contain p-2"
+                            unoptimized
+                          />
+                        </div>
                       )}
                       <div className="min-w-0 flex-1 text-center sm:text-left">
                         <p className="font-medium text-white/90 line-clamp-2">{item.title}</p>
@@ -637,8 +729,8 @@ export default function Home() {
                         </a>
                         <button
                           type="button"
-                          onClick={() => setSaved(saved.filter((p) => p.link !== item.link))}
-                          className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium text-rose-200/90 transition hover:bg-rose-500/10"
+                          onClick={() => void removeSavedProduct(item.link)}
+                          className="min-h-11 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium text-rose-200/90 transition hover:bg-rose-500/10"
                         >
                           Remove
                         </button>
@@ -662,11 +754,14 @@ export default function Home() {
                 </p>
                 <div className="relative grid gap-8 md:grid-cols-[minmax(0,200px)_1fr_minmax(0,160px)] md:items-center">
                   {best.image && (
-                    <div className="rounded-2xl border border-white/[0.08] bg-white p-4 shadow-inner">
-                      <img
+                    <div className="relative mx-auto aspect-square w-full max-w-[200px] rounded-2xl border border-white/[0.08] bg-white p-4 shadow-inner">
+                      <Image
                         src={best.image}
                         alt=""
-                        className="mx-auto h-40 w-full object-contain"
+                        fill
+                        sizes="200px"
+                        className="object-contain p-2"
+                        unoptimized
                       />
                     </div>
                   )}
@@ -818,37 +913,43 @@ export default function Home() {
                           }),
                         });
 
-                        const data = (await res.json()) as {
+                        const parsed = await readApiJson<{
                           reply?: string;
                           highlights?: string[];
                           caution?: string;
                           error?: string;
                           detail?: string;
                           retryAfter?: number;
-                        };
+                        }>(res);
+                        const data = parsed.data;
 
                         if (res.status === 429) {
-                          const wait = data.retryAfter
-                            ? ` Try again in ~${data.retryAfter}s.`
-                            : "";
-                          setAiReply((data.error || "Too many requests.") + wait);
+                          const wait =
+                            data && typeof data.retryAfter === "number"
+                              ? ` Try again in ~${data.retryAfter}s.`
+                              : "";
+                          setAiReply(apiErrorText(parsed, "Too many requests.") + wait);
                           return;
                         }
 
-                        if (!res.ok) {
+                        if (!res.ok || isApiFailure(parsed)) {
                           setAiReply(
-                            data.error ||
-                              data.detail ||
+                            (data?.error ||
+                              (typeof data?.detail === "string" ? data.detail : null) ||
+                              apiErrorText(parsed, "QuantAI could not analyze this request.")) ??
                               "QuantAI could not analyze this request."
                           );
                           return;
                         }
 
-                        let out = data.reply || data.error || "No reply returned.";
-                        if (data.highlights?.length) {
+                        let out =
+                          data?.reply ||
+                          data?.error ||
+                          apiErrorText(parsed, "No reply returned.");
+                        if (data?.highlights?.length) {
                           out += `\n\n${data.highlights.map((h) => `• ${h}`).join("\n")}`;
                         }
-                        if (data.caution?.trim()) {
+                        if (data?.caution?.trim()) {
                           out += `\n\nCaution: ${data.caution.trim()}`;
                         }
                         setAiReply(out);

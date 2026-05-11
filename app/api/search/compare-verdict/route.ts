@@ -1,12 +1,14 @@
 import OpenAI from "openai";
 import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
 import { z } from "zod";
+import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
 import { heuristicCompareVerdict } from "@/lib/intelligence/compareVerdict";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { extractResponsesApiText } from "@/lib/openai-response-text";
 import { parseJsonObject } from "@/lib/openai/safeJson";
 import { compareVerdictRatelimit, enforceLimit } from "@/lib/rate-limit";
+import { logDevError } from "@/lib/log/devLog";
+import { recordCompareSession } from "@/lib/intelligence/persistence";
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -24,28 +26,33 @@ export async function POST(req: Request) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json({ error: "Sign in to request a compare verdict." }, { status: 401 });
+      return jsonErr(401, "Sign in to request a compare verdict.");
     }
 
     const limited = await enforceLimit(compareVerdictRatelimit, userId);
     if (!limited.ok) {
-      return NextResponse.json(
-        { error: "Too many compare requests. Try again later.", retryAfter: limited.retryAfter },
-        { status: 429, headers: { "Retry-After": String(limited.retryAfter) } }
-      );
+      return jsonErr(429, "Too many compare requests. Try again later.", { retryAfter: limited.retryAfter }, {
+        headers: { "Retry-After": String(limited.retryAfter) },
+      });
     }
 
     const body = (await req.json()) as { products?: QuantProduct[] };
     const products = Array.isArray(body.products) ? body.products.slice(0, 3) : [];
 
     if (products.length === 0) {
-      return NextResponse.json({ error: "Send 1–3 products to compare." }, { status: 400 });
+      return jsonErr(400, "Send 1–3 products to compare.");
     }
 
     const fallback = heuristicCompareVerdict(products);
 
     if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json({ verdict: fallback, source: "heuristic" });
+      void recordCompareSession(userId, {
+        at: new Date().toISOString(),
+        links: products.map((p) => p.link),
+        verdict: fallback,
+        source: "heuristic",
+      });
+      return jsonOk({ verdict: fallback, source: "heuristic" });
     }
 
     const compact = products.map((p) => ({
@@ -85,15 +92,24 @@ Products JSON:\n${JSON.stringify(compact, null, 2)}`,
     const parsed = raw ? parseJsonObject(raw, VerdictSchema) : null;
 
     if (parsed && products.some((p) => p.link === parsed.winnerLink)) {
-      return NextResponse.json({ verdict: parsed, source: "openai" });
+      void recordCompareSession(userId, {
+        at: new Date().toISOString(),
+        links: products.map((p) => p.link),
+        verdict: parsed,
+        source: "openai",
+      });
+      return jsonOk({ verdict: parsed, source: "openai" });
     }
 
-    return NextResponse.json({ verdict: fallback, source: "heuristic" });
+    void recordCompareSession(userId, {
+      at: new Date().toISOString(),
+      links: products.map((p) => p.link),
+      verdict: fallback,
+      source: "heuristic_fallback",
+    });
+    return jsonOk({ verdict: fallback, source: "heuristic" });
   } catch (e) {
-    console.error(e);
-    return NextResponse.json(
-      { error: "Could not generate compare verdict." },
-      { status: 500 }
-    );
+    logDevError("compare-verdict", e);
+    return jsonErr(500, "Could not generate compare verdict.");
   }
 }

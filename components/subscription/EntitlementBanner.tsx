@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Sparkles, TrendingUp } from "lucide-react";
+import { isApiFailure } from "@/lib/api/apiResult";
+import { readApiJson } from "@/lib/api/readJson";
 import type { SearchEntitlementsDTO } from "@/lib/subscription/entitlements";
 import type { QuantPlanTier } from "@/lib/subscription/plans";
 
@@ -21,8 +23,8 @@ export default function EntitlementBanner() {
     void (async () => {
       try {
         const res = await fetch("/api/billing/subscription", { credentials: "same-origin" });
-        const json = (await res.json()) as Payload;
-        if (!cancelled && res.ok) setData(json);
+        const parsed = await readApiJson<Payload>(res);
+        if (!cancelled && !isApiFailure(parsed) && parsed.data) setData(parsed.data);
       } catch {
         /* ignore */
       }

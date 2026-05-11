@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CreditCard, ExternalLink, Loader2 } from "lucide-react";
 import TrustRibbon from "@/components/trust/TrustRibbon";
+import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
+import { readApiJson } from "@/lib/api/readJson";
 import { QUANT_PLANS, type QuantPlanTier } from "@/lib/subscription/plans";
 
 type SubPayload = {
@@ -28,10 +30,14 @@ function BillingInner() {
     void (async () => {
       try {
         const res = await fetch("/api/billing/subscription", { credentials: "same-origin" });
-        const json = (await res.json()) as SubPayload;
+        const parsed = await readApiJson<SubPayload>(res);
         if (!cancelled) {
-          if (!res.ok) setErr("Could not load subscription.");
-          else setData(json);
+          if (!res.ok || isApiFailure(parsed) || !parsed.data) {
+            setErr(apiErrorText(parsed, "Could not load subscription."));
+          } else {
+            setData(parsed.data);
+            setErr(null);
+          }
         }
       } catch {
         if (!cancelled) setErr("Could not load subscription.");
@@ -124,9 +130,13 @@ function BillingInner() {
                     credentials: "same-origin",
                     body: JSON.stringify({ plan }),
                   });
-                  const json = (await res.json()) as { url?: string; redirectUrl?: string };
-                  if (json.url) window.location.href = json.url;
-                  else if (json.redirectUrl) window.location.href = json.redirectUrl;
+                  const parsed = await readApiJson<{ url?: string; redirectUrl?: string }>(res);
+                  const json = parsed.data;
+                  if (json?.url) window.location.href = json.url;
+                  else if (json?.redirectUrl) window.location.href = json.redirectUrl;
+                  else if (!res.ok || isApiFailure(parsed)) {
+                    setErr(apiErrorText(parsed, "Checkout could not start."));
+                  }
                 } finally {
                   setCheckoutBusy(false);
                 }
@@ -148,9 +158,13 @@ function BillingInner() {
                     method: "POST",
                     credentials: "same-origin",
                   });
-                  const json = (await res.json()) as { url?: string; redirectUrl?: string };
-                  if (json.url) window.location.href = json.url;
-                  else if (json.redirectUrl) window.location.href = json.redirectUrl;
+                  const parsed = await readApiJson<{ url?: string; redirectUrl?: string }>(res);
+                  const json = parsed.data;
+                  if (json?.url) window.location.href = json.url;
+                  else if (json?.redirectUrl) window.location.href = json.redirectUrl;
+                  else if (!res.ok || isApiFailure(parsed)) {
+                    setErr(apiErrorText(parsed, "Customer portal could not open."));
+                  }
                 } finally {
                   setPortalBusy(false);
                 }

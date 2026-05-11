@@ -42,7 +42,7 @@ export default function ResultsToolbar({
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="rounded-2xl border border-white/12 bg-white/[0.07] px-4 py-2.5 text-[13px] font-medium text-white/92 outline-none transition hover:border-cyan-400/28 focus:border-cyan-400/45 focus:ring-2 focus:ring-cyan-400/15"
+            className="min-h-11 rounded-2xl border border-white/12 bg-white/[0.07] px-4 py-2.5 text-[13px] font-medium text-white/92 outline-none transition hover:border-cyan-400/28 focus:border-cyan-400/45 focus:ring-2 focus:ring-cyan-400/15"
           >
             <option value="value">Best value (QI composite)</option>
             <option value="ai">Best model layer</option>
@@ -53,7 +53,7 @@ export default function ResultsToolbar({
           <button
             type="button"
             onClick={() => setFilterPanelOpen(!filterPanelOpen)}
-            className="inline-flex items-center gap-2 rounded-2xl border border-white/12 bg-white/[0.05] px-4 py-2.5 text-[13px] font-medium text-slate-200 transition hover:border-cyan-400/25 hover:bg-white/[0.08]"
+            className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-white/12 bg-white/[0.05] px-4 py-2.5 text-[13px] font-medium text-slate-200 transition hover:border-cyan-400/25 hover:bg-white/[0.08]"
             aria-expanded={filterPanelOpen}
           >
             <Filter className="size-4 text-cyan-300/80" aria-hidden />

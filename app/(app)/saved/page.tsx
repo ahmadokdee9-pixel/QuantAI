@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ExternalLink, Loader2, Trash2 } from "lucide-react";
 import TrustRibbon from "@/components/trust/TrustRibbon";
+import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
+import { readApiJson } from "@/lib/api/readJson";
 
 type SavedRow = {
   id?: string;
@@ -25,13 +27,13 @@ export default function SavedProductsPage() {
     setErr(null);
     try {
       const res = await fetch("/api/intelligence/saved-products", { credentials: "same-origin" });
-      const data = (await res.json()) as { items?: SavedRow[]; error?: string };
-      if (!res.ok) {
-        setErr(data.error || "Could not load saved products.");
+      const parsed = await readApiJson<{ items?: SavedRow[]; error?: string }>(res);
+      if (!res.ok || isApiFailure(parsed)) {
+        setErr(apiErrorText(parsed, "Could not load saved products."));
         setItems([]);
         return;
       }
-      setItems(Array.isArray(data.items) ? data.items : []);
+      setItems(Array.isArray(parsed.data?.items) ? (parsed.data.items ?? []) : []);
     } catch {
       setErr("Could not load saved products.");
       setItems([]);
@@ -52,9 +54,9 @@ export default function SavedProductsPage() {
         `/api/intelligence/saved-products?link=${encodeURIComponent(link)}`,
         { method: "DELETE", credentials: "same-origin" }
       );
-      if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        setErr(data.error || "Could not remove item.");
+      const parsed = await readApiJson<{ error?: string }>(res);
+      if (!res.ok || isApiFailure(parsed)) {
+        setErr(apiErrorText(parsed, "Could not remove item."));
         return;
       }
       setItems((prev) => prev.filter((x) => x.link !== link));

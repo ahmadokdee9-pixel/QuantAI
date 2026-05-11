@@ -41,7 +41,7 @@ export default function FloatingIntelDock() {
       initial={reduce ? false : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={spring}
-      className="pointer-events-none fixed bottom-[max(1.25rem,env(safe-area-inset-bottom,0px))] right-[max(1rem,env(safe-area-inset-right,0px))] z-[90] hidden max-w-[calc(100vw-2rem)] flex-col items-end gap-2 lg:bottom-28 lg:flex"
+      className="pointer-events-none fixed bottom-[max(1rem,env(safe-area-inset-bottom,0px))] right-[max(0.75rem,env(safe-area-inset-right,0px))] z-[90] flex max-w-[calc(100vw-1.5rem)] flex-col items-end gap-2 lg:bottom-28"
       style={{ maxHeight: "min(70vh, 28rem)" }}
     >
       <div className="pointer-events-auto flex max-h-[inherit] flex-col gap-2 overflow-y-auto overflow-x-hidden rounded-2xl border border-white/[0.1] bg-[#060b14]/92 p-2 shadow-[0_28px_80px_-24px_rgba(0,0,0,0.85),0_0_48px_-20px_rgba(34,211,238,0.12)] backdrop-blur-2xl">
@@ -97,7 +97,7 @@ function DockBtn({
       title={label}
       aria-label={label}
       onClick={onClick}
-      className="flex size-11 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.05] text-slate-200 transition hover:border-cyan-400/28 hover:bg-cyan-500/10 hover:text-white"
+      className="flex size-12 min-h-12 min-w-12 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.05] text-slate-200 transition hover:border-cyan-400/28 hover:bg-cyan-500/10 hover:text-white active:scale-[0.98]"
     >
       <Icon className="size-[1.15rem]" strokeWidth={1.75} aria-hidden />
     </button>

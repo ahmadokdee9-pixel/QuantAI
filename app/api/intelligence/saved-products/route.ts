@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
+import { supabaseAdmin, supabaseAdminConfigured } from "@/lib/supabaseAdmin";
 
 export type SavedProductRow = {
   id?: string;
@@ -16,10 +16,10 @@ export type SavedProductRow = {
 export async function GET() {
   const { userId } = await auth();
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonErr(401, "Unauthorized");
   }
   if (!supabaseAdmin) {
-    return NextResponse.json({ items: [] as SavedProductRow[] });
+    return jsonOk({ items: [] as SavedProductRow[], configured: supabaseAdminConfigured });
   }
 
   const { data, error } = await supabaseAdmin
@@ -30,32 +30,36 @@ export async function GET() {
     .limit(200);
 
   if (error) {
-    return NextResponse.json({ items: [] as SavedProductRow[], error: error.message });
+    return jsonOk({
+      items: [] as SavedProductRow[],
+      storageError: error.message,
+      configured: true,
+    });
   }
-  return NextResponse.json({ items: (data ?? []) as SavedProductRow[] });
+  return jsonOk({ items: (data ?? []) as SavedProductRow[], configured: true });
 }
 
 export async function DELETE(req: Request) {
   const { userId } = await auth();
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonErr(401, "Unauthorized");
   }
   if (!supabaseAdmin) {
-    return NextResponse.json({ error: "Database is not configured." }, { status: 503 });
+    return jsonErr(503, "Database is not configured.");
   }
 
   try {
     const { searchParams } = new URL(req.url);
     const link = searchParams.get("link")?.trim();
     if (!link) {
-      return NextResponse.json({ error: "Missing link" }, { status: 400 });
+      return jsonErr(400, "Missing link");
     }
     const { error } = await supabaseAdmin.from("saved_products").delete().eq("user_id", userId).eq("link", link);
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return jsonErr(500, error.message);
     }
-    return NextResponse.json({ ok: true });
+    return jsonOk({ ok: true });
   } catch {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return jsonErr(400, "Invalid request");
   }
 }

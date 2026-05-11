@@ -74,7 +74,7 @@ export default function LandingNav() {
 
         <button
           type="button"
-          className="flex size-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white/80 lg:hidden"
+          className="flex size-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white/80 lg:hidden"
           aria-expanded={open}
           aria-label={open ? "Close menu" : "Open menu"}
           onClick={() => setOpen((v) => !v)}
@@ -85,14 +85,14 @@ export default function LandingNav() {
 
       {open && (
         <div
-          className="border-t border-white/[0.06] bg-[#030712]/95 backdrop-blur-xl px-4 py-4 lg:hidden motion-safe:animate-[fadeIn_0.2s_ease-out]"
+          className="qa-scroll-touch border-t border-white/[0.06] bg-[#030712]/95 backdrop-blur-xl px-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-4 lg:hidden motion-safe:animate-[fadeIn_0.2s_ease-out]"
         >
-          <div className="flex flex-col gap-1">
+          <div className="flex max-h-[min(70dvh,28rem)] flex-col gap-1 overflow-y-auto">
             {links.map((l) => (
               <a
                 key={l.href}
                 href={l.href}
-                className="rounded-xl px-3 py-3 text-sm font-medium text-white/75 hover:bg-white/[0.05] hover:text-white"
+                className="min-h-11 rounded-xl px-3 py-3 text-sm font-medium text-white/75 hover:bg-white/[0.05] hover:text-white"
                 onClick={() => setOpen(false)}
               >
                 {l.label}

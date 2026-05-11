@@ -3,9 +3,13 @@
 import type { Dispatch, SetStateAction } from "react";
 import dynamic from "next/dynamic";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { AlertCircle, BarChart3, GitCompare, Loader2, Sparkles, X } from "lucide-react";
-import MultiStoreDealAdvisor from "@/components/deals/MultiStoreDealAdvisor";
+import { QuantAnalyticsEvents } from "@/lib/analytics/events";
+import { trackEvent } from "@/lib/analytics/track";
+import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
+import { readApiJson } from "@/lib/api/readJson";
 import GlobalIntelligencePanel from "@/components/intelligence/GlobalIntelligencePanel";
 import AILoadingPhase from "@/components/loading/AILoadingPhase";
 import SearchStreamRibbon from "@/components/loading/SearchStreamRibbon";
@@ -27,6 +31,13 @@ import ResultsToolbar from "./ResultsToolbar";
 const IntelligenceEducationStrip = dynamic(() => import("./IntelligenceEducationStrip"), {
   loading: () => (
     <div className="mb-10 h-28 max-w-5xl rounded-2xl border border-white/[0.06] bg-white/[0.03] animate-pulse" />
+  ),
+});
+
+const MultiStoreDealAdvisor = dynamic(() => import("@/components/deals/MultiStoreDealAdvisor"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-36 max-w-5xl rounded-2xl border border-white/[0.06] bg-white/[0.03] animate-pulse" aria-hidden />
   ),
 });
 
@@ -242,7 +253,7 @@ export default function ProductResultsSurface({
         credentials: "same-origin",
         body: JSON.stringify({ products: compareProducts }),
       });
-      const data = (await res.json()) as {
+      const parsed = await readApiJson<{
         verdict?: {
           winnerTitle: string;
           winnerLink: string;
@@ -253,26 +264,46 @@ export default function ProductResultsSurface({
         source?: string;
         error?: string;
         retryAfter?: number;
-      };
+      }>(res);
+      const data = parsed.data;
       if (res.status === 429) {
-        const wait = data.retryAfter ? ` Retry in ~${data.retryAfter}s.` : "";
-        setVerdictError((data.error || "Too many requests.") + wait);
+        const wait =
+          data && typeof data.retryAfter === "number"
+            ? ` Retry in ~${data.retryAfter}s.`
+            : "";
+        setVerdictError(apiErrorText(parsed, "Too many requests.") + wait);
+        trackEvent(QuantAnalyticsEvents.COMPARE_VERDICT_FAIL, { reason: "rate_limit" });
         return;
       }
-      if (!res.ok || !data.verdict) {
-        setVerdictError(data.error || "Could not load AI verdict.");
+      if (!res.ok || isApiFailure(parsed) || !data?.verdict) {
+        setVerdictError(apiErrorText(parsed, "Could not load AI verdict."));
+        trackEvent(QuantAnalyticsEvents.COMPARE_VERDICT_FAIL, { reason: "response" });
         return;
       }
       setVerdict(data.verdict);
       setVerdictSource(data.source ?? null);
+      trackEvent(QuantAnalyticsEvents.COMPARE_VERDICT, {
+        source: data.source ?? "unknown",
+        count: compareProducts.length,
+      });
     } catch {
       setVerdictError("Could not load AI verdict.");
+      trackEvent(QuantAnalyticsEvents.COMPARE_VERDICT_FAIL, { reason: "network" });
     } finally {
       setVerdictLoading(false);
     }
   }
 
   const compareProducts = sortedProducts.filter((p) => compareLinks.includes(p.link));
+
+  const prevCompareCount = useRef(0);
+  useEffect(() => {
+    const n = compareProducts.length;
+    if (n > 0 && prevCompareCount.current === 0) {
+      trackEvent(QuantAnalyticsEvents.COMPARE_OPEN, { count: n });
+    }
+    prevCompareCount.current = n;
+  }, [compareProducts.length]);
 
   if (loading && products.length === 0) {
     return (
@@ -449,8 +480,15 @@ export default function ProductResultsSurface({
                 >
                   <div className="flex gap-3">
                     {p.image && (
-                      <div className="size-[4.25rem] shrink-0 overflow-hidden rounded-xl border border-white/[0.08] bg-gradient-to-b from-white to-slate-100 p-1.5">
-                        <img src={p.image} alt="" className="size-full object-contain object-center" loading="lazy" />
+                      <div className="relative size-[4.25rem] shrink-0 overflow-hidden rounded-xl border border-white/[0.08] bg-gradient-to-b from-white to-slate-100 p-1.5">
+                        <Image
+                          src={p.image}
+                          alt=""
+                          fill
+                          sizes="68px"
+                          className="object-contain object-center p-0.5"
+                          unoptimized
+                        />
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
@@ -484,7 +522,7 @@ export default function ProductResultsSurface({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 18, scale: 0.99 }}
             transition={{ type: "spring", stiffness: 380, damping: 34, mass: 0.85 }}
-            className="fixed bottom-4 left-4 right-4 z-40 mx-auto max-w-5xl rounded-3xl border border-cyan-400/22 bg-[#050a14]/97 p-4 shadow-[0_36px_100px_-24px_rgba(34,211,238,0.2),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-2xl sm:p-5 md:left-1/2 md:-translate-x-1/2 md:right-auto max-md:max-h-[min(70vh,28rem)] max-md:overflow-y-auto"
+            className="qa-scroll-touch fixed bottom-[max(0.75rem,env(safe-area-inset-bottom,0px))] left-3 right-3 z-40 mx-auto max-w-5xl rounded-3xl border border-cyan-400/22 bg-[#050a14]/97 p-4 shadow-[0_36px_100px_-24px_rgba(34,211,238,0.2),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-2xl sm:left-4 sm:right-4 sm:p-5 md:left-1/2 md:-translate-x-1/2 md:right-auto max-md:max-h-[min(72dvh,30rem)] max-md:overflow-y-auto"
             role="region"
             aria-label="Product compare"
           >
@@ -499,7 +537,7 @@ export default function ProductResultsSurface({
                   type="button"
                   onClick={() => void runCompareVerdict()}
                   disabled={verdictLoading}
-                  className="inline-flex min-h-[2.25rem] items-center gap-1.5 rounded-full border border-cyan-400/35 bg-cyan-400/15 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-cyan-100 transition hover:bg-cyan-400/22 disabled:opacity-50"
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-cyan-400/35 bg-cyan-400/15 px-3.5 py-2 text-[11px] font-semibold uppercase tracking-wide text-cyan-100 transition hover:bg-cyan-400/22 disabled:opacity-50"
                 >
                   {verdictLoading ? (
                     <>
@@ -521,7 +559,7 @@ export default function ProductResultsSurface({
                       }
                     })();
                   }}
-                  className="rounded-full border border-white/12 bg-white/[0.07] px-3 py-1.5 text-[11px] font-semibold text-slate-200 transition hover:bg-white/12"
+                  className="min-h-11 rounded-full border border-white/12 bg-white/[0.07] px-3 py-2 text-[11px] font-semibold text-slate-200 transition hover:bg-white/12"
                 >
                   {compareExportFlash ? "Copied" : "Export compare"}
                 </button>

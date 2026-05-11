@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
 import { appUrl } from "@/lib/stripe/config";
 import { getStripe } from "@/lib/stripe/client";
 
@@ -10,14 +10,14 @@ import { getStripe } from "@/lib/stripe/client";
 export async function POST() {
   const { userId } = await auth();
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonErr(401, "Unauthorized");
   }
 
   const stripe = getStripe();
   const customerId = process.env.STRIPE_CUSTOMER_ID_PLACEHOLDER?.trim();
 
   if (!stripe || !customerId) {
-    return NextResponse.json({
+    return jsonOk({
       ok: false as const,
       mode: "placeholder" as const,
       redirectUrl: `${appUrl()}/billing?focus=manage`,
@@ -31,9 +31,9 @@ export async function POST() {
       customer: customerId,
       return_url: `${appUrl()}/billing`,
     });
-    return NextResponse.json({ ok: true as const, mode: "stripe" as const, url: session.url });
+    return jsonOk({ ok: true as const, mode: "stripe" as const, url: session.url });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Stripe error";
-    return NextResponse.json({ error: msg }, { status: 502 });
+    return jsonErr(502, msg);
   }
 }

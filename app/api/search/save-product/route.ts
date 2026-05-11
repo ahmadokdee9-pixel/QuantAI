@@ -1,8 +1,9 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
 import { countSavedProducts } from "@/lib/intelligence/persistence";
 import { planDefinition } from "@/lib/subscription/plans";
 import { subscriptionTierFromClerkUser } from "@/lib/subscription/resolveTier";
+import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
+import { logDevError } from "@/lib/log/devLog";
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 
 export async function POST(req: Request) {
@@ -10,17 +11,11 @@ export async function POST(req: Request) {
     const { userId } = await auth();
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return jsonErr(401, "Unauthorized");
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Database is not configured." },
-        { status: 503 }
-      );
+      return jsonErr(503, "Database is not configured.");
     }
 
     const user = await currentUser();
@@ -29,30 +24,21 @@ export async function POST(req: Request) {
     if (plan.savedProductsMax != null) {
       const n = await countSavedProducts(userId);
       if (n !== null && n >= plan.savedProductsMax) {
-        return NextResponse.json(
-          {
-            error: `Saved product limit (${plan.savedProductsMax}) reached. Upgrade to save more.`,
-            code: "PLAN_SAVED_LIMIT",
-          },
-          { status: 403 }
+        return jsonErr(
+          403,
+          `Saved product limit (${plan.savedProductsMax}) reached. Upgrade to save more.`,
+          { code: "PLAN_SAVED_LIMIT" }
         );
       }
     }
 
     const body = await req.json();
 
-    const {
-      product_id,
-      title,
-      price,
-      image,
-      link,
-      ai_score,
-    } = body;
+    const { product_id, title, price, image, link, ai_score } = body as Record<string, unknown>;
 
-    const { error } = await supabaseAdmin
-      .from("saved_products")
-      .insert({
+    const now = new Date().toISOString();
+    const { error } = await supabaseAdmin.from("saved_products").upsert(
+      {
         user_id: userId,
         product_id,
         title,
@@ -60,24 +46,18 @@ export async function POST(req: Request) {
         image,
         link,
         ai_score,
-      });
+        updated_at: now,
+      },
+      { onConflict: "user_id,link" }
+    );
 
     if (error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      );
+      return jsonErr(500, error.message);
     }
 
-    return NextResponse.json({
-      success: true,
-    });
+    return jsonOk({});
   } catch (e) {
-    console.error(e);
-
-    return NextResponse.json(
-      { error: "Server error" },
-      { status: 500 }
-    );
+    logDevError("save-product", e);
+    return jsonErr(500, "Server error");
   }
 }

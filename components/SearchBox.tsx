@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useUser } from "@clerk/nextjs";
 import { Loader2, Search } from "lucide-react";
+import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
+import { readApiJson } from "@/lib/api/readJson";
 
 type ShoppingHit = {
   title: string;
@@ -14,7 +15,6 @@ type ShoppingHit = {
 };
 
 export default function SearchBox() {
-  const { isSignedIn } = useUser();
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,11 +22,6 @@ export default function SearchBox() {
 
   async function handleSearch() {
     if (!query.trim()) return;
-
-    if (!isSignedIn) {
-      setError("Sign in to search live shopping results.");
-      return;
-    }
 
     setLoading(true);
     setError(null);
@@ -42,30 +37,41 @@ export default function SearchBox() {
         body: JSON.stringify({ query }),
       });
 
-      const data = (await res.json()) as {
-        products?: ShoppingHit[];
+      type SearchRoot = {
+        success?: boolean;
+        data?: { products?: ShoppingHit[] };
+        message?: string;
         error?: string;
         retryAfter?: number;
       };
+      const parsed = await readApiJson<SearchRoot>(res);
+      const root = parsed.data;
+      const searchData =
+        root && typeof root === "object" && root.data && typeof root.data === "object"
+          ? root.data
+          : null;
 
       if (res.status === 401) {
-        setError(data.error || "Please sign in.");
+        setError(apiErrorText(parsed, "Please sign in."));
         return;
       }
 
       if (res.status === 429) {
-        const wait = data.retryAfter ? ` Retry in ~${data.retryAfter}s.` : "";
-        setError((data.error || "Too many searches.") + wait);
+        const wait =
+          root && typeof root.retryAfter === "number"
+            ? ` Retry in ~${root.retryAfter}s.`
+            : "";
+        setError(apiErrorText(parsed, "Too many searches.") + wait);
         return;
       }
 
-      if (!res.ok) {
-        setError(data.error || "Search failed.");
+      if (!res.ok || isApiFailure(parsed)) {
+        setError(apiErrorText(parsed, "Search failed."));
         return;
       }
 
-      setResults(data.products || []);
-      if (!data.products?.length) {
+      setResults(searchData?.products || []);
+      if (!searchData?.products?.length) {
         setError("No products found for this query.");
       }
     } catch {

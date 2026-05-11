@@ -6,6 +6,10 @@ import Link from "next/link";
 import { ArrowRight, Check, Loader2 } from "lucide-react";
 import MagneticSurface from "@/components/motion/MagneticSurface";
 import { QUANT_PLANS, type QuantPlanTier } from "@/lib/subscription/plans";
+import { QuantAnalyticsEvents } from "@/lib/analytics/events";
+import { trackEvent } from "@/lib/analytics/track";
+import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
+import { readApiJson } from "@/lib/api/readJson";
 
 const glassCard = "cockpit-glass-card";
 
@@ -22,7 +26,11 @@ async function startCheckout(plan: "pro" | "premium"): Promise<void> {
     credentials: "same-origin",
     body: JSON.stringify({ plan }),
   });
-  const data = (await res.json()) as { url?: string; redirectUrl?: string; error?: string };
+  const parsed = await readApiJson<{ url?: string; redirectUrl?: string; error?: string }>(res);
+  const data = parsed.data;
+  if (isApiFailure(parsed) || !data) {
+    throw new Error(apiErrorText(parsed, "Checkout unavailable"));
+  }
   if (data.url) {
     window.location.href = data.url;
     return;
@@ -31,7 +39,7 @@ async function startCheckout(plan: "pro" | "premium"): Promise<void> {
     window.location.href = data.redirectUrl;
     return;
   }
-  throw new Error(data.error || "Checkout unavailable");
+  throw new Error(apiErrorText(parsed, "Checkout unavailable"));
 }
 
 export default function PricingCards({ currentTier = null, className = "" }: Props) {
@@ -158,6 +166,7 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
                   {isSignedIn && isCurrent ? (
                     <Link
                       href="/dashboard"
+                      onClick={() => trackEvent(QuantAnalyticsEvents.PRICING_CTA_DASHBOARD, { plan: "free" })}
                       className="flex w-full items-center justify-center rounded-full border border-white/12 py-3 text-sm font-semibold text-white/85 transition hover:bg-white/[0.06]"
                     >
                       Open dashboard
@@ -182,6 +191,7 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
                 (isCurrent ? (
                   <Link
                     href="/billing?plan=pro&focus=manage"
+                    onClick={() => trackEvent(QuantAnalyticsEvents.PRICING_CTA_DASHBOARD, { plan: "pro_manage" })}
                     className="flex w-full items-center justify-center gap-2 rounded-full border border-cyan-400/35 bg-cyan-500/15 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/25"
                   >
                     Manage Pro
@@ -193,6 +203,7 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
                       type="button"
                       disabled={checkoutPlan !== null}
                       onClick={() => {
+                        trackEvent(QuantAnalyticsEvents.PRICING_CTA_CHECKOUT, { plan: "pro" });
                         setCheckoutPlan("pro");
                         void startCheckout("pro")
                           .catch(() => {
@@ -230,6 +241,9 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
                 (isCurrent ? (
                   <Link
                     href="/billing?plan=premium&focus=manage"
+                    onClick={() =>
+                      trackEvent(QuantAnalyticsEvents.PRICING_CTA_DASHBOARD, { plan: "premium_manage" })
+                    }
                     className="flex w-full items-center justify-center gap-2 rounded-full border border-white/15 bg-white/10 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
                   >
                     Manage Power Buyer
@@ -241,6 +255,7 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
                       type="button"
                       disabled={checkoutPlan !== null}
                       onClick={() => {
+                        trackEvent(QuantAnalyticsEvents.PRICING_CTA_CHECKOUT, { plan: "premium" });
                         setCheckoutPlan("premium");
                         void startCheckout("premium")
                           .catch(() => {

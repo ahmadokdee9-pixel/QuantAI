@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -7,15 +7,15 @@ type RouteContext = { params: Promise<{ id: string }> };
 export async function POST(req: Request, ctx: RouteContext) {
   const { userId } = await auth();
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonErr(401, "Unauthorized");
   }
   if (!supabaseAdmin) {
-    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+    return jsonErr(503, "Database not configured");
   }
 
   const { id: collectionId } = await ctx.params;
   if (!collectionId) {
-    return NextResponse.json({ error: "Missing collection id" }, { status: 400 });
+    return jsonErr(400, "Missing collection id");
   }
 
   const { data: col, error: colErr } = await supabaseAdmin
@@ -26,13 +26,13 @@ export async function POST(req: Request, ctx: RouteContext) {
     .maybeSingle();
 
   if (colErr || !col) {
-    return NextResponse.json({ error: "Collection not found" }, { status: 404 });
+    return jsonErr(404, "Collection not found");
   }
 
   try {
     const body = (await req.json()) as { product?: Record<string, unknown> };
     if (!body.product || typeof body.product !== "object") {
-      return NextResponse.json({ error: "Missing product" }, { status: 400 });
+      return jsonErr(400, "Missing product");
     }
 
     const { error } = await supabaseAdmin.from("collection_products").insert({
@@ -41,10 +41,10 @@ export async function POST(req: Request, ctx: RouteContext) {
     });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return jsonErr(500, error.message);
     }
-    return NextResponse.json({ ok: true });
+    return jsonOk({ ok: true });
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return jsonErr(400, "Invalid JSON");
   }
 }

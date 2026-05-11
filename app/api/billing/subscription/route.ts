@@ -1,5 +1,5 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
 import { countSearchesTodayUtc } from "@/lib/intelligence/persistence";
 import { stripeSecretKey } from "@/lib/stripe/config";
 import { entitlementsForTier } from "@/lib/subscription/entitlements";
@@ -10,7 +10,7 @@ import { subscriptionTierFromClerkUser } from "@/lib/subscription/resolveTier";
 export async function GET() {
   const user = await currentUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonErr(401, "Unauthorized");
   }
 
   const { userId } = await auth();
@@ -23,7 +23,7 @@ export async function GET() {
     searchesToday = await countSearchesTodayUtc(userId);
   }
 
-  return NextResponse.json({
+  return jsonOk({
     tier,
     plan: {
       id: plan.id,

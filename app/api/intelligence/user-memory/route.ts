@@ -1,14 +1,14 @@
 import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function GET() {
   const { userId } = await auth();
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonErr(401, "Unauthorized");
   }
   if (!supabaseAdmin) {
-    return NextResponse.json({ memory: {} });
+    return jsonOk({ memory: {} });
   }
 
   const { data, error } = await supabaseAdmin
@@ -18,10 +18,10 @@ export async function GET() {
     .maybeSingle();
 
   if (error || !data) {
-    return NextResponse.json({ memory: {} });
+    return jsonOk({ memory: {} });
   }
 
-  return NextResponse.json({
+  return jsonOk({
     memory: typeof data.memory === "object" && data.memory !== null ? data.memory : {},
   });
 }
@@ -29,10 +29,10 @@ export async function GET() {
 export async function PUT(req: Request) {
   const { userId } = await auth();
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonErr(401, "Unauthorized");
   }
   if (!supabaseAdmin) {
-    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+    return jsonErr(503, "Database not configured");
   }
 
   try {
@@ -62,10 +62,10 @@ export async function PUT(req: Request) {
     );
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return jsonErr(500, error.message);
     }
-    return NextResponse.json({ ok: true, memory: next });
+    return jsonOk({ ok: true, memory: next });
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return jsonErr(400, "Invalid JSON");
   }
 }

@@ -1,9 +1,10 @@
 import OpenAI from "openai";
 import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
 import { z } from "zod";
+import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
 import { extractResponsesApiText } from "@/lib/openai-response-text";
 import { parseJsonObject } from "@/lib/openai/safeJson";
+import { logDevError } from "@/lib/log/devLog";
 import { aiChatRatelimit, enforceLimit } from "@/lib/rate-limit";
 
 const client = new OpenAI({
@@ -21,32 +22,21 @@ export async function POST(req: Request) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return NextResponse.json(
-        { reply: "", error: "Sign in to use the AI assistant." },
-        { status: 401 }
-      );
+      return jsonErr(401, "Sign in to use the AI assistant.", { reply: "" });
     }
 
     const limited = await enforceLimit(aiChatRatelimit, userId);
     if (!limited.ok) {
-      return NextResponse.json(
-        {
-          reply: "",
-          error: "Too many AI requests. Try again later.",
-          retryAfter: limited.retryAfter,
-        },
-        {
-          status: 429,
-          headers: { "Retry-After": String(limited.retryAfter) },
-        }
+      return jsonErr(
+        429,
+        "Too many AI requests. Try again later.",
+        { reply: "", retryAfter: limited.retryAfter },
+        { headers: { "Retry-After": String(limited.retryAfter) } }
       );
     }
 
     if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { reply: "", error: "AI assistant is not configured." },
-        { status: 503 }
-      );
+      return jsonErr(503, "AI assistant is not configured.", { reply: "" });
     }
 
     const { question, products } = await req.json();
@@ -71,7 +61,7 @@ Rules: never invent prices; if data is missing, say so. Prefer listings with hig
     const parsed = raw ? parseJsonObject(raw, ChatStructuredSchema) : null;
 
     if (parsed?.reply?.trim()) {
-      return NextResponse.json({
+      return jsonOk({
         reply: parsed.reply.trim(),
         highlights: parsed.highlights ?? [],
         caution: parsed.caution ?? "",
@@ -83,16 +73,12 @@ Rules: never invent prices; if data is missing, say so. Prefer listings with hig
       raw?.trim() ||
       "QuantAI could not produce a structured reply for this request.";
 
-    return NextResponse.json({ reply, highlights: [] as string[], caution: "", productSummary: "" });
+    return jsonOk({ reply, highlights: [] as string[], caution: "", productSummary: "" });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json(
-      {
-        reply: "",
-        error: "QuantAI could not analyze this request.",
-        detail: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 }
-    );
+    logDevError("ai-chat", error);
+    return jsonErr(500, "QuantAI could not analyze this request.", {
+      reply: "",
+      detail: error instanceof Error ? error.message : String(error),
+    });
   }
 }

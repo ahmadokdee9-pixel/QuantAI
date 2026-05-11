@@ -1,14 +1,14 @@
 import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function GET() {
   const { userId } = await auth();
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonErr(401, "Unauthorized");
   }
   if (!supabaseAdmin) {
-    return NextResponse.json({ items: [] });
+    return jsonOk({ items: [] });
   }
 
   const { data, error } = await supabaseAdmin
@@ -19,8 +19,8 @@ export async function GET() {
     .limit(40);
 
   if (error) {
-    return NextResponse.json({ items: [] });
+    return jsonOk({ items: [], storageError: error.message });
   }
 
-  return NextResponse.json({ items: data ?? [] });
+  return jsonOk({ items: data ?? [] });
 }

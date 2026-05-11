@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { memo, useId, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowDownRight,
@@ -167,7 +167,7 @@ function CardProductImage({ src, reduceMotion }: { src: string; reduceMotion: bo
   );
 }
 
-export default function ProductResultCard({
+function ProductResultCard({
   product: p,
   list,
   index,
@@ -558,3 +558,5 @@ export default function ProductResultCard({
     </MagneticSurface>
   );
 }
+
+export default memo(ProductResultCard);
