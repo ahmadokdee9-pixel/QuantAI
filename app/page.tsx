@@ -12,6 +12,7 @@ import {
   countActiveFilters,
   defaultResultsFilters,
 } from "@/lib/resultsFilters";
+import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
 import type { DealClusterDTO } from "@/lib/deals/types";
 import {
   getFinalComposite,
@@ -44,6 +45,7 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [products, setProducts] = useState<QuantProduct[]>([]);
   const [dealClusters, setDealClusters] = useState<DealClusterDTO[]>([]);
+  const [searchIntelligence, setSearchIntelligence] = useState<SearchIntelligenceDTO | null>(null);
   const [loading, setLoading] = useState(false);
   const [sort, setSort] = useState("value");
   const [filters, setFilters] = useState(defaultResultsFilters());
@@ -188,6 +190,7 @@ export default function Home() {
     setLoading(true);
     setProducts([]);
     setDealClusters([]);
+    setSearchIntelligence(null);
     setSearchError(null);
 
     try {
@@ -198,6 +201,7 @@ export default function Home() {
       const data = (await res.json()) as {
         products?: QuantProduct[];
         dealClusters?: DealClusterDTO[];
+        searchIntelligence?: SearchIntelligenceDTO | null;
         error?: string;
         retryAfter?: number;
       };
@@ -222,6 +226,11 @@ export default function Home() {
         setProducts(data.products);
         setDealClusters(
           Array.isArray(data.dealClusters) ? data.dealClusters : []
+        );
+        setSearchIntelligence(
+          data.searchIntelligence && typeof data.searchIntelligence === "object"
+            ? data.searchIntelligence
+            : null
         );
         void refreshSearchHistory();
       } else {
@@ -771,6 +780,7 @@ export default function Home() {
             products={products}
             sortedProducts={sortedProducts}
             dealClusters={dealClusters}
+            searchIntelligence={searchIntelligence}
             loading={loading}
             sort={sort}
             setSort={setSort}

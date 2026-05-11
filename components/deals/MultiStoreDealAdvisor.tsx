@@ -86,8 +86,10 @@ const pickDefs: { key: keyof DealClusterDTO["picks"]; label: string }[] = [
   { key: "bestBudget", label: "Cheapest deal" },
   { key: "mostTrusted", label: "Most trusted" },
   { key: "fastestDelivery", label: "Fastest delivery" },
+  { key: "bestWarrantySupport", label: "Warranty / support" },
   { key: "bestLongTermValue", label: "Best long-term value" },
   { key: "premiumChoice", label: "Premium choice" },
+  { key: "premiumOverpriced", label: "Premium · weak value" },
   { key: "riskyButCheap", label: "Risky but cheap" },
   { key: "waitForBetterPricing", label: "Wait — poor value row" },
 ];
@@ -378,7 +380,7 @@ export default function MultiStoreDealAdvisor({
 
                     <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-black/20">
                       <div className="overflow-x-auto">
-                        <table className="w-full min-w-[720px] text-left text-[11px]">
+                        <table className="w-full min-w-[780px] text-left text-[11px]">
                           <thead>
                             <tr className="border-b border-white/[0.06] bg-white/[0.03] text-[9px] font-semibold uppercase tracking-wider text-slate-500">
                               <th className="px-3 py-2.5">Retailer</th>
@@ -386,6 +388,7 @@ export default function MultiStoreDealAdvisor({
                               <th className="px-3 py-2.5">List</th>
                               <th className="px-3 py-2.5">Disc.</th>
                               <th className="px-3 py-2.5">Trust</th>
+                              <th className="px-3 py-2.5">Mkt</th>
                               <th className="px-3 py-2.5">Delivery</th>
                               <th className="px-3 py-2.5">Reviews</th>
                               <th className="px-3 py-2.5">Verdict</th>
@@ -456,6 +459,9 @@ export default function MultiStoreDealAdvisor({
                                     {disc != null ? `${disc}%` : "—"}
                                   </td>
                                   <td className="px-3 py-2.5 tabular-nums text-slate-300">{trust}</td>
+                                  <td className="px-3 py-2.5 text-[10px] uppercase text-slate-500">
+                                    {ins?.marketplaceSellerRisk ?? "—"}
+                                  </td>
                                   <td className="px-3 py-2.5">
                                     <div className="flex items-center gap-1 text-slate-400">
                                       <Truck className="size-3 shrink-0 text-slate-500" aria-hidden />
@@ -506,6 +512,9 @@ export default function MultiStoreDealAdvisor({
                                           </span>
                                         )}
                                         <span className="mt-1 block italic text-slate-500">{ins.reasoning}</span>
+                                        <span className="mt-1 block text-[10px] text-slate-600">
+                                          {ins.ratingAuthenticityHint}
+                                        </span>
                                       </>
                                     )}
                                   </td>

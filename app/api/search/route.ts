@@ -7,6 +7,7 @@ import {
   recordSearchHistory,
 } from "@/lib/intelligence/persistence";
 import { buildDealClusters } from "@/lib/deals";
+import { buildSearchIntelligence } from "@/lib/intelligence/searchDecisionEngine";
 import { enforceLimit, searchRatelimit } from "@/lib/rate-limit";
 import { fetchShoppingProducts } from "./lib/fetchShopping";
 
@@ -42,6 +43,7 @@ async function handleSearch(q: string | null | undefined) {
 
   const products = enrichProductsWithIntelligence(result.products, query);
   const dealClusters = buildDealClusters(products);
+  const searchIntelligence = buildSearchIntelligence(query, products, dealClusters);
   const { topCategory } = memoryPatchFromSearch(query);
 
   void recordSearchHistory(userId, query, products.length);
@@ -50,9 +52,10 @@ async function handleSearch(q: string | null | undefined) {
   return NextResponse.json({
     products,
     dealClusters,
+    searchIntelligence,
     meta: {
       category: topCategory,
-      intelligenceVersion: 2,
+      intelligenceVersion: 3,
     },
   });
 }

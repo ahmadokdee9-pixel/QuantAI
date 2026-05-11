@@ -2,12 +2,22 @@ import type { QuantProduct } from "@/lib/shoppingScore";
 import { inferProductCategory } from "@/lib/intelligence/categoryContext";
 import type { ProductCategorySlug } from "@/lib/intelligence/types";
 
-/** Finer market segment for copy + weight tuning (UI label). */
+/**
+ * Finer market segment for weights + copy — keyword-driven, not hard-wired to one vertical.
+ * Unknown products fall back to `general`.
+ */
 export type DealMarketSegment =
   | "phones"
   | "laptops"
   | "headphones"
   | "monitors"
+  | "tvs"
+  | "cameras"
+  | "watches"
+  | "shoes"
+  | "gaming"
+  | "tools"
+  | "accessories"
   | "appliances"
   | "fashion"
   | "furniture"
@@ -19,7 +29,6 @@ export type DealMarketSegment =
   | "general";
 
 export type DealQualityBlend = {
-  /** 0–1 weights for listing-level deal quality (normalized later). */
   composite: number;
   trust: number;
   rating: number;
@@ -37,7 +46,7 @@ function titleBlob(listings: QuantProduct[]): string {
   return listings.map((p) => p.title).join(" ");
 }
 
-/** Segment from titles + optional server category. */
+/** Segment from titles + optional server category (universal, keyword-first). */
 export function inferDealMarketSegment(listings: QuantProduct[]): {
   segment: DealMarketSegment;
   slug: ProductCategorySlug;
@@ -54,9 +63,17 @@ export function inferDealMarketSegment(listings: QuantProduct[]): {
   else if (/(macbook|laptop|chromebook|thinkpad|zenbook|notebook)/i.test(t)) segment = "laptops";
   else if (/(headphone|earbud|airpod|headset|wh-1000)/i.test(t)) segment = "headphones";
   else if (/(monitor|display|\d{2,3}\s*hz.*monitor|ultrawide)/i.test(t)) segment = "monitors";
+  else if (/(oled tv|qled tv|smart tv|\btv\b|television)/i.test(t)) segment = "tvs";
+  else if (/(camera|mirrorless|dslr|lens\b|gopro|canon|nikon|fuji|sony a\d)/i.test(t)) segment = "cameras";
+  else if (/(chronograph|timepiece|\bwatch\b|smartwatch|apple watch)/i.test(t)) segment = "watches";
+  else if (/(shoe|sneaker|boot|trainer|loafer|heel|sandals)/i.test(t)) segment = "shoes";
+  else if (/(gaming|steam deck|ps5|xbox|switch|esports|racing wheel|gaming chair)/i.test(t)) segment = "gaming";
+  else if (/(drill|saw\b|wrench|toolbox|multimeter|pliers|hammer|ladder|power tool)/i.test(t)) segment = "tools";
+  else if (/(case\b|cover\b|cable|charger|adapter|mount|strap|stand|skin|screen protector|hub\b)/i.test(t))
+    segment = "accessories";
   else if (/(fridge|refrigerator|washer|washing machine|dryer|dishwasher|oven|microwave|vacuum cleaner)/i.test(t))
     segment = "appliances";
-  else if (slug === "fashion" || /(shoe|sneaker|jacket|dress|jeans|handbag)/i.test(t)) segment = "fashion";
+  else if (slug === "fashion" || /(dress|jacket|jeans|handbag|apparel|clothing)/i.test(t)) segment = "fashion";
   else if (/(sofa|couch|mattress|bookshelf|dining table|office chair|wardrobe)/i.test(t)) segment = "furniture";
   else if (slug === "home") segment = "home";
   else if (slug === "beauty") segment = "beauty";
@@ -69,6 +86,13 @@ export function inferDealMarketSegment(listings: QuantProduct[]): {
     laptops: "Laptops & notebooks",
     headphones: "Headphones & audio wear",
     monitors: "Monitors & displays",
+    tvs: "TVs & home cinema",
+    cameras: "Cameras & optics",
+    watches: "Watches & wearables",
+    shoes: "Shoes & sneakers",
+    gaming: "Gaming & consoles",
+    tools: "Tools & DIY",
+    accessories: "Accessories & peripherals",
     appliances: "Appliances",
     fashion: "Fashion & apparel",
     furniture: "Furniture",
@@ -83,7 +107,36 @@ export function inferDealMarketSegment(listings: QuantProduct[]): {
   return { segment, slug, label: labels[segment] };
 }
 
-/** Category-tuned blend for deep deal scoring (sums ~1 before normalization). */
+function normBlend(b: DealQualityBlend): DealQualityBlend {
+  const sum =
+    b.composite +
+    b.trust +
+    b.rating +
+    b.reviewDepth +
+    b.delivery +
+    b.discountAuth +
+    b.savingsVsFair +
+    b.volatilityPenalty +
+    b.fakePenalty +
+    b.returnClarity +
+    b.stockUrgency;
+  const f = sum > 0 ? 1 / sum : 1;
+  return {
+    composite: b.composite * f,
+    trust: b.trust * f,
+    rating: b.rating * f,
+    reviewDepth: b.reviewDepth * f,
+    delivery: b.delivery * f,
+    discountAuth: b.discountAuth * f,
+    savingsVsFair: b.savingsVsFair * f,
+    volatilityPenalty: b.volatilityPenalty * f,
+    fakePenalty: b.fakePenalty * f,
+    returnClarity: b.returnClarity * f,
+    stockUrgency: b.stockUrgency * f,
+  };
+}
+
+/** Category-tuned blend for deep deal scoring (sums ~1 after normalization). */
 export function getDealQualityBlend(segment: DealMarketSegment): DealQualityBlend {
   const base: DealQualityBlend = {
     composite: 0.28,
@@ -99,44 +152,30 @@ export function getDealQualityBlend(segment: DealMarketSegment): DealQualityBlen
     stockUrgency: 0.02,
   };
 
-  const patch: Partial<DealQualityBlend> =
-    segment === "phones" || segment === "laptops"
-      ? { trust: 0.17, rating: 0.14, reviewDepth: 0.13, delivery: 0.07, composite: 0.24, discountAuth: 0.09 }
-      : segment === "headphones" || segment === "monitors"
-        ? { rating: 0.15, reviewDepth: 0.14, composite: 0.26, delivery: 0.09, discountAuth: 0.1 }
-        : segment === "appliances" || segment === "furniture"
-          ? { trust: 0.16, delivery: 0.12, savingsVsFair: 0.14, composite: 0.22, returnClarity: 0.1 }
-          : segment === "fashion" || segment === "beauty"
-            ? { trust: 0.18, returnClarity: 0.12, rating: 0.14, reviewDepth: 0.12, composite: 0.2 }
-            : segment === "electronics"
-              ? { trust: 0.15, rating: 0.13, reviewDepth: 0.12, composite: 0.26, discountAuth: 0.09 }
-              : {};
-
-  const merged = { ...base, ...patch };
-  const sum =
-    merged.composite +
-    merged.trust +
-    merged.rating +
-    merged.reviewDepth +
-    merged.delivery +
-    merged.discountAuth +
-    merged.savingsVsFair +
-    merged.volatilityPenalty +
-    merged.fakePenalty +
-    merged.returnClarity +
-    merged.stockUrgency;
-  const f = sum > 0 ? 1 / sum : 1;
-  return {
-    composite: merged.composite * f,
-    trust: merged.trust * f,
-    rating: merged.rating * f,
-    reviewDepth: merged.reviewDepth * f,
-    delivery: merged.delivery * f,
-    discountAuth: merged.discountAuth * f,
-    savingsVsFair: merged.savingsVsFair * f,
-    volatilityPenalty: merged.volatilityPenalty * f,
-    fakePenalty: merged.fakePenalty * f,
-    returnClarity: merged.returnClarity * f,
-    stockUrgency: merged.stockUrgency * f,
+  const patches: Partial<Record<DealMarketSegment, Partial<DealQualityBlend>>> = {
+    phones: { trust: 0.17, rating: 0.14, reviewDepth: 0.13, delivery: 0.07, composite: 0.24, discountAuth: 0.09 },
+    laptops: { trust: 0.16, rating: 0.14, reviewDepth: 0.13, composite: 0.25, returnClarity: 0.07 },
+    headphones: { rating: 0.15, reviewDepth: 0.14, composite: 0.26, delivery: 0.09, discountAuth: 0.1 },
+    monitors: { rating: 0.15, reviewDepth: 0.13, composite: 0.26, delivery: 0.08, discountAuth: 0.09 },
+    tvs: { delivery: 0.11, trust: 0.15, returnClarity: 0.1, composite: 0.22, savingsVsFair: 0.13 },
+    cameras: { reviewDepth: 0.15, trust: 0.15, rating: 0.13, composite: 0.24, returnClarity: 0.08 },
+    watches: { trust: 0.18, returnClarity: 0.11, rating: 0.14, composite: 0.2, discountAuth: 0.08 },
+    shoes: { trust: 0.17, returnClarity: 0.12, rating: 0.13, reviewDepth: 0.12, composite: 0.2 },
+    gaming: { trust: 0.15, delivery: 0.09, composite: 0.26, reviewDepth: 0.12, discountAuth: 0.08 },
+    tools: { trust: 0.16, delivery: 0.1, returnClarity: 0.1, composite: 0.22, savingsVsFair: 0.13 },
+    accessories: { composite: 0.24, trust: 0.13, discountAuth: 0.11, delivery: 0.09, reviewDepth: 0.11 },
+    appliances: { trust: 0.16, delivery: 0.12, savingsVsFair: 0.14, composite: 0.22, returnClarity: 0.1 },
+    fashion: { trust: 0.18, returnClarity: 0.12, rating: 0.14, reviewDepth: 0.12, composite: 0.2 },
+    furniture: { delivery: 0.12, trust: 0.15, savingsVsFair: 0.14, composite: 0.22, returnClarity: 0.1 },
+    home: { composite: 0.22, trust: 0.14, delivery: 0.1, savingsVsFair: 0.13, returnClarity: 0.09 },
+    electronics: { trust: 0.15, rating: 0.13, reviewDepth: 0.12, composite: 0.26, discountAuth: 0.09 },
+    beauty: { reviewDepth: 0.15, trust: 0.17, rating: 0.15, composite: 0.2, returnClarity: 0.09 },
+    sports: { rating: 0.17, trust: 0.14, composite: 0.24, reviewDepth: 0.12, delivery: 0.09 },
+    toys: { trust: 0.16, rating: 0.15, composite: 0.22, reviewDepth: 0.11 },
+    general: {},
   };
+
+  const patch = patches[segment] ?? {};
+  const merged = { ...base, ...patch };
+  return normBlend(merged);
 }

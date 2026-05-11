@@ -10,5 +10,6 @@ export type {
   DealVerdict,
   FakeDiscountRisk,
   ListingDealInsight,
+  MarketplaceSellerRisk,
   PrimaryDealAction,
 } from "./types";

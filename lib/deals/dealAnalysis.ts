@@ -1,6 +1,7 @@
 import { scoreDeliverySpeed } from "@/lib/intelligence/deliveryScore";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getFinalComposite, getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
+import { getMarketplaceSellerRiskTier } from "@/lib/retailTrust";
 import {
   buildGroupingRationale,
   buildHiddenRisksNote,
@@ -24,6 +25,7 @@ import type {
   DealVerdict,
   FakeDiscountRisk,
   ListingDealInsight,
+  MarketplaceSellerRisk,
   PrimaryDealAction,
 } from "./types";
 
@@ -160,6 +162,22 @@ function buyVsWaitFor(
   return "compare";
 }
 
+function ratingAuthenticityHint(p: QuantProduct, maxReviews: number): string {
+  const r = ratingValue(p.rating);
+  const n = p.reviewsCount ?? 0;
+  const depth = reviewDepth01(p, maxReviews);
+  if (r >= 4.9 && n < 22) {
+    return "Near-perfect stars on thin review volume—possible early-rater bias; read recent text reviews.";
+  }
+  if (r >= 4.75 && depth < 0.26) {
+    return "High rating with shallow proof—QuantAI discounts star power until depth catches up.";
+  }
+  if (r <= 3.45 && n > 180) {
+    return "Large voter base with muted stars—more trustworthy as a caution flag than a hype score.";
+  }
+  return "Stars look ordinary for this tray—still scan for SKU-specific complaints and photos.";
+}
+
 function listingDataGaps(p: QuantProduct): string[] {
   const g: string[] = [];
   if (p.oldPrice == null) g.push("No list / anchor price in feed");
@@ -290,12 +308,15 @@ function buyerConfidence(
   listings: QuantProduct[],
   fake: FakeDiscountRisk,
   dealQ: number,
-  dataGaps: string[]
+  dataGaps: string[],
+  mkt: MarketplaceSellerRisk
 ): number {
   const trust = getStoreTrustScore(p.store);
   const depth = reviewDepth01(p, Math.max(...listings.map((x) => x.reviewsCount ?? 0), 1));
   let c = dealQ * 0.55 + trust * 0.25 + depth * 100 * 0.2;
   if (fake !== "low") c -= 14;
+  if (mkt === "high") c -= 12;
+  else if (mkt === "medium") c -= 6;
   c -= Math.min(18, dataGaps.length * 5);
   return Math.min(100, Math.max(0, Math.round(c)));
 }
@@ -317,7 +338,9 @@ function pickBy(
   return best.link;
 }
 
-function buildCorePicks(listings: QuantProduct[]): Omit<ClusterPicks, "riskyButCheap" | "waitForBetterPricing"> {
+function buildCorePicks(
+  listings: QuantProduct[]
+): Omit<ClusterPicks, "riskyButCheap" | "waitForBetterPricing" | "bestWarrantySupport" | "premiumOverpriced"> {
   const safe = listings.filter((p) => p.price > 0);
   if (!safe.length) {
     const z = listings[0]?.link ?? "";
@@ -388,6 +411,31 @@ function pickRiskyButCheap(listings: QuantProduct[], insights: ListingDealInsigh
   const pool = risky.length ? risky : scored;
   pool.sort((a, b) => a.price - b.price || b.risk - a.risk);
   return pool[0]!.p.link;
+}
+
+function warrantySupportScore(p: QuantProduct): number {
+  const h = returnPolicyHint(p);
+  let s = getStoreTrustScore(p.store);
+  if (/friendly|warranty|money|return/i.test(h)) s += 24;
+  if (/restricted|final|not explicit/i.test(h)) s -= 16;
+  return s;
+}
+
+function pickBestWarrantySupport(listings: QuantProduct[]): string {
+  const safe = listings.filter((p) => p.price > 0);
+  if (!safe.length) return listings[0]?.link ?? "";
+  return pickBy(safe, (p) => warrantySupportScore(p), true);
+}
+
+function pickPremiumOverpriced(listings: QuantProduct[], insights: ListingDealInsight[]): string {
+  const safe = listings.filter((p) => p.price > 0);
+  if (!safe.length) return listings[0]?.link ?? "";
+  const map = insightByLink(insights);
+  const over = safe.filter((p) => map.get(p.link)?.dealVerdict === "Overpriced");
+  if (over.length) return pickBy(over, (p) => p.price, true);
+  const soft = safe.filter((p) => (map.get(p.link)?.dealQualityScore ?? 99) < 58);
+  if (soft.length) return pickBy(soft, (p) => p.price, true);
+  return pickBy(safe, (p) => p.price, true);
 }
 
 function pickWaitForBetter(listings: QuantProduct[], insights: ListingDealInsight[], fair: number): string {
@@ -465,6 +513,7 @@ export function analyzeDealCluster(id: string, listings: QuantProduct[]): DealCl
     const dataGaps = listingDataGaps(p);
     const tg = tooGoodToBeTrue(p, listings, disc, maxReviews);
     const dq = dealQualityScore(p, listings, fake, verdict, fair, spreadPct, blend, returnHint);
+    const mkt = getMarketplaceSellerRiskTier(p.store);
     const buyVsWait = buyVsWaitFor(
       p,
       listings,
@@ -477,7 +526,7 @@ export function analyzeDealCluster(id: string, listings: QuantProduct[]): DealCl
       link: p.link,
       dealVerdict: verdict,
       dealQualityScore: dq,
-      buyerConfidence: buyerConfidence(p, listings, fake, dq, dataGaps),
+      buyerConfidence: buyerConfidence(p, listings, fake, dq, dataGaps, mkt),
       reasoning: buildListingDealReasoning(
         p,
         verdict,
@@ -497,6 +546,8 @@ export function analyzeDealCluster(id: string, listings: QuantProduct[]): DealCl
       savingsVsFair: fair > 0 && p.price > 0 ? Math.round(fair - p.price) : null,
       tooGoodToBeTrue: tg,
       dataGaps,
+      marketplaceSellerRisk: mkt,
+      ratingAuthenticityHint: ratingAuthenticityHint(p, maxReviews),
     };
   });
 
@@ -504,6 +555,8 @@ export function analyzeDealCluster(id: string, listings: QuantProduct[]): DealCl
     ...core,
     riskyButCheap: pickRiskyButCheap(listings, provisionalInsights),
     waitForBetterPricing: pickWaitForBetter(listings, provisionalInsights, fair),
+    bestWarrantySupport: pickBestWarrantySupport(listings),
+    premiumOverpriced: pickPremiumOverpriced(listings, provisionalInsights),
   };
 
   const suspiciousDiscountCluster =

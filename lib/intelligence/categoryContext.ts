@@ -78,11 +78,18 @@ const PROFILES: Record<ProductCategorySlug, Partial<CategoryWeightProfile>> = {
 function matchCategory(text: string): ProductCategorySlug {
   const t = text.toLowerCase();
   if (
-    /laptop|phone|iphone|android|tablet|gpu|graphics|monitor|tv|oled|qled|headphone|earbud|camera|drone|console|playstation|xbox|nintendo|router|ssd|ram|keyboard|mouse|speaker|smartwatch|charger|cable|usb|hdmi|pc\b|macbook|ipad/i.test(
+    /laptop|phone|iphone|android|tablet|gpu|graphics|monitor|tv|oled|qled|headphone|earbud|camera|drone|console|playstation|xbox|nintendo|router|ssd|ram|keyboard|mouse|speaker|smartwatch|charger|cable|usb|hdmi|pc\b|macbook|ipad|steam deck|gaming|mirrorless|dslr|gopro|webcam|microphone|capture card|vr headset/i.test(
       t
     )
   ) {
     return "electronics";
+  }
+  if (
+    /drill\b|impact driver|circular saw|table saw|wrench|socket set|multimeter|pliers|hammer|toolbox|ladder|screwdriver|angle grinder|oscillating tool/i.test(
+      t
+    )
+  ) {
+    return "home";
   }
   if (
     /shoe|sneaker|boot|dress|shirt|jacket|coat|jeans|pants|skirt|handbag|wallet|watch\b|sunglass|jewelry|ring\b|necklace|apparel|fashion|clothing/i.test(

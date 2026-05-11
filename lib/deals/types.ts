@@ -16,6 +16,8 @@ export type DataCompleteness = "high" | "medium" | "low";
 
 export type PrimaryDealAction = "buy_now" | "compare" | "wait";
 
+export type MarketplaceSellerRisk = "low" | "medium" | "high";
+
 export type ListingDealInsight = {
   link: string;
   dealVerdict: DealVerdict;
@@ -30,6 +32,8 @@ export type ListingDealInsight = {
   savingsVsFair: number | null;
   tooGoodToBeTrue: boolean;
   dataGaps: string[];
+  marketplaceSellerRisk: MarketplaceSellerRisk;
+  ratingAuthenticityHint: string;
 };
 
 export type ClusterPicks = {
@@ -43,6 +47,10 @@ export type ClusterPicks = {
   riskyButCheap: string;
   /** Example listing where patience or a different store likely wins. */
   waitForBetterPricing: string;
+  /** Best return / warranty language + trust blend in-cluster. */
+  bestWarrantySupport: string;
+  /** Premium ticket with weak value signal (overpriced or soft quality vs price). */
+  premiumOverpriced: string;
 };
 
 export type DealClusterDTO = {

@@ -1,0 +1,320 @@
+"use client";
+
+import { useMemo } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import {
+  AlertTriangle,
+  ArrowRight,
+  BarChart3,
+  CheckCircle2,
+  Globe2,
+  MapPin,
+  Shield,
+  Sparkles,
+  Users,
+} from "lucide-react";
+import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
+
+type Props = {
+  intel: SearchIntelligenceDTO;
+};
+
+function finalTone(kind: SearchIntelligenceDTO["finalRecommendation"]): string {
+  switch (kind) {
+    case "buy_now":
+    case "best_trusted_option":
+    case "smart_long_term_buy":
+      return "from-emerald-500/20 via-cyan-500/10 to-transparent border-emerald-400/30";
+    case "wait":
+      return "from-rose-500/15 via-violet-500/10 to-transparent border-rose-400/30";
+    case "risky_deal":
+    case "cheapest_but_risky":
+      return "from-amber-500/18 via-orange-500/8 to-transparent border-amber-400/35";
+    case "premium_but_overpriced":
+      return "from-violet-500/15 to-transparent border-violet-400/30";
+    default:
+      return "from-cyan-500/12 to-transparent border-cyan-400/25";
+  }
+}
+
+function tierLabel(t: SearchIntelligenceDTO["confidenceTier"]): string {
+  if (t === "high") return "Model confidence · high";
+  if (t === "moderate") return "Model confidence · moderate";
+  if (t === "low") return "Model confidence · low";
+  return "Verify manually";
+}
+
+export default function GlobalIntelligencePanel({ intel }: Props) {
+  const reduceMotion = useReducedMotion();
+  const confPct = Math.max(8, 100 - intel.buyerUncertaintyScore);
+
+  const heatRows = useMemo(() => {
+    return intel.trustMatrix.slice(0, 8).map((row) => {
+      const trustNorm = row.trust / 100;
+      const mkt =
+        row.marketplaceRisk === "high" ? 0.25 : row.marketplaceRisk === "medium" ? 0.55 : 0.88;
+      return { ...row, trustNorm, mkt };
+    });
+  }, [intel.trustMatrix]);
+
+  return (
+    <motion.section
+      initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 380, damping: 32 }}
+      className="mb-10 space-y-6"
+      aria-label="Global shopping intelligence"
+    >
+      <div
+        className={`relative overflow-hidden rounded-[1.75rem] border bg-gradient-to-br p-5 sm:p-7 backdrop-blur-2xl ${finalTone(intel.finalRecommendation)}`}
+      >
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_20%_0%,rgba(34,211,238,0.12),transparent_55%)]" />
+        <div className="relative flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/30 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-cyan-200/90">
+                <Globe2 className="size-3.5" aria-hidden />
+                Global decision
+              </span>
+              <span className="rounded-full border border-white/10 bg-black/25 px-2 py-0.5 text-[10px] font-medium text-slate-400">
+                {intel.basketRegionBias === "unknown" || intel.basketRegionBias === "mixed"
+                  ? "Region mix · inferred from store names"
+                  : `Store-name bias · ${intel.basketRegionBias.toUpperCase()}`}
+              </span>
+            </div>
+            <h3 className="mt-3 text-xl font-semibold tracking-tight text-white sm:text-2xl">
+              {intel.finalHeadline}
+            </h3>
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-300">{intel.finalBody}</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {intel.globalDeal && (
+                <a
+                  href={intel.globalDeal.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-500/20"
+                >
+                  Best global pick · {intel.globalDeal.store}
+                  <ArrowRight className="size-3.5" aria-hidden />
+                </a>
+              )}
+              {intel.localDeal && (
+                <a
+                  href={intel.localDeal.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-50 transition hover:bg-cyan-500/18"
+                >
+                  <MapPin className="size-3.5" aria-hidden />
+                  Local lean · {intel.localDeal.store}
+                </a>
+              )}
+              {intel.cheapestReliable && (
+                <a
+                  href={intel.cheapestReliable.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-white/20"
+                >
+                  Cheapest reliable · {intel.cheapestReliable.store}
+                </a>
+              )}
+              {intel.mostTrustedListing && (
+                <a
+                  href={intel.mostTrustedListing.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-violet-400/25 bg-violet-500/10 px-3 py-1.5 text-xs font-semibold text-violet-100 transition hover:bg-violet-500/18"
+                >
+                  <Shield className="size-3.5" aria-hidden />
+                  Most trusted · {intel.mostTrustedListing.store}
+                </a>
+              )}
+            </div>
+          </div>
+          <div className="w-full shrink-0 lg:w-64">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              {tierLabel(intel.confidenceTier)}
+            </p>
+            <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-black/40">
+              <motion.div
+                className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-violet-400 to-emerald-400"
+                initial={reduceMotion ? false : { width: 0 }}
+                animate={{ width: `${confPct}%` }}
+                transition={{ duration: reduceMotion ? 0 : 0.85, ease: [0.22, 1, 0.36, 1] }}
+              />
+            </div>
+            <p className="mt-1.5 text-[11px] text-slate-500">
+              Uncertainty · {intel.buyerUncertaintyScore}/100 (↑ means verify more)
+            </p>
+            {intel.insufficientDataWarnings.length > 0 && (
+              <ul className="mt-3 space-y-1.5 text-[11px] text-amber-200/90">
+                {intel.insufficientDataWarnings.slice(0, 4).map((w) => (
+                  <li key={w} className="flex gap-2">
+                    <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                    <span>{w}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 backdrop-blur-xl">
+          <div className="flex items-center gap-2 text-xs font-semibold text-white/90">
+            <BarChart3 className="size-4 text-cyan-300" aria-hidden />
+            Price spread
+          </div>
+          <p className="mt-3 text-2xl font-semibold tabular-nums text-white">
+            €{intel.priceSpread.min.toFixed(0)}
+            <span className="mx-1 text-slate-600">→</span>
+            €{intel.priceSpread.max.toFixed(0)}
+          </p>
+          <p className="mt-1 text-[11px] text-slate-500">Median €{intel.priceSpread.median.toFixed(0)}</p>
+          <div className="mt-4 flex h-3 overflow-hidden rounded-full bg-black/35">
+            <div
+              className="bg-gradient-to-r from-emerald-400/80 to-amber-400/90"
+              style={{
+                width: `${
+                  intel.priceSpread.max > intel.priceSpread.min
+                    ? Math.min(
+                        100,
+                        ((intel.priceSpread.median - intel.priceSpread.min) /
+                          (intel.priceSpread.max - intel.priceSpread.min)) *
+                          100
+                      )
+                    : 50
+                }%`,
+              }}
+            />
+            <div className="flex-1 bg-violet-500/20" />
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 backdrop-blur-xl">
+          <div className="flex items-center gap-2 text-xs font-semibold text-white/90">
+            <Shield className="size-4 text-violet-300" aria-hidden />
+            Market signals
+          </div>
+          <ul className="mt-3 space-y-1.5 text-[11px] text-slate-400">
+            <li className={intel.marketIntel.aggressiveFakeDiscount ? "text-amber-200" : ""}>
+              {intel.marketIntel.aggressiveFakeDiscount ? "●" : "○"} Fake-discount stress in tray
+            </li>
+            <li className={intel.marketIntel.ratingInflationRisk ? "text-amber-200" : ""}>
+              {intel.marketIntel.ratingInflationRisk ? "●" : "○"} Thin-review / high-star pattern
+            </li>
+            <li className={intel.marketIntel.marketplaceVarianceRisk ? "text-amber-200" : ""}>
+              {intel.marketIntel.marketplaceVarianceRisk ? "●" : "○"} Marketplace / third-party variance
+            </li>
+            <li className={intel.marketIntel.cheapestNotSafest ? "text-rose-200/90" : ""}>
+              {intel.marketIntel.cheapestNotSafest ? "●" : "○"} Cheapest ≠ safest gap detected
+            </li>
+          </ul>
+        </div>
+
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-4 backdrop-blur-xl">
+          <div className="flex items-center gap-2 text-xs font-semibold text-white/90">
+            <Users className="size-4 text-emerald-300" aria-hidden />
+            Who / when
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-slate-400">{intel.whoShouldBuy}</p>
+          <p className="mt-2 text-[11px] leading-relaxed text-rose-100/70">{intel.whoShouldAvoid}</p>
+          <p className="mt-2 text-[11px] leading-relaxed text-slate-500">{intel.timingNote}</p>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-white/[0.08] bg-black/25 p-4 backdrop-blur-xl">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs font-semibold text-white/90">Store trust heatmap</p>
+          <span className="text-[10px] text-slate-500">Price fit · Trust · Marketplace safety</span>
+        </div>
+        <div className="mt-3 overflow-x-auto">
+          <div className="min-w-[520px] space-y-1">
+            <div className="grid grid-cols-[1.4fr_repeat(3,minmax(0,1fr))] gap-1 text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+              <span>Store</span>
+              <span>Price fit</span>
+              <span>Trust</span>
+              <span>Mkt safety</span>
+            </div>
+            {heatRows.map((row) => (
+              <div
+                key={row.store}
+                className="grid grid-cols-[1.4fr_repeat(3,minmax(0,1fr))] gap-1 rounded-lg border border-white/[0.05] bg-white/[0.02] px-2 py-1.5 text-[11px]"
+              >
+                <span className="truncate font-medium text-slate-200">{row.store}</span>
+                <HeatCell v={row.priceFit} />
+                <HeatCell v={row.trustNorm} />
+                <HeatCell v={row.mkt} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 backdrop-blur-xl">
+        <div className="mb-3 flex items-center gap-2">
+          <Sparkles className="size-4 text-violet-300" aria-hidden />
+          <p className="text-xs font-semibold text-white/90">Buyer personas · adaptive read</p>
+        </div>
+        <div className="flex gap-3 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch]">
+          {intel.personaCards.map((card, i) => (
+            <motion.div
+              key={card.id}
+              initial={reduceMotion ? false : { opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: reduceMotion ? 0 : i * 0.04 }}
+              className="min-w-[240px] max-w-[260px] shrink-0 rounded-xl border border-white/[0.08] bg-gradient-to-b from-white/[0.06] to-black/30 p-3"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-white/95">{card.title}</p>
+                <span className="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-cyan-100">
+                  {card.fitScore}
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] font-medium text-cyan-200/85">{card.verdict}</p>
+              <p className="mt-2 text-[11px] leading-relaxed text-slate-500">{card.body}</p>
+              {card.suggestedLink && card.suggestedStore && (
+                <a
+                  href={card.suggestedLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold text-cyan-300 hover:underline"
+                >
+                  Lean · {card.suggestedStore}
+                  <ArrowRight className="size-3" />
+                </a>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
+          <p className="text-xs font-semibold text-white/90">Opportunity cost</p>
+          <p className="mt-2 text-[12px] leading-relaxed text-slate-400">{intel.opportunityCostNote}</p>
+        </div>
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
+          <p className="text-xs font-semibold text-white/90">Upgrade calculus</p>
+          <p className="mt-2 text-[12px] leading-relaxed text-slate-400">
+            {intel.upgradeWorthItNote ??
+              "No strong upgrade signal for this query—QuantAI did not detect a clear spec cliff worth paying for yet."}
+          </p>
+        </div>
+      </div>
+    </motion.section>
+  );
+}
+
+function HeatCell({ v }: { v: number }) {
+  const hue =
+    v >= 0.72 ? "bg-emerald-500/55" : v >= 0.48 ? "bg-amber-400/45" : v >= 0.32 ? "bg-orange-500/40" : "bg-rose-500/45";
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className={`h-2 flex-1 rounded-full ${hue}`} style={{ opacity: 0.35 + v * 0.55 }} />
+      <CheckCircle2 className="size-3 shrink-0 text-slate-600" aria-hidden />
+    </div>
+  );
+}

@@ -5,8 +5,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { AlertCircle, BarChart3, GitCompare, Loader2, Sparkles, X } from "lucide-react";
 import MultiStoreDealAdvisor from "@/components/deals/MultiStoreDealAdvisor";
+import GlobalIntelligencePanel from "@/components/intelligence/GlobalIntelligencePanel";
 import { analyzeDealCluster } from "@/lib/deals";
 import type { DealClusterDTO } from "@/lib/deals/types";
+import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
 import type { ResultsFiltersState } from "@/lib/resultsFilters";
 import { getFinalComposite, ratingValue, sortByCompositeRank } from "@/lib/shoppingScore";
 import type { QuantProduct } from "@/lib/shoppingScore";
@@ -19,6 +21,7 @@ type Props = {
   products: QuantProduct[];
   sortedProducts: QuantProduct[];
   dealClusters?: DealClusterDTO[];
+  searchIntelligence?: SearchIntelligenceDTO | null;
   loading: boolean;
   sort: string;
   setSort: (v: string) => void;
@@ -69,6 +72,7 @@ export default function ProductResultsSurface({
   searchError,
   addToWatchlist,
   dealClusters = [],
+  searchIntelligence = null,
 }: Props) {
   const reduceMotion = useReducedMotion();
   const anchorRef = useRef<HTMLDivElement>(null);
@@ -288,6 +292,12 @@ export default function ProductResultsSurface({
       />
 
       <IntelligenceEducationStrip />
+
+      {searchIntelligence && (
+        <div className="mb-10">
+          <GlobalIntelligencePanel intel={searchIntelligence} />
+        </div>
+      )}
 
       {aiTopPicks.length > 0 && (
         <motion.div

@@ -1,58 +1,109 @@
+/**
+ * Global retailer heuristics for trust scoring (name substring match on feed `store`).
+ * Not a legal endorsement — a UX prior for comparison ranking.
+ */
+
 export const TRUSTED_SUBSTRINGS = [
   "amazon",
-  "bol",
+  "ebay",
+  "walmart",
+  "best buy",
+  "target",
+  "aliexpress",
+  "temu",
+  "newegg",
+  "b&h",
+  "bh photo",
+  "adorama",
+  "back market",
   "coolblue",
+  "bol.com",
+  "bol ",
   "mediamarkt",
+  "media markt",
+  "fnac",
+  "carrefour",
+  "otto",
+  "zalando",
+  "asos",
+  "nike",
+  "adidas",
+  "samsung",
   "apple",
+  "lenovo",
+  "microsoft",
+  "asus",
+  "hp store",
+  "dell",
+  "costco",
+  "etsy",
+  "rakuten",
+  "noon",
+  "flipkart",
   "ikea",
   "wayfair",
-  "best buy",
-  "walmart",
-  "target",
-  "bh photo",
-  "newegg",
-  "fnac",
   "darty",
   "boulanger",
-  "carrefour",
-  "costco",
-  "home depot",
-  "lowe",
   "currys",
   "john lewis",
   "argos",
-  "ebay",
+  "home depot",
+  "lowe",
 ] as const;
 
-/** Tier 1 — established omnichannel / specialty with strong buyer protections. */
+/** Tier 1 — flagship omnichannel / first-party stores with strong buyer protections. */
 const TIER1_SCORE = 90;
-/** Tier 2 — recognizable national chains. */
+/** Tier 2 — large national / regional chains & reputable marketplaces. */
 const TIER2_SCORE = 82;
-/** Tier 3 — unknown but plausible storefront names. */
-const TIER3_SCORE = 64;
-/** Tier 4 — very short / generic — higher friction assumption. */
-const TIER4_SCORE = 52;
+/** Tier 3 — recognizable specialty or mid-market. */
+const TIER3_SCORE = 70;
+/** Tier 4 — unknown / short names — assume higher variance. */
+const TIER4_SCORE = 54;
 
 const TIER1 = new Set(
   [
     "amazon",
     "apple",
+    "microsoft",
+    "samsung",
     "best buy",
     "walmart",
     "target",
     "costco",
-    "mediamarkt",
-    "coolblue",
-    "bol",
-    "bh photo",
     "newegg",
-    "john lewis",
+    "bh photo",
+    "b&h",
+    "adorama",
+    "mediamarkt",
+    "media markt",
+    "coolblue",
+    "bol.com",
+    "bol ",
     "fnac",
+    "john lewis",
+    "apple store",
+    "microsoft store",
+    "samsung store",
+    "lenovo",
+    "asus",
+    "hp store",
+    "dell",
+    "zalando",
+    "nike",
+    "adidas",
+    "noon",
+    "flipkart",
+    "carrefour",
+    "otto",
+    "back market",
   ].map((x) => x.toLowerCase())
 );
 
 const TIER2 = new Set(
   [
+    "ebay",
+    "etsy",
+    "rakuten",
     "ikea",
     "wayfair",
     "home depot",
@@ -61,8 +112,9 @@ const TIER2 = new Set(
     "argos",
     "darty",
     "boulanger",
-    "carrefour",
-    "ebay",
+    "asos",
+    "aliexpress",
+    "temu",
   ].map((x) => x.toLowerCase())
 );
 
@@ -76,7 +128,7 @@ export function getStoreTrustScore(store: string): number {
     if (s.includes(t)) return TIER2_SCORE;
   }
   if (TRUSTED_SUBSTRINGS.some((t) => s.includes(t))) return TIER2_SCORE;
-  if (s.length > 2 && s.length < 48) return TIER3_SCORE;
+  if (s.length > 2 && s.length < 52) return TIER3_SCORE;
   return TIER4_SCORE;
 }
 
@@ -92,6 +144,30 @@ export function getTrustTierLabel(store: string): "elite" | "strong" | "standard
   const n = getStoreTrustScore(store);
   if (n >= 88) return "elite";
   if (n >= 78) return "strong";
-  if (n >= 60) return "standard";
+  if (n >= 62) return "standard";
   return "caution";
+}
+
+/**
+ * Marketplace / third-party variance risk (not the same as trust score).
+ * High = more diligence on seller identity, warranty, and returns.
+ */
+export function getMarketplaceSellerRiskTier(store: string): "low" | "medium" | "high" {
+  const s = store.toLowerCase();
+  if (/temu|aliexpress|wish\.com|dhgate|banggood|geekbuying/i.test(s)) return "high";
+  if (/ebay|etsy|facebook marketplace|rakuten marketplace|amazon marketplace/i.test(s)) return "medium";
+  return "low";
+}
+
+/** Coarse geo signal from store naming (no IP geolocation). */
+export function inferStoreRegionHint(store: string): "us" | "eu" | "uk" | "me" | "asia" | "unknown" {
+  const s = store.toLowerCase();
+  if (/\.(nl|de|fr|be|es|it|pl|se|dk|at|ch)\b|coolblue|bol\.|mediamarkt|fnac|zalando|otto|carrefour/i.test(s)) {
+    return "eu";
+  }
+  if (/\.co\.uk|john lewis|argos|currys/i.test(s)) return "uk";
+  if (/noon|\.ae|namshi|souq/i.test(s)) return "me";
+  if (/flipkart|\.in\b|noon|rakuten\.co\.jp|\.jp\b/i.test(s)) return "asia";
+  if (/walmart|target|best buy|newegg|costco|\.com\b/i.test(s)) return "us";
+  return "unknown";
 }
