@@ -366,3 +366,17 @@ body {
   animation: cockpit-scan 4.5s ease-in-out infinite;
   pointer-events: none;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .cockpit-hero-scanlines::after,
+  .cockpit-search-aurora[data-loading="true"]::before,
+  .ai-grid-motion {
+    animation: none !important;
+  }
+
+  .animate-aurora,
+  .animate-soft-pulse,
+  .animate-shimmer {
+    animation: none !important;
+  }
+}

@@ -10,6 +10,7 @@ import MarketingSections from "../components/landing/MarketingSections";
 import PricingCards from "../components/subscription/PricingCards";
 import FeedbackLauncher from "../components/feedback/FeedbackLauncher";
 import TrustRibbon from "../components/trust/TrustRibbon";
+import AILoadingPhase from "../components/loading/AILoadingPhase";
 import { calculateAIScore } from "./api/search/lib/aiScoring";
 import ProductResultsSurface from "../components/search/ProductResultsSurface";
 import {
@@ -484,11 +485,15 @@ export default function Home() {
                     </span>
                   </button>
                 </div>
-                <p className="relative mt-2 px-1 text-left text-[11px] font-medium text-slate-500">
-                  {loading
-                    ? "Synthesizing listings, trust signals, and cross-store deal clusters…"
-                    : "Press Enter or tap run — results open the live cockpit below."}
-                </p>
+                {loading ? (
+                  <div className="relative mt-3 px-0">
+                    <AILoadingPhase />
+                  </div>
+                ) : (
+                  <p className="relative mt-2 px-1 text-left text-[11px] font-medium text-slate-500">
+                    Press Enter or tap run — results open the live cockpit below.
+                  </p>
+                )}
 
                 <div className="relative mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
                   {[
@@ -877,6 +882,8 @@ export default function Home() {
             resultsKey={resultsKey}
             searchError={searchError}
             addToWatchlist={addToWatchlist}
+            searchQuery={query}
+            onRetrySearch={() => void search()}
           />
         )}
 

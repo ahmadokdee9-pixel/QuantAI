@@ -5,7 +5,9 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowDownRight,
   ArrowUpRight,
+  Check,
   ChevronDown,
+  Copy,
   Minus,
   PanelRight,
   Shield,
@@ -14,7 +16,20 @@ import {
   Store,
   Truck,
 } from "lucide-react";
+import MagneticSurface from "@/components/motion/MagneticSurface";
 import { calculateAIScore } from "@/app/api/search/lib/aiScoring";
+import {
+  currencySymbolFromListing,
+  deliveryConfidencePct,
+  formatListingPrice,
+  longTermValueHint,
+  marketplaceVerifiedLabel,
+  retailerMonogram,
+  riskHintFromProduct,
+  shippingEstimateLabel,
+  stockConfidencePct,
+} from "@/lib/commerce/cues";
+import { buildProductSnapshot, copyText } from "@/lib/share/intelligenceExport";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import {
   getProfessionalBadge,
@@ -92,12 +107,21 @@ export default function ProductResultCard({
   const reduceMotion = useReducedMotion();
   const ringGradId = useId().replace(/:/g, "");
   const [intelOpen, setIntelOpen] = useState(false);
+  const [imgErr, setImgErr] = useState(false);
+  const [cardCopyFlash, setCardCopyFlash] = useState(false);
   const ai = calculateAIScore(p, list);
   const score = p.qiComposite != null && Number.isFinite(p.qiComposite) ? p.qiComposite : ai.score;
   const scoreNorm = Math.min(100, Math.max(0, Number(score) || 0));
   const badge = getProfessionalBadge(p, list, rank);
   const trust = getStoreTrustScore(p.store);
   const inCompare = compareLinks.includes(p.link);
+  const sym = currencySymbolFromListing(p);
+  const delPct = deliveryConfidencePct(p);
+  const stockPct = stockConfidencePct(p);
+  const shipEst = shippingEstimateLabel(p);
+  const mkt = marketplaceVerifiedLabel(p);
+  const riskHint = riskHintFromProduct(p);
+  const ltHint = longTermValueHint(p, list);
   const ringR = 21;
   const ringC = 2 * Math.PI * ringR;
   const ringDash = ringC * (1 - scoreNorm / 100);
@@ -106,22 +130,34 @@ export default function ProductResultCard({
     ? { duration: 0 }
     : { type: "spring" as const, stiffness: 420, damping: 34 };
 
+  const mktChipClass =
+    mkt.tone === "high"
+      ? "border-emerald-400/25 bg-emerald-500/10 text-emerald-100/90"
+      : mkt.tone === "mid"
+        ? "border-cyan-400/20 bg-cyan-500/8 text-cyan-100/85"
+        : "border-amber-400/25 bg-amber-500/10 text-amber-100/90";
+
   return (
-    <motion.article
-      layout
-      initial={reduceMotion ? false : { opacity: 0, y: 22 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ ...transition, delay: Math.min(index * 0.035, 0.4) }}
-      whileHover={
-        reduceMotion
-          ? undefined
-          : {
-              y: -3,
-              transition: { type: "spring", stiffness: 400, damping: 28 },
-            }
-      }
-      className="cockpit-card-lift group relative flex flex-col overflow-hidden rounded-[1.5rem] p-px bg-gradient-to-br from-white/[0.14] via-cyan-400/10 to-violet-500/16 shadow-[0_24px_70px_-32px_rgba(0,0,0,0.88)]"
-    >
+    <MagneticSurface className="h-full" strength={0.09}>
+      <motion.article
+        layout
+        initial={reduceMotion ? false : { opacity: 0, y: 22 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ ...transition, delay: Math.min(index * 0.035, 0.4) }}
+        whileHover={
+          reduceMotion
+            ? undefined
+            : {
+                y: -3,
+                transition: { type: "spring", stiffness: 400, damping: 28 },
+              }
+        }
+        className={`cockpit-card-lift group relative flex h-full flex-col overflow-hidden rounded-[1.5rem] p-px bg-gradient-to-br from-white/[0.14] via-cyan-400/10 to-violet-500/16 ${
+          scoreNorm >= 78
+            ? "shadow-[0_28px_85px_-28px_rgba(34,211,238,0.22)]"
+            : "shadow-[0_24px_70px_-32px_rgba(0,0,0,0.88)]"
+        }`}
+      >
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.45rem] border border-white/[0.07] bg-gradient-to-b from-white/[0.08] to-[#060b14]/98 backdrop-blur-2xl transition-[box-shadow,border-color] duration-500 group-hover:border-cyan-400/22 group-hover:shadow-[0_32px_90px_-28px_rgba(34,211,238,0.18)]">
         <div className="pointer-events-none absolute -right-16 -top-16 size-44 rounded-full bg-cyan-400/10 blur-3xl opacity-0 transition duration-700 group-hover:opacity-100" />
         <div className="pointer-events-none absolute -bottom-20 -left-12 size-40 rounded-full bg-violet-500/10 blur-3xl opacity-0 transition duration-700 group-hover:opacity-50" />
@@ -147,13 +183,14 @@ export default function ProductResultCard({
           </button>
         </div>
 
-        {p.image && (
+        {p.image && !imgErr && (
           <div className="mx-4 mt-3 overflow-hidden rounded-[1.05rem] border border-white/[0.08] bg-gradient-to-b from-white/[0.12] to-white p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
             <motion.img
               src={p.image}
               alt=""
               loading="lazy"
               decoding="async"
+              onError={() => setImgErr(true)}
               className="mx-auto h-[7.25rem] w-full object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.35)]"
               whileHover={
                 reduceMotion
@@ -170,7 +207,13 @@ export default function ProductResultCard({
           </h3>
 
           <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[11px] text-slate-400">
-            <span className="inline-flex min-w-0 items-center gap-1 font-medium text-slate-300">
+            <span className="inline-flex min-w-0 items-center gap-1.5 font-medium text-slate-300">
+              <span
+                className="flex size-6 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-gradient-to-br from-white/[0.08] to-black/40 text-[9px] font-bold tracking-tight text-cyan-100/90"
+                aria-hidden
+              >
+                {retailerMonogram(p.store)}
+              </span>
               <Store className="size-3 shrink-0 opacity-70" strokeWidth={1.5} aria-hidden />
               <span className="truncate">{p.store}</span>
             </span>
@@ -191,9 +234,13 @@ export default function ProductResultCard({
                 <p className="text-[10px] text-slate-600">Listed price</p>
               )}
               <div className="mt-0.5 flex flex-wrap items-baseline gap-1.5">
-                <p className="text-xl font-semibold tabular-nums tracking-tight text-white">€{p.price}</p>
+                <p className="text-xl font-semibold tabular-nums tracking-tight text-white">
+                  {formatListingPrice(p.price, sym)}
+                </p>
                 {p.oldPrice != null && p.oldPrice > p.price && (
-                  <span className="text-xs text-slate-500 line-through tabular-nums">€{p.oldPrice}</span>
+                  <span className="text-xs text-slate-500 line-through tabular-nums">
+                    {formatListingPrice(p.oldPrice, sym)}
+                  </span>
                 )}
               </div>
               <div className="mt-0.5">
@@ -249,6 +296,21 @@ export default function ProductResultCard({
           </div>
 
           <div className="mt-2.5 flex flex-wrap gap-1.5 text-[10px]">
+            <span
+              className="rounded-full border border-cyan-400/20 bg-cyan-500/8 px-2 py-0.5 font-medium tabular-nums text-cyan-100/85"
+              title="Heuristic delivery confidence from listing + trust"
+            >
+              Delivery · {delPct}%
+            </span>
+            <span
+              className="rounded-full border border-violet-400/20 bg-violet-500/8 px-2 py-0.5 font-medium tabular-nums text-violet-100/85"
+              title="Availability language confidence"
+            >
+              Stock · {stockPct}%
+            </span>
+            <span className={`max-w-[min(100%,14rem)] truncate rounded-full border px-2 py-0.5 ${mktChipClass}`}>
+              {mkt.label}
+            </span>
             {ratingValue(p.rating) > 0 && (
               <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-white/10 bg-black/25 px-2 py-0.5 text-amber-200/90">
                 <Star className="size-2.5 shrink-0" strokeWidth={1.5} aria-hidden />
@@ -258,15 +320,25 @@ export default function ProductResultCard({
                 )}
               </span>
             )}
-            {p.shipping && (
+            {shipEst && (
               <span className="inline-flex max-w-[min(100%,11rem)] items-center gap-1 truncate rounded-full border border-white/10 bg-black/20 px-2 py-0.5 text-slate-400">
                 <Truck className="size-2.5 shrink-0" strokeWidth={1.5} aria-hidden />
-                {p.shipping}
+                {shipEst}
               </span>
             )}
             {p.availability && (
               <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-0.5 text-emerald-200/90">
                 {p.availability}
+              </span>
+            )}
+            {riskHint && (
+              <span className="max-w-full rounded-full border border-amber-400/30 bg-amber-500/10 px-2 py-0.5 text-amber-100/90">
+                {riskHint}
+              </span>
+            )}
+            {ltHint && (
+              <span className="max-w-full rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-slate-300">
+                {ltHint}
               </span>
             )}
           </div>
@@ -334,6 +406,28 @@ export default function ProductResultCard({
           </motion.button>
 
           <div className="mt-3 flex flex-wrap gap-2">
+            <motion.button
+              type="button"
+              onClick={() => {
+                void (async () => {
+                  const ok = await copyText(buildProductSnapshot(p, list));
+                  if (ok) {
+                    setCardCopyFlash(true);
+                    window.setTimeout(() => setCardCopyFlash(false), 2000);
+                  }
+                })();
+              }}
+              whileHover={reduceMotion ? undefined : { scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              className="inline-flex items-center justify-center gap-1.5 rounded-full border border-white/15 bg-white/[0.05] px-3 py-2 text-[11px] font-semibold text-slate-200 transition hover:border-cyan-400/25 hover:bg-white/[0.08]"
+            >
+              {cardCopyFlash ? (
+                <Check className="size-3.5 text-emerald-300" aria-hidden />
+              ) : (
+                <Copy className="size-3.5 opacity-80" aria-hidden />
+              )}
+              {cardCopyFlash ? "Copied" : "Export card"}
+            </motion.button>
             <motion.a
               href={p.link}
               target="_blank"
@@ -374,5 +468,6 @@ export default function ProductResultCard({
         </div>
       </div>
     </motion.article>
+    </MagneticSurface>
   );
 }

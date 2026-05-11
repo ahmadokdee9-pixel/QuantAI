@@ -1,5 +1,7 @@
-import { currentUser } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { countSearchesTodayUtc } from "@/lib/intelligence/persistence";
+import { stripeSecretKey } from "@/lib/stripe/config";
 import { entitlementsForTier } from "@/lib/subscription/entitlements";
 import { planDefinition, QUANT_PLANS } from "@/lib/subscription/plans";
 import { subscriptionTierFromClerkUser } from "@/lib/subscription/resolveTier";
@@ -11,9 +13,15 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const { userId } = await auth();
   const tier = subscriptionTierFromClerkUser(user);
   const plan = planDefinition(tier);
   const entitlements = entitlementsForTier(tier);
+
+  let searchesToday: number | null = null;
+  if (userId) {
+    searchesToday = await countSearchesTodayUtc(userId);
+  }
 
   return NextResponse.json({
     tier,
@@ -24,6 +32,13 @@ export async function GET() {
       tagline: plan.tagline,
     },
     entitlements,
+    usage: {
+      searchesToday,
+      searchesLimit: plan.searchesPerDay,
+    },
+    stripe: {
+      connected: Boolean(stripeSecretKey()),
+    },
     plans: Object.values(QUANT_PLANS).map((p) => ({
       id: p.id,
       name: p.name,
@@ -41,9 +56,10 @@ export async function GET() {
       },
     })),
     billing: {
-      status: "not_connected",
-      message:
-        "Stripe Customer Portal is not connected yet. Set STRIPE_SECRET_KEY and webhook to sync `publicMetadata.subscriptionTier`.",
+      status: stripeSecretKey() ? "stripe_configured" : "not_connected",
+      message: stripeSecretKey()
+        ? "Stripe secret present—complete Checkout price IDs and webhooks to sync Clerk metadata."
+        : "Set STRIPE_SECRET_KEY and webhook to sync `publicMetadata.subscriptionTier`.",
       manageUrl: null as string | null,
     },
   });

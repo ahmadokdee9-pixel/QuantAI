@@ -1,22 +1,32 @@
 "use client";
 
 import type { Dispatch, SetStateAction } from "react";
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { AlertCircle, BarChart3, GitCompare, Loader2, Sparkles, X } from "lucide-react";
 import MultiStoreDealAdvisor from "@/components/deals/MultiStoreDealAdvisor";
 import GlobalIntelligencePanel from "@/components/intelligence/GlobalIntelligencePanel";
+import AILoadingPhase from "@/components/loading/AILoadingPhase";
+import ShareSnapshotBar from "@/components/share/ShareSnapshotBar";
 import { analyzeDealCluster } from "@/lib/deals";
 import type { DealClusterDTO } from "@/lib/deals/types";
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
 import type { SearchIntelligenceLevel } from "@/lib/subscription/plans";
 import type { ResultsFiltersState } from "@/lib/resultsFilters";
+import { buildCompareExport, copyText } from "@/lib/share/intelligenceExport";
+import { currencySymbolFromListing, formatListingPrice } from "@/lib/commerce/cues";
 import { getFinalComposite, ratingValue, sortByCompositeRank } from "@/lib/shoppingScore";
 import type { QuantProduct } from "@/lib/shoppingScore";
-import IntelligenceEducationStrip from "./IntelligenceEducationStrip";
 import ProductIntelligenceDrawer from "./ProductIntelligenceDrawer";
 import ProductResultCard from "./ProductResultCard";
 import ResultsToolbar from "./ResultsToolbar";
+
+const IntelligenceEducationStrip = dynamic(() => import("./IntelligenceEducationStrip"), {
+  loading: () => (
+    <div className="mb-10 h-28 max-w-5xl rounded-2xl border border-white/[0.06] bg-white/[0.03] animate-pulse" />
+  ),
+});
 
 type Props = {
   products: QuantProduct[];
@@ -36,6 +46,8 @@ type Props = {
   resultsKey: number;
   searchError: string | null;
   addToWatchlist?: (p: QuantProduct) => void;
+  searchQuery?: string;
+  onRetrySearch?: () => void;
 };
 
 function ResultSkeleton() {
@@ -73,6 +85,8 @@ export default function ProductResultsSurface({
   dealClusters = [],
   searchIntelligence = null,
   intelligenceLevel = "full",
+  searchQuery = "",
+  onRetrySearch,
 }: Props) {
   const reduceMotion = useReducedMotion();
   const anchorRef = useRef<HTMLDivElement>(null);
@@ -90,6 +104,7 @@ export default function ProductResultsSurface({
     confidence: string;
   } | null>(null);
   const [verdictSource, setVerdictSource] = useState<string | null>(null);
+  const [compareExportFlash, setCompareExportFlash] = useState(false);
 
   const compositeRanked = useMemo(
     () => sortByCompositeRank(sortedProducts),
@@ -196,9 +211,10 @@ export default function ProductResultsSurface({
         aria-label="Loading search results"
       >
         <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-cyan-500/8 to-transparent blur-2xl" />
-        <div className="sticky top-[3.25rem] z-30 -mx-4 px-4 py-3 sm:-mx-6 sm:px-6 mb-8 border-b border-white/[0.07] bg-[#030712]/75 backdrop-blur-[28px] shadow-[0_20px_50px_-32px_rgba(0,0,0,0.85)]">
+        <div className="sticky top-[3.25rem] z-30 -mx-4 px-4 py-3 sm:-mx-6 sm:px-6 mb-6 border-b border-white/[0.07] bg-[#030712]/75 backdrop-blur-[28px] shadow-[0_20px_50px_-32px_rgba(0,0,0,0.85)]">
           <div className="h-12 max-w-2xl rounded-2xl border border-white/[0.06] bg-gradient-to-r from-white/[0.07] via-white/[0.04] to-white/[0.07] animate-pulse" />
         </div>
+        <AILoadingPhase className="mb-6 max-w-2xl" />
         <ResultSkeleton />
       </section>
     );
@@ -216,8 +232,17 @@ export default function ProductResultsSurface({
           <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-rose-400/30 bg-rose-500/15">
             <AlertCircle className="size-6 text-rose-200" strokeWidth={1.5} aria-hidden />
           </div>
-          <h2 className="text-lg font-semibold text-white/95">Search could not complete</h2>
-          <p className="mt-2 text-sm leading-relaxed text-rose-100/80">{searchError}</p>
+          <h2 className="cockpit-display text-lg text-white/95">Search could not complete</h2>
+          <p className="cockpit-body mt-2 text-sm text-rose-100/80">{searchError}</p>
+          {onRetrySearch && (
+            <button
+              type="button"
+              onClick={onRetrySearch}
+              className="cockpit-cta mt-6 w-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 py-2.5 text-sm text-slate-950 transition hover:brightness-105"
+            >
+              Retry intelligence run
+            </button>
+          )}
         </motion.div>
       </section>
     );
@@ -290,6 +315,10 @@ export default function ProductResultsSurface({
         activeFilterCount={activeFilterCount}
         onClearFilters={onClearFilters}
       />
+
+      <div className="mb-6">
+        <ShareSnapshotBar query={searchQuery} products={sortedProducts} />
+      </div>
 
       <IntelligenceEducationStrip />
 
@@ -394,6 +423,21 @@ export default function ProductResultsSurface({
                 <button
                   type="button"
                   onClick={() => {
+                    void (async () => {
+                      const ok = await copyText(buildCompareExport(compareProducts));
+                      if (ok) {
+                        setCompareExportFlash(true);
+                        window.setTimeout(() => setCompareExportFlash(false), 2000);
+                      }
+                    })();
+                  }}
+                  className="rounded-full border border-white/12 bg-white/[0.06] px-3 py-1.5 text-[11px] font-semibold text-slate-200 transition hover:bg-white/10"
+                >
+                  {compareExportFlash ? "Copied" : "Export compare"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
                     setCompareLinks([]);
                     setVerdict(null);
                     setVerdictError(null);
@@ -409,6 +453,7 @@ export default function ProductResultsSurface({
               {compareProducts.map((p) => {
                 const qi = getFinalComposite(p, sortedProducts);
                 const trust = p.store;
+                const sym = currencySymbolFromListing(p);
                 return (
                   <motion.div
                     key={p.link}
@@ -420,7 +465,9 @@ export default function ProductResultsSurface({
                     <div className="mt-3 grid grid-cols-2 gap-2">
                       <div className="rounded-lg border border-white/[0.06] bg-black/30 px-2 py-1.5">
                         <p className="text-[9px] uppercase tracking-wider text-slate-500">Price</p>
-                        <p className="text-sm font-semibold tabular-nums text-emerald-300">€{p.price}</p>
+                        <p className="text-sm font-semibold tabular-nums text-emerald-300">
+                          {formatListingPrice(p.price, sym)}
+                        </p>
                       </div>
                       <div className="rounded-lg border border-white/[0.06] bg-black/30 px-2 py-1.5">
                         <p className="text-[9px] uppercase tracking-wider text-slate-500">QI</p>

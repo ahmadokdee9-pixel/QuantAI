@@ -413,8 +413,19 @@ function ConfidenceTriRadar({
           stroke="rgba(34,211,238,0.55)"
           strokeWidth="0.9"
           initial={reduceMotion ? false : { opacity: 0, scale: 0.92 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: reduceMotion ? 0 : 0.55, ease: [0.22, 1, 0.36, 1] }}
+          animate={
+            reduceMotion
+              ? { opacity: 1, scale: 1 }
+              : { opacity: 1, scale: [1, 1.035, 1] }
+          }
+          transition={
+            reduceMotion
+              ? { duration: 0 }
+              : {
+                  opacity: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+                  scale: { duration: 3.4, repeat: Infinity, ease: "easeInOut" },
+                }
+          }
           style={{ transformOrigin: "50px 52px" }}
         />
       </svg>

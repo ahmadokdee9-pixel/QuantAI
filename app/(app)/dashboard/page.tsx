@@ -14,6 +14,7 @@ import {
 import type { SearchEntitlementsDTO } from "@/lib/subscription/entitlements";
 import type { QuantPlanTier } from "@/lib/subscription/plans";
 import TrustRibbon from "@/components/trust/TrustRibbon";
+import EntitlementBanner from "@/components/subscription/EntitlementBanner";
 
 type HistoryRow = { id?: string; query: string; result_count?: number; created_at?: string };
 type WatchRow = { id?: string; product?: Record<string, unknown>; created_at?: string };
@@ -107,6 +108,8 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      <EntitlementBanner />
+
       <section className="cockpit-glass-panel p-6 sm:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
