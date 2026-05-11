@@ -23,8 +23,8 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang="en" className={quantaiSans.variable}>
-        <body className="min-h-dvh bg-[#020617] font-sans text-slate-100 antialiased selection:bg-cyan-500/30 selection:text-cyan-50">
+      <html lang="en" className={`${quantaiSans.variable} scroll-smooth`}>
+        <body className="min-h-dvh overflow-x-hidden bg-[#020617] font-sans text-slate-100 antialiased selection:bg-cyan-500/30 selection:text-cyan-50">
           {children}
         </body>
       </html>

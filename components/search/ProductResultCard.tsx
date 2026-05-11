@@ -120,7 +120,7 @@ export default function ProductResultCard({
               transition: { type: "spring", stiffness: 400, damping: 28 },
             }
       }
-      className="group relative flex flex-col overflow-hidden rounded-[1.5rem] p-px bg-gradient-to-br from-white/[0.14] via-cyan-400/10 to-violet-500/16 shadow-[0_24px_70px_-32px_rgba(0,0,0,0.88)]"
+      className="cockpit-card-lift group relative flex flex-col overflow-hidden rounded-[1.5rem] p-px bg-gradient-to-br from-white/[0.14] via-cyan-400/10 to-violet-500/16 shadow-[0_24px_70px_-32px_rgba(0,0,0,0.88)]"
     >
       <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.45rem] border border-white/[0.07] bg-gradient-to-b from-white/[0.08] to-[#060b14]/98 backdrop-blur-2xl transition-[box-shadow,border-color] duration-500 group-hover:border-cyan-400/22 group-hover:shadow-[0_32px_90px_-28px_rgba(34,211,238,0.18)]">
         <div className="pointer-events-none absolute -right-16 -top-16 size-44 rounded-full bg-cyan-400/10 blur-3xl opacity-0 transition duration-700 group-hover:opacity-100" />

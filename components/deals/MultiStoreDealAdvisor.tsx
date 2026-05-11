@@ -133,7 +133,7 @@ export default function MultiStoreDealAdvisor({
       aria-label="Multi-store deal intelligence"
     >
       <div className="pointer-events-auto mx-auto max-w-7xl px-3 sm:px-6 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <div className="rounded-t-[1.45rem] border border-white/[0.11] border-b-0 bg-gradient-to-b from-[#0a1428]/96 via-[#060b18]/94 to-[#03060f]/96 shadow-[0_-32px_90px_-28px_rgba(34,211,238,0.22),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-[32px]">
+        <div className="rounded-t-[1.45rem] border border-white/[0.11] border-b-0 bg-gradient-to-b from-[#0a1428]/96 via-[#060b18]/94 to-[#03060f]/96 shadow-[0_-32px_90px_-28px_rgba(34,211,238,0.22),0_0_60px_-40px_rgba(167,139,250,0.12),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-[32px]">
           <button
             type="button"
             onClick={() => setExpanded((e) => !e)}

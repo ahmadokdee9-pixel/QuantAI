@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { SearchEntitlementsDTO } from "@/lib/subscription/entitlements";
 import type { QuantPlanTier } from "@/lib/subscription/plans";
+import TrustRibbon from "@/components/trust/TrustRibbon";
 
 type HistoryRow = { id?: string; query: string; result_count?: number; created_at?: string };
 type WatchRow = { id?: string; product?: Record<string, unknown>; created_at?: string };
@@ -114,10 +115,10 @@ export default function DashboardPage() {
               Your cockpit
             </div>
             <h1 className="cockpit-display max-w-3xl text-3xl text-white md:text-4xl">
-              Command center for saves, watchlist, and subscription.
+              Your orbital view of saves, signals, and subscription.
             </h1>
-            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-400">
-              Run live analysis on the home page—this dashboard stays in sync with your account data.
+            <p className="cockpit-body mt-4 max-w-2xl text-sm text-slate-400">
+              The cockpit on the home page runs live intelligence—this hub mirrors what your account already knows.
             </p>
             {memoryLine && (
               <p className="mt-3 max-w-xl text-xs text-slate-500">
@@ -265,15 +266,17 @@ export default function DashboardPage() {
       </section>
 
       <section className="cockpit-glass-panel p-6">
-        <h2 className="text-lg font-semibold text-white/95">AI recommendation</h2>
-        <p className="mt-3 text-sm leading-relaxed text-slate-400">
+        <h2 className="text-lg font-semibold text-white/95">Next intelligent move</h2>
+        <p className="cockpit-body mt-3 text-sm text-slate-400">
           {saved.length >= 3
-            ? "You have a healthy shortlist saved—open compare on the home search results to pressure-test finalists."
+            ? "Strong shortlist—return to search, open Compare lab, and let the verdict layer stress-test finalists before checkout."
             : saved.length > 0
-              ? "Add a couple more saves from search, then use Compare lab to stress-test price and trust side by side."
-              : "Run a product search, save your top picks, and QuantAI will keep context for your next assistant question."}
+              ? "Add one or two more anchors from search, then compare on price, trust, and delivery language in one pass."
+              : "Run a live query, save what resonates, and the assistant will stay grounded in your tray—not generic advice."}
         </p>
       </section>
+
+      <TrustRibbon />
     </div>
   );
 }

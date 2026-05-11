@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { SignInButton, SignUpButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Loader2 } from "lucide-react";
 import { QUANT_PLANS, type QuantPlanTier } from "@/lib/subscription/plans";
 
 const glassCard = "cockpit-glass-card";
@@ -13,8 +14,28 @@ type Props = {
   className?: string;
 };
 
+async function startCheckout(plan: "pro" | "premium"): Promise<void> {
+  const res = await fetch("/api/stripe/checkout", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "same-origin",
+    body: JSON.stringify({ plan }),
+  });
+  const data = (await res.json()) as { url?: string; redirectUrl?: string; error?: string };
+  if (data.url) {
+    window.location.href = data.url;
+    return;
+  }
+  if (data.redirectUrl) {
+    window.location.href = data.redirectUrl;
+    return;
+  }
+  throw new Error(data.error || "Checkout unavailable");
+}
+
 export default function PricingCards({ currentTier = null, className = "" }: Props) {
   const { isSignedIn } = useUser();
+  const [checkoutPlan, setCheckoutPlan] = useState<"pro" | "premium" | null>(null);
   /** Signed-out visitors have no tier until they subscribe — avoid marking Free as "current" for everyone. */
   const resolvedTier: QuantPlanTier | null = currentTier ?? (isSignedIn ? "free" : null);
   const order: QuantPlanTier[] = ["free", "pro", "premium"];
@@ -142,28 +163,94 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
                   )}
                 </>
               )}
-              {id === "pro" && (
-                <Link
-                  href={`/billing?plan=pro${isCurrent ? "&focus=manage" : ""}`}
-                  className={`flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-semibold transition ${
-                    isCurrent
-                      ? "border border-cyan-400/35 bg-cyan-500/15 text-cyan-100 hover:bg-cyan-500/25"
-                      : "bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-500 text-slate-950 shadow-[0_0_32px_-6px_rgba(34,211,238,0.45)] hover:brightness-105"
-                  }`}
-                >
-                  {isCurrent ? "Manage Pro" : "Upgrade to Pro"}
-                  <ArrowRight className="size-4 opacity-80" aria-hidden />
-                </Link>
-              )}
-              {id === "premium" && (
-                <Link
-                  href={`/billing?plan=premium${isCurrent ? "&focus=manage" : ""}`}
-                  className="flex w-full items-center justify-center gap-2 rounded-full bg-white py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
-                >
-                  {isCurrent ? "Manage Power Buyer" : "Go Power Buyer"}
-                  <ArrowRight className="size-4 opacity-70" aria-hidden />
-                </Link>
-              )}
+              {id === "pro" &&
+                (isCurrent ? (
+                  <Link
+                    href="/billing?plan=pro&focus=manage"
+                    className="flex w-full items-center justify-center gap-2 rounded-full border border-cyan-400/35 bg-cyan-500/15 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/25"
+                  >
+                    Manage Pro
+                    <ArrowRight className="size-4 opacity-80" aria-hidden />
+                  </Link>
+                ) : isSignedIn ? (
+                  <button
+                    type="button"
+                    disabled={checkoutPlan !== null}
+                    onClick={() => {
+                      setCheckoutPlan("pro");
+                      void startCheckout("pro").catch(() => {
+                        window.location.href = "/billing?plan=pro";
+                      }).finally(() => setCheckoutPlan(null));
+                    }}
+                    className="cockpit-cta flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-500 py-3 text-sm text-slate-950 shadow-[0_0_32px_-6px_rgba(34,211,238,0.45)] transition enabled:hover:brightness-105 disabled:opacity-70"
+                  >
+                    {checkoutPlan === "pro" ? (
+                      <>
+                        <Loader2 className="size-4 animate-spin" aria-hidden />
+                        Opening checkout…
+                      </>
+                    ) : (
+                      <>
+                        Upgrade to Pro
+                        <ArrowRight className="size-4 opacity-80" aria-hidden />
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <SignInButton mode="modal" forceRedirectUrl="/pricing">
+                    <button
+                      type="button"
+                      className="cockpit-cta flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-500 py-3 text-sm text-slate-950 shadow-[0_0_32px_-6px_rgba(34,211,238,0.45)]"
+                    >
+                      Sign in to upgrade
+                      <ArrowRight className="size-4 opacity-80" aria-hidden />
+                    </button>
+                  </SignInButton>
+                ))}
+              {id === "premium" &&
+                (isCurrent ? (
+                  <Link
+                    href="/billing?plan=premium&focus=manage"
+                    className="flex w-full items-center justify-center gap-2 rounded-full border border-white/15 bg-white/10 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+                  >
+                    Manage Power Buyer
+                    <ArrowRight className="size-4 opacity-70" aria-hidden />
+                  </Link>
+                ) : isSignedIn ? (
+                  <button
+                    type="button"
+                    disabled={checkoutPlan !== null}
+                    onClick={() => {
+                      setCheckoutPlan("premium");
+                      void startCheckout("premium").catch(() => {
+                        window.location.href = "/billing?plan=premium";
+                      }).finally(() => setCheckoutPlan(null));
+                    }}
+                    className="cockpit-cta flex w-full items-center justify-center gap-2 rounded-full bg-white py-3 text-sm text-slate-900 transition enabled:hover:bg-slate-100 disabled:opacity-70"
+                  >
+                    {checkoutPlan === "premium" ? (
+                      <>
+                        <Loader2 className="size-4 animate-spin" aria-hidden />
+                        Opening checkout…
+                      </>
+                    ) : (
+                      <>
+                        Go Power Buyer
+                        <ArrowRight className="size-4 opacity-70" aria-hidden />
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <SignInButton mode="modal" forceRedirectUrl="/pricing">
+                    <button
+                      type="button"
+                      className="cockpit-cta flex w-full items-center justify-center gap-2 rounded-full bg-white py-3 text-sm text-slate-900"
+                    >
+                      Sign in to upgrade
+                      <ArrowRight className="size-4 opacity-70" aria-hidden />
+                    </button>
+                  </SignInButton>
+                ))}
             </div>
           </div>
         );

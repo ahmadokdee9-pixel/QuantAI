@@ -112,7 +112,11 @@ export default function GlobalIntelligencePanel({ intel, displayLevel = "full" }
             <h3 className="cockpit-display mt-3 text-xl text-white sm:text-[1.65rem]">
               {intel.finalHeadline}
             </h3>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-300/95">{intel.finalBody}</p>
+            <p className="cockpit-body mt-2 max-w-3xl text-sm text-slate-300/95">{intel.finalBody}</p>
+            <p className="cockpit-body mt-3 max-w-3xl text-[11px] leading-relaxed text-slate-500">
+              Confidence reflects signal alignment in this tray—not a promise of market truth. Sparse listings or uneven
+              stores increase uncertainty; cross-check price and seller before you commit.
+            </p>
             <div className="mt-4 flex flex-wrap gap-2">
               {intel.globalDeal && (
                 <a

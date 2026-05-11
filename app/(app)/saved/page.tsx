@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ExternalLink, Loader2, Trash2 } from "lucide-react";
+import TrustRibbon from "@/components/trust/TrustRibbon";
 
 type SavedRow = {
   id?: string;
@@ -114,7 +115,7 @@ export default function SavedProductsPage() {
           {items.map((item) => (
             <div
               key={item.link}
-              className="cockpit-glass-panel flex flex-col gap-4 p-5 sm:flex-row sm:items-center"
+              className="cockpit-glass-panel cockpit-card-lift flex flex-col gap-4 p-5 sm:flex-row sm:items-center"
             >
               {item.image && (
                 <div className="mx-auto size-24 shrink-0 overflow-hidden rounded-xl border border-white/[0.08] bg-white p-2 sm:mx-0">
@@ -152,6 +153,12 @@ export default function SavedProductsPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {!loading && (
+        <div className="mt-10">
+          <TrustRibbon />
         </div>
       )}
     </div>

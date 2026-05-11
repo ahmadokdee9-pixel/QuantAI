@@ -3,7 +3,8 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { CreditCard, ExternalLink } from "lucide-react";
+import { CreditCard, ExternalLink, Loader2 } from "lucide-react";
+import TrustRibbon from "@/components/trust/TrustRibbon";
 import { QUANT_PLANS, type QuantPlanTier } from "@/lib/subscription/plans";
 
 type SubPayload = {
@@ -15,9 +16,12 @@ function BillingInner() {
   const searchParams = useSearchParams();
   const planParam = searchParams.get("plan");
   const focus = searchParams.get("focus");
+  const checkout = searchParams.get("checkout");
 
   const [data, setData] = useState<SubPayload | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [portalBusy, setPortalBusy] = useState(false);
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,12 +58,13 @@ function BillingInner() {
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-300/80">
               Billing &amp; subscription
             </p>
-            <h1 className="cockpit-display mt-2 text-2xl text-white sm:text-3xl">Stripe-ready preview</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-400">
-              Your plan is stored in Clerk <code className="text-cyan-200/90">publicMetadata.subscriptionTier</code>{" "}
-              (values: <span className="text-slate-300">free</span>, <span className="text-slate-300">pro</span>,{" "}
-              <span className="text-slate-300">premium</span>). Wire Stripe webhooks to update that field and this
-              page becomes your customer portal shell.
+            <h1 className="cockpit-display mt-2 text-2xl text-white sm:text-3xl">Billing constellation</h1>
+            <p className="cockpit-body mt-3 max-w-2xl text-sm text-slate-400">
+              Live tier reads from Clerk{" "}
+              <code className="rounded bg-white/[0.06] px-1.5 py-0.5 text-cyan-200/90">publicMetadata.subscriptionTier</code>{" "}
+              (<span className="text-slate-300">free</span>, <span className="text-slate-300">pro</span>,{" "}
+              <span className="text-slate-300">premium</span>). Stripe Checkout and Customer Portal routes are wired—add
+              keys to go live.
             </p>
           </div>
           <Link
@@ -74,6 +79,13 @@ function BillingInner() {
         {err && (
           <p className="mt-4 rounded-xl border border-rose-400/25 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
             {err}
+          </p>
+        )}
+
+        {checkout === "success" && (
+          <p className="mt-4 rounded-xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+            Checkout completed in Stripe. Finalize webhooks to sync tier into Clerk—until then, set metadata manually to
+            test premium surfaces.
           </p>
         )}
 
@@ -100,26 +112,71 @@ function BillingInner() {
         <div className="mt-8 flex flex-wrap gap-3">
           <button
             type="button"
-            disabled
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-5 py-2.5 text-sm font-semibold text-slate-950 opacity-60"
-            title="Connect Stripe to enable"
+            disabled={checkoutBusy}
+            onClick={() => {
+              const plan = highlighted ?? "pro";
+              setCheckoutBusy(true);
+              void (async () => {
+                try {
+                  const res = await fetch("/api/stripe/checkout", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "same-origin",
+                    body: JSON.stringify({ plan }),
+                  });
+                  const json = (await res.json()) as { url?: string; redirectUrl?: string };
+                  if (json.url) window.location.href = json.url;
+                  else if (json.redirectUrl) window.location.href = json.redirectUrl;
+                } finally {
+                  setCheckoutBusy(false);
+                }
+              })();
+            }}
+            className="cockpit-cta inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-5 py-2.5 text-sm text-slate-950 transition hover:brightness-105 disabled:opacity-60"
           >
-            <CreditCard className="size-4" aria-hidden />
-            Start checkout (Stripe)
+            {checkoutBusy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <CreditCard className="size-4" aria-hidden />}
+            {highlighted ? `Checkout · ${QUANT_PLANS[highlighted].name}` : "Start Stripe checkout"}
           </button>
           <button
             type="button"
-            disabled
-            className="rounded-full border border-white/12 px-5 py-2.5 text-sm font-medium text-slate-400"
-            title="Connect Stripe Customer Portal"
+            disabled={portalBusy}
+            onClick={() => {
+              setPortalBusy(true);
+              void (async () => {
+                try {
+                  const res = await fetch("/api/stripe/portal", {
+                    method: "POST",
+                    credentials: "same-origin",
+                  });
+                  const json = (await res.json()) as { url?: string; redirectUrl?: string };
+                  if (json.url) window.location.href = json.url;
+                  else if (json.redirectUrl) window.location.href = json.redirectUrl;
+                } finally {
+                  setPortalBusy(false);
+                }
+              })();
+            }}
+            className="rounded-full border border-white/12 px-5 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/[0.06] disabled:opacity-50"
           >
-            Open customer portal
+            {portalBusy ? "Opening…" : "Customer portal"}
           </button>
+          <Link
+            href="/pricing"
+            className="inline-flex items-center rounded-full border border-white/10 px-5 py-2.5 text-sm font-medium text-slate-400 transition hover:text-white"
+          >
+            All plans
+          </Link>
         </div>
-        <p className="mt-4 text-xs text-slate-500">
-          Environment: set <code className="text-slate-400">STRIPE_SECRET_KEY</code>, price IDs, and webhook secret.
-          Do not remove Clerk—metadata is the bridge until hosted checkout ships.
+        <p className="cockpit-body mt-4 text-xs text-slate-500">
+          Required env: <code className="text-slate-400">STRIPE_SECRET_KEY</code>,{" "}
+          <code className="text-slate-400">STRIPE_PRICE_ID_PRO</code>,{" "}
+          <code className="text-slate-400">STRIPE_PRICE_ID_PREMIUM</code>, optional{" "}
+          <code className="text-slate-400">STRIPE_WEBHOOK_SECRET</code>,{" "}
+          <code className="text-slate-400">NEXT_PUBLIC_APP_URL</code>. Portal needs a stored Stripe customer id per user.
         </p>
+        <div className="mt-8">
+          <TrustRibbon />
+        </div>
       </section>
     </div>
   );

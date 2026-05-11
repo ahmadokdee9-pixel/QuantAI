@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Bell } from "lucide-react";
+import TrustRibbon from "@/components/trust/TrustRibbon";
 
 export default function AlertsPage() {
   return (
@@ -12,6 +13,9 @@ export default function AlertsPage() {
         Threshold alerts and quiet monitoring are on the roadmap. Today you can use the watchlist from live search
         results—items sync to your account when Supabase is configured.
       </p>
+      <div className="mt-10">
+        <TrustRibbon />
+      </div>
       <div className="mt-8 flex flex-wrap gap-3">
         <Link
           href="/"

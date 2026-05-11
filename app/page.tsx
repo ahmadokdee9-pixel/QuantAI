@@ -8,6 +8,8 @@ import SearchBox from "../components/SearchBox";
 import LandingNav from "../components/landing/LandingNav";
 import MarketingSections from "../components/landing/MarketingSections";
 import PricingCards from "../components/subscription/PricingCards";
+import FeedbackLauncher from "../components/feedback/FeedbackLauncher";
+import TrustRibbon from "../components/trust/TrustRibbon";
 import { calculateAIScore } from "./api/search/lib/aiScoring";
 import ProductResultsSurface from "../components/search/ProductResultsSurface";
 import {
@@ -416,19 +418,19 @@ export default function Home() {
               <span className="relative flex size-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)]">
                 <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/40" />
               </span>
-              Neural shopping cockpit
+              Live neural commerce layer
             </div>
 
             <h1 className="cockpit-display mt-10 text-[2.65rem] sm:text-5xl lg:text-[3.75rem] text-white motion-safe:animate-[fadeIn_0.65s_ease-out]">
-              <span className="block text-white">The AI decision layer</span>
+              <span className="block text-white">Clarity at the speed of live listings</span>
               <span className="mt-3 block cockpit-gradient-text font-semibold">
-                for every product on Earth.
+                A decision field for every cart you care about.
               </span>
             </h1>
 
-            <p className="mx-auto mt-7 max-w-2xl text-base sm:text-lg font-normal leading-relaxed text-slate-400/95 motion-safe:animate-[fadeIn_0.7s_ease-out]">
-              One immersive workspace: live global listings, quantitative scoring, multi-store deal
-              intelligence, and reasoning you can trust—without the noise of ordinary ecommerce.
+            <p className="cockpit-body mx-auto mt-7 max-w-2xl text-base sm:text-lg text-slate-400/95 motion-safe:animate-[fadeIn_0.7s_ease-out]">
+              One surface: fused offers, quantitative QI scoring, cross-retailer deal graphs, and language you can
+              defend—stripped of generic ecommerce noise.
             </p>
 
             {/* Search — hero instrument */}
@@ -916,6 +918,10 @@ export default function Home() {
           </div>
         </section>
 
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 pb-8">
+          <TrustRibbon />
+        </div>
+
         <footer className="border-t border-white/[0.06] py-10 text-center">
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-slate-500">
             <Link href="/pricing" className="hover:text-cyan-300">
@@ -934,10 +940,15 @@ export default function Home() {
           <p className="mt-6 text-xs font-medium text-slate-600">
             © {new Date().getFullYear()} QuantAI · Shopping intelligence, not financial advice.
           </p>
-          <p className="mt-2 text-[11px] text-slate-600/80 max-w-md mx-auto">
-            AI outputs can be wrong; always verify price and seller at checkout.
+          <p className="cockpit-body mt-2 max-w-lg mx-auto text-[11px] text-slate-600/85">
+            Outputs are probabilistic—treat every score as decision support, not a guarantee. Verify listings before
+            you pay.
           </p>
         </footer>
+
+        <div className="fixed bottom-5 right-5 z-50 lg:hidden">
+          <FeedbackLauncher variant="floating" />
+        </div>
       </div>
     </main>
   );

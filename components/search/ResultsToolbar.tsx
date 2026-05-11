@@ -35,9 +35,9 @@ export default function ResultsToolbar({
     >
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+          <span className="cockpit-overline flex items-center gap-1.5 text-slate-500">
             <SlidersHorizontal className="size-3.5 text-cyan-400/50" aria-hidden />
-            Cockpit controls
+            Tray controls
           </span>
           <select
             value={sort}

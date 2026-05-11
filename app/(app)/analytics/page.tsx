@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BarChart3 } from "lucide-react";
+import TrustRibbon from "@/components/trust/TrustRibbon";
 
 export default function AnalyticsPage() {
   return (
@@ -12,6 +13,9 @@ export default function AnalyticsPage() {
         Portfolio-level analytics will aggregate your searches, saves, and watchlist movement. For now, use the
         dashboard for recent activity and the cockpit on the home page for live intelligence.
       </p>
+      <div className="mt-10">
+        <TrustRibbon />
+      </div>
       <div className="mt-8 flex flex-wrap gap-3">
         <Link
           href="/dashboard"

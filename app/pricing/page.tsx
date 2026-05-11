@@ -6,6 +6,7 @@ import { useUser } from "@clerk/nextjs";
 import AmbientBackdrop from "@/components/cockpit/AmbientBackdrop";
 import LandingNav from "@/components/landing/LandingNav";
 import PricingCards from "@/components/subscription/PricingCards";
+import TrustRibbon from "@/components/trust/TrustRibbon";
 import type { QuantPlanTier } from "@/lib/subscription/plans";
 
 export default function PricingPage() {
@@ -46,23 +47,25 @@ export default function PricingPage() {
           <h1 className="cockpit-display mt-4 text-center text-3xl text-white sm:text-4xl lg:text-5xl">
             One cockpit. <span className="cockpit-gradient-text">Three power levels.</span>
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-center text-base leading-relaxed text-slate-400">
-            Upgrade when you need deeper global intelligence, higher limits, and premium alerts. Stripe
-            checkout will connect here—billing preview is live today.
+          <p className="cockpit-body mx-auto mt-5 max-w-2xl text-center text-base text-slate-400">
+            Elevate limits and unlock full-spectrum intelligence when your cart stakes are real. Checkout routes to
+            Stripe when keys are set; otherwise you land on a safe billing preview.
           </p>
           <div className="mt-14">
             <PricingCards currentTier={tier} />
           </div>
-          <p className="mt-12 text-center text-sm text-slate-500">
+          <div className="mx-auto mt-14 max-w-3xl">
+            <TrustRibbon />
+          </div>
+          <p className="cockpit-body mt-10 text-center text-sm text-slate-500">
             Questions?{" "}
             <Link href="/dashboard" className="font-medium text-cyan-300 hover:underline">
-              Open your dashboard
+              Command center
             </Link>{" "}
-            or return{" "}
+            ·{" "}
             <Link href="/" className="font-medium text-cyan-300 hover:underline">
-              to search
+              Return to search
             </Link>
-            .
           </p>
         </section>
       </div>
