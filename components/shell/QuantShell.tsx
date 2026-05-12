@@ -5,6 +5,7 @@ import CommandPalette from "@/components/cockpit/CommandPalette";
 import FloatingIntelDock from "@/components/cockpit/FloatingIntelDock";
 import { CopilotProvider } from "@/components/copilot/CopilotContext";
 import CopilotDrawer from "@/components/copilot/CopilotDrawer";
+import OnboardingWelcome from "@/components/onboarding/OnboardingWelcome";
 
 export default function QuantShell({ children }: { children: React.ReactNode }) {
   return (
@@ -19,6 +20,7 @@ export default function QuantShell({ children }: { children: React.ReactNode }) 
         {children}
         <CommandPalette />
         <FloatingIntelDock />
+        <OnboardingWelcome />
         <CopilotDrawer />
       </CockpitProvider>
     </CopilotProvider>

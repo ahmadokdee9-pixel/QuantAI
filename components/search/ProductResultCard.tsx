@@ -31,6 +31,7 @@ import {
   stockConfidencePct,
 } from "@/lib/commerce/cues";
 import { buildProductSnapshot, copyText } from "@/lib/share/intelligenceExport";
+import { recordViewedProductLink } from "@/lib/personalization/localSignals";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import {
   getProfessionalBadge,
@@ -483,7 +484,10 @@ function ProductResultCard({
 
             <motion.button
               type="button"
-              onClick={() => onOpenIntelligence(p)}
+              onClick={() => {
+                recordViewedProductLink(p.link);
+                onOpenIntelligence(p);
+              }}
               whileTap={{ scale: 0.99 }}
               className="mt-4 flex w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-cyan-400/18 bg-gradient-to-r from-cyan-400/[0.08] to-violet-500/[0.07] py-2.5 text-[11px] font-semibold text-slate-100/95 transition hover:border-cyan-400/26 hover:from-cyan-400/[0.11] hover:to-violet-500/[0.09]"
             >
@@ -519,6 +523,7 @@ function ProductResultCard({
                 href={p.link}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => recordViewedProductLink(p.link)}
                 whileHover={reduceMotion ? undefined : { scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className={`${btnRow} relative flex min-w-[7.5rem] flex-[1.1_1_7rem] items-center justify-center overflow-hidden bg-gradient-to-r from-white via-slate-50 to-white px-4 text-slate-900 shadow-[0_10px_28px_-16px_rgba(15,23,42,0.45)] hover:brightness-[1.02]`}

@@ -337,7 +337,7 @@ export default function ProductResultsSurface({
     return (
       <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-16" aria-live="assertive">
         <motion.div
-          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+          initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={transition}
           className="mx-auto max-w-lg rounded-[1.75rem] border border-rose-400/25 bg-gradient-to-b from-rose-500/[0.12] to-white/[0.03] px-8 py-10 text-center backdrop-blur-2xl"
@@ -384,7 +384,7 @@ export default function ProductResultsSurface({
           onClearFilters={onClearFilters}
         />
         <motion.div
-          initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+          initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={transition}
           className="mx-auto max-w-md rounded-[1.75rem] border border-white/[0.1] bg-gradient-to-b from-white/[0.07] to-white/[0.02] px-8 py-12 text-center backdrop-blur-2xl"
@@ -435,15 +435,25 @@ export default function ProductResultsSurface({
       />
 
       <div className="mb-6">
-        <ShareSnapshotBar query={searchQuery} products={sortedProducts} />
+        <ShareSnapshotBar
+          query={searchQuery}
+          products={sortedProducts}
+          intelligence={searchIntelligence}
+        />
       </div>
+      {sortedProducts.length >= 2 && compareLinks.length === 0 && (
+        <p className="cockpit-body -mt-1 mb-4 text-center text-[11px] leading-relaxed text-slate-500">
+          Pin <span className="font-medium text-slate-400">Compare</span> on two or three finalists to unlock QuantAI
+          verdicts in Compare lab.
+        </p>
+      )}
 
       <IntelligenceEducationStrip />
 
       {searchIntelligence && (
         <motion.div
           key={`gi-${intelligenceEpoch}`}
-          initial={reduceMotion ? false : { opacity: 0.88, y: 10 }}
+          initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0.88, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 360, damping: 34 }}
           className="intel-panel-shimmer relative z-0 mb-12 min-w-0 overflow-hidden rounded-[1.75rem]"
@@ -456,7 +466,7 @@ export default function ProductResultsSurface({
 
       {aiTopPicks.length > 0 && (
         <motion.div
-          initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+          initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={transition}
           className="mb-12"
@@ -477,7 +487,7 @@ export default function ProductResultsSurface({
               return (
                 <motion.div
                   key={p.link}
-                  initial={reduceMotion ? false : { opacity: 0, x: 14 }}
+                  initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: 14 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ ...transition, delay: idx * 0.05 }}
                   whileHover={
@@ -525,7 +535,7 @@ export default function ProductResultsSurface({
         {compareProducts.length > 0 && (
           <motion.div
             id="quantai-compare-lab"
-            initial={reduceMotion ? false : { opacity: 0, y: 28, scale: 0.985 }}
+            initial={reduceMotion ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 28, scale: 0.985 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 18, scale: 0.99 }}
             transition={{ type: "spring", stiffness: 380, damping: 34, mass: 0.85 }}
@@ -593,7 +603,7 @@ export default function ProductResultsSurface({
                   <motion.div
                     key={p.link}
                     layout
-                    initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+                    initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ ...transition, delay: cIdx * 0.04 }}
                     className="min-w-0 rounded-2xl border border-white/[0.09] bg-gradient-to-b from-white/[0.08] to-black/45 p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:p-4"
@@ -682,7 +692,7 @@ export default function ProductResultsSurface({
       <AnimatePresence mode="popLayout">
         <motion.div
           key={resultsKey}
-          initial={reduceMotion ? false : { opacity: 0 }}
+          initial={reduceMotion ? { opacity: 1 } : { opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: reduceMotion ? 0 : 0.22 }}

@@ -25,6 +25,12 @@ const CHIPS: { label: string; prompt: string }[] = [
   { label: "Explain score", prompt: "Explain how QuantAI scores these listings and what matters most." },
 ];
 
+const FOLLOW_UP_CHIPS: { label: string; prompt: string }[] = [
+  { label: "Hidden fees?", prompt: "What fees or caveats should I watch for in these listings?" },
+  { label: "Delivery risk", prompt: "Which pick has the safest delivery / return story in this tray?" },
+  { label: "Price vs trust", prompt: "How do price and store trust trade off in my top results?" },
+];
+
 function OptionBlock({
   title,
   opt,
@@ -42,6 +48,29 @@ function OptionBlock({
   );
 }
 
+function TypingRow({ active, reduce }: { active: boolean; reduce: boolean | null }) {
+  if (!active) return null;
+  return (
+    <div className="flex items-center gap-2 rounded-2xl border border-white/[0.06] bg-white/[0.03] px-3 py-2" aria-live="polite">
+      <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Copilot</span>
+      <div className="flex gap-1" aria-hidden>
+        {[0, 1, 2].map((i) => (
+          <motion.span
+            key={i}
+            className="size-1.5 rounded-full bg-cyan-400/75"
+            animate={reduce ? { opacity: 0.9 } : { opacity: [0.25, 1, 0.25] }}
+            transition={
+              reduce
+                ? { duration: 0 }
+                : { repeat: Infinity, duration: 0.9, delay: i * 0.12, ease: "easeInOut" }
+            }
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function CopilotDrawer() {
   const reduce = useReducedMotion();
   const { session } = useCopilotSession();
@@ -54,7 +83,7 @@ export default function CopilotDrawer() {
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
-  }, [msgs, open]);
+  }, [msgs, open, busy]);
 
   const send = useCallback(
     async (text: string) => {
@@ -192,7 +221,7 @@ export default function CopilotDrawer() {
                   ? { duration: 0 }
                   : { type: "spring", stiffness: 380, damping: 34 }
               }
-              className="relative flex h-[100dvh] w-full max-w-md flex-col border-l border-white/[0.08] bg-[#060b18]/96 shadow-[-24px_0_80px_-20px_rgba(0,0,0,0.85)] backdrop-blur-2xl"
+              className="relative flex h-[100dvh] w-full max-w-md flex-col overflow-hidden border-l border-white/[0.08] bg-[#060b18]/96 shadow-[-24px_0_80px_-20px_rgba(0,0,0,0.85)] backdrop-blur-2xl"
             >
               <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
                 <div className="flex items-center gap-2">
@@ -228,7 +257,7 @@ export default function CopilotDrawer() {
                 ))}
               </div>
 
-              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3">
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-3 py-3">
                 {msgs.length === 0 && (
                   <p className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-3 text-xs leading-relaxed text-slate-400">
                     Ask about your current search tray, saved items, compare picks, or plan limits. Answers use QuantAI
@@ -236,8 +265,12 @@ export default function CopilotDrawer() {
                   </p>
                 )}
                 {msgs.map((m) => (
-                  <div
+                  <motion.div
                     key={m.id}
+                    layout
+                    initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ type: "spring", stiffness: 420, damping: 36 }}
                     className={
                       m.role === "user"
                         ? "ml-6 rounded-2xl border border-cyan-400/20 bg-cyan-500/10 px-3 py-2 text-sm text-cyan-50/95"
@@ -278,8 +311,27 @@ export default function CopilotDrawer() {
                         )}
                       </>
                     )}
-                  </div>
+                  </motion.div>
                 ))}
+                <TypingRow active={busy} reduce={reduce} />
+                {!busy && msgs.length > 0 && msgs[msgs.length - 1]?.role === "assistant" && (
+                  <div className="flex flex-wrap gap-1.5 border-t border-white/[0.04] pt-2">
+                    <span className="w-full text-[10px] font-semibold uppercase tracking-wider text-slate-600">
+                      Follow-ups
+                    </span>
+                    {FOLLOW_UP_CHIPS.map((c) => (
+                      <button
+                        key={c.label}
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void send(c.prompt)}
+                        className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[10px] font-medium text-slate-400 transition hover:border-cyan-400/20 hover:text-slate-200 disabled:opacity-50"
+                      >
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <div ref={endRef} />
               </div>
 

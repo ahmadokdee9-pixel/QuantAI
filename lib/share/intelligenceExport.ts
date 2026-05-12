@@ -1,5 +1,17 @@
+import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getFinalComposite, getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
+
+export function buildIntelligenceShareText(intel: SearchIntelligenceDTO | null | undefined): string {
+  if (!intel) return "";
+  const chunks = [
+    "QuantAI · Intelligence briefing",
+    typeof intel.finalHeadline === "string" ? intel.finalHeadline.trim() : "",
+    typeof intel.finalBody === "string" ? intel.finalBody.trim() : "",
+    "Decision support only—verify price, seller, and returns before purchase.",
+  ];
+  return chunks.filter((c) => c.length > 0).join("\n\n");
+}
 
 export function buildTraySummary(query: string, products: QuantProduct[]): string {
   const top = products.slice(0, 5);

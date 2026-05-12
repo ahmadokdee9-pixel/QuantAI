@@ -10,6 +10,7 @@ const links = [
   { href: "/#features", label: "AI picks" },
   { href: "/#alerts", label: "Alerts" },
   { href: "/#how-it-works", label: "How it works" },
+  { href: "/#quantai-trust", label: "Trust & AI" },
   { href: "/#compare", label: "Compare" },
   { href: "/pricing", label: "Plans" },
 ] as const;

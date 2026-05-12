@@ -2,19 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import {
-  ArrowRight,
-  Bookmark,
-  Brain,
-  Loader2,
-  Search,
-  Sparkles,
-  TrendingUp,
-} from "lucide-react";
+import { ArrowRight, Bookmark, Brain, Loader2, Radar, Search, Sparkles, TrendingUp } from "lucide-react";
 import type { SearchEntitlementsDTO } from "@/lib/subscription/entitlements";
 import type { QuantPlanTier } from "@/lib/subscription/plans";
 import TrustRibbon from "@/components/trust/TrustRibbon";
 import EntitlementBanner from "@/components/subscription/EntitlementBanner";
+import CockpitEmptyState from "@/components/empty/CockpitEmptyState";
 import { QuantAnalyticsEvents } from "@/lib/analytics/events";
 import { trackEvent } from "@/lib/analytics/track";
 import { isApiFailure } from "@/lib/api/apiResult";
@@ -283,10 +276,15 @@ export default function DashboardPage() {
           </Link>
         </div>
         {watchlist.length === 0 ? (
-          <p className="rounded-xl border border-white/[0.06] bg-black/30 px-4 py-8 text-center text-sm text-slate-500">
-            No watchlist items yet. From live results, tap <span className="font-medium text-slate-400">Watch</span> on a
-            card.
-          </p>
+          <CockpitEmptyState
+            title="Watchlist is your price-drop radar"
+            description="Save listings you are timing. QuantAI keeps the cockpit honest—when Supabase sync is on, this list travels with your account."
+            primaryLabel="Find listings to watch"
+            primaryHref="/"
+            secondaryLabel="How alerts work"
+            secondaryHref="/alerts"
+            icon={<Radar className="size-6 text-cyan-200/90" strokeWidth={1.5} aria-hidden />}
+          />
         ) : (
           <ul className="space-y-2">
             {watchlist.slice(0, 12).map((w) => {
@@ -330,9 +328,15 @@ export default function DashboardPage() {
           </Link>
         </div>
         {compareHistory.length === 0 ? (
-          <p className="rounded-xl border border-white/[0.06] bg-black/30 px-4 py-8 text-center text-sm text-slate-500">
-            No compare sessions yet. Add up to three listings to Compare lab and request a verdict.
-          </p>
+          <CockpitEmptyState
+            title="Compare history stays empty until you stress-test"
+            description="Pin two or three products in Compare lab on the home page, run a QuantAI verdict, and your rationale snapshots land here for receipts-driven buying."
+            primaryLabel="Open Compare lab"
+            primaryHref="/"
+            secondaryLabel="Compare tips"
+            secondaryHref="/#compare"
+            icon={<Sparkles className="size-6 text-violet-200/90" strokeWidth={1.5} aria-hidden />}
+          />
         ) : (
           <ul className="space-y-2">
             {compareHistory.slice(0, 10).map((row) => {
@@ -375,9 +379,15 @@ export default function DashboardPage() {
             </Link>
           </div>
           {history.length === 0 ? (
-            <p className="rounded-xl border border-white/[0.06] bg-black/30 px-4 py-8 text-center text-sm text-slate-500">
-              No searches yet. Open the home cockpit and run your first live query.
-            </p>
+            <CockpitEmptyState
+              title="No recent searches yet"
+              description="Your home cockpit logs every live query here when you are signed in—rerun a favorite or start a fresh intelligence pass."
+              primaryLabel="Run a search"
+              primaryHref="/"
+              secondaryLabel="View saved"
+              secondaryHref="/saved"
+              icon={<Search className="size-6 text-cyan-200/90" strokeWidth={1.5} aria-hidden />}
+            />
           ) : (
             <ul className="space-y-2">
               {history.slice(0, 12).map((h) => (

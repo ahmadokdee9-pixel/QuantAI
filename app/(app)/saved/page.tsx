@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ExternalLink, Loader2, Trash2 } from "lucide-react";
+import { ExternalLink, Loader2, Sparkles, Trash2 } from "lucide-react";
 import TrustRibbon from "@/components/trust/TrustRibbon";
+import CockpitEmptyState from "@/components/empty/CockpitEmptyState";
 import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
 import { readApiJson } from "@/lib/api/readJson";
 import { useCopilotSession } from "@/components/copilot/CopilotContext";
@@ -130,12 +131,15 @@ export default function SavedProductsPage() {
           Loading…
         </div>
       ) : items.length === 0 ? (
-        <div className="cockpit-glass-panel px-6 py-16 text-center">
-          <p className="text-sm text-slate-400">Nothing saved yet.</p>
-          <Link href="/" className="mt-4 inline-block text-sm font-medium text-cyan-300 hover:underline">
-            Analyze a product and tap Save on a card
-          </Link>
-        </div>
+        <CockpitEmptyState
+          title="Your saved shelf is ready for anchors"
+          description="Tap Save on any QuantAI card after a search. Shortlists power Compare lab, copilot context, and your command center—keep what you might actually buy."
+          primaryLabel="Run intelligence"
+          primaryHref="/"
+          secondaryLabel="Open dashboard"
+          secondaryHref="/dashboard"
+          icon={<Sparkles className="size-6 text-cyan-200/90" strokeWidth={1.5} aria-hidden />}
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {items.map((item) => (

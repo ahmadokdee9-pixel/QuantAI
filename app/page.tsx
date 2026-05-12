@@ -11,6 +11,7 @@ import MarketingSections from "../components/landing/MarketingSections";
 import PricingCards from "../components/subscription/PricingCards";
 import FeedbackLauncher from "../components/feedback/FeedbackLauncher";
 import TrustRibbon from "../components/trust/TrustRibbon";
+import QuantAITransparencySection from "../components/trust/QuantAITransparencySection";
 import AILoadingPhase from "../components/loading/AILoadingPhase";
 import SearchStreamRibbon from "../components/loading/SearchStreamRibbon";
 import MagneticSurface from "../components/motion/MagneticSurface";
@@ -46,6 +47,7 @@ import { readApiJson } from "@/lib/api/readJson";
 import { logDevError } from "@/lib/log/devLog";
 import { toCopilotProductBrief } from "@/lib/copilot/mapProduct";
 import type { CopilotSessionPayload } from "@/lib/copilot/sessionTypes";
+import { appendLocalRecentSearch, recordInterestTag } from "@/lib/personalization/localSignals";
 import {
   ArrowRight,
   Bell,
@@ -403,6 +405,7 @@ export default function Home() {
           if (searchData.entitlements.tier) setSubscriptionTier(searchData.entitlements.tier);
         }
         void refreshSearchHistory();
+        appendLocalRecentSearch(q);
         trackEvent(QuantAnalyticsEvents.SEARCH_SUCCESS, {
           resultCount: searchData.products.length,
         });
@@ -418,6 +421,19 @@ export default function Home() {
       setLoading(false);
     }
   }
+
+  const searchRef = useRef(search);
+  searchRef.current = search;
+
+  useEffect(() => {
+    const handler = (ev: Event) => {
+      const ce = ev as CustomEvent<{ q?: string }>;
+      const qq = ce.detail?.q;
+      if (typeof qq === "string" && qq.trim()) void searchRef.current(qq.trim());
+    };
+    window.addEventListener("quantai:try-search", handler);
+    return () => window.removeEventListener("quantai:try-search", handler);
+  }, []);
 
   async function saveProduct(product: QuantProduct) {
     if (!isSignedIn) {
@@ -467,6 +483,7 @@ export default function Home() {
         });
       } else {
         trackEvent(QuantAnalyticsEvents.PRODUCT_SAVE, { link: product.link });
+        recordInterestTag("saved");
       }
     } catch (e) {
       logDevError("saveProduct", e);
@@ -1085,6 +1102,7 @@ export default function Home() {
         </section>
 
         <div className="mx-auto w-full min-w-0 max-w-6xl px-4 sm:px-6 pb-8">
+          <QuantAITransparencySection />
           <TrustRibbon />
         </div>
 
