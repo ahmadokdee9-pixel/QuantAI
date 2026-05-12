@@ -15,6 +15,7 @@ import AILoadingPhase from "@/components/loading/AILoadingPhase";
 import SearchStreamRibbon from "@/components/loading/SearchStreamRibbon";
 import { useCockpit, type CockpitQuickHandlers } from "@/components/cockpit/cockpitContext";
 import ShareSnapshotBar from "@/components/share/ShareSnapshotBar";
+import { buildCompareTrayInsights } from "@/lib/intelligence/compareTrayInsights";
 import type { CompareVerdictPayload } from "@/lib/intelligence/compareVerdict";
 import { analyzeDealCluster } from "@/lib/deals";
 import type { DealClusterDTO } from "@/lib/deals/types";
@@ -23,7 +24,7 @@ import type { SearchIntelligenceLevel } from "@/lib/subscription/plans";
 import type { ResultsFiltersState } from "@/lib/resultsFilters";
 import { buildCompareExport, buildTraySummary, copyText } from "@/lib/share/intelligenceExport";
 import { currencySymbolFromListing, formatListingPrice } from "@/lib/commerce/cues";
-import { getFinalComposite, ratingValue, sortByCompositeRank } from "@/lib/shoppingScore";
+import { getFinalComposite, getStoreTrustScore, ratingValue, sortByCompositeRank } from "@/lib/shoppingScore";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import ProductIntelligenceDrawer from "./ProductIntelligenceDrawer";
 import ProductResultCard from "./ProductResultCard";
@@ -298,6 +299,11 @@ export default function ProductResultsSurface({
   }
 
   const compareProducts = sortedProducts.filter((p) => compareLinks.includes(p.link));
+
+  const compareTrayInsightLines = useMemo(() => {
+    const pinned = sortedProducts.filter((p) => compareLinks.includes(p.link));
+    return buildCompareTrayInsights(pinned, sortedProducts);
+  }, [compareLinks, sortedProducts]);
 
   const prevCompareCount = useRef(0);
   useEffect(() => {
@@ -619,10 +625,27 @@ export default function ProductResultsSurface({
                 </button>
               </div>
             </div>
+            {compareTrayInsightLines.length > 0 && (
+              <div className="mb-3 min-w-0 rounded-2xl border border-white/[0.07] bg-black/35 px-3 py-3 sm:px-4">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  Analyst snapshot (heuristic)
+                </p>
+                <ul className="mt-2 space-y-2.5">
+                  {compareTrayInsightLines.map((line) => (
+                    <li key={line.id} className="min-w-0">
+                      <p className="text-[11px] font-semibold text-slate-200/95">{line.title}</p>
+                      <p className="cockpit-body mt-0.5 text-[11px] leading-relaxed text-slate-400 [overflow-wrap:anywhere]">
+                        {line.body}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="grid min-w-0 gap-3 sm:gap-4 lg:grid-cols-3">
               {compareProducts.map((p, cIdx) => {
                 const qi = getFinalComposite(p, sortedProducts);
-                const trust = p.store;
+                const trustScore = getStoreTrustScore(p.store);
                 const sym = currencySymbolFromListing(p);
                 return (
                   <motion.div
@@ -636,7 +659,11 @@ export default function ProductResultsSurface({
                     <p className="cockpit-body text-[12px] font-semibold leading-snug text-white/[0.95] line-clamp-2">
                       {p.title}
                     </p>
-                    <p className="cockpit-body mt-1.5 text-[11px] text-slate-500">{trust}</p>
+                    <p className="cockpit-body mt-1.5 text-[11px] leading-snug text-slate-500 [overflow-wrap:anywhere]">
+                      <span className="text-slate-400">{p.store}</span>
+                      <span className="text-slate-600"> · </span>
+                      <span className="tabular-nums text-slate-300">Trust prior {trustScore}</span>
+                    </p>
                     <div className="mt-3.5 grid grid-cols-2 gap-2 sm:gap-2.5">
                       <div className="rounded-xl border border-white/[0.07] bg-black/35 px-2.5 py-2">
                         <p className="cockpit-label text-[9px] text-slate-500">Price</p>
@@ -649,15 +676,13 @@ export default function ProductResultsSurface({
                         <p className="mt-0.5 text-sm font-semibold tabular-nums text-cyan-100">{qi}</p>
                       </div>
                       <div className="rounded-xl border border-white/[0.07] bg-black/35 px-2.5 py-2">
+                        <p className="cockpit-label text-[9px] text-slate-500">Trust</p>
+                        <p className="mt-0.5 text-sm font-semibold tabular-nums text-slate-200">{trustScore}</p>
+                      </div>
+                      <div className="rounded-xl border border-white/[0.07] bg-black/35 px-2.5 py-2">
                         <p className="cockpit-label text-[9px] text-slate-500">Rating</p>
                         <p className="mt-0.5 text-sm font-semibold text-amber-200/90">
                           {ratingValue(p.rating) > 0 ? ratingValue(p.rating).toFixed(1) : "—"}
-                        </p>
-                      </div>
-                      <div className="rounded-xl border border-white/[0.07] bg-black/35 px-2.5 py-2">
-                        <p className="cockpit-label text-[9px] text-slate-500">Trend</p>
-                        <p className="cockpit-body mt-0.5 text-[11px] font-medium capitalize text-slate-300">
-                          {p.qiTrendProjection ?? p.priceTrend}
                         </p>
                       </div>
                     </div>
@@ -672,8 +697,13 @@ export default function ProductResultsSurface({
             )}
             {verdict && (
               <div className="mt-4 rounded-2xl border border-violet-400/28 bg-gradient-to-b from-violet-500/[0.1] to-black/30 p-4 text-xs sm:p-4">
-                <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-                  <p className="cockpit-display text-sm text-violet-100">QuantAI verdict</p>
+                <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-200/70">
+                      Compare analyst report
+                    </p>
+                    <p className="cockpit-display text-sm text-violet-100">QuantAI verdict</p>
+                  </div>
                   {verdictSource && (
                     <span className="shrink-0 rounded-full border border-white/10 bg-black/35 px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-400">
                       {verdictSource}

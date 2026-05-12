@@ -1,16 +1,19 @@
 "use client";
 
-import { memo, useId, useState } from "react";
+import { memo, useId, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowDownRight,
   ArrowUpRight,
+  Ban,
   Check,
   ChevronDown,
   Copy,
   ImageIcon,
   Minus,
   PanelRight,
+  PauseCircle,
+  Scale,
   Shield,
   Sparkles,
   Star,
@@ -38,6 +41,11 @@ import {
   getStoreTrustScore,
   ratingValue,
 } from "@/lib/shoppingScore";
+import {
+  buildProductBuyDecision,
+  buildVerdictExpansion,
+  type BuyStance,
+} from "@/lib/intelligence/productBuyDecision";
 
 function badgeChipClass(key: string): string {
   switch (key) {
@@ -86,6 +94,44 @@ function qiCenterLabelClass(tier: ReturnType<typeof qiConfidenceTier>): string {
       return "text-amber-100";
     default:
       return "text-slate-200";
+  }
+}
+
+function stancePresentation(stance: BuyStance): {
+  border: string;
+  bg: string;
+  text: string;
+  Icon: typeof Check;
+} {
+  switch (stance) {
+    case "buy":
+      return {
+        border: "border-emerald-400/30",
+        bg: "bg-emerald-500/[0.08]",
+        text: "text-emerald-100/95",
+        Icon: Check,
+      };
+    case "wait":
+      return {
+        border: "border-amber-400/28",
+        bg: "bg-amber-500/[0.08]",
+        text: "text-amber-100/90",
+        Icon: PauseCircle,
+      };
+    case "avoid":
+      return {
+        border: "border-rose-400/30",
+        bg: "bg-rose-500/[0.08]",
+        text: "text-rose-100/90",
+        Icon: Ban,
+      };
+    default:
+      return {
+        border: "border-cyan-400/25",
+        bg: "bg-cyan-500/[0.07]",
+        text: "text-cyan-50/95",
+        Icon: Scale,
+      };
   }
 }
 
@@ -206,6 +252,11 @@ function ProductResultCard({
   const ringR = 22;
   const ringC = 2 * Math.PI * ringR;
   const ringDash = ringC * (1 - scoreNorm / 100);
+
+  const buyDecision = useMemo(() => buildProductBuyDecision(p, list, rank), [p, list, rank]);
+  const analystFrame = useMemo(() => buildVerdictExpansion(p, list, buyDecision), [p, list, buyDecision]);
+  const stanceUi = stancePresentation(buyDecision.stance);
+  const StanceIcon = stanceUi.Icon;
 
   const transition = lite
     ? { duration: 0 }
@@ -425,9 +476,87 @@ function ProductResultCard({
               )}
             </div>
 
-            <p className="cockpit-body mt-4 text-[11.5px] leading-relaxed text-slate-500/90 line-clamp-2 sm:text-xs">
-              {p.qiReason?.trim() || ai.reason}
-            </p>
+            <div className="mt-4 min-w-0 rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.03] to-black/30 px-3 py-3 sm:px-3.5">
+              <div className="flex min-w-0 flex-wrap items-start gap-2">
+                <span
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] ${stanceUi.border} ${stanceUi.bg} ${stanceUi.text}`}
+                >
+                  <StanceIcon className="size-3.5 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
+                  {buyDecision.stanceLabel}
+                </span>
+                <div className="flex min-w-0 flex-1 flex-wrap gap-1" aria-hidden>
+                  {(["buy", "wait", "compare", "avoid"] as const).map((s) => {
+                    const on = buyDecision.stance === s;
+                    const short =
+                      s === "buy" ? "Buy" : s === "wait" ? "Wait" : s === "compare" ? "Compare" : "Avoid";
+                    return (
+                      <span
+                        key={s}
+                        className={`rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
+                          on
+                            ? "border-cyan-400/35 bg-cyan-500/15 text-cyan-100/95"
+                            : "border-white/[0.05] bg-black/20 text-slate-600"
+                        }`}
+                      >
+                        {short}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+              <p className="cockpit-body mt-2 text-[11px] leading-relaxed text-slate-400 [overflow-wrap:anywhere]">
+                {buyDecision.stanceDetail}
+              </p>
+              <p className="mt-2 text-[10px] leading-relaxed text-slate-500/90 [overflow-wrap:anywhere]">
+                <span className="font-semibold text-slate-400/95">Why this rank · </span>
+                {buyDecision.rankWhy}
+              </p>
+              <p className="mt-2 text-[10px] leading-relaxed text-violet-200/80 [overflow-wrap:anywhere]">
+                <span className="font-semibold text-violet-200/90">Buyer fit · </span>
+                {buyDecision.buyerFit}
+              </p>
+              <div className="mt-3 grid min-w-0 gap-2.5 border-t border-white/[0.06] pt-3 sm:grid-cols-2">
+                <div className="min-w-0">
+                  <p className="text-[9px] font-semibold uppercase tracking-wider text-emerald-200/75">Pros</p>
+                  <ul className="mt-1.5 space-y-1 text-[10.5px] leading-snug text-slate-400/95">
+                    {(buyDecision.pros.length ? buyDecision.pros : ["No standout positive axis vs peers—neutral band."]).map(
+                      (line, i) => (
+                        <li key={`pro-${i}`} className="flex gap-1.5 [overflow-wrap:anywhere]">
+                          <span className="mt-1.5 size-1 shrink-0 rounded-full bg-emerald-400/55" aria-hidden />
+                          <span>{line}</span>
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[9px] font-semibold uppercase tracking-wider text-rose-200/70">Watch / risk</p>
+                  <ul className="mt-1.5 space-y-1 text-[10.5px] leading-snug text-slate-400/95">
+                    {(buyDecision.cons.length ? buyDecision.cons : ["No acute flags in heuristics—still verify seller pages."]).map(
+                      (line, i) => (
+                        <li key={`con-${i}`} className="flex gap-1.5 [overflow-wrap:anywhere]">
+                          <span className="mt-1.5 size-1 shrink-0 rounded-full bg-rose-400/50" aria-hidden />
+                          <span>{line}</span>
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 min-w-0 rounded-xl border border-white/[0.06] bg-black/22 px-3 py-2.5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-cyan-200/75">QuantAI verdict</p>
+              <p className="cockpit-body mt-1.5 text-[12px] font-medium leading-relaxed text-slate-100/95 [overflow-wrap:anywhere] line-clamp-4 sm:line-clamp-3">
+                {buyDecision.headlineVerdict}
+              </p>
+              {(p.qiReason?.trim() || ai.reason) && (
+                <p className="cockpit-body mt-2 border-t border-white/[0.05] pt-2 text-[11px] leading-relaxed text-slate-500/90 line-clamp-2 [overflow-wrap:anywhere]">
+                  <span className="text-slate-500">Model note · </span>
+                  {p.qiReason?.trim() || ai.reason}
+                </p>
+              )}
+            </div>
 
             <button
               type="button"
@@ -436,7 +565,7 @@ function ProductResultCard({
               aria-expanded={intelOpen}
             >
               <span className="cockpit-label text-[10px] tracking-[0.1em] text-slate-500/90 group-hover:text-slate-400">
-                Signal depth
+                Signals &amp; transparency
               </span>
               <ChevronDown
                 className={`size-4 shrink-0 text-slate-500 transition duration-300 ${intelOpen ? "rotate-180" : ""}`}
@@ -455,6 +584,23 @@ function ProductResultCard({
                 >
                   <div className="mt-2 space-y-4 rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.04] via-black/25 to-transparent px-3.5 py-4 sm:px-4 sm:py-5">
                     <div className="space-y-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-cyan-200/70">
+                        Verdict depth &amp; tradeoffs
+                      </p>
+                      <p className="cockpit-body text-[11.5px] leading-relaxed text-slate-300/95 [overflow-wrap:anywhere]">
+                        {analystFrame.strengths}
+                      </p>
+                      <p className="cockpit-body text-[11.5px] leading-relaxed text-slate-400/95 [overflow-wrap:anywhere]">
+                        {analystFrame.risks}
+                      </p>
+                      <p className="cockpit-body text-[11.5px] leading-relaxed text-amber-100/85 [overflow-wrap:anywhere]">
+                        {analystFrame.verify}
+                      </p>
+                      <p className="cockpit-body text-[10.5px] leading-relaxed text-slate-500/90 [overflow-wrap:anywhere]">
+                        {analystFrame.limits}
+                      </p>
+                    </div>
+                    <div className="space-y-2 border-t border-white/[0.06] pt-4">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">
                         Model read
                       </p>
@@ -478,7 +624,10 @@ function ProductResultCard({
                         Rank #{rank + 1}
                       </span>
                       <span className="rounded-full border border-white/[0.08] bg-black/30 px-2.5 py-1 text-[10px] font-semibold tabular-nums text-slate-400">
-                        Trust {trust}
+                        Trust prior {trust}
+                      </span>
+                      <span className="rounded-full border border-white/[0.08] bg-black/30 px-2.5 py-1 text-[10px] text-slate-500">
+                        Heuristics only — not legal advice
                       </span>
                     </div>
                   </div>

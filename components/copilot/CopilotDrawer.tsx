@@ -26,6 +26,12 @@ const CHIPS: { label: string; prompt: string }[] = [
 ];
 
 const FOLLOW_UP_CHIPS: { label: string; prompt: string }[] = [
+  { label: "Why this product?", prompt: "For the top-ranked listing in my tray, explain why it is there: which signals lifted it and what I should still verify manually." },
+  { label: "Find cheaper", prompt: "Find cheaper alternatives in my current tray that still look sane on trust and reviews, and explain the tradeoffs vs the top pick." },
+  { label: "Compare top 3", prompt: "Compare the top 3 listings by composite score as a pre-checkout brief: winner, safer choice, better value, and the riskiest option if any." },
+  { label: "Safest retailer", prompt: "Which retailer in my tray has the strongest trust prior and what does that mean in practice at checkout—not marketing fluff." },
+  { label: "Best long-term value", prompt: "Which option is best for long-term value in this tray, weighing reviews, trust, delivery language, and price realism." },
+  { label: "Verify before buying", prompt: "What should I verify on the seller page before buying any pick from this tray? Be specific and conservative." },
   { label: "Hidden fees?", prompt: "What fees or caveats should I watch for in these listings?" },
   { label: "Delivery risk", prompt: "Which pick has the safest delivery / return story in this tray?" },
   { label: "Price vs trust", prompt: "How do price and store trust trade off in my top results?" },
