@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
+import { isBenignStorageSchemaError } from "@/lib/supabase/benignStorageError";
 import { supabaseAdmin, supabaseAdminConfigured } from "@/lib/supabaseAdmin";
 
 export async function GET() {
@@ -18,7 +19,11 @@ export async function GET() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    return jsonOk({ collections: [], configured: true, storageError: error.message });
+    const extras =
+      !isBenignStorageSchemaError(error.message) && process.env.NODE_ENV === "development"
+        ? { storageError: error.message }
+        : {};
+    return jsonOk({ collections: [], configured: true, ...extras });
   }
   return jsonOk({ collections: data ?? [], configured: true });
 }

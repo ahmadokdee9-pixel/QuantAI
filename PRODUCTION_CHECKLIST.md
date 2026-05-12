@@ -43,8 +43,10 @@ Copy `env.example` to `.env.local` locally. In Vercel: **Project → Settings �
      Tables: `search_history`, `user_shopping_memory`, `shopping_watchlist`, `product_collections`, `collection_products`.
    - `supabase/migrations/20250510140000_saved_products_compare_prefs.sql`  
      Tables: `saved_products`, `compare_sessions`, `user_preferences`.
+   - `supabase/migrations/20260110120000_search_history_user_memory_rls.sql`  
+     Ensures `search_history` + `user_shopping_memory` exist, extra indexes, and **RLS** (JWT `sub` = `user_id` for `authenticated`; service role used by API bypasses RLS).
 
-3. **Row Level Security**: the app uses the **service role** from the server only. Lock down tables for `anon` / `authenticated` roles in Supabase as you prefer; the API does not expose the service key to the browser.
+3. **Row Level Security**: the app uses the **service role** from the server only (bypasses RLS). The migration above adds policies so a future Supabase-authenticated client cannot read other users’ rows. Lock down remaining tables for `anon` as needed.
 
 4. **Optional feedback table** (for `/api/feedback` persistence):
 

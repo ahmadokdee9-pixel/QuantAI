@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
+import { isBenignStorageSchemaError } from "@/lib/supabase/benignStorageError";
 import { supabaseAdmin, supabaseAdminConfigured } from "@/lib/supabaseAdmin";
 
 export type SavedProductRow = {
@@ -30,10 +31,14 @@ export async function GET() {
     .limit(200);
 
   if (error) {
+    const extras =
+      !isBenignStorageSchemaError(error.message) && process.env.NODE_ENV === "development"
+        ? { storageError: error.message }
+        : {};
     return jsonOk({
       items: [] as SavedProductRow[],
-      storageError: error.message,
       configured: true,
+      ...extras,
     });
   }
   return jsonOk({ items: (data ?? []) as SavedProductRow[], configured: true });

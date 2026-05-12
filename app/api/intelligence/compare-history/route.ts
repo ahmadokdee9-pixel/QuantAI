@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
+import { isBenignStorageSchemaError } from "@/lib/supabase/benignStorageError";
 import { supabaseAdmin, supabaseAdminConfigured } from "@/lib/supabaseAdmin";
 
 export type CompareHistoryRow = {
@@ -25,10 +26,14 @@ export async function GET() {
     .limit(40);
 
   if (error) {
+    const extras =
+      !isBenignStorageSchemaError(error.message) && process.env.NODE_ENV === "development"
+        ? { storageError: error.message }
+        : {};
     return jsonOk({
       items: [] as CompareHistoryRow[],
       configured: true,
-      storageError: error.message,
+      ...extras,
     });
   }
 

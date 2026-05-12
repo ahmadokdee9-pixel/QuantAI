@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
+import { isBenignStorageSchemaError } from "@/lib/supabase/benignStorageError";
 import { supabaseAdmin, supabaseAdminConfigured } from "@/lib/supabaseAdmin";
 
 export async function GET() {
@@ -40,11 +41,20 @@ export async function PUT(req: Request) {
     const body = (await req.json()) as { memory?: Record<string, unknown> };
     const patch = body.memory && typeof body.memory === "object" ? body.memory : {};
 
-    const { data: row } = await supabaseAdmin
+    const { data: row, error: readErr } = await supabaseAdmin
       .from("user_shopping_memory")
       .select("memory")
       .eq("user_id", userId)
       .maybeSingle();
+
+    if (readErr) {
+      if (isBenignStorageSchemaError(readErr.message)) {
+        return jsonErr(503, "User memory storage is not available.", {
+          code: "STORAGE_UNAVAILABLE",
+        });
+      }
+      return jsonErr(500, readErr.message);
+    }
 
     const prev =
       row && typeof row.memory === "object" && row.memory !== null
@@ -63,6 +73,11 @@ export async function PUT(req: Request) {
     );
 
     if (error) {
+      if (isBenignStorageSchemaError(error.message)) {
+        return jsonErr(503, "User memory storage is not available.", {
+          code: "STORAGE_UNAVAILABLE",
+        });
+      }
       return jsonErr(500, error.message);
     }
     return jsonOk({ ok: true, memory: next });

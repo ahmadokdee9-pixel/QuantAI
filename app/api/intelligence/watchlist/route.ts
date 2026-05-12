@@ -3,6 +3,7 @@ import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
 import { countWatchlistItems } from "@/lib/intelligence/persistence";
 import { planDefinition } from "@/lib/subscription/plans";
 import { subscriptionTierFromClerkUser } from "@/lib/subscription/resolveTier";
+import { isBenignStorageSchemaError } from "@/lib/supabase/benignStorageError";
 import { supabaseAdmin, supabaseAdminConfigured } from "@/lib/supabaseAdmin";
 
 /** Foundation route for price-drop / availability alerts (persist when DB tables exist). */
@@ -24,7 +25,11 @@ export async function GET() {
     .limit(100);
 
   if (error) {
-    return jsonOk({ items: [], configured: true, storageError: error.message });
+    const extras =
+      !isBenignStorageSchemaError(error.message) && process.env.NODE_ENV === "development"
+        ? { storageError: error.message }
+        : {};
+    return jsonOk({ items: [], configured: true, ...extras });
   }
   return jsonOk({ items: data ?? [], configured: true });
 }

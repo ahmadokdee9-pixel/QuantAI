@@ -1,4 +1,5 @@
 import { logDevWarn } from "@/lib/log/devLog";
+import { isBenignStorageSchemaError } from "@/lib/supabase/benignStorageError";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { inferSearchCategory } from "./categoryContext";
 
@@ -19,11 +20,13 @@ export async function recordSearchHistory(
       query: query.trim().slice(0, 500),
       result_count: resultCount,
     });
-    if (error) {
+    if (error && !isBenignStorageSchemaError(error.message)) {
       logDevWarn("search_history", error.message);
     }
   } catch (e) {
-    logDevWarn("search_history", String(e));
+    if (!isBenignStorageSchemaError(String(e))) {
+      logDevWarn("search_history", String(e));
+    }
   }
 }
 
@@ -35,11 +38,17 @@ export async function mergeRecommendationMemory(
   const db = getAdmin();
   if (!db) return;
   try {
-    const { data: row } = await db
+    const { data: row, error: readErr } = await db
       .from("user_shopping_memory")
       .select("memory")
       .eq("user_id", userId)
       .maybeSingle();
+
+    if (readErr) {
+      if (isBenignStorageSchemaError(readErr.message)) return;
+      logDevWarn("user_shopping_memory", readErr.message);
+      return;
+    }
 
     const prev =
       row && typeof row.memory === "object" && row.memory !== null
@@ -66,11 +75,13 @@ export async function mergeRecommendationMemory(
       },
       { onConflict: "user_id" }
     );
-    if (error) {
+    if (error && !isBenignStorageSchemaError(error.message)) {
       logDevWarn("user_shopping_memory", error.message);
     }
   } catch (e) {
-    logDevWarn("user_shopping_memory", String(e));
+    if (!isBenignStorageSchemaError(String(e))) {
+      logDevWarn("user_shopping_memory", String(e));
+    }
   }
 }
 
@@ -140,10 +151,12 @@ export async function recordCompareSession(userId: string, payload: Record<strin
       user_id: userId,
       payload,
     });
-    if (error) {
+    if (error && !isBenignStorageSchemaError(error.message)) {
       logDevWarn("compare_sessions", error.message);
     }
   } catch (e) {
-    logDevWarn("compare_sessions", String(e));
+    if (!isBenignStorageSchemaError(String(e))) {
+      logDevWarn("compare_sessions", String(e));
+    }
   }
 }
