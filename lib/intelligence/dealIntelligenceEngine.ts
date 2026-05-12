@@ -3,17 +3,19 @@ import type { DealVerdict, FakeDiscountRisk } from "@/lib/deals/types";
 import { scoreDeliverySpeed } from "@/lib/intelligence/deliveryScore";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getFinalComposite, getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
+import { buildLiveCommerceSignals, type LiveCommerceSignals } from "@/lib/intelligence/liveCommerceSignals";
 
-/** Premium AI-native deal verdicts (tray + cluster context). */
+/** QuantAI primary verdict language — scan-optimized, tray-relative. */
 export type QuantAIDealVerdict =
-  | "Buy Now"
-  | "Great Deal"
-  | "Fair Price"
-  | "Wait for Better Deal"
-  | "Risky Discount"
-  | "Premium but Trusted"
-  | "Best Trusted Option"
-  | "High-Confidence Discount";
+  | "Best Deal Today"
+  | "Strong Buy"
+  | "Trusted Discount"
+  | "Safe Buy"
+  | "Premium Pick"
+  | "Best Price-to-Quality"
+  | "Wait For Better Price"
+  | "Suspicious Discount"
+  | "Avoid Fake Sale";
 
 export type DealTimingCategory = "strong_window" | "neutral" | "wait_favored" | "unstable_tray";
 
@@ -102,6 +104,8 @@ export type ProductDealIntelligence = {
   discountPct: number | null;
   savingsVsFair: number | null;
   isBestTrustedDealInSet: boolean;
+  /** Future live-commerce hooks; safe to ignore in UI until wired. */
+  liveSignals: LiveCommerceSignals;
 };
 
 export type TrayDealHighlight = {
@@ -152,24 +156,28 @@ function mapToAiVerdict(args: {
   fake: FakeDiscountRisk;
   trust: number;
   comp: number;
-  discount: number | null;
+  stars: number;
   overpriced: boolean;
   underpriced: boolean;
   isBestTrustedInSet: boolean;
   highConfDisc: boolean;
 }): QuantAIDealVerdict {
-  const { base, fake, trust, comp, overpriced, underpriced, isBestTrustedInSet, highConfDisc } = args;
-  if (fake === "high" || base === "Suspicious discount" || (underpriced && fake !== "low")) {
-    return "Risky Discount";
+  const { base, fake, trust, comp, stars, overpriced, underpriced, isBestTrustedInSet, highConfDisc } = args;
+  if (fake === "high" || (underpriced && fake !== "low")) return "Avoid Fake Sale";
+  if (base === "Suspicious discount") return "Suspicious Discount";
+  if (overpriced && trust >= 76 && comp >= 58) return "Premium Pick";
+  if (overpriced || base === "Wait for lower pricing") return "Wait For Better Price";
+  if (isBestTrustedInSet && trust >= 70 && fake === "low" && comp >= 64) return "Safe Buy";
+  if (highConfDisc) return "Trusted Discount";
+  if (base === "Real deal" && comp >= 78 && fake === "low") return "Best Deal Today";
+  if (base === "Real deal" || base === "Strong value") return "Strong Buy";
+  if (base === "Compare carefully") {
+    if (comp >= 66 && stars >= 4.12) return "Best Price-to-Quality";
+    if (trust >= 72 && comp >= 58) return "Safe Buy";
+    return "Wait For Better Price";
   }
-  if (overpriced && trust >= 76 && comp >= 58) return "Premium but Trusted";
-  if (overpriced || base === "Wait for lower pricing") return "Wait for Better Deal";
-  if (isBestTrustedInSet && trust >= 70 && fake === "low" && comp >= 64) return "Best Trusted Option";
-  if (highConfDisc) return "High-Confidence Discount";
-  if (base === "Real deal" && comp >= 78 && fake === "low") return "Buy Now";
-  if (base === "Real deal" || base === "Strong value") return "Great Deal";
-  if (base === "Compare carefully") return "Fair Price";
-  return "Fair Price";
+  if (trust >= 62 && comp >= 56) return "Safe Buy";
+  return "Wait For Better Price";
 }
 
 function trustAdjustedDiscountScoreCalc(
@@ -177,13 +185,17 @@ function trustAdjustedDiscountScoreCalc(
   authenticity: number,
   trust: number,
   absoluteSavings: number | null,
-  fair: number
+  fair: number,
+  inflatedAnchor: boolean,
+  trayPriceCv: number
 ): number {
   const d = disc != null ? Math.min(55, disc) / 55 : 0;
   const a = authenticity / 100;
   const t = trust / 100;
   const sav = absoluteSavings != null && fair > 0 ? Math.min(1, absoluteSavings / fair) : 0;
-  const raw = d * 42 * a + t * 28 + a * 18 + sav * 12;
+  let raw = d * 42 * a + t * 28 + a * 18 + sav * 12;
+  if (inflatedAnchor) raw = Math.max(0, raw - 11);
+  if (!inflatedAnchor && trayPriceCv < 0.13 && authenticity >= 60) raw += 4;
   return Math.min(100, Math.max(0, Math.round(raw)));
 }
 
@@ -440,18 +452,32 @@ function worthBuyingNowSignal(
   goodTime: boolean,
   waitPricing: boolean
 ): WorthBuyingSignal {
-  if (verdict === "Risky Discount" || verdict === "Wait for Better Deal") return "wait";
+  if (
+    verdict === "Avoid Fake Sale" ||
+    verdict === "Suspicious Discount" ||
+    verdict === "Wait For Better Price"
+  ) {
+    return "wait";
+  }
   if (waitPricing && !goodTime) return "wait";
   if (
     goodTime &&
-    (verdict === "Buy Now" || verdict === "Great Deal" || verdict === "High-Confidence Discount" || verdict === "Best Trusted Option")
+    (verdict === "Best Deal Today" ||
+      verdict === "Strong Buy" ||
+      verdict === "Trusted Discount" ||
+      verdict === "Safe Buy")
   ) {
     return "yes";
   }
   return "maybe";
 }
 
-function authenticityScore(fake: FakeDiscountRisk, p: QuantProduct, dq: number | undefined): number {
+function authenticityScore(
+  fake: FakeDiscountRisk,
+  p: QuantProduct,
+  dq: number | undefined,
+  inflatedAnchor: boolean
+): number {
   const dqClamped = dq ?? 50;
   const modelDisc = p.qiSignals?.discountQuality;
   let s = fake === "low" ? 78 : fake === "medium" ? 48 : 24;
@@ -459,6 +485,7 @@ function authenticityScore(fake: FakeDiscountRisk, p: QuantProduct, dq: number |
   if (p.qiCommerce?.priceAnomaly === "suspicious_low") s -= 18;
   if (p.qiCommerce?.priceAnomaly === "deep_discount") s -= 8;
   s += (dqClamped - 50) * 0.08;
+  if (inflatedAnchor) s -= 14;
   return Math.min(100, Math.max(0, Math.round(s)));
 }
 
@@ -467,7 +494,8 @@ function valueOpportunityScore(
   price: number,
   p: QuantProduct,
   list: QuantProduct[],
-  fake: FakeDiscountRisk
+  fake: FakeDiscountRisk,
+  inflatedAnchor: boolean
 ): number {
   const comp = getFinalComposite(p, list);
   const vfm = p.qiCommerce?.valueForMoney ?? 52;
@@ -477,6 +505,9 @@ function valueOpportunityScore(
   if (fake === "high") s -= 28;
   else if (fake === "medium") s -= 14;
   if (p.qiCommerce?.priceAnomaly === "premium_outlier") s -= 10;
+  if (inflatedAnchor) s -= 10;
+  const trustW = getStoreTrustScore(p.store) / 100;
+  s += trustW * 6;
   return Math.min(100, Math.max(0, Math.round(s)));
 }
 
@@ -627,8 +658,8 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
     del * 0.12 +
     (disc != null && disc >= 10 && fake === "low" ? 14 : 0);
 
-  const discountAuthenticity = authenticityScore(fake, product, provisionalQuality);
-  const valueOpportunity = valueOpportunityScore(fair, product.price, product, list, fake);
+  const discountAuthenticity = authenticityScore(fake, product, provisionalQuality, inflated);
+  const valueOpportunity = valueOpportunityScore(fair, product.price, product, list, fake, inflated);
   const dealConfidence = dealConfidenceBlend(discountAuthenticity, valueOpportunity, trust, comp, fake);
   const retailerAdjustedDealScore = retailerAdjustedDeal(dealConfidence, trust, discountAuthenticity);
 
@@ -663,12 +694,15 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
     minTrayPrice > 0 &&
     product.price <= minTrayPrice * 1.02;
   const maxDiscInTray = list.length >= 2 ? Math.max(0, ...list.map((x) => discountPct(x) ?? 0)) : 0;
+  const trayCv = trayPriceVolatility(list);
   const trustAdjustedDiscountScore = trustAdjustedDiscountScoreCalc(
     disc,
     discountAuthenticity,
     trust,
     absoluteSavings,
-    fair
+    fair,
+    inflated,
+    trayCv
   );
 
   const urgency = stockUrgencyLevel(product);
@@ -723,7 +757,7 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
     fake,
     trust,
     comp,
-    discount: disc,
+    stars: ratingValue(product.rating),
     overpriced: overpricedVsTray,
     underpriced: underpricedAnomaly,
     isBestTrustedInSet: false,
@@ -742,6 +776,16 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
   };
   const historicalConfidenceLabel = historicalConfidenceText(lowestKnownInTray, fake, inflated);
   const dealStrength = Math.round((retailerAdjustedDealScore + dealConfidence) / 2);
+
+  const liveSignals = buildLiveCommerceSignals({
+    product,
+    hasDiscount,
+    discountPct: disc,
+    suspiciousDiscountRisk,
+    atTrayFloor: lowestKnownInTray,
+    shelfHasRareDeal: shelfLabels.includes("Rare Deal"),
+    urgency,
+  });
 
   return {
     aiDealVerdict,
@@ -784,6 +828,7 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
     discountPct: disc,
     savingsVsFair: fair > 0 && product.price > 0 ? Math.round(fair - product.price) : null,
     isBestTrustedDealInSet: false,
+    liveSignals,
   };
 }
 
@@ -816,7 +861,7 @@ export function buildDealIntelByLink(list: QuantProduct[]): Map<string, ProductD
       fake: row.fakeDiscountRisk,
       trust: getStoreTrustScore(p.store),
       comp: getFinalComposite(p, list),
-      discount: row.discountPct,
+      stars: ratingValue(p.rating),
       overpriced: row.overpricedVsTray,
       underpriced: row.underpricedAnomaly,
       isBestTrustedInSet: isBestTrusted,
@@ -851,9 +896,16 @@ export function buildDealIntelByLink(list: QuantProduct[]): Map<string, ProductD
       "Best Discount Today",
       ...row.shelfLabels.filter((l) => l !== "Best Discount Today" && l !== "Weak Discount"),
     ];
+    const bumpedVerdict: QuantAIDealVerdict =
+      bestTad >= 38 && (row.aiDealVerdict === "Strong Buy" || row.aiDealVerdict === "Trusted Discount")
+        ? "Best Deal Today"
+        : row.aiDealVerdict;
+    const worthB = worthBuyingNowSignal(bumpedVerdict, row.goodTimeToBuy, row.waitForBetterPricing);
     m.set(bestDiscLink, {
       ...row,
       shelfLabels: [...new Set(merged)].slice(0, 4),
+      aiDealVerdict: bumpedVerdict,
+      worthBuyingNow: worthB,
     });
   }
   return m;
@@ -879,7 +931,10 @@ export function buildTrayDealHighlights(list: QuantProduct[]): TrayDealHighlight
     })
     .sort((a, b) => b.score - a.score)[0]!;
   const risky = [...withPrice]
-    .filter((p) => intel.get(p.link)?.aiDealVerdict === "Risky Discount")
+    .filter((p) => {
+      const v = intel.get(p.link)?.aiDealVerdict;
+      return v === "Avoid Fake Sale" || v === "Suspicious Discount";
+    })
     .sort((a, b) => a.price - b.price)[0];
 
   const out: TrayDealHighlight[] = [
@@ -942,3 +997,5 @@ export function buildClusterDealLanes(clusterListings: QuantProduct[]): ClusterD
   const h = buildTrayDealHighlights(clusterListings);
   return h.map((x) => ({ label: x.label, link: x.link, hint: x.blurb }));
 }
+
+export type { LiveCommerceSignals } from "@/lib/intelligence/liveCommerceSignals";

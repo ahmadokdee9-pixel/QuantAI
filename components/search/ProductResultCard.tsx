@@ -105,17 +105,23 @@ function qiCenterLabelClass(tier: ReturnType<typeof qiConfidenceTier>): string {
 
 function dealVerdictChipClass(v: ProductDealIntelligence["aiDealVerdict"]): string {
   switch (v) {
-    case "Buy Now":
-    case "Great Deal":
-    case "High-Confidence Discount":
-    case "Best Trusted Option":
-      return "border-emerald-400/30 bg-emerald-500/[0.1] text-emerald-100/95";
-    case "Risky Discount":
-      return "border-amber-400/35 bg-amber-500/[0.1] text-amber-100/95";
-    case "Wait for Better Deal":
-      return "border-rose-400/28 bg-rose-500/[0.08] text-rose-100/90";
-    case "Premium but Trusted":
-      return "border-violet-400/28 bg-violet-500/[0.09] text-violet-100/90";
+    case "Best Deal Today":
+      return "border-amber-300/35 bg-gradient-to-r from-amber-500/15 via-cyan-500/12 to-emerald-500/12 text-amber-50/95 shadow-[0_0_20px_-8px_rgba(251,191,36,0.35)]";
+    case "Strong Buy":
+    case "Trusted Discount":
+      return "border-emerald-400/32 bg-emerald-500/[0.12] text-emerald-50/95";
+    case "Safe Buy":
+      return "border-cyan-400/30 bg-cyan-500/[0.11] text-cyan-50/95";
+    case "Premium Pick":
+      return "border-violet-400/32 bg-violet-500/[0.12] text-violet-50/95";
+    case "Best Price-to-Quality":
+      return "border-sky-400/28 bg-sky-500/[0.1] text-sky-50/95";
+    case "Wait For Better Price":
+      return "border-rose-400/28 bg-rose-500/[0.09] text-rose-50/92";
+    case "Suspicious Discount":
+      return "border-amber-400/38 bg-amber-500/[0.12] text-amber-50/95";
+    case "Avoid Fake Sale":
+      return "border-rose-400/38 bg-rose-600/[0.14] text-rose-50/95";
     default:
       return "border-white/[0.1] bg-white/[0.05] text-slate-200/90";
   }
@@ -295,7 +301,7 @@ type Props = {
 };
 
 const btnRow =
-  "min-h-[2.625rem] shrink-0 rounded-full text-[11px] font-semibold tracking-tight transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400/40";
+  "min-h-[2.75rem] shrink-0 rounded-full text-[11px] font-semibold tracking-tight transition-transform duration-300 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400/40";
 
 function CardProductImage({ src, reduceMotion }: { src: string; reduceMotion: boolean | null }) {
   const [loaded, setLoaded] = useState(false);
@@ -303,7 +309,7 @@ function CardProductImage({ src, reduceMotion }: { src: string; reduceMotion: bo
   if (err) {
     return (
       <div
-        className="flex aspect-[4/3] max-h-[8.5rem] min-h-[6.75rem] w-full flex-col items-center justify-center gap-2 rounded-[1.05rem] border border-dashed border-white/[0.12] bg-gradient-to-br from-slate-900/80 via-[#0a1220]/95 to-slate-900/90 text-center"
+        className="flex aspect-[4/3] max-h-[9.25rem] min-h-[7.1rem] w-full flex-col items-center justify-center gap-2 rounded-[1.05rem] border border-dashed border-white/[0.12] bg-gradient-to-br from-slate-900/80 via-[#0a1220]/95 to-slate-900/90 text-center"
         aria-hidden
       >
         <ImageIcon className="size-8 text-slate-600" strokeWidth={1.25} />
@@ -312,7 +318,7 @@ function CardProductImage({ src, reduceMotion }: { src: string; reduceMotion: bo
     );
   }
   return (
-    <div className="relative aspect-[4/3] max-h-[8.5rem] min-h-[6.75rem] w-full overflow-hidden rounded-[1.05rem] border border-white/[0.09] bg-gradient-to-b from-white/[0.14] to-slate-900/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]">
+    <div className="relative aspect-[4/3] max-h-[9.25rem] min-h-[7.1rem] w-full overflow-hidden rounded-[1.05rem] border border-white/[0.09] bg-gradient-to-b from-white/[0.14] to-slate-900/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]">
       {!loaded && (
         <div className="qi-image-shimmer absolute inset-0 z-[1] rounded-[inherit]" aria-hidden />
       )}
@@ -323,7 +329,7 @@ function CardProductImage({ src, reduceMotion }: { src: string; reduceMotion: bo
         decoding="async"
         onLoad={() => setLoaded(true)}
         onError={() => setErr(true)}
-        className="relative z-[2] mx-auto h-full w-full max-h-[8.25rem] object-contain object-center p-2.5 drop-shadow-[0_14px_28px_rgba(0,0,0,0.38)]"
+        className="relative z-[2] mx-auto h-full w-full max-h-[8.85rem] object-contain object-center p-3 drop-shadow-[0_16px_32px_rgba(0,0,0,0.42)]"
         initial={false}
         animate={{ opacity: loaded ? 1 : 0 }}
         transition={{ duration: reduceMotion ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
@@ -407,17 +413,17 @@ function ProductResultCard({
           lite
             ? undefined
             : {
-                y: -2,
-                transition: { type: "spring", stiffness: 380, damping: 26 },
+                y: -1.5,
+                transition: { type: "spring", stiffness: 420, damping: 32 },
               }
         }
-        className={`qi-product-card-shell group relative flex h-full min-w-0 flex-col overflow-hidden rounded-[1.55rem] p-px ${
+        className={`qi-product-card-shell group relative flex h-full min-w-0 flex-col overflow-hidden rounded-[1.55rem] p-px transition-[background,box-shadow] duration-700 ease-out ${
           scoreNorm >= 78
             ? "bg-gradient-to-br from-cyan-400/14 via-white/[0.08] to-violet-500/12"
             : "bg-gradient-to-br from-white/[0.1] via-cyan-400/6 to-violet-500/10"
         }`}
       >
-        <div className="qi-product-card-inner relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.48rem] border border-white/[0.07] bg-gradient-to-b from-white/[0.08] via-white/[0.03] to-[#040912]/98 backdrop-blur-2xl transition-[border-color,box-shadow,transform] duration-500 group-hover:border-cyan-400/18 group-hover:shadow-[0_0_0_1px_rgba(34,211,238,0.08),0_24px_48px_-28px_rgba(34,211,238,0.18)]">
+        <div className="qi-product-card-inner relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.48rem] border border-white/[0.07] bg-gradient-to-b from-white/[0.08] via-white/[0.03] to-[#040912]/98 backdrop-blur-2xl transition-[border-color,box-shadow,transform] duration-700 ease-out group-hover:border-cyan-400/22 group-hover:shadow-[0_0_0_1px_rgba(34,211,238,0.07),0_22px_48px_-30px_rgba(34,211,238,0.16)]">
           <div className="pointer-events-none absolute -right-20 -top-20 size-48 rounded-full bg-cyan-400/8 blur-3xl opacity-0 transition duration-700 group-hover:opacity-100" />
           <div className="pointer-events-none absolute -bottom-24 -left-16 size-44 rounded-full bg-violet-500/8 blur-3xl opacity-0 transition duration-700 group-hover:opacity-45" />
 
@@ -442,7 +448,7 @@ function ProductResultCard({
               <CardProductImage key={`${p.link}-${p.image}`} src={p.image} reduceMotion={lite} />
             ) : (
               <div
-                className="flex aspect-[4/3] max-h-[8.5rem] min-h-[6.75rem] w-full flex-col items-center justify-center gap-2 rounded-[1.05rem] border border-dashed border-white/[0.12] bg-gradient-to-br from-slate-900/80 via-[#0a1220]/95 to-slate-900/90 text-center"
+                className="flex aspect-[4/3] max-h-[9.25rem] min-h-[7.1rem] w-full flex-col items-center justify-center gap-2 rounded-[1.05rem] border border-dashed border-white/[0.12] bg-gradient-to-br from-slate-900/80 via-[#0a1220]/95 to-slate-900/90 text-center"
                 aria-hidden
               >
                 <ImageIcon className="size-8 text-slate-600" strokeWidth={1.25} />
@@ -558,7 +564,7 @@ function ProductResultCard({
 
             <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2">
               <span
-                className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${dealVerdictChipClass(deal.aiDealVerdict)}`}
+                className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide transition-shadow duration-500 ease-out ${dealVerdictChipClass(deal.aiDealVerdict)}`}
                 title={deal.whyDealGoodOrRisky}
               >
                 <Percent className="size-2.5 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
@@ -580,7 +586,7 @@ function ProductResultCard({
                 aria-label="Deal strength score"
               >
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-cyan-400/85 to-emerald-400/75"
+                  className="h-full rounded-full bg-gradient-to-r from-cyan-400/85 to-emerald-400/75 transition-[width] duration-700 ease-out"
                   style={{ width: `${deal.dealStrength}%` }}
                 />
               </div>
@@ -752,6 +758,11 @@ function ProductResultCard({
                         <p className="text-[10px] text-slate-500/90">Availability · {p.availability}</p>
                       )}
                       {shipEst && <p className="text-[10px] text-slate-500/90">Shipping · {shipEst}</p>}
+                      <p className="text-[9px] leading-snug text-slate-600/90">
+                        Live intel · drop {deal.liveSignals.suddenDropScore} · velocity {deal.liveSignals.dealVelocityBand} ·
+                        rebound {deal.liveSignals.priceReboundBand}
+                        {deal.liveSignals.liveFeedAttached ? " · stream on" : ""}
+                      </p>
                     </div>
 
                     <div className="space-y-2 border-b border-white/[0.06] pb-4">
@@ -919,7 +930,7 @@ function ProductResultCard({
               <PanelRight className="size-3.5 opacity-80" strokeWidth={1.5} aria-hidden />
             </motion.button>
 
-            <div className="mt-4 flex min-w-0 flex-wrap items-stretch justify-center gap-2 sm:gap-2.5">
+            <div className="mt-5 grid min-w-0 grid-cols-2 items-stretch justify-items-stretch gap-x-2 gap-y-2 sm:flex sm:flex-wrap sm:justify-center sm:gap-x-3 sm:gap-y-2">
               <motion.button
                 type="button"
                 onClick={() => {
@@ -931,9 +942,9 @@ function ProductResultCard({
                     }
                   })();
                 }}
-                whileHover={lite ? undefined : { scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`${btnRow} inline-flex min-w-0 flex-[1_1_5.5rem] items-center justify-center gap-1.5 border border-white/[0.1] bg-white/[0.05] px-3 text-slate-300 hover:border-white/[0.14] hover:bg-white/[0.07]`}
+                whileHover={lite ? undefined : { scale: 1.015 }}
+                whileTap={{ scale: 0.985 }}
+                className={`${btnRow} inline-flex min-w-0 flex-[1_1_5.5rem] items-center justify-center gap-1.5 border border-white/[0.1] bg-white/[0.05] px-3.5 text-slate-300 hover:border-white/[0.15] hover:bg-white/[0.08]`}
               >
                 {cardCopyFlash ? (
                   <Check className="size-3.5 text-emerald-300" aria-hidden />
@@ -947,9 +958,9 @@ function ProductResultCard({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => recordViewedProductLink(p.link)}
-                whileHover={lite ? undefined : { scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`${btnRow} relative flex min-w-[7.5rem] flex-[1.1_1_7rem] items-center justify-center overflow-hidden bg-gradient-to-r from-white via-slate-50 to-white px-4 text-slate-900 shadow-[0_10px_28px_-16px_rgba(15,23,42,0.45)] hover:brightness-[1.02]`}
+                whileHover={lite ? undefined : { scale: 1.015 }}
+                whileTap={{ scale: 0.985 }}
+                className={`${btnRow} relative flex min-w-0 flex-[1.1_1_7rem] items-center justify-center overflow-hidden bg-gradient-to-r from-white via-slate-50 to-white px-4 text-slate-900 shadow-[0_10px_28px_-16px_rgba(15,23,42,0.45)] transition-shadow duration-500 hover:brightness-[1.03]`}
               >
                 <span
                   className="absolute inset-0 bg-gradient-to-r from-cyan-200/0 via-cyan-200/20 to-violet-200/0 opacity-0 transition group-hover:opacity-100"
@@ -961,9 +972,9 @@ function ProductResultCard({
                 <motion.button
                   type="button"
                   onClick={() => addToWatchlist(p)}
-                  whileHover={lite ? undefined : { scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`${btnRow} border border-violet-400/22 bg-violet-500/10 px-3.5 text-violet-100/90 hover:bg-violet-500/16`}
+                  whileHover={lite ? undefined : { scale: 1.015 }}
+                  whileTap={{ scale: 0.985 }}
+                  className={`${btnRow} border border-violet-400/22 bg-violet-500/10 px-3.5 text-violet-100/90 hover:bg-violet-500/[0.14]`}
                   title="Add to watchlist"
                 >
                   Watch
@@ -973,9 +984,9 @@ function ProductResultCard({
                 type="button"
                 onClick={() => saveProduct(p)}
                 disabled={savedLinks.has(p.link)}
-                whileHover={lite ? undefined : { scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`${btnRow} border border-cyan-400/22 bg-cyan-500/[0.1] px-4 text-cyan-50/95 hover:border-cyan-400/30 hover:bg-cyan-500/[0.14] disabled:opacity-45`}
+                whileHover={lite ? undefined : { scale: 1.015 }}
+                whileTap={{ scale: 0.985 }}
+                className={`${btnRow} border border-cyan-400/22 bg-cyan-500/[0.1] px-3.5 text-cyan-50/95 hover:border-cyan-400/32 hover:bg-cyan-500/[0.14] disabled:opacity-45`}
               >
                 {savedLinks.has(p.link) ? "Saved" : "Save"}
               </motion.button>
