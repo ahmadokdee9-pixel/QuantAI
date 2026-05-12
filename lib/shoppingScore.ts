@@ -1,4 +1,5 @@
 import { calculateAIScore } from "@/app/api/search/lib/aiScoring";
+import type { ProductCommerceAI } from "@/lib/intelligence/commerceAnalysisTypes";
 import type { IntelligenceSignals, ProductCategorySlug } from "@/lib/intelligence/types";
 import {
   getStoreTrustScore,
@@ -33,6 +34,8 @@ export type QuantProduct = {
   qiVerdict?: string;
   /** One-line purchase-psychology read. */
   qiPsychology?: string;
+  /** AI commerce layer: verdicts, pros/cons, risks, VfM, confidence, delivery/returns notes (OpenAI or heuristic). */
+  qiCommerce?: ProductCommerceAI;
 };
 
 export { getStoreTrustScore };

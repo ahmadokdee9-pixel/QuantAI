@@ -1,6 +1,9 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { enrichProductsWithIntelligence } from "@/lib/intelligence/enrichProducts";
+import type { SearchCommerceAIMeta } from "@/lib/intelligence/commerceAnalysisTypes";
+import { attachCommerceAiLayer } from "@/lib/intelligence/commerceAi/attachCommerceAiLayer";
+import { resolveCommerceAiEngine } from "@/lib/intelligence/commerceAi/commerceAiEngine";
 import {
   countSearchesTodayUtc,
   mergeRecommendationMemory,
@@ -117,6 +120,19 @@ async function handleSearch(q: string | null | undefined): Promise<NextResponse>
       );
     }
 
+    let commerceMeta: SearchCommerceAIMeta;
+    try {
+      const layered = await attachCommerceAiLayer(products, query);
+      products = layered.products;
+      commerceMeta = layered.commerceMeta;
+    } catch (e) {
+      return fail(
+        500,
+        "SEARCH_FAILED",
+        e instanceof Error ? e.message : "Commerce analysis failed."
+      );
+    }
+
     let dealClusters: DealClusterDTO[];
     let searchIntelligence: SearchIntelligenceDTO | null;
     try {
@@ -144,7 +160,9 @@ async function handleSearch(q: string | null | undefined): Promise<NextResponse>
       entitlements: entitlementsForTier(tier),
       meta: {
         category: topCategory,
-        intelligenceVersion: 3,
+        intelligenceVersion: 4,
+        commerceAI: commerceMeta,
+        commerceAiEngine: resolveCommerceAiEngine(),
       },
     };
 
