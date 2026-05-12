@@ -30,6 +30,7 @@ import type { SearchEntitlementsDTO } from "@/lib/subscription/entitlements";
 import type { QuantPlanTier } from "@/lib/subscription/plans";
 import type { DealClusterDTO } from "@/lib/deals/types";
 import { buildDealIntelByLink } from "@/lib/intelligence/dealIntelligenceEngine";
+import { sortByVerifiedDealRank } from "@/lib/intelligence/discountRank";
 import {
   getFinalComposite,
   getHeuristicScore,
@@ -254,6 +255,8 @@ export default function Home() {
         return sortedList;
       case "trust":
         return sortByTrust(sortedList);
+      case "deals":
+        return sortByVerifiedDealRank(sortedList);
       case "value":
       default:
         return sortByCompositeRank(sortedList);

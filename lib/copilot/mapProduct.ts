@@ -29,5 +29,8 @@ export function toCopilotProductBrief(
     valueOpportunityScore: dealIntel?.valueOpportunity,
     retailerDealScore: dealIntel?.retailerAdjustedDealScore,
     dealTimingNote: dealIntel?.timingSummary,
+    primaryDiscountLabel: dealIntel?.dealLabels?.[0],
+    worthBuyingNow: dealIntel?.worthBuyingNow,
+    trustAdjustedDiscountScore: dealIntel?.trustAdjustedDiscountScore,
   };
 }

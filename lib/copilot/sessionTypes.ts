@@ -25,6 +25,9 @@ export type CopilotProductBrief = {
   valueOpportunityScore?: number;
   retailerDealScore?: number;
   dealTimingNote?: string;
+  primaryDiscountLabel?: string;
+  worthBuyingNow?: "yes" | "maybe" | "wait";
+  trustAdjustedDiscountScore?: number;
 };
 
 export type CopilotSavedBrief = { title: string; link: string; price: number | null };

@@ -17,6 +17,29 @@ export type QuantAIDealVerdict =
 
 export type DealTimingCategory = "strong_window" | "neutral" | "wait_favored" | "unstable_tray";
 
+/** AI-native discount labels (tray-relative; no fabricated off-feed history). */
+export type DiscountDealLabel =
+  | "Best Discount"
+  | "Rare Deal"
+  | "Flash Sale"
+  | "Historically Low"
+  | "Trusted Discount"
+  | "Fake Sale Risk"
+  | "Weak Discount"
+  | "Premium But Fair"
+  | "Wait Before Buying";
+
+export type WorthBuyingSignal = "yes" | "maybe" | "wait";
+
+/** Infrastructure hooks for “historical” reads — all derived from this tray + listing fields. */
+export type TrayPriceMemory = {
+  trayFloorPrice: number;
+  isAtOrNearTrayFloor: boolean;
+  estimatedFairPrice: number;
+  inflatedBeforeSale: boolean;
+  suspiciousFakeDiscount: boolean;
+};
+
 export type ProductDealIntelligence = {
   aiDealVerdict: QuantAIDealVerdict;
   baseDealVerdict: DealVerdict;
@@ -24,7 +47,21 @@ export type ProductDealIntelligence = {
   dealConfidence: number;
   discountAuthenticity: number;
   valueOpportunity: number;
+  /** Same axis as value opportunity — explicit name for discount brain copy. */
+  discountValueScore: number;
   retailerAdjustedDealScore: number;
+  /** Headline % off list→ask when available. */
+  percentOff: number | null;
+  /** Absolute savings from listing anchor (old→current), not vs tray median. */
+  absoluteSavings: number | null;
+  /** Discount depth × authenticity × trust (+ savings vs fair band). */
+  trustAdjustedDiscountScore: number;
+  /** 0–100 meter for UI — blend of confidence + retailer-adjusted deal. */
+  dealStrength: number;
+  dealLabels: DiscountDealLabel[];
+  worthBuyingNow: WorthBuyingSignal;
+  priceMemory: TrayPriceMemory;
+  historicalConfidenceLabel: string;
   fairMarketEstimate: number;
   categoryBaselineEstimate: number;
   overpricedVsTray: boolean;
@@ -108,6 +145,95 @@ function mapToAiVerdict(args: {
   if (base === "Real deal" || base === "Strong value") return "Great Deal";
   if (base === "Compare carefully") return "Fair Price";
   return "Fair Price";
+}
+
+function trustAdjustedDiscountScoreCalc(
+  disc: number | null,
+  authenticity: number,
+  trust: number,
+  absoluteSavings: number | null,
+  fair: number
+): number {
+  const d = disc != null ? Math.min(55, disc) / 55 : 0;
+  const a = authenticity / 100;
+  const t = trust / 100;
+  const sav = absoluteSavings != null && fair > 0 ? Math.min(1, absoluteSavings / fair) : 0;
+  const raw = d * 42 * a + t * 28 + a * 18 + sav * 12;
+  return Math.min(100, Math.max(0, Math.round(raw)));
+}
+
+function deriveDiscountDealLabels(args: {
+  disc: number | null;
+  fake: FakeDiscountRisk;
+  trust: number;
+  inflated: boolean;
+  lowestInTray: boolean;
+  urgency: ProductDealIntelligence["urgencySuspected"];
+  overpriced: boolean;
+  waitBuy: boolean;
+  maxDiscInTray: number;
+}): DiscountDealLabel[] {
+  const { disc, fake, trust, inflated, lowestInTray, urgency, overpriced, waitBuy, maxDiscInTray } = args;
+  const labels: DiscountDealLabel[] = [];
+  const suspiciousFake = fake === "high" || (fake === "medium" && (disc ?? 0) >= 28) || inflated;
+  if (suspiciousFake && ((disc ?? 0) >= 12 || inflated)) {
+    labels.push("Fake Sale Risk");
+  }
+  if (waitBuy || (overpriced && trust < 66 && !labels.includes("Fake Sale Risk"))) {
+    labels.push("Wait Before Buying");
+  }
+  if (overpriced && trust >= 72 && fake === "low") {
+    labels.push("Premium But Fair");
+  }
+  if (lowestInTray && fake === "low" && (disc ?? 0) >= 5) {
+    labels.push("Historically Low");
+  }
+  if (urgency === "elevated" && disc != null && disc >= 10 && fake === "low") {
+    labels.push("Flash Sale");
+  }
+  if (disc != null && disc >= 20 && disc >= maxDiscInTray - 3 && maxDiscInTray >= 15 && fake === "low" && trust >= 58) {
+    labels.push("Rare Deal");
+  }
+  if (trust >= 68 && disc != null && disc >= 12 && fake === "low" && !labels.includes("Fake Sale Risk")) {
+    labels.push("Trusted Discount");
+  }
+  const weak = disc == null || disc < 8;
+  if (weak && !labels.some((x) => x === "Trusted Discount" || x === "Historically Low")) {
+    labels.push("Weak Discount");
+  }
+  return [...new Set(labels)].slice(0, 4);
+}
+
+function historicalConfidenceText(lowestInTray: boolean, fake: FakeDiscountRisk, inflated: boolean): string {
+  if (inflated) {
+    return "Tray heuristics: anchor looks high vs peer asks—inflated-before-sale is plausible (no off-feed price archive).";
+  }
+  if (lowestInTray && fake === "low") {
+    return "Ask sits at/near the tray floor with clean discount hygiene—closest read to “historically low” on this snapshot.";
+  }
+  if (fake === "high") {
+    return "Low confidence in headline markdown vs peers—treat “original” price as unproven without external history.";
+  }
+  if (fake === "medium") {
+    return "Mixed corroboration—historical confidence is medium; verify list price, SKU, and seller.";
+  }
+  return "Tray-relative snapshot only—no verified multi-week price timeline on this row.";
+}
+
+function worthBuyingNowSignal(
+  verdict: QuantAIDealVerdict,
+  goodTime: boolean,
+  waitPricing: boolean
+): WorthBuyingSignal {
+  if (verdict === "Risky Discount" || verdict === "Wait for Better Deal") return "wait";
+  if (waitPricing && !goodTime) return "wait";
+  if (
+    goodTime &&
+    (verdict === "Buy Now" || verdict === "Great Deal" || verdict === "High-Confidence Discount" || verdict === "Best Trusted Option")
+  ) {
+    return "yes";
+  }
+  return "maybe";
 }
 
 function authenticityScore(fake: FakeDiscountRisk, p: QuantProduct, dq: number | undefined): number {
@@ -291,6 +417,25 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
   const dealConfidence = dealConfidenceBlend(discountAuthenticity, valueOpportunity, trust, comp, fake);
   const retailerAdjustedDealScore = retailerAdjustedDeal(dealConfidence, trust, discountAuthenticity);
 
+  const absoluteSavings =
+    product.oldPrice != null && product.oldPrice > product.price && product.price > 0
+      ? Math.round(product.oldPrice - product.price)
+      : null;
+  const minTrayPrice = prices.length ? Math.min(...prices) : product.price;
+  const lowestKnownInTray =
+    list.length >= 2 &&
+    product.price > 0 &&
+    minTrayPrice > 0 &&
+    product.price <= minTrayPrice * 1.02;
+  const maxDiscInTray = list.length >= 2 ? Math.max(0, ...list.map((x) => discountPct(x) ?? 0)) : 0;
+  const trustAdjustedDiscountScore = trustAdjustedDiscountScoreCalc(
+    disc,
+    discountAuthenticity,
+    trust,
+    absoluteSavings,
+    fair
+  );
+
   const urgency = stockUrgencyLevel(product);
   const authenticityLines = buildAuthenticityLines(product, fake, inflated, urgency, trust, del);
   const whyDealGoodOrRisky = whyLine(product, base, fake, fair, trust, comp);
@@ -303,6 +448,18 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
     comp >= 62;
   const waitForBetterPricing =
     base === "Wait for lower pricing" || base === "Overpriced" || (comp < 56 && trust < 58);
+
+  const dealLabels = deriveDiscountDealLabels({
+    disc,
+    fake,
+    trust,
+    inflated,
+    lowestInTray: lowestKnownInTray,
+    urgency,
+    overpriced: overpricedVsTray,
+    waitBuy: waitForBetterPricing,
+    maxDiscInTray,
+  });
 
   const highConfDisc =
     fake === "low" &&
@@ -325,6 +482,17 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
 
   const timing = timingFromSignals(list, base, fake, goodTimeToBuy, waitForBetterPricing);
 
+  const worthBuyingNow = worthBuyingNowSignal(aiDealVerdict, goodTimeToBuy, waitForBetterPricing);
+  const priceMemory: TrayPriceMemory = {
+    trayFloorPrice: Math.round(minTrayPrice),
+    isAtOrNearTrayFloor: lowestKnownInTray,
+    estimatedFairPrice: Math.round(fair),
+    inflatedBeforeSale: inflated,
+    suspiciousFakeDiscount: fake === "high" || (fake === "medium" && (disc ?? 0) > 30),
+  };
+  const historicalConfidenceLabel = historicalConfidenceText(lowestKnownInTray, fake, inflated);
+  const dealStrength = Math.round((retailerAdjustedDealScore + dealConfidence) / 2);
+
   return {
     aiDealVerdict,
     baseDealVerdict: base,
@@ -332,7 +500,16 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
     dealConfidence,
     discountAuthenticity,
     valueOpportunity,
+    discountValueScore: valueOpportunity,
     retailerAdjustedDealScore,
+    percentOff: disc,
+    absoluteSavings,
+    trustAdjustedDiscountScore,
+    dealStrength,
+    dealLabels,
+    worthBuyingNow,
+    priceMemory,
+    historicalConfidenceLabel,
     fairMarketEstimate: Math.round(fair),
     categoryBaselineEstimate: baseline,
     overpricedVsTray,
@@ -391,7 +568,31 @@ export function buildDealIntelByLink(list: QuantProduct[]): Map<string, ProductD
         (p.qiCommerce?.confidence ?? 0) >= 68 &&
         getFinalComposite(p, list) >= 70,
     });
-    m.set(p.link, { ...row, isBestTrustedDealInSet: isBestTrusted, aiDealVerdict: ai2 });
+    const worthNow = worthBuyingNowSignal(ai2, row.goodTimeToBuy, row.waitForBetterPricing);
+    m.set(p.link, { ...row, isBestTrustedDealInSet: isBestTrusted, aiDealVerdict: ai2, worthBuyingNow: worthNow });
+  }
+
+  let bestDiscLink: string | null = null;
+  let bestTad = -1;
+  for (const p of list) {
+    const row = m.get(p.link);
+    if (!row) continue;
+    if ((row.discountPct ?? 0) < 6) continue;
+    if (row.trustAdjustedDiscountScore > bestTad) {
+      bestTad = row.trustAdjustedDiscountScore;
+      bestDiscLink = p.link;
+    }
+  }
+  if (bestDiscLink != null && bestTad >= 28) {
+    const row = m.get(bestDiscLink)!;
+    const merged: DiscountDealLabel[] = [
+      "Best Discount",
+      ...row.dealLabels.filter((l) => l !== "Best Discount"),
+    ];
+    m.set(bestDiscLink, {
+      ...row,
+      dealLabels: [...new Set(merged)].slice(0, 4),
+    });
   }
   return m;
 }

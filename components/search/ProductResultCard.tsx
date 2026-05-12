@@ -49,6 +49,7 @@ import {
 } from "@/lib/intelligence/productBuyDecision";
 import {
   buildProductDealIntelligence,
+  type DiscountDealLabel,
   type ProductDealIntelligence,
 } from "@/lib/intelligence/dealIntelligenceEngine";
 
@@ -118,6 +119,32 @@ function dealVerdictChipClass(v: ProductDealIntelligence["aiDealVerdict"]): stri
     default:
       return "border-white/[0.1] bg-white/[0.05] text-slate-200/90";
   }
+}
+
+function discountDealLabelClass(label: DiscountDealLabel): string {
+  switch (label) {
+    case "Best Discount":
+    case "Rare Deal":
+    case "Historically Low":
+      return "border-emerald-400/35 bg-emerald-500/[0.12] text-emerald-50/95";
+    case "Trusted Discount":
+      return "border-cyan-400/30 bg-cyan-500/[0.1] text-cyan-50/95";
+    case "Flash Sale":
+      return "border-amber-400/35 bg-amber-500/[0.12] text-amber-50/95";
+    case "Fake Sale Risk":
+    case "Wait Before Buying":
+      return "border-rose-400/32 bg-rose-500/[0.1] text-rose-50/95";
+    case "Premium But Fair":
+      return "border-violet-400/28 bg-violet-500/[0.1] text-violet-50/95";
+    default:
+      return "border-white/[0.1] bg-white/[0.06] text-slate-200/90";
+  }
+}
+
+function worthBuyingCopy(w: ProductDealIntelligence["worthBuyingNow"]): { headline: string; cls: string } {
+  if (w === "yes") return { headline: "Yes — strong tray read for cautious buyers", cls: "text-emerald-200/95" };
+  if (w === "wait") return { headline: "Wait — discount or price position looks weak", cls: "text-rose-200/90" };
+  return { headline: "Maybe — verify peers + seller pages", cls: "text-amber-100/90" };
 }
 
 function stancePresentation(stance: BuyStance): {
@@ -285,6 +312,7 @@ function ProductResultCard({
     () => dealIntelProp ?? buildProductDealIntelligence(p, list),
     [dealIntelProp, p, list]
   );
+  const worthLine = useMemo(() => worthBuyingCopy(deal.worthBuyingNow), [deal.worthBuyingNow]);
   const stanceUi = stancePresentation(buyDecision.stance);
   const StanceIcon = stanceUi.Icon;
 
@@ -407,6 +435,69 @@ function ProductResultCard({
                   Best trusted lane
                 </span>
               )}
+            </div>
+
+            <div className="mt-3 min-h-[4.25rem] w-full min-w-0 rounded-xl border border-white/[0.07] bg-black/[0.2] px-3 py-2.5">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="flex min-w-0 flex-[1_1_8rem] flex-wrap items-center gap-1.5">
+                  {deal.dealLabels.slice(0, 2).map((lb) => (
+                    <span
+                      key={lb}
+                      className={`max-w-full rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide [overflow-wrap:anywhere] ${discountDealLabelClass(lb)}`}
+                    >
+                      {lb}
+                    </span>
+                  ))}
+                </div>
+                {(deal.percentOff ?? 0) > 0 && (
+                  <span className="shrink-0 rounded-md border border-emerald-400/25 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold tabular-nums text-emerald-100">
+                    {deal.percentOff}% OFF
+                  </span>
+                )}
+              </div>
+              {deal.absoluteSavings != null && deal.absoluteSavings > 0 ? (
+                <p className="mt-1.5 text-[10px] text-slate-400">
+                  Save{" "}
+                  <span className="font-semibold tabular-nums text-white/90">
+                    {formatListingPrice(deal.absoluteSavings, sym)}
+                  </span>{" "}
+                  vs listing anchor
+                </p>
+              ) : deal.savingsVsFair != null && deal.savingsVsFair > 0 ? (
+                <p className="mt-1.5 text-[10px] text-slate-500">
+                  ~{formatListingPrice(deal.savingsVsFair, sym)} under tray median (no list anchor in feed)
+                </p>
+              ) : (
+                <p className="mt-1.5 text-[10px] text-slate-600">No headline savings math in feed</p>
+              )}
+              <div className="mt-2 space-y-1">
+                <div className="flex items-center justify-between gap-2 text-[9px] text-slate-500">
+                  <span>Deal strength</span>
+                  <span className="tabular-nums text-slate-400">{deal.dealStrength}/100</span>
+                </div>
+                <div
+                  className="h-1.5 w-full overflow-hidden rounded-full bg-black/50"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={deal.dealStrength}
+                  aria-label="Deal strength score"
+                >
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-cyan-400/85 to-emerald-400/75"
+                    style={{ width: `${deal.dealStrength}%` }}
+                  />
+                </div>
+              </div>
+              <p
+                className="mt-1.5 line-clamp-2 text-[9px] leading-snug text-slate-500/95"
+                title={deal.historicalConfidenceLabel}
+              >
+                {deal.historicalConfidenceLabel}
+              </p>
+              <p className={`mt-1.5 text-[10px] font-semibold leading-snug ${worthLine.cls}`}>
+                Worth buying now? {worthLine.headline}
+              </p>
             </div>
 
             <div className="mt-5 flex min-w-0 flex-wrap items-end justify-between gap-4 border-t border-white/[0.06] pt-5">
@@ -669,6 +760,16 @@ function ProductResultCard({
                           </li>
                         ))}
                       </ul>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Discount labels</p>
+                      <p className="cockpit-body text-[10.5px] text-slate-400 [overflow-wrap:anywhere]">
+                        {deal.dealLabels.join(" · ")}
+                      </p>
+                      <p className="cockpit-body text-[10px] leading-relaxed text-slate-500/90 [overflow-wrap:anywhere]">
+                        Tray price memory (heuristic, no off-feed archive): visible floor{" "}
+                        {formatListingPrice(deal.priceMemory.trayFloorPrice, sym)}, fair estimate{" "}
+                        {formatListingPrice(deal.priceMemory.estimatedFairPrice, sym)}
+                        {deal.priceMemory.suspiciousFakeDiscount ? " · suspicious markdown pattern vs peers." : "."}
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-cyan-200/70">
