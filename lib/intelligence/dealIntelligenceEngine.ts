@@ -17,15 +17,28 @@ export type QuantAIDealVerdict =
 
 export type DealTimingCategory = "strong_window" | "neutral" | "wait_favored" | "unstable_tray";
 
-/** AI-native discount labels (tray-relative; no fabricated off-feed history). */
-export type DiscountDealLabel =
-  | "Best Discount"
-  | "Rare Deal"
+/** Live shelf labels — discount-led when real markdown exists, otherwise value/trust-led. */
+export type LiveShelfLabel =
+  | "Best Discount Today"
+  | "Verified Discount"
+  | "Strong Discount Opportunity"
+  | "Trusted Discount"
+  | "Smart Deal Today"
+  | "Price Drop Signal"
+  | "Hidden Discount Gem"
+  | "Weak Discount"
+  | "Suspicious Discount"
+  | "Discount Not Enough"
+  | "Best Value"
+  | "Best Trusted Option"
+  | "Best Price-to-Quality"
+  | "Safest Buy"
+  | "Strong Buy"
+  | "Compare Alternatives"
+  | "Wait for Better Price"
   | "Flash Sale"
   | "Historically Low"
-  | "Trusted Discount"
-  | "Fake Sale Risk"
-  | "Weak Discount"
+  | "Rare Deal"
   | "Premium But Fair"
   | "Wait Before Buying";
 
@@ -44,6 +57,18 @@ export type ProductDealIntelligence = {
   aiDealVerdict: QuantAIDealVerdict;
   baseDealVerdict: DealVerdict;
   fakeDiscountRisk: FakeDiscountRisk;
+  /** Meaningful headline markdown vs anchors (not coupon-site noise). */
+  hasDiscount: boolean;
+  /** Same as headline % off listing anchor when present. */
+  discountPercent: number | null;
+  discountConfidence: number;
+  suspiciousDiscountRisk: number;
+  discountExplanation: string;
+  /** Why this row reads the way it does for ranking + checkout. */
+  liveRankExplanation: string;
+  discountVsQualityNote: string;
+  retailerTrustNote: string;
+  retailerIntelligenceScore: number;
   dealConfidence: number;
   discountAuthenticity: number;
   valueOpportunity: number;
@@ -58,7 +83,7 @@ export type ProductDealIntelligence = {
   trustAdjustedDiscountScore: number;
   /** 0–100 meter for UI — blend of confidence + retailer-adjusted deal. */
   dealStrength: number;
-  dealLabels: DiscountDealLabel[];
+  shelfLabels: LiveShelfLabel[];
   worthBuyingNow: WorthBuyingSignal;
   priceMemory: TrayPriceMemory;
   historicalConfidenceLabel: string;
@@ -162,46 +187,236 @@ function trustAdjustedDiscountScoreCalc(
   return Math.min(100, Math.max(0, Math.round(raw)));
 }
 
-function deriveDiscountDealLabels(args: {
+function retailerIntelligenceScoreCalc(p: QuantProduct, trust: number, del: number, comp: number): number {
+  const rt = p.qiSignals?.retailerTrust ?? trust;
+  const rev = Math.min(100, ratingValue(p.rating) * 20);
+  const comm = p.qiCommerce?.confidence ?? 52;
+  return Math.min(
+    100,
+    Math.max(
+      0,
+      Math.round(trust * 0.34 + del * 0.16 + rt * 0.16 + rev * 0.14 + comm * 0.12 + comp * 0.08)
+    )
+  );
+}
+
+function computeSuspiciousDiscountRisk(
+  fake: FakeDiscountRisk,
+  inflated: boolean,
+  underpricedAnomaly: boolean
+): number {
+  let r = fake === "high" ? 86 : fake === "medium" ? 48 : 12;
+  if (inflated) r += 16;
+  if (underpricedAnomaly) r += 12;
+  return Math.min(100, Math.round(r));
+}
+
+function computeDiscountConfidence(
+  hasDiscount: boolean,
+  discountAuthenticity: number,
+  dealConfidence: number,
+  comp: number,
+  trust: number,
+  suspiciousRisk: number
+): number {
+  if (hasDiscount) {
+    return Math.min(
+      100,
+      Math.max(
+        0,
+        Math.round(discountAuthenticity * 0.48 + dealConfidence * 0.32 + (100 - suspiciousRisk) * 0.2)
+      )
+    );
+  }
+  return Math.min(100, Math.max(0, Math.round(comp * 0.38 + trust * 0.32 + dealConfidence * 0.3)));
+}
+
+function buildDiscountExplanation(hasDiscount: boolean, inflated: boolean, fake: FakeDiscountRisk): string {
+  const anchor =
+    "Based on current listing anchors only—no independent multi-week price archive is attached to this tray.";
+  if (!hasDiscount) {
+    return "No meaningful headline discount detected on listing anchors vs this tray; ranking leans on price, composite, trust, and delivery signals instead.";
+  }
+  if (inflated) {
+    return `${anchor} The crossed-out anchor reads high versus peer asks—inflate-then-markdown is plausible.`;
+  }
+  if (fake === "high") {
+    return `${anchor} Peer alignment does not support the full headline markdown—treat % off as unproven until checkout matches.`;
+  }
+  if (fake === "medium") {
+    return `${anchor} Partial corroboration only; still confirm SKU match and final total.`;
+  }
+  return `${anchor} Headline markdown is reasonably coherent with peers for this snapshot.`;
+}
+
+function buildRetailerTrustNote(trust: number, fake: FakeDiscountRisk, del: number): string {
+  if (trust >= 78 && fake === "low") {
+    return "Trusted retailer prior with calmer checkout friction signals in this feed.";
+  }
+  if (trust < 54) {
+    return "Weaker storefront trust prior—manual seller verification is weighted heavier in ranking.";
+  }
+  if (del < 46) {
+    return "Delivery-signal softness—confirm who ships and realistic lead times before leaning on price alone.";
+  }
+  return "Balanced storefront prior versus peers—compare policies before optimizing purely on price.";
+}
+
+function buildDiscountVsQualityNote(
+  hasDiscount: boolean,
+  disc: number | null,
+  trust: number,
+  comp: number,
+  fake: FakeDiscountRisk
+): string {
+  const d = disc ?? 0;
+  if (hasDiscount && d >= 18 && trust < 62) {
+    return "Strong discount headline, but seller trust is only moderate—verify returns and seller identity.";
+  }
+  if (!hasDiscount && comp >= 72) {
+    return "No discount detected, but price-to-quality vs this tray still reads strong.";
+  }
+  if (hasDiscount && fake !== "low") {
+    return "Cheap listing, but discount confidence is weak versus peer corroboration.";
+  }
+  if (!hasDiscount && trust >= 74 && comp >= 60) {
+    return "Trusted retailer with fair price and low headline-discount reliance.";
+  }
+  return "Tray-relative blend: trust, composite, and checkout safety weigh alongside any markdown story.";
+}
+
+function buildLiveRankExplanation(
+  hasDiscount: boolean,
+  trustAdjustedDiscountScore: number,
+  comp: number,
+  trust: number,
+  suspiciousRisk: number,
+  fake: FakeDiscountRisk
+): string {
+  if (suspiciousRisk >= 58) {
+    return "Rank is pulled down: suspicious discount hygiene and trust checks run before raw savings.";
+  }
+  if (hasDiscount && trustAdjustedDiscountScore >= 52 && trust >= 66 && fake === "low") {
+    return "Rank gets a lift from coherent markdown plus workable trust—still not a single-axis discount win.";
+  }
+  if (!hasDiscount && comp >= 70 && trust >= 68) {
+    return "No big markdown, yet composite + trust still justify a premium lane in this tray.";
+  }
+  if (hasDiscount && fake !== "low") {
+    return "Markdown exists, but authenticity and peer corroboration cap how aggressively it can pull rank.";
+  }
+  return "Balanced tray read: final price only advances after trust, composite, and discount hygiene pass.";
+}
+
+function deriveLiveShelfLabels(args: {
+  p: QuantProduct;
+  hasDiscount: boolean;
   disc: number | null;
   fake: FakeDiscountRisk;
   trust: number;
+  comp: number;
   inflated: boolean;
   lowestInTray: boolean;
   urgency: ProductDealIntelligence["urgencySuspected"];
   overpriced: boolean;
   waitBuy: boolean;
   maxDiscInTray: number;
-}): DiscountDealLabel[] {
-  const { disc, fake, trust, inflated, lowestInTray, urgency, overpriced, waitBuy, maxDiscInTray } = args;
-  const labels: DiscountDealLabel[] = [];
-  const suspiciousFake = fake === "high" || (fake === "medium" && (disc ?? 0) >= 28) || inflated;
-  if (suspiciousFake && ((disc ?? 0) >= 12 || inflated)) {
-    labels.push("Fake Sale Risk");
+  waitForBetterPricing: boolean;
+  fair: number;
+  price: number;
+}): LiveShelfLabel[] {
+  const {
+    p,
+    hasDiscount,
+    disc,
+    fake,
+    trust,
+    comp,
+    inflated,
+    lowestInTray,
+    urgency,
+    overpriced,
+    waitBuy,
+    maxDiscInTray,
+    waitForBetterPricing,
+    fair,
+    price,
+  } = args;
+  const d = disc ?? 0;
+  const rt = ratingValue(p.rating);
+
+  if (!hasDiscount) {
+    const out: LiveShelfLabel[] = [];
+    if (waitBuy || overpriced || waitForBetterPricing) {
+      out.push("Wait for Better Price");
+    } else if (comp >= 78 && trust >= 70 && !overpriced) {
+      out.push("Strong Buy");
+    } else if (trust >= 80 && comp >= 58) {
+      out.push("Safest Buy");
+    } else if (fair > 0 && price > 0 && price <= fair * 0.94 && comp >= 66) {
+      out.push("Best Value");
+    } else if (comp >= 74 && rt >= 4.22 && trust >= 60) {
+      out.push("Best Price-to-Quality");
+    } else if (trust >= 76 && comp >= 62) {
+      out.push("Best Trusted Option");
+    } else {
+      out.push("Compare Alternatives");
+    }
+    if (out.length < 2) {
+      if (!out.includes("Best Trusted Option") && trust >= 74 && comp >= 60) {
+        out.push("Best Trusted Option");
+      } else if (!out.includes("Best Price-to-Quality") && comp >= 70 && rt >= 4.05) {
+        out.push("Best Price-to-Quality");
+      }
+    }
+    return [...new Set(out)].slice(0, 4);
   }
-  if (waitBuy || (overpriced && trust < 66 && !labels.includes("Fake Sale Risk"))) {
-    labels.push("Wait Before Buying");
+
+  const suspicious = fake === "high" || (fake === "medium" && d >= 22) || (inflated && d >= 8);
+  const pool: LiveShelfLabel[] = [];
+
+  if (suspicious && d >= 6) pool.push("Suspicious Discount");
+  if (waitBuy && !pool.includes("Suspicious Discount")) pool.push("Wait Before Buying");
+
+  if (!suspicious) {
+    if (fake === "low" && d >= 14 && trust >= 72) pool.push("Verified Discount");
+    if (fake === "low" && d >= 12 && trust >= 64 && !pool.includes("Verified Discount")) {
+      pool.push("Trusted Discount");
+    }
+    if (fake === "low" && d >= 20 && trust >= 62) pool.push("Strong Discount Opportunity");
+    if (fake === "low" && comp >= 70 && d >= 10) pool.push("Smart Deal Today");
+    if (p.priceTrend === "down" && fake === "low" && d >= 8) pool.push("Price Drop Signal");
+    if ((p.reviewsCount ?? 0) < 48 && d >= 14 && trust >= 58 && fake === "low") pool.push("Hidden Discount Gem");
+    if (urgency === "elevated" && d >= 10 && fake === "low") pool.push("Flash Sale");
+    if (lowestInTray && fake === "low" && d >= 6) pool.push("Historically Low");
+    if (fake === "low" && d >= 18 && d >= maxDiscInTray - 4 && maxDiscInTray >= 14) pool.push("Rare Deal");
+    if (overpriced && trust >= 72 && fake === "low") pool.push("Premium But Fair");
   }
-  if (overpriced && trust >= 72 && fake === "low") {
-    labels.push("Premium But Fair");
+
+  if (!suspicious && d >= 6 && d < 12 && trust < 64) pool.push("Discount Not Enough");
+  if (!suspicious && fake === "low" && d >= 6 && d < 12 && trust >= 64 && !pool.includes("Discount Not Enough")) {
+    pool.push("Weak Discount");
   }
-  if (lowestInTray && fake === "low" && (disc ?? 0) >= 5) {
-    labels.push("Historically Low");
-  }
-  if (urgency === "elevated" && disc != null && disc >= 10 && fake === "low") {
-    labels.push("Flash Sale");
-  }
-  if (disc != null && disc >= 20 && disc >= maxDiscInTray - 3 && maxDiscInTray >= 15 && fake === "low" && trust >= 58) {
-    labels.push("Rare Deal");
-  }
-  if (trust >= 68 && disc != null && disc >= 12 && fake === "low" && !labels.includes("Fake Sale Risk")) {
-    labels.push("Trusted Discount");
-  }
-  const weak = disc == null || disc < 8;
-  if (weak && !labels.some((x) => x === "Trusted Discount" || x === "Historically Low")) {
-    labels.push("Weak Discount");
-  }
-  return [...new Set(labels)].slice(0, 4);
+
+  const priority: LiveShelfLabel[] = [
+    "Suspicious Discount",
+    "Wait Before Buying",
+    "Discount Not Enough",
+    "Weak Discount",
+    "Verified Discount",
+    "Strong Discount Opportunity",
+    "Trusted Discount",
+    "Smart Deal Today",
+    "Price Drop Signal",
+    "Hidden Discount Gem",
+    "Flash Sale",
+    "Historically Low",
+    "Rare Deal",
+    "Premium But Fair",
+  ];
+  const ordered = priority.filter((x) => pool.includes(x));
+  const rest = pool.filter((x) => !ordered.includes(x));
+  return [...new Set([...ordered, ...rest])].slice(0, 4);
 }
 
 function historicalConfidenceText(lowestInTray: boolean, fake: FakeDiscountRisk, inflated: boolean): string {
@@ -421,6 +636,26 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
     product.oldPrice != null && product.oldPrice > product.price && product.price > 0
       ? Math.round(product.oldPrice - product.price)
       : null;
+  const hasDiscount =
+    (disc != null && disc >= 6) ||
+    (absoluteSavings != null &&
+      product.price > 0 &&
+      absoluteSavings >= Math.max(12, Math.round(product.price * 0.035)));
+
+  const suspiciousDiscountRisk = computeSuspiciousDiscountRisk(fake, inflated, underpricedAnomaly);
+  const retailerIntelligenceScore = retailerIntelligenceScoreCalc(product, trust, del, comp);
+  const discountConfidence = computeDiscountConfidence(
+    hasDiscount,
+    discountAuthenticity,
+    dealConfidence,
+    comp,
+    trust,
+    suspiciousDiscountRisk
+  );
+  const discountExplanation = buildDiscountExplanation(hasDiscount, inflated, fake);
+  const retailerTrustNote = buildRetailerTrustNote(trust, fake, del);
+  const discountVsQualityNote = buildDiscountVsQualityNote(hasDiscount, disc, trust, comp, fake);
+
   const minTrayPrice = prices.length ? Math.min(...prices) : product.price;
   const lowestKnownInTray =
     list.length >= 2 &&
@@ -449,17 +684,32 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
   const waitForBetterPricing =
     base === "Wait for lower pricing" || base === "Overpriced" || (comp < 56 && trust < 58);
 
-  const dealLabels = deriveDiscountDealLabels({
+  const shelfLabels = deriveLiveShelfLabels({
+    p: product,
+    hasDiscount,
     disc,
     fake,
     trust,
+    comp,
     inflated,
     lowestInTray: lowestKnownInTray,
     urgency,
     overpriced: overpricedVsTray,
     waitBuy: waitForBetterPricing,
     maxDiscInTray,
+    waitForBetterPricing,
+    fair,
+    price: product.price,
   });
+
+  const liveRankExplanation = buildLiveRankExplanation(
+    hasDiscount,
+    trustAdjustedDiscountScore,
+    comp,
+    trust,
+    suspiciousDiscountRisk,
+    fake
+  );
 
   const highConfDisc =
     fake === "low" &&
@@ -497,6 +747,15 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
     aiDealVerdict,
     baseDealVerdict: base,
     fakeDiscountRisk: fake,
+    hasDiscount,
+    discountPercent: disc,
+    discountConfidence,
+    suspiciousDiscountRisk,
+    discountExplanation,
+    liveRankExplanation,
+    discountVsQualityNote,
+    retailerTrustNote,
+    retailerIntelligenceScore,
     dealConfidence,
     discountAuthenticity,
     valueOpportunity,
@@ -506,7 +765,7 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
     absoluteSavings,
     trustAdjustedDiscountScore,
     dealStrength,
-    dealLabels,
+    shelfLabels,
     worthBuyingNow,
     priceMemory,
     historicalConfidenceLabel,
@@ -577,21 +836,24 @@ export function buildDealIntelByLink(list: QuantProduct[]): Map<string, ProductD
   for (const p of list) {
     const row = m.get(p.link);
     if (!row) continue;
+    if (!row.hasDiscount) continue;
+    if (row.suspiciousDiscountRisk >= 70) continue;
+    if (getStoreTrustScore(p.store) < 54) continue;
     if ((row.discountPct ?? 0) < 6) continue;
     if (row.trustAdjustedDiscountScore > bestTad) {
       bestTad = row.trustAdjustedDiscountScore;
       bestDiscLink = p.link;
     }
   }
-  if (bestDiscLink != null && bestTad >= 28) {
+  if (bestDiscLink != null && bestTad >= 26) {
     const row = m.get(bestDiscLink)!;
-    const merged: DiscountDealLabel[] = [
-      "Best Discount",
-      ...row.dealLabels.filter((l) => l !== "Best Discount"),
+    const merged: LiveShelfLabel[] = [
+      "Best Discount Today",
+      ...row.shelfLabels.filter((l) => l !== "Best Discount Today" && l !== "Weak Discount"),
     ];
     m.set(bestDiscLink, {
       ...row,
-      dealLabels: [...new Set(merged)].slice(0, 4),
+      shelfLabels: [...new Set(merged)].slice(0, 4),
     });
   }
   return m;

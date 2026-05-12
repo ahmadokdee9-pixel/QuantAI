@@ -25,7 +25,18 @@ export type CopilotProductBrief = {
   valueOpportunityScore?: number;
   retailerDealScore?: number;
   dealTimingNote?: string;
+  /** @deprecated use primaryShelfLabel — kept for older copilot prompts */
   primaryDiscountLabel?: string;
+  primaryShelfLabel?: string;
+  hasDiscount?: boolean;
+  discountPercent?: number | null;
+  discountConfidence?: number;
+  suspiciousDiscountRisk?: number;
+  discountExplanation?: string;
+  liveRankExplanation?: string;
+  discountVsQualityNote?: string;
+  retailerTrustNote?: string;
+  retailerIntelligenceScore?: number;
   worthBuyingNow?: "yes" | "maybe" | "wait";
   trustAdjustedDiscountScore?: number;
 };

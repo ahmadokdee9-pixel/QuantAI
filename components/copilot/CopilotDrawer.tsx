@@ -19,7 +19,9 @@ type Msg = {
 const CHIPS: { label: string; prompt: string }[] = [
   { label: "Is this discount real?", prompt: "Using only my current tray, which headline discounts look authentic versus inflated anchors or suspiciously low asks? Be explicit about heuristics and what to verify." },
   { label: "Buy now or wait?", prompt: "For my current search results, should I buy now or wait for better pricing? Use QuantAI timing reads (tray volatility, fair-band, trust) — no fabricated price history." },
-  { label: "Trusted deals only", prompt: "Filter mentally to trusted-deal rows only: which listings combine strong store trust with sane discount hygiene in my tray?" },
+  { label: "Best store discount?", prompt: "Which store in my tray has the best discount after QuantAI trust weighting and suspiciousDiscountRisk—not just the largest percent off? Use fields on each product brief." },
+  { label: "Trusted deals only", prompt: "Show only trusted deals from my tray: filter using hasDiscount, shelfLabels, storeTrust, suspiciousDiscountRisk, and discountConfidence; explain each keep or drop." },
+  { label: "Low-risk discount", prompt: "Find the best discount with low risk in my tray: rank using suspiciousDiscountRisk, discountConfidence, retailerIntelligenceScore, and worthBuyingNow." },
   { label: "Stronger discounts", prompt: "Where are the strongest real discounts in my tray after authenticity and trust adjustments—not just the biggest % off?" },
   { label: "Why risky?", prompt: "If any row looks like a risky discount, explain exactly which signals triggered that label and what I should verify before checkout." },
   { label: "Best buy", prompt: "Which one should I buy and why? Pick the best buy from my current tray." },
@@ -32,6 +34,7 @@ const CHIPS: { label: string; prompt: string }[] = [
 
 const FOLLOW_UP_CHIPS: { label: string; prompt: string }[] = [
   { label: "Why this product?", prompt: "For the top-ranked listing in my tray, explain why it is there: which signals lifted it and what I should still verify manually." },
+  { label: "Why cheaper?", prompt: "Why is the cheapest listing cheaper than the others? Explain using discountExplanation, suspiciousDiscountRisk, liveRankExplanation, and retailerTrustNote from QuantAI." },
   { label: "Find cheaper", prompt: "Find cheaper alternatives in my current tray that still look sane on trust and reviews, and explain the tradeoffs vs the top pick." },
   { label: "Compare top 3", prompt: "Compare the top 3 listings by composite score as a pre-checkout brief: winner, safer choice, better value, and the riskiest option if any." },
   { label: "Safest retailer", prompt: "Which retailer in my tray has the strongest trust prior and what does that mean in practice at checkout—not marketing fluff." },
