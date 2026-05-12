@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useEffect, useState } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 import AmbientBackdrop from "@/components/cockpit/AmbientBackdrop";
@@ -10,10 +10,14 @@ import TrustRibbon from "@/components/trust/TrustRibbon";
 import { isApiFailure } from "@/lib/api/apiResult";
 import { readApiJson } from "@/lib/api/readJson";
 import type { QuantPlanTier } from "@/lib/subscription/plans";
+import { useCopilotSession } from "@/components/copilot/CopilotContext";
+import { defaultCopilotSession } from "@/lib/copilot/sessionTypes";
+import type { CopilotSessionPayload } from "@/lib/copilot/sessionTypes";
 
 export default function PricingPage() {
   const { isSignedIn } = useUser();
   const [tier, setTier] = useState<QuantPlanTier | null>(null);
+  const { setSession: setCopilotSession } = useCopilotSession();
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -41,6 +45,20 @@ export default function PricingPage() {
       cancelled = true;
     };
   }, [isSignedIn]);
+
+  const pricingCopilotSession = useMemo((): CopilotSessionPayload => {
+    return {
+      ...defaultCopilotSession(),
+      route: "pricing",
+      subscriptionTier: tier ?? "free",
+      lastSearchQuery: "pricing",
+      memoryHints: ["context:pricing_page"],
+    };
+  }, [tier]);
+
+  useEffect(() => {
+    setCopilotSession(pricingCopilotSession);
+  }, [pricingCopilotSession, setCopilotSession]);
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-[#020617] text-slate-100">

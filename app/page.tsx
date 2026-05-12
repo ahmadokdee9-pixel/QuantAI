@@ -15,6 +15,7 @@ import AILoadingPhase from "../components/loading/AILoadingPhase";
 import SearchStreamRibbon from "../components/loading/SearchStreamRibbon";
 import MagneticSurface from "../components/motion/MagneticSurface";
 import { useCockpit } from "../components/cockpit/cockpitContext";
+import { useCopilotSession } from "../components/copilot/CopilotContext";
 import { calculateAIScore } from "./api/search/lib/aiScoring";
 import ProductResultsSurface from "../components/search/ProductResultsSurface";
 import {
@@ -43,6 +44,8 @@ import { trackEvent } from "@/lib/analytics/track";
 import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
 import { readApiJson } from "@/lib/api/readJson";
 import { logDevError } from "@/lib/log/devLog";
+import { toCopilotProductBrief } from "@/lib/copilot/mapProduct";
+import type { CopilotSessionPayload } from "@/lib/copilot/sessionTypes";
 import {
   ArrowRight,
   Bell,
@@ -79,7 +82,9 @@ export default function Home() {
   const [searchHistory, setSearchHistory] = useState<SearchHistoryRow[]>([]);
   const [subscriptionTier, setSubscriptionTier] = useState<QuantPlanTier | null>(null);
   const [searchEntitlements, setSearchEntitlements] = useState<SearchEntitlementsDTO | null>(null);
+  const [compareTrayLinks, setCompareTrayLinks] = useState<string[]>([]);
   const bootedSearchFromUrl = useRef(false);
+  const { setSession: setCopilotSession } = useCopilotSession();
 
   const savedLinks = useMemo(
     () => new Set(saved.map((s) => s.link)),
@@ -231,6 +236,65 @@ export default function Home() {
     return "This option looks weak compared with other available results. Better to avoid or wait.";
   }
 
+  const sortedProductsMemo = useMemo(() => {
+    const filteredForSort = applyResultsFilters(products, filters);
+    const sortedList = [...filteredForSort];
+    switch (sort) {
+      case "ai":
+        return sortByBestAIScore(sortedList);
+      case "cheap":
+        sortedList.sort((a, b) => a.price - b.price);
+        return sortedList;
+      case "trust":
+        return sortByTrust(sortedList);
+      case "value":
+      default:
+        return sortByCompositeRank(sortedList);
+    }
+  }, [products, filters, sort]);
+
+  const searchIntelHeadline = searchIntelligence?.finalHeadline;
+  const searchIntelBody = searchIntelligence?.finalBody;
+
+  const homeCopilotSession = useMemo((): CopilotSessionPayload => {
+    return {
+      route: "home",
+      lastSearchQuery: query,
+      products: sortedProductsMemo.map(toCopilotProductBrief),
+      savedSummaries: saved.map((s) => ({
+        title: s.title,
+        link: s.link,
+        price: s.price,
+      })),
+      watchlistSummaries: [],
+      compareTrayLinks,
+      subscriptionTier: subscriptionTier ?? "free",
+      entitlementsLevel: searchEntitlements?.intelligenceLevel,
+      memoryHints: [`sort:${sort}`],
+      searchIntelligenceExcerpt:
+        searchIntelHeadline != null || searchIntelBody != null
+          ? { finalHeadline: searchIntelHeadline, finalBody: searchIntelBody }
+          : null,
+      recentCompareHistory: [],
+    };
+  }, [
+    query,
+    sortedProductsMemo,
+    saved,
+    compareTrayLinks,
+    subscriptionTier,
+    searchEntitlements?.intelligenceLevel,
+    sort,
+    searchIntelHeadline,
+    searchIntelBody,
+  ]);
+
+  useEffect(() => {
+    setCopilotSession(homeCopilotSession);
+  }, [homeCopilotSession, setCopilotSession]);
+
+  const sortedProducts = sortedProductsMemo;
+
   function smartDecisionText(p: QuantProduct) {
     const score = getFinalComposite(p, sortedProducts);
 
@@ -247,26 +311,6 @@ export default function Home() {
     }
 
     return "QuantAI does not recommend this option right now. The score is weak compared with other products in the search results.";
-  }
-
-  const filteredForSort = applyResultsFilters(products, filters);
-  const sortedList = [...filteredForSort];
-  let sortedProducts: QuantProduct[];
-  switch (sort) {
-    case "ai":
-      sortedProducts = sortByBestAIScore(sortedList);
-      break;
-    case "cheap":
-      sortedList.sort((a, b) => a.price - b.price);
-      sortedProducts = sortedList;
-      break;
-    case "trust":
-      sortedProducts = sortByTrust(sortedList);
-      break;
-    case "value":
-    default:
-      sortedProducts = sortByCompositeRank(sortedList);
-      break;
   }
 
   const activeFilterCount = countActiveFilters(filters);
@@ -998,6 +1042,7 @@ export default function Home() {
             addToWatchlist={addToWatchlist}
             searchQuery={query}
             onRetrySearch={() => void search()}
+            onCompareTrayChange={setCompareTrayLinks}
           />
         )}
 

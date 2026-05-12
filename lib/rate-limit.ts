@@ -36,6 +36,15 @@ export const compareVerdictRatelimit = redis
     })
   : null;
 
+/** Copilot chat — per user or guest IP when Redis configured. */
+export const copilotRatelimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(50, "1 h"),
+      prefix: "quantai:copilot",
+    })
+  : null;
+
 export async function enforceLimit(
   limiter: Ratelimit | null,
   identifier: string

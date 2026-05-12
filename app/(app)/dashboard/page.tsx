@@ -20,6 +20,9 @@ import { trackEvent } from "@/lib/analytics/track";
 import { isApiFailure } from "@/lib/api/apiResult";
 import { readApiJson } from "@/lib/api/readJson";
 import { logDevError } from "@/lib/log/devLog";
+import { useCopilotSession } from "@/components/copilot/CopilotContext";
+import { defaultCopilotSession } from "@/lib/copilot/sessionTypes";
+import type { CopilotSessionPayload } from "@/lib/copilot/sessionTypes";
 
 type HistoryRow = { id?: string; query: string; result_count?: number; created_at?: string };
 type WatchRow = { id?: string; product?: Record<string, unknown>; created_at?: string };
@@ -45,6 +48,52 @@ export default function DashboardPage() {
   const [compareHistory, setCompareHistory] = useState<CompareHistoryRow[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const dashboardTracked = useRef(false);
+  const { setSession: setCopilotSession } = useCopilotSession();
+  const entitlementsLevel = entitlements?.intelligenceLevel;
+
+  const dashboardCopilotSession = useMemo((): CopilotSessionPayload | null => {
+    if (loading) return null;
+    return {
+      ...defaultCopilotSession(),
+      route: "dashboard",
+      lastSearchQuery: memoryLine ?? history[0]?.query ?? "",
+      savedSummaries: saved.map((s) => ({
+        title: s.title ?? "Saved item",
+        link: s.link,
+        price: s.price,
+      })),
+      watchlistSummaries: watchlist.map((w) => {
+        const prod = w.product as Record<string, unknown> | undefined;
+        return {
+          title: typeof prod?.title === "string" ? prod.title : "Watchlist item",
+          link: typeof prod?.link === "string" ? prod.link : undefined,
+          price: typeof prod?.price === "number" ? prod.price : null,
+        };
+      }),
+      compareTrayLinks: [],
+      subscriptionTier: tier,
+      entitlementsLevel,
+      memoryHints: memoryLine ? [memoryLine] : [],
+      recentCompareHistory: compareHistory.slice(0, 5).map((c) => ({
+        at: c.created_at,
+        summary: `Saved compare snapshot (${c.id.slice(0, 8)})`,
+      })),
+    };
+  }, [
+    loading,
+    memoryLine,
+    history,
+    saved,
+    watchlist,
+    tier,
+    entitlementsLevel,
+    compareHistory,
+  ]);
+
+  useEffect(() => {
+    if (!dashboardCopilotSession) return;
+    setCopilotSession(dashboardCopilotSession);
+  }, [dashboardCopilotSession, setCopilotSession]);
 
   useEffect(() => {
     if (!dashboardTracked.current) {

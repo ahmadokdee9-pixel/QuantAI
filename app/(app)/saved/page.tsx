@@ -1,11 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ExternalLink, Loader2, Trash2 } from "lucide-react";
 import TrustRibbon from "@/components/trust/TrustRibbon";
 import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
 import { readApiJson } from "@/lib/api/readJson";
+import { useCopilotSession } from "@/components/copilot/CopilotContext";
+import { defaultCopilotSession } from "@/lib/copilot/sessionTypes";
+import type { CopilotSessionPayload } from "@/lib/copilot/sessionTypes";
 
 type SavedRow = {
   id?: string;
@@ -21,6 +24,7 @@ export default function SavedProductsPage() {
   const [items, setItems] = useState<SavedRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const { setSession: setCopilotSession } = useCopilotSession();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -47,6 +51,26 @@ export default function SavedProductsPage() {
       void load();
     });
   }, [load]);
+
+  const savedCopilotSession = useMemo((): CopilotSessionPayload | null => {
+    if (loading) return null;
+    return {
+      ...defaultCopilotSession(),
+      route: "saved",
+      lastSearchQuery: "saved_products",
+      savedSummaries: items.map((s) => ({
+        title: s.title ?? "Saved item",
+        link: s.link,
+        price: s.price,
+      })),
+      memoryHints: ["context:saved_products_page"],
+    };
+  }, [loading, items]);
+
+  useEffect(() => {
+    if (!savedCopilotSession) return;
+    setCopilotSession(savedCopilotSession);
+  }, [savedCopilotSession, setCopilotSession]);
 
   async function remove(link: string) {
     try {

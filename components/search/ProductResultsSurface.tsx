@@ -61,6 +61,8 @@ type Props = {
   addToWatchlist?: (p: QuantProduct) => void;
   searchQuery?: string;
   onRetrySearch?: () => void;
+  /** Reports compare tray link selection for copilot / analytics context. */
+  onCompareTrayChange?: (links: string[]) => void;
 };
 
 function ResultSkeleton() {
@@ -103,6 +105,7 @@ export default function ProductResultsSurface({
   intelligenceLevel = "full",
   searchQuery = "",
   onRetrySearch,
+  onCompareTrayChange,
 }: Props) {
   const { registerQuickHandlers, intelligenceEpoch } = useCockpit();
   const reduceMotion = useReducedMotion();
@@ -122,6 +125,10 @@ export default function ProductResultsSurface({
   } | null>(null);
   const [verdictSource, setVerdictSource] = useState<string | null>(null);
   const [compareExportFlash, setCompareExportFlash] = useState(false);
+
+  useEffect(() => {
+    onCompareTrayChange?.(compareLinks);
+  }, [compareLinks, onCompareTrayChange]);
 
   const compositeRanked = useMemo(
     () => sortByCompositeRank(sortedProducts),
