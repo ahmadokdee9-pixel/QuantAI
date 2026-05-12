@@ -41,6 +41,17 @@ function minPriceForStore(products: QuantProduct[], storeLabel: string): number 
   return vals.length ? Math.min(...vals) : 0;
 }
 
+function representativeListingForStore(
+  products: QuantProduct[],
+  storeLabel: string
+): QuantProduct | undefined {
+  const t = storeLabel.trim().toLowerCase();
+  const priced = products.filter((p) => p.store.trim().toLowerCase() === t && p.price > 0);
+  const pool = priced.length ? priced : products.filter((p) => p.store.trim().toLowerCase() === t);
+  if (!pool.length) return undefined;
+  return [...pool].sort((a, b) => (a.price > 0 ? a.price : Infinity) - (b.price > 0 ? b.price : Infinity))[0];
+}
+
 export function inferBasketRegionBias(
   products: QuantProduct[]
 ): SearchIntelligenceDTO["basketRegionBias"] {
@@ -119,7 +130,7 @@ function buildMarketIntel(products: QuantProduct[], clusters: DealClusterDTO[]):
     (p) => ratingValue(p.rating) >= 4.85 && (p.reviewsCount ?? 0) < 22
   );
   const lowRev = products.filter((p) => (p.reviewsCount ?? 0) < 12).length >= Math.ceil(products.length * 0.55);
-  const mktVar = products.some((p) => getMarketplaceSellerRiskTier(p.store) !== "low");
+  const mktVar = products.some((p) => getMarketplaceSellerRiskTier(p.store, p.title) !== "low");
   const cheap = [...products].sort((a, b) => (a.price > 0 ? a.price : Infinity) - (b.price > 0 ? b.price : Infinity))[0];
   const cheapTrust = cheap ? getStoreTrustScore(cheap.store) : 100;
   const cheapestNotSafest =
@@ -333,7 +344,7 @@ function computeFinal(
   const comp = hero ? getFinalComposite(hero, products) : 0;
   const trust = hero ? getStoreTrustScore(hero.store) : 0;
   const susp = intel.aggressiveFakeDiscount;
-  const riskyMkt = products.filter((p) => getMarketplaceSellerRiskTier(p.store) === "high").length;
+  const riskyMkt = products.filter((p) => getMarketplaceSellerRiskTier(p.store, p.title) === "high").length;
   const cheap = [...products].filter((p) => p.price > 0).sort((a, b) => a.price - b.price)[0]!;
   const cheapTrust = getStoreTrustScore(cheap.store);
 
@@ -475,13 +486,14 @@ export function buildSearchIntelligence(
   const maxP = prices.length ? Math.max(...prices) : 0;
   const trustMatrix: StoreTrustRow[] = uniqStores(products).map((store) => {
     const pStore = minPriceForStore(products, store);
+    const rep = representativeListingForStore(products, store);
     const priceFit =
       maxP > minP && pStore > 0 ? Math.max(0, Math.min(1, 1 - (pStore - minP) / (maxP - minP))) : 0.5;
     return {
       store,
       trust: getStoreTrustScore(store),
       tier: getTrustTierLabel(store),
-      marketplaceRisk: getMarketplaceSellerRiskTier(store),
+      marketplaceRisk: getMarketplaceSellerRiskTier(store, rep?.title),
       priceFit,
     };
   });

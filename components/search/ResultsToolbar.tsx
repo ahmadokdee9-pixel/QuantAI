@@ -31,7 +31,7 @@ export default function ResultsToolbar({
   return (
     <motion.div
       layout
-      className="sticky top-[3.25rem] z-30 -mx-4 px-4 py-3.5 sm:-mx-6 sm:px-6 mb-8 border-b border-white/[0.07] bg-[#030712]/78 backdrop-blur-[28px] backdrop-saturate-150 supports-[backdrop-filter]:bg-[#030712]/55 shadow-[0_24px_60px_-32px_rgba(0,0,0,0.9),0_0_48px_-36px_rgba(34,211,238,0.08)]"
+      className="sticky top-[3.25rem] z-30 -mx-4 px-4 py-3.5 sm:-mx-6 sm:px-6 mb-8 touch-manipulation border-b border-white/[0.07] bg-[#030712]/78 backdrop-blur-[28px] backdrop-saturate-150 supports-[backdrop-filter]:bg-[#030712]/55 shadow-[0_24px_60px_-32px_rgba(0,0,0,0.9),0_0_48px_-36px_rgba(34,211,238,0.08)]"
     >
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-center gap-2">
@@ -42,7 +42,7 @@ export default function ResultsToolbar({
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="min-h-11 rounded-2xl border border-white/12 bg-white/[0.07] px-4 py-2.5 text-[13px] font-medium text-white/92 outline-none transition hover:border-cyan-400/28 focus:border-cyan-400/45 focus:ring-2 focus:ring-cyan-400/15"
+            className="min-h-11 rounded-2xl border border-white/12 bg-white/[0.07] px-4 py-2.5 text-[13px] font-medium text-white/92 outline-none transition duration-200 hover:border-cyan-400/22 focus:border-cyan-400/45 focus:ring-2 focus:ring-cyan-400/15 active:scale-[0.99]"
           >
             <option value="value">Best value (QI composite)</option>
             <option value="deals">Smart deals (verified discounts)</option>
@@ -54,7 +54,7 @@ export default function ResultsToolbar({
           <button
             type="button"
             onClick={() => setFilterPanelOpen(!filterPanelOpen)}
-            className="inline-flex min-h-11 items-center gap-2 rounded-2xl border border-white/12 bg-white/[0.05] px-4 py-2.5 text-[13px] font-medium text-slate-200 transition hover:border-cyan-400/25 hover:bg-white/[0.08]"
+            className="inline-flex min-h-11 touch-manipulation items-center gap-2 rounded-2xl border border-white/12 bg-white/[0.05] px-4 py-2.5 text-[13px] font-medium text-slate-200 transition duration-200 hover:border-cyan-400/25 hover:bg-white/[0.08] active:scale-[0.99]"
             aria-expanded={filterPanelOpen}
           >
             <Filter className="size-4 text-cyan-300/80" aria-hidden />
@@ -106,7 +106,7 @@ export default function ResultsToolbar({
                     setFilters((f) => ({ ...f, minPrice: e.target.value }))
                   }
                   placeholder="0"
-                  className="w-full rounded-xl border border-white/12 bg-black/30 px-3 py-2 text-[13px] text-white outline-none transition focus:border-cyan-400/40"
+                  className="w-full min-h-11 touch-manipulation rounded-xl border border-white/12 bg-black/30 px-3 py-2 text-[13px] text-white outline-none transition duration-200 focus:border-cyan-400/40 focus:ring-1 focus:ring-cyan-400/12"
                 />
               </label>
               <label className="block">
@@ -121,7 +121,7 @@ export default function ResultsToolbar({
                     setFilters((f) => ({ ...f, maxPrice: e.target.value }))
                   }
                   placeholder="∞"
-                  className="w-full rounded-xl border border-white/12 bg-black/30 px-3 py-2 text-[13px] text-white outline-none transition focus:border-cyan-400/40"
+                  className="w-full min-h-11 touch-manipulation rounded-xl border border-white/12 bg-black/30 px-3 py-2 text-[13px] text-white outline-none transition duration-200 focus:border-cyan-400/40 focus:ring-1 focus:ring-cyan-400/12"
                 />
               </label>
               <label className="block sm:col-span-2 lg:col-span-1">
@@ -135,7 +135,7 @@ export default function ResultsToolbar({
                     setFilters((f) => ({ ...f, brand: e.target.value }))
                   }
                   placeholder="In title…"
-                  className="w-full rounded-xl border border-white/12 bg-black/30 px-3 py-2 text-[13px] text-white outline-none transition focus:border-cyan-400/40"
+                  className="w-full min-h-11 touch-manipulation rounded-xl border border-white/12 bg-black/30 px-3 py-2 text-[13px] text-white outline-none transition duration-200 focus:border-cyan-400/40 focus:ring-1 focus:ring-cyan-400/12"
                 />
               </label>
               <label className="block">
@@ -147,7 +147,7 @@ export default function ResultsToolbar({
                   onChange={(e) =>
                     setFilters((f) => ({ ...f, minRating: e.target.value }))
                   }
-                  className="w-full rounded-xl border border-white/12 bg-black/30 px-3 py-2 text-[13px] text-white outline-none transition focus:border-cyan-400/40"
+                  className="w-full min-h-11 touch-manipulation rounded-xl border border-white/12 bg-black/30 px-3 py-2 text-[13px] text-white outline-none transition duration-200 focus:border-cyan-400/40 focus:ring-1 focus:ring-cyan-400/12"
                 >
                   <option value="">Any</option>
                   <option value="3">3+</option>
@@ -165,7 +165,7 @@ export default function ResultsToolbar({
                   onChange={(e) =>
                     setFilters((f) => ({ ...f, minTrust: e.target.value }))
                   }
-                  className="w-full rounded-xl border border-white/12 bg-black/30 px-3 py-2 text-[13px] text-white outline-none transition focus:border-cyan-400/40"
+                  className="w-full min-h-11 touch-manipulation rounded-xl border border-white/12 bg-black/30 px-3 py-2 text-[13px] text-white outline-none transition duration-200 focus:border-cyan-400/40 focus:ring-1 focus:ring-cyan-400/12"
                 >
                   <option value="">Any</option>
                   <option value="55">55+</option>

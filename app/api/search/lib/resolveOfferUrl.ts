@@ -67,6 +67,11 @@ function collectCandidateUrls(row: Record<string, unknown>): string[] {
 
   push(row.link);
   push(row.product_link);
+  push(row.merchant_link);
+  push(row.retailer_link);
+  push(row.store_link);
+  push(row.source_link);
+  push(row.direct_link);
 
   const offers = row.offers;
   if (Array.isArray(offers)) {

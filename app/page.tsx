@@ -55,7 +55,7 @@ import { logDevError } from "@/lib/log/devLog";
 import { toCopilotProductBrief } from "@/lib/copilot/mapProduct";
 import type { CopilotSessionPayload } from "@/lib/copilot/sessionTypes";
 import { appendLocalRecentSearch, recordInterestTag } from "@/lib/personalization/localSignals";
-import { HERO_SEARCH_PROMPTS } from "@/lib/search/heroPrompts";
+import { HERO_INPUT_PLACEHOLDERS, HERO_SEARCH_PROMPTS } from "@/lib/search/heroPrompts";
 import { useMobilePerf } from "@/lib/hooks/useMobilePerf";
 import {
   ArrowRight,
@@ -96,6 +96,8 @@ export default function Home() {
   const [searchEntitlements, setSearchEntitlements] = useState<SearchEntitlementsDTO | null>(null);
   const [compareTrayLinks, setCompareTrayLinks] = useState<string[]>([]);
   const bootedSearchFromUrl = useRef(false);
+  const searchAbortRef = useRef<AbortController | null>(null);
+  const [heroPlaceholderIdx, setHeroPlaceholderIdx] = useState(0);
   const { setSession: setCopilotSession } = useCopilotSession();
 
   const savedLinks = useMemo(
@@ -342,6 +344,10 @@ export default function Home() {
       setQuery(overrideQuery);
     }
 
+    searchAbortRef.current?.abort();
+    const ac = new AbortController();
+    searchAbortRef.current = ac;
+
     setResultsKey((k) => k + 1);
     setFilters(defaultResultsFilters());
     trackEvent(QuantAnalyticsEvents.SEARCH_RUN, { queryLength: q.length });
@@ -351,7 +357,7 @@ export default function Home() {
     try {
       const res = await fetch(
         `/api/search?q=${encodeURIComponent(q)}`,
-        { credentials: "same-origin" }
+        { credentials: "same-origin", signal: ac.signal }
       );
       type SearchRoot = {
         success?: boolean;
@@ -374,6 +380,8 @@ export default function Home() {
         root && typeof root === "object" && root.data && typeof root.data === "object"
           ? root.data
           : null;
+
+      if (searchAbortRef.current !== ac) return;
 
       if (res.status === 401) {
         setSearchError(apiErrorText(parsed, "Please sign in to search."));
@@ -429,11 +437,14 @@ export default function Home() {
         trackEvent(QuantAnalyticsEvents.SEARCH_ERROR, { code: "empty" });
       }
     } catch (e) {
+      if (e instanceof DOMException && e.name === "AbortError") return;
       setSearchError("Search failed. Check your connection and try again.");
       logDevError("search", e);
       trackEvent(QuantAnalyticsEvents.SEARCH_ERROR, { code: "exception" });
     } finally {
-      setLoading(false);
+      if (searchAbortRef.current === ac) {
+        setLoading(false);
+      }
     }
   }
 
@@ -448,6 +459,13 @@ export default function Home() {
     };
     window.addEventListener("quantai:try-search", handler);
     return () => window.removeEventListener("quantai:try-search", handler);
+  }, []);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setHeroPlaceholderIdx((i) => (i + 1) % HERO_INPUT_PLACEHOLDERS.length);
+    }, 4800);
+    return () => window.clearInterval(id);
   }, []);
 
   async function saveProduct(product: QuantProduct) {
@@ -614,7 +632,7 @@ export default function Home() {
 
             {/* Search — hero instrument */}
             <div
-              className="cockpit-search-aurora mx-auto mt-14 max-w-3xl motion-safe:animate-[fadeIn_0.75s_ease-out] rounded-[1.5rem] p-px shadow-[0_28px_80px_-40px_rgba(15,23,42,0.85)]"
+              className="cockpit-search-aurora mx-auto mt-14 max-w-3xl motion-safe:animate-[fadeIn_0.75s_ease-out] rounded-[1.5rem] p-px shadow-[0_32px_90px_-44px_rgba(15,23,42,0.88),0_0_64px_-40px_rgba(34,211,238,0.12)]"
               data-loading={loading ? "true" : "false"}
             >
               <div className="cockpit-hero-scanlines relative overflow-hidden rounded-[1.45rem] border border-white/[0.08] bg-[#060b18]/90 px-3.5 py-3.5 sm:p-4 backdrop-blur-[32px]">
@@ -626,7 +644,7 @@ export default function Home() {
                   />
                 )}
                 <div className="relative flex flex-col gap-3.5 sm:flex-row sm:items-stretch sm:gap-3">
-                  <div className="relative flex min-h-[52px] sm:min-h-[56px] flex-1 items-center gap-3 rounded-2xl border border-white/[0.07] bg-black/40 px-3.5 sm:px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-[border-color,box-shadow,transform] duration-300 ease-out motion-safe:focus-within:scale-[1.002] focus-within:border-cyan-400/35 focus-within:shadow-[0_0_0_1px_rgba(34,211,238,0.2),0_0_48px_-20px_rgba(34,211,238,0.14)]">
+                  <div className="relative flex min-h-[52px] sm:min-h-[56px] flex-1 items-center gap-3 rounded-2xl border border-white/[0.07] bg-black/40 px-3.5 sm:px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-[border-color,box-shadow,transform] duration-300 ease-out motion-safe:focus-within:scale-[1.002] focus-within:border-cyan-400/40 focus-within:shadow-[0_0_0_1px_rgba(34,211,238,0.18),0_0_56px_-22px_rgba(34,211,238,0.16)]">
                     <Search
                       className={`size-[1.15rem] shrink-0 sm:size-5 ${loading ? "text-cyan-300/85 motion-reduce:animate-none animate-pulse" : "text-cyan-400/35"}`}
                       strokeWidth={1.5}
@@ -637,7 +655,7 @@ export default function Home() {
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && void search()}
-                      placeholder="Ask the tray — brand, model, budget band, or risk posture…"
+                      placeholder={HERO_INPUT_PLACEHOLDERS[heroPlaceholderIdx] ?? HERO_INPUT_PLACEHOLDERS[0]}
                       autoComplete="off"
                       enterKeyHint="search"
                       className="min-w-0 flex-1 bg-transparent py-3 text-[15px] font-medium leading-snug tracking-tight text-white placeholder:text-slate-500/70 placeholder:font-normal outline-none"
@@ -684,7 +702,7 @@ export default function Home() {
                         type="button"
                         disabled={loading}
                         onClick={() => void search(p)}
-                        className="max-w-[min(88vw,20rem)] shrink-0 snap-start rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-left text-[11px] font-medium leading-snug text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition hover:border-cyan-400/30 hover:bg-white/[0.07] hover:text-slate-100 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-45"
+                        className="max-w-[min(88vw,20rem)] shrink-0 snap-start touch-manipulation rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-left text-[11px] font-medium leading-snug text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 hover:border-cyan-400/30 hover:bg-white/[0.07] hover:text-slate-100 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-45"
                       >
                         {p}
                       </button>

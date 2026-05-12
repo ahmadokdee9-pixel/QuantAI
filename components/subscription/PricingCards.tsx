@@ -62,9 +62,9 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
             key={id}
             className={`relative flex flex-col ${glassCard} p-8 transition duration-500 hover:border-white/15 ${
               isPro
-                ? "border-cyan-400/30 shadow-[0_40px_100px_-40px_rgba(34,211,238,0.22)] ring-1 ring-cyan-400/15 lg:scale-[1.03] lg:z-[1]"
+                ? "border-cyan-400/30 shadow-[0_44px_110px_-48px_rgba(34,211,238,0.28)] ring-1 ring-cyan-400/18 lg:scale-[1.03] lg:z-[1]"
                 : ""
-            } ${isPremium ? "ring-1 ring-white/10" : ""}`}
+            } ${isPremium ? "ring-1 ring-white/10 shadow-[0_36px_90px_-52px_rgba(99,102,241,0.18)]" : ""}`}
           >
             {isPro && (
               <span className="absolute right-6 top-6 rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-950 shadow-[0_0_24px_-4px_rgba(34,211,238,0.5)]">
@@ -76,21 +76,21 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
                 Best for professionals
               </span>
             )}
-            <h3 className="cockpit-display text-lg text-white/95">{plan.name}</h3>
-            <p className="cockpit-body mt-1 text-sm text-slate-500">{plan.tagline}</p>
+            <h3 className="cockpit-display text-lg tracking-tight text-white/95">{plan.name}</h3>
+            <p className="cockpit-body mt-2 text-sm leading-relaxed text-slate-500">{plan.tagline}</p>
             {isPro && (
               <p className="cockpit-body mt-3 rounded-xl border border-cyan-400/18 bg-cyan-500/[0.07] px-3 py-2 text-[11px] leading-relaxed text-cyan-50/90">
                 <span className="font-semibold text-cyan-100">Power Buyer path: </span>
                 unlocks full global intelligence, deeper compare, and the daily headroom serious shoppers need.
               </p>
             )}
-            <p className="mt-8 text-4xl font-semibold tracking-tight text-white/95 tabular-nums">
+            <p className="mt-9 text-4xl font-semibold tracking-tight text-white/95 tabular-nums">
               {plan.monthlyPriceEur == null ? "—" : `€${plan.monthlyPriceEur}`}
               {plan.monthlyPriceEur != null && (
                 <span className="text-base font-medium text-slate-500">/mo</span>
               )}
             </p>
-            <ul className="mt-8 flex-1 space-y-2.5 text-sm text-slate-300">
+            <ul className="mt-9 flex-1 space-y-3 text-sm text-slate-300">
               {plan.highlights.map((h) => (
                 <li key={h} className="flex gap-2">
                   <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-400/20 text-emerald-300">
@@ -160,7 +160,7 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
               </li>
             </ul>
 
-            <div className="mt-8">
+            <div className="mt-10">
               {id === "free" && (
                 <>
                   {isSignedIn && isCurrent ? (

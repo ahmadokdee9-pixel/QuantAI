@@ -1,3 +1,4 @@
+import { listingTextQuality01 } from "@/lib/commerce/listingQuality";
 import { fakeDiscountRisk, dealVerdictFor } from "@/lib/deals/dealAnalysis";
 import type { DealVerdict, FakeDiscountRisk } from "@/lib/deals/types";
 import { scoreDeliverySpeed } from "@/lib/intelligence/deliveryScore";
@@ -161,10 +162,24 @@ function mapToAiVerdict(args: {
   underpriced: boolean;
   isBestTrustedInSet: boolean;
   highConfDisc: boolean;
+  suspiciousDiscountRisk?: number;
 }): QuantAIDealVerdict {
-  const { base, fake, trust, comp, stars, overpriced, underpriced, isBestTrustedInSet, highConfDisc } = args;
+  const {
+    base,
+    fake,
+    trust,
+    comp,
+    stars,
+    overpriced,
+    underpriced,
+    isBestTrustedInSet,
+    highConfDisc,
+    suspiciousDiscountRisk,
+  } = args;
+  const sr = suspiciousDiscountRisk ?? 0;
   if (fake === "high" || (underpriced && fake !== "low")) return "Avoid Fake Sale";
   if (base === "Suspicious discount") return "Suspicious Discount";
+  if (sr >= 68 && trust < 58 && fake !== "low") return "Suspicious Discount";
   if (overpriced && trust >= 76 && comp >= 58) return "Premium Pick";
   if (overpriced || base === "Wait for lower pricing") return "Wait For Better Price";
   if (isBestTrustedInSet && trust >= 70 && fake === "low" && comp >= 64) return "Safe Buy";
@@ -460,7 +475,8 @@ function historicalConfidenceText(lowestInTray: boolean, fake: FakeDiscountRisk,
 function worthBuyingNowSignal(
   verdict: QuantAIDealVerdict,
   goodTime: boolean,
-  waitPricing: boolean
+  waitPricing: boolean,
+  ctx?: { trust: number; suspiciousDiscountRisk: number; fake: FakeDiscountRisk }
 ): WorthBuyingSignal {
   if (
     verdict === "Avoid Fake Sale" ||
@@ -470,6 +486,16 @@ function worthBuyingNowSignal(
     return "wait";
   }
   if (waitPricing && !goodTime) return "wait";
+  if (ctx) {
+    if (ctx.suspiciousDiscountRisk >= 62 && ctx.trust < 64 && ctx.fake !== "low") return "maybe";
+    if (ctx.suspiciousDiscountRisk >= 70 && ctx.trust < 70) return "maybe";
+    if (
+      verdict === "Best Deal Today" &&
+      (ctx.fake !== "low" || ctx.trust < 60 || ctx.suspiciousDiscountRisk >= 55)
+    ) {
+      return "maybe";
+    }
+  }
   if (
     goodTime &&
     (verdict === "Best Deal Today" ||
@@ -508,10 +534,11 @@ function valueOpportunityScore(
   inflatedAnchor: boolean
 ): number {
   const comp = getFinalComposite(p, list);
+  const lq = listingTextQuality01(p.title);
   const vfm = p.qiCommerce?.valueForMoney ?? 52;
   const savings =
     fair > 0 && price > 0 ? Math.min(1, Math.max(-0.25, (fair - price) / fair)) * 55 : 0;
-  let s = 42 + savings + vfm * 0.28 + comp * 0.22;
+  let s = 42 + savings + vfm * 0.28 + comp * 0.22 + (lq - 0.55) * 8;
   if (fake === "high") s -= 28;
   else if (fake === "medium") s -= 14;
   if (p.qiCommerce?.priceAnomaly === "premium_outlier") s -= 10;
@@ -661,6 +688,8 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
   const underpricedAnomaly =
     peerMed > 0 && product.price < peerMed * 0.58 && (disc ?? 0) > 32 && (product.qiCommerce?.priceAnomaly === "suspicious_low" || fake !== "low");
 
+  const suspiciousDiscountRisk = computeSuspiciousDiscountRisk(fake, inflated, underpricedAnomaly);
+
   const provisionalQuality =
     comp * 0.38 +
     trust * 0.22 +
@@ -683,7 +712,6 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
       product.price > 0 &&
       absoluteSavings >= Math.max(12, Math.round(product.price * 0.035)));
 
-  const suspiciousDiscountRisk = computeSuspiciousDiscountRisk(fake, inflated, underpricedAnomaly);
   const retailerIntelligenceScore = retailerIntelligenceScoreCalc(product, trust, del, comp);
   const discountConfidence = computeDiscountConfidence(
     hasDiscount,
@@ -722,7 +750,7 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
   const goodTimeToBuy =
     (base === "Real deal" || base === "Strong value") &&
     fake === "low" &&
-    trust >= 60 &&
+    trust >= ((disc ?? 0) > 28 ? 64 : 60) &&
     !underpricedAnomaly &&
     comp >= 62;
   const waitForBetterPricing =
@@ -772,11 +800,16 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
     underpriced: underpricedAnomaly,
     isBestTrustedInSet: false,
     highConfDisc,
+    suspiciousDiscountRisk,
   });
 
   const timing = timingFromSignals(list, base, fake, goodTimeToBuy, waitForBetterPricing);
 
-  const worthBuyingNow = worthBuyingNowSignal(aiDealVerdict, goodTimeToBuy, waitForBetterPricing);
+  const worthBuyingNow = worthBuyingNowSignal(aiDealVerdict, goodTimeToBuy, waitForBetterPricing, {
+    trust,
+    suspiciousDiscountRisk,
+    fake,
+  });
   const priceMemory: TrayPriceMemory = {
     trayFloorPrice: Math.round(minTrayPrice),
     isAtOrNearTrayFloor: lowestKnownInTray,
@@ -893,8 +926,13 @@ export function buildDealIntelByLink(list: QuantProduct[]): Map<string, ProductD
         (row.discountPct ?? 0) >= 14 &&
         (p.qiCommerce?.confidence ?? 0) >= 68 &&
         getFinalComposite(p, list) >= 70,
+      suspiciousDiscountRisk: row.suspiciousDiscountRisk,
     });
-    const worthNow = worthBuyingNowSignal(ai2, row.goodTimeToBuy, row.waitForBetterPricing);
+    const worthNow = worthBuyingNowSignal(ai2, row.goodTimeToBuy, row.waitForBetterPricing, {
+      trust: getStoreTrustScore(p.store),
+      suspiciousDiscountRisk: row.suspiciousDiscountRisk,
+      fake: row.fakeDiscountRisk,
+    });
     m.set(p.link, { ...row, isBestTrustedDealInSet: isBestTrusted, aiDealVerdict: ai2, worthBuyingNow: worthNow });
   }
 
@@ -914,6 +952,7 @@ export function buildDealIntelByLink(list: QuantProduct[]): Map<string, ProductD
   }
   if (bestDiscLink != null && bestTad >= 26) {
     const row = m.get(bestDiscLink)!;
+    const winner = list.find((x) => x.link === bestDiscLink);
     const merged: LiveShelfLabel[] = [
       "Best Discount Today",
       ...row.shelfLabels.filter((l) => l !== "Best Discount Today" && l !== "Weak Discount"),
@@ -922,7 +961,11 @@ export function buildDealIntelByLink(list: QuantProduct[]): Map<string, ProductD
       bestTad >= 38 && (row.aiDealVerdict === "Strong Buy" || row.aiDealVerdict === "Trusted Discount")
         ? "Best Deal Today"
         : row.aiDealVerdict;
-    const worthB = worthBuyingNowSignal(bumpedVerdict, row.goodTimeToBuy, row.waitForBetterPricing);
+    const worthB = worthBuyingNowSignal(bumpedVerdict, row.goodTimeToBuy, row.waitForBetterPricing, {
+      trust: winner ? getStoreTrustScore(winner.store) : 50,
+      suspiciousDiscountRisk: row.suspiciousDiscountRisk,
+      fake: row.fakeDiscountRisk,
+    });
     m.set(bestDiscLink, {
       ...row,
       shelfLabels: [...new Set(merged)].slice(0, 4),

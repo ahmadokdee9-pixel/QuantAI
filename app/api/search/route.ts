@@ -1,4 +1,5 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { unstable_cache } from "next/cache";
 import { NextResponse } from "next/server";
 import { enrichProductsWithIntelligence } from "@/lib/intelligence/enrichProducts";
 import type { SearchCommerceAIMeta } from "@/lib/intelligence/commerceAnalysisTypes";
@@ -20,7 +21,43 @@ import type { DealClusterDTO } from "@/lib/deals/types";
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
 import type { SearchEntitlementsDTO } from "@/lib/subscription/entitlements";
 import type { QuantProduct } from "@/lib/shoppingScore";
-import { fetchShoppingProducts } from "./lib/fetchShopping";
+import { fetchShoppingProductsDeduped } from "./lib/fetchShoppingDeduped";
+
+const SEARCH_UPSTREAM_PREFIX = "__SEARCH_UPSTREAM__:";
+
+async function runSearchPipeline(query: string): Promise<{
+  products: QuantProduct[];
+  dealClusters: DealClusterDTO[];
+  searchIntelligence: SearchIntelligenceDTO | null;
+  commerceMeta: SearchCommerceAIMeta;
+}> {
+  const result = await fetchShoppingProductsDeduped(query);
+  if (!result.ok) {
+    const status =
+      result.status >= 400 && result.status < 600 ? result.status : 502;
+    throw new Error(
+      `${SEARCH_UPSTREAM_PREFIX}${status}:${result.error || "Search upstream failed."}`
+    );
+  }
+  let products = enrichProductsWithIntelligence(result.products, query);
+  const layered = await attachCommerceAiLayer(products, query);
+  products = layered.products;
+  const dealClusters = buildDealClusters(products);
+  const searchIntelligence = buildSearchIntelligence(query, products, dealClusters);
+  return {
+    products,
+    dealClusters,
+    searchIntelligence,
+    commerceMeta: layered.commerceMeta,
+  };
+}
+
+/** Cross-request tray cache (short TTL) — pairs with in-flight dedupe in `fetchShoppingProductsDeduped`. */
+const getCachedSearchPipeline = unstable_cache(
+  async (query: string) => runSearchPipeline(query),
+  ["quantai-search-pipeline-v2"],
+  { revalidate: 50 }
+);
 
 type SearchDataPayload = {
   products: QuantProduct[];
@@ -102,47 +139,31 @@ async function handleSearch(q: string | null | undefined): Promise<NextResponse>
       }
     }
 
-    const result = await fetchShoppingProducts(query);
-    if (!result.ok) {
-      const status =
-        result.status >= 400 && result.status < 600 ? result.status : 502;
-      return fail(status, "SEARCH_FAILED", result.error || "Search upstream failed.");
-    }
-
     let products: QuantProduct[];
-    try {
-      products = enrichProductsWithIntelligence(result.products, query);
-    } catch (e) {
-      return fail(
-        500,
-        "SEARCH_FAILED",
-        e instanceof Error ? e.message : "Search processing failed."
-      );
-    }
-
-    let commerceMeta: SearchCommerceAIMeta;
-    try {
-      const layered = await attachCommerceAiLayer(products, query);
-      products = layered.products;
-      commerceMeta = layered.commerceMeta;
-    } catch (e) {
-      return fail(
-        500,
-        "SEARCH_FAILED",
-        e instanceof Error ? e.message : "Commerce analysis failed."
-      );
-    }
-
     let dealClusters: DealClusterDTO[];
     let searchIntelligence: SearchIntelligenceDTO | null;
+    let commerceMeta: SearchCommerceAIMeta;
     try {
-      dealClusters = buildDealClusters(products);
-      searchIntelligence = buildSearchIntelligence(query, products, dealClusters);
+      const tray = await getCachedSearchPipeline(query);
+      products = tray.products;
+      dealClusters = tray.dealClusters;
+      searchIntelligence = tray.searchIntelligence;
+      commerceMeta = tray.commerceMeta;
     } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      if (msg.startsWith(SEARCH_UPSTREAM_PREFIX)) {
+        const rest = msg.slice(SEARCH_UPSTREAM_PREFIX.length);
+        const colon = rest.indexOf(":");
+        const statusRaw = colon >= 0 ? rest.slice(0, colon) : rest;
+        const status = Number.parseInt(statusRaw, 10);
+        const message = colon >= 0 ? rest.slice(colon + 1) : "Search upstream failed.";
+        const httpStatus = Number.isFinite(status) && status >= 400 && status < 600 ? status : 502;
+        return fail(httpStatus, "SEARCH_FAILED", message || "Search upstream failed.");
+      }
       return fail(
         500,
         "SEARCH_FAILED",
-        e instanceof Error ? e.message : "Search intelligence failed."
+        e instanceof Error ? e.message : "Search could not complete."
       );
     }
 
@@ -160,7 +181,7 @@ async function handleSearch(q: string | null | undefined): Promise<NextResponse>
       entitlements: entitlementsForTier(tier),
       meta: {
         category: topCategory,
-        intelligenceVersion: 4,
+        intelligenceVersion: 5,
         commerceAI: commerceMeta,
         commerceAiEngine: resolveCommerceAiEngine(),
       },

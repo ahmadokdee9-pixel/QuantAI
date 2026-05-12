@@ -1,9 +1,12 @@
+import { listingTextQuality01 } from "@/lib/commerce/listingQuality";
 import { getStoreTrustScore, getTrustRankPercentile } from "@/lib/retailTrust";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { ratingValue } from "@/lib/shoppingScore";
 import { getCategoryWeights, inferProductCategory } from "./categoryContext";
 import { scoreDeliverySpeed } from "./deliveryScore";
 import { queryListingRelevance01 } from "./queryRelevance";
+import type { CommerceSearchIntents } from "./searchIntentV2";
+import { intentCompositeLift, parseCommerceSearchIntents } from "./searchIntentV2";
 import type { IntelligenceSignals, ListStats, ProductCategorySlug } from "./types";
 
 function clamp01(n: number): number {
@@ -50,10 +53,20 @@ function reviewDepthScore(reviews: number | null, maxReviews: number): number {
   return clamp01(log);
 }
 
-function discountQualityScore(price: number, oldPrice: number | null): number {
+function discountQualityScore(
+  price: number,
+  oldPrice: number | null,
+  trust: number,
+  listingQuality01: number
+): number {
   if (oldPrice == null || oldPrice <= price || price <= 0) return 0.35;
   const pct = (oldPrice - price) / oldPrice;
-  return clamp01(pct / 0.35);
+  let base = clamp01(pct / 0.35);
+  if (pct >= 0.42 && trust < 62) base *= 0.52;
+  if (pct >= 0.52 && trust < 72) base *= 0.68;
+  if (pct >= 0.58 && trust < 82) base *= 0.82;
+  base *= 0.78 + listingQuality01 * 0.35;
+  return clamp01(base);
 }
 
 function pricePerformanceScore(
@@ -86,8 +99,10 @@ export function scoreProductEngine(
   p: QuantProduct,
   searchQuery: string,
   stats: ListStats,
-  listMaxValueRaw: number
+  listMaxValueRaw: number,
+  intents?: CommerceSearchIntents
 ): EngineResult {
+  const intentsResolved = intents ?? parseCommerceSearchIntents(searchQuery);
   const category = inferProductCategory(searchQuery, p.title);
   const w = getCategoryWeights(category);
   const rating = ratingValue(p.rating);
@@ -95,6 +110,7 @@ export function scoreProductEngine(
   const trust = getStoreTrustScore(p.store);
   const trustNorm = clamp01(trust / 100);
   const trustRank = getTrustRankPercentile(p.store) / 100;
+  const listingQ = listingTextQuality01(p.title);
 
   const queryRel = queryListingRelevance01(searchQuery, p);
   const categoryFitBase = category === "general" ? 0.45 : 0.85;
@@ -103,7 +119,7 @@ export function scoreProductEngine(
   const priceFit = priceFitScore(p.price, stats);
   const reviewDepth = reviewDepthScore(p.reviewsCount, stats.maxReviews);
   const delivery = scoreDeliverySpeed(p.shipping);
-  const discount = discountQualityScore(p.price, p.oldPrice);
+  const discount = discountQualityScore(p.price, p.oldPrice, trust, listingQ);
   const { norm: valueNorm } = pricePerformanceScore(
     p.price,
     rating,
@@ -121,7 +137,14 @@ export function scoreProductEngine(
     w.pricePerformance * valueNorm +
     w.discountQuality * discount;
 
-  const composite01 = clamp01(weighted * 0.91 + categoryFitBlend * 0.09);
+  const medianHint =
+    stats.medianPrice > 0 && p.price > 0
+      ? (stats.medianPrice - p.price) / stats.medianPrice
+      : undefined;
+  const intentLift = intentCompositeLift(intentsResolved, category, trustNorm, medianHint);
+  const listingFit = clamp01(0.52 + (listingQ - 0.5) * 0.22);
+
+  const composite01 = clamp01(weighted * 0.86 + categoryFitBlend * 0.085 + listingFit * 0.035 + intentLift);
 
   const composite = Math.min(100, Math.round(composite01 * 100));
 

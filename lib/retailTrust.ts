@@ -8,9 +8,8 @@ export const TRUSTED_SUBSTRINGS = [
   "ebay",
   "walmart",
   "best buy",
+  "bestbuy",
   "target",
-  "aliexpress",
-  "temu",
   "newegg",
   "b&h",
   "bh photo",
@@ -49,6 +48,9 @@ export const TRUSTED_SUBSTRINGS = [
   "argos",
   "home depot",
   "lowe",
+  "decathlon",
+  "alternate",
+  "alternate.de",
 ] as const;
 
 /** Tier 1 — flagship omnichannel / first-party stores with strong buyer protections. */
@@ -67,6 +69,7 @@ const TIER1 = new Set(
     "microsoft",
     "samsung",
     "best buy",
+    "bestbuy",
     "walmart",
     "target",
     "costco",
@@ -96,6 +99,10 @@ const TIER1 = new Set(
     "carrefour",
     "otto",
     "back market",
+    "ikea",
+    "decathlon",
+    "alternate",
+    "alternate.de",
   ].map((x) => x.toLowerCase())
 );
 
@@ -104,7 +111,6 @@ const TIER2 = new Set(
     "ebay",
     "etsy",
     "rakuten",
-    "ikea",
     "wayfair",
     "home depot",
     "lowe",
@@ -113,14 +119,16 @@ const TIER2 = new Set(
     "darty",
     "boulanger",
     "asos",
-    "aliexpress",
-    "temu",
   ].map((x) => x.toLowerCase())
 );
+
+/** Domains / names treated as high-variance marketplaces — down-ranked vs first-party retail. */
+const LOW_TRUST_MARKETPLACE = /temu|aliexpress|wish\.com|dhgate|banggood|geekbuying|lightinthebox|tomtop/i;
 
 export function getStoreTrustScore(store: string): number {
   const s = store.toLowerCase().trim();
   if (!s) return TIER4_SCORE;
+  if (LOW_TRUST_MARKETPLACE.test(s)) return 36;
   for (const t of TIER1) {
     if (s.includes(t)) return TIER1_SCORE;
   }
@@ -152,9 +160,17 @@ export function getTrustTierLabel(store: string): "elite" | "strong" | "standard
  * Marketplace / third-party variance risk (not the same as trust score).
  * High = more diligence on seller identity, warranty, and returns.
  */
-export function getMarketplaceSellerRiskTier(store: string): "low" | "medium" | "high" {
+export function getMarketplaceSellerRiskTier(store: string, listingTitle?: string): "low" | "medium" | "high" {
   const s = store.toLowerCase();
-  if (/temu|aliexpress|wish\.com|dhgate|banggood|geekbuying/i.test(s)) return "high";
+  const title = (listingTitle ?? "").toLowerCase();
+  if (
+    /replica|oem only|not actual (item|product)|stock photo|random color|assorted|read desc|for parts|as.is|no warranty|exact item not shown/i.test(
+      title
+    )
+  ) {
+    return "high";
+  }
+  if (/temu|aliexpress|wish\.com|dhgate|banggood|geekbuying|lightinthebox|tomtop/i.test(s)) return "high";
   if (/ebay|etsy|facebook marketplace|rakuten marketplace|amazon marketplace/i.test(s)) return "medium";
   return "low";
 }
@@ -162,7 +178,7 @@ export function getMarketplaceSellerRiskTier(store: string): "low" | "medium" | 
 /** Coarse geo signal from store naming (no IP geolocation). */
 export function inferStoreRegionHint(store: string): "us" | "eu" | "uk" | "me" | "asia" | "unknown" {
   const s = store.toLowerCase();
-  if (/\.(nl|de|fr|be|es|it|pl|se|dk|at|ch)\b|coolblue|bol\.|mediamarkt|fnac|zalando|otto|carrefour/i.test(s)) {
+  if (/\.(nl|de|fr|be|es|it|pl|se|dk|at|ch)\b|coolblue|bol\.|mediamarkt|fnac|zalando|otto|carrefour|decathlon|alternate/i.test(s)) {
     return "eu";
   }
   if (/\.co\.uk|john lewis|argos|currys/i.test(s)) return "uk";

@@ -2,6 +2,10 @@ import {
   computePriceTrend,
   type QuantProduct,
 } from "@/lib/shoppingScore";
+import {
+  isSpammyListingTitle,
+  normalizeMarketplaceTitle,
+} from "@/lib/commerce/listingQuality";
 import { resolveShoppingListingLink } from "./resolveOfferUrl";
 
 function extractNumberFromPrice(val: unknown): number | null {
@@ -62,9 +66,10 @@ export async function fetchShoppingProducts(
       return { ok: false, error: "Search is temporarily unavailable", status: 503 };
     }
 
+    const gl = (process.env.SERPAPI_SHOPPING_GL ?? "nl").trim().slice(0, 4) || "nl";
     const url = `https://serpapi.com/search.json?engine=google_shopping&q=${encodeURIComponent(
       trimmed
-    )}&gl=nl&hl=en&api_key=${process.env.SERPAPI_KEY}`;
+    )}&gl=${encodeURIComponent(gl)}&hl=en&api_key=${process.env.SERPAPI_KEY}`;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25_000);
@@ -107,9 +112,12 @@ export async function fetchShoppingProducts(
       const extensions = parseExtensions(row);
       const link = resolveShoppingListingLink(row);
 
+      const rawTitle = String(row.title || "Unknown product");
+      const title = normalizeMarketplaceTitle(rawTitle);
+
       return {
         id: index + 1,
-        title: String(row.title || "Unknown product"),
+        title,
         store: String(row.source || row.store || "Unknown store"),
         price,
         displayPrice: String(row.price || ""),
@@ -129,6 +137,7 @@ export async function fetchShoppingProducts(
       .filter((p) => {
         const title = p.title.toLowerCase();
         if (title === "unknown product" || title.length < 3) return false;
+        if (isSpammyListingTitle(p.title)) return false;
         if (p.store.toLowerCase() === "unknown store") return false;
         if (p.price <= 0 && !String(p.displayPrice || "").trim()) return false;
         if (p.link === "#" || p.link.length < 8) return false;

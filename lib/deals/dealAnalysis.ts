@@ -1,3 +1,4 @@
+import { listingTextQuality01 } from "@/lib/commerce/listingQuality";
 import { scoreDeliverySpeed } from "@/lib/intelligence/deliveryScore";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getFinalComposite, getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
@@ -95,16 +96,20 @@ export function fakeDiscountRisk(
   const trust = getStoreTrustScore(p.store);
   const depth = reviewDepth01(p, maxReviews);
   const outlier = priceOutlierFactor(p, listings);
+  const lq = listingTextQuality01(p.title);
 
   const inflated = p.oldPrice != null && peerMed > 0 && p.oldPrice > peerMed * 1.38;
   const extreme = discount > 58;
   const weakTrust = trust < 54;
   const thinReviews = depth < 0.22 && (p.reviewsCount ?? 0) < 18;
   const tooSteepVsPeers = peerMed > 0 && p.price < peerMed * 0.58 && discount > 38;
+  const noisyTitleSteepDisc = discount > 36 && lq < 0.34 && trust < 62;
 
   if (inflated && extreme) return "high";
   if (tooSteepVsPeers && (thinReviews || weakTrust)) return "high";
+  if (noisyTitleSteepDisc && (inflated || thinReviews)) return "high";
   if (inflated || extreme || (discount > 42 && weakTrust && thinReviews)) return "medium";
+  if (noisyTitleSteepDisc) return "medium";
   if (discount > 48 && outlier > 1.1 && thinReviews) return "medium";
   return "low";
 }
@@ -513,7 +518,7 @@ export function analyzeDealCluster(id: string, listings: QuantProduct[]): DealCl
     const dataGaps = listingDataGaps(p);
     const tg = tooGoodToBeTrue(p, listings, disc, maxReviews);
     const dq = dealQualityScore(p, listings, fake, verdict, fair, spreadPct, blend, returnHint);
-    const mkt = getMarketplaceSellerRiskTier(p.store);
+    const mkt = getMarketplaceSellerRiskTier(p.store, p.title);
     const buyVsWait = buyVsWaitFor(
       p,
       listings,

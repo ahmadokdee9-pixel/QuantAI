@@ -7,6 +7,7 @@ import {
   computeListStats,
   scoreProductEngine,
 } from "./scoringEngine";
+import { parseCommerceSearchIntents } from "./searchIntentV2";
 
 export function enrichProductsWithIntelligence(
   products: QuantProduct[],
@@ -15,9 +16,10 @@ export function enrichProductsWithIntelligence(
   if (products.length === 0) return [];
   const stats = computeListStats(products);
   const listMaxValueRaw = computeListMaxValueRaw(products);
+  const intents = parseCommerceSearchIntents(searchQuery);
 
   const scored = products.map((p) => {
-    const engine = scoreProductEngine(p, searchQuery, stats, listMaxValueRaw);
+    const engine = scoreProductEngine(p, searchQuery, stats, listMaxValueRaw, intents);
     const reason = buildScoreReasoning(p, products, stats, engine.signals, engine.category);
     const trend = simulatePriceTrend(p, stats);
     const qiVerdict = getAdaptiveVerdict(p, products, stats, engine.signals);

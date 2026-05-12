@@ -1,10 +1,13 @@
 import type { QuantProduct } from "@/lib/shoppingScore";
+import { listingTextQuality01 } from "@/lib/commerce/listingQuality";
 import {
   getFinalComposite,
   getStoreTrustScore,
   ratingValue,
 } from "@/lib/shoppingScore";
 import { queryListingRelevance01 } from "@/lib/intelligence/queryRelevance";
+import { intentCompositeLift, parseCommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
+import type { ProductCategorySlug } from "@/lib/intelligence/types";
 
 export type PurchaseIntent =
   | "neutral"
@@ -126,19 +129,31 @@ function anchorInflationPenalty(p: QuantProduct): number {
 }
 
 export function purchaseIntentFromQuery(q: string): PurchaseIntent {
+  const intents = parseCommerceSearchIntents(q);
   const s = q.toLowerCase();
   if (
+    /\b(fast\s+shipping|overnight|next\s+day|two.day|2.day|quick\s+delivery|arrive\s+fast)\b/.test(s)
+  ) {
+    return "fast";
+  }
+  if (
+    intents.budget ||
     /\b(cheap|budget|affordable|lowest|under\s+(\$|€|£)|save\s+money|discount|clearance|bargain)\b/.test(s)
   ) {
     return "budget";
   }
-  if (/\b(premium|luxury|flagship|best\s+quality|pro\s+model|top\s+tier|high.end)\b/.test(s)) {
+  if (
+    intents.premium ||
+    intents.luxury ||
+    /\b(premium|luxury|flagship|best\s+quality|pro\s+model|top\s+tier|high.end)\b/.test(s)
+  ) {
     return "premium";
   }
-  if (/\b(fast\s+shipping|overnight|next\s+day|two.day|2.day|quick\s+delivery|arrive\s+fast)\b/.test(s)) {
-    return "fast";
-  }
-  if (/\b(best\s+value|bang\s+for|worth\s+it|value\s+pick|price.to.quality)\b/.test(s)) {
+  if (
+    /\b(best\s+value|bang\s+for|worth\s+it|value\s+pick|price.to.quality)\b/.test(s) ||
+    intents.productivity ||
+    intents.gaming
+  ) {
     return "value";
   }
   return "neutral";
@@ -186,6 +201,7 @@ function intentCompositeDelta(
  */
 export function sortByCompositeRankEnhanced(list: QuantProduct[], query: string): QuantProduct[] {
   if (list.length === 0) return list;
+  const intents = parseCommerceSearchIntents(query);
   const intent = purchaseIntentFromQuery(query);
   const prices = list.map((x) => x.price).filter((n) => n > 0).sort((a, b) => a - b);
   const medianPrice = prices[Math.floor(prices.length / 2)] ?? 0;
@@ -205,6 +221,11 @@ export function sortByCompositeRankEnhanced(list: QuantProduct[], query: string)
     c += trust >= 78 ? 1.8 : trust < 46 ? -2.6 : 0;
     c += del >= 72 ? 1.2 : del < 44 ? -1.1 : 0;
     c += intentCompositeDelta(p, list, intent, medianPrice);
+    const priceVsMedian =
+      medianPrice > 0 && p.price > 0 ? (medianPrice - p.price) / medianPrice : undefined;
+    const cat = (p.qiCategory ?? "general") as ProductCategorySlug;
+    c += intentCompositeLift(intents, cat, trust / 100, priceVsMedian) * 92;
+    c += (listingTextQuality01(p.title) - 0.55) * 5.8;
     c += (queryListingRelevance01(query, p) - 0.5) * 10;
     return c;
   };
