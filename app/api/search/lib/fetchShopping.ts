@@ -2,6 +2,7 @@ import {
   computePriceTrend,
   type QuantProduct,
 } from "@/lib/shoppingScore";
+import { resolveShoppingListingLink } from "./resolveOfferUrl";
 
 function extractNumberFromPrice(val: unknown): number | null {
   if (val == null) return null;
@@ -97,13 +98,14 @@ export async function fetchShoppingProducts(
     }
 
     const raw = (data.shopping_results as unknown[]) || [];
-    const products: ShoppingProduct[] = raw.slice(0, 20).map((item: unknown, index: number) => {
+    const mapped = raw.slice(0, 28).map((item: unknown, index: number) => {
       const row = item as Record<string, unknown>;
       const price = Number(row.extracted_price) || 0;
       const oldRaw =
         row.extracted_old_price ?? row.old_price_extracted ?? row.old_price;
       const oldPrice = extractNumberFromPrice(oldRaw);
       const extensions = parseExtensions(row);
+      const link = resolveShoppingListingLink(row);
 
       return {
         id: index + 1,
@@ -112,7 +114,7 @@ export async function fetchShoppingProducts(
         price,
         displayPrice: String(row.price || ""),
         rating: (row.rating as number | string) ?? "N/A",
-        link: String(row.link || row.product_link || "#"),
+        link,
         image: String(row.thumbnail || ""),
         reviewsCount: parseReviews(row),
         shipping: parseShipping(row),
@@ -122,6 +124,17 @@ export async function fetchShoppingProducts(
         extensions,
       };
     });
+
+    const products: ShoppingProduct[] = mapped
+      .filter((p) => {
+        const title = p.title.toLowerCase();
+        if (title === "unknown product" || title.length < 3) return false;
+        if (p.store.toLowerCase() === "unknown store") return false;
+        if (p.price <= 0 && !String(p.displayPrice || "").trim()) return false;
+        if (p.link === "#" || p.link.length < 8) return false;
+        return true;
+      })
+      .map((p, i) => ({ ...p, id: i + 1 }));
 
     return { ok: true, products };
   } catch {

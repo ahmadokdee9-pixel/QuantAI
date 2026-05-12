@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useId, useMemo, useState } from "react";
+import { memo, useEffect, useId, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowDownRight,
@@ -36,6 +36,7 @@ import {
 } from "@/lib/commerce/cues";
 import { buildProductSnapshot, copyText } from "@/lib/share/intelligenceExport";
 import { recordViewedProductLink } from "@/lib/personalization/localSignals";
+import { isValidHttpOfferUrl } from "@/lib/commerce/offerClick";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import {
   getProfessionalBadge,
@@ -298,12 +299,22 @@ type Props = {
   dealIntel?: ProductDealIntelligence;
   /** Mobile / touch: skip magnetic tilt and heavy hover motion. */
   lowPower?: boolean;
+  /** Above-the-fold images request high fetch priority. */
+  imagePriority?: "high" | "low";
 };
 
 const btnRow =
   "min-h-[2.75rem] shrink-0 rounded-full text-[11px] font-semibold tracking-tight transition-transform duration-300 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400/40";
 
-function CardProductImage({ src, reduceMotion }: { src: string; reduceMotion: boolean | null }) {
+function CardProductImage({
+  src,
+  reduceMotion,
+  fetchPriority,
+}: {
+  src: string;
+  reduceMotion: boolean | null;
+  fetchPriority: "high" | "low";
+}) {
   const [loaded, setLoaded] = useState(false);
   const [err, setErr] = useState(false);
   if (err) {
@@ -325,8 +336,9 @@ function CardProductImage({ src, reduceMotion }: { src: string; reduceMotion: bo
       <motion.img
         src={src}
         alt=""
-        loading="lazy"
+        loading={fetchPriority === "high" ? "eager" : "lazy"}
         decoding="async"
+        fetchPriority={fetchPriority}
         onLoad={() => setLoaded(true)}
         onError={() => setErr(true)}
         className="relative z-[2] mx-auto h-full w-full max-h-[8.85rem] object-contain object-center p-3 drop-shadow-[0_16px_32px_rgba(0,0,0,0.42)]"
@@ -354,12 +366,31 @@ function ProductResultCard({
   onOpenIntelligence,
   dealIntel: dealIntelProp,
   lowPower = false,
+  imagePriority = "low",
 }: Props) {
   const reduceMotion = useReducedMotion();
   const lite = reduceMotion || lowPower;
   const ringGradId = useId().replace(/:/g, "");
   const [intelOpen, setIntelOpen] = useState(false);
+  const [intelBodyReady, setIntelBodyReady] = useState(false);
   const [cardCopyFlash, setCardCopyFlash] = useState(false);
+
+  useEffect(() => {
+    if (!intelOpen) return;
+    const id = window.requestAnimationFrame(() => setIntelBodyReady(true));
+    return () => window.cancelAnimationFrame(id);
+  }, [intelOpen]);
+
+  const toggleIntelOpen = () => {
+    setIntelOpen((prev) => {
+      if (!prev) {
+        setIntelBodyReady(false);
+      } else {
+        queueMicrotask(() => setIntelBodyReady(false));
+      }
+      return !prev;
+    });
+  };
   const ai = calculateAIScore(p, list);
   const score = p.qiComposite != null && Number.isFinite(p.qiComposite) ? p.qiComposite : ai.score;
   const scoreNorm = Math.min(100, Math.max(0, Number(score) || 0));
@@ -418,14 +449,16 @@ function ProductResultCard({
               }
         }
         className={`qi-product-card-shell group relative flex h-full min-w-0 flex-col overflow-hidden rounded-[1.55rem] p-px transition-[background,box-shadow] duration-700 ease-out ${
+          lite ? "" : "will-change-transform [transform:translateZ(0)]"
+        } ${
           scoreNorm >= 78
             ? "bg-gradient-to-br from-cyan-400/14 via-white/[0.08] to-violet-500/12"
             : "bg-gradient-to-br from-white/[0.1] via-cyan-400/6 to-violet-500/10"
         }`}
       >
-        <div className="qi-product-card-inner relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.48rem] border border-white/[0.07] bg-gradient-to-b from-white/[0.08] via-white/[0.03] to-[#040912]/98 backdrop-blur-2xl transition-[border-color,box-shadow,transform] duration-700 ease-out group-hover:border-cyan-400/22 group-hover:shadow-[0_0_0_1px_rgba(34,211,238,0.07),0_22px_48px_-30px_rgba(34,211,238,0.16)]">
-          <div className="pointer-events-none absolute -right-20 -top-20 size-48 rounded-full bg-cyan-400/8 blur-3xl opacity-0 transition duration-700 group-hover:opacity-100" />
-          <div className="pointer-events-none absolute -bottom-24 -left-16 size-44 rounded-full bg-violet-500/8 blur-3xl opacity-0 transition duration-700 group-hover:opacity-45" />
+        <div className="qi-product-card-inner relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.48rem] border border-white/[0.07] bg-gradient-to-b from-white/[0.08] via-white/[0.03] to-[#040912]/98 backdrop-blur-2xl transition-[border-color,box-shadow,transform] duration-700 ease-out group-hover:border-cyan-400/26 group-hover:shadow-[0_0_0_1px_rgba(34,211,238,0.08),0_24px_52px_-28px_rgba(34,211,238,0.18)]">
+          <div className="pointer-events-none absolute -right-20 -top-20 size-48 rounded-full bg-cyan-400/8 blur-3xl opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-100" />
+          <div className="pointer-events-none absolute -bottom-24 -left-16 size-44 rounded-full bg-violet-500/8 blur-3xl opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-45" />
 
           <div className="relative z-[2] flex justify-end px-4 pt-3 sm:px-5 sm:pt-4">
             <button
@@ -445,7 +478,12 @@ function ProductResultCard({
 
           <div className="relative z-[2] mx-4 mt-3 min-w-0 sm:mx-5">
             {p.image ? (
-              <CardProductImage key={`${p.link}-${p.image}`} src={p.image} reduceMotion={lite} />
+              <CardProductImage
+                key={`${p.link}-${p.image}`}
+                src={p.image}
+                reduceMotion={lite}
+                fetchPriority={imagePriority}
+              />
             ) : (
               <div
                 className="flex aspect-[4/3] max-h-[9.25rem] min-h-[7.1rem] w-full flex-col items-center justify-center gap-2 rounded-[1.05rem] border border-dashed border-white/[0.12] bg-gradient-to-br from-slate-900/80 via-[#0a1220]/95 to-slate-900/90 text-center"
@@ -572,44 +610,6 @@ function ProductResultCard({
               </span>
             </div>
 
-            <div className="mt-3">
-              <div className="flex items-center justify-between gap-2 text-[10px] font-medium text-slate-400">
-                <span>Deal strength</span>
-                <span className="tabular-nums text-slate-300">{deal.dealStrength}/100</span>
-              </div>
-              <div
-                className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-black/50"
-                role="progressbar"
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={deal.dealStrength}
-                aria-label="Deal strength score"
-              >
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-cyan-400/85 to-emerald-400/75 transition-[width] duration-700 ease-out"
-                  style={{ width: `${deal.dealStrength}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="mt-2.5 min-h-[1.25rem] text-[11px] text-slate-500">
-              {deal.hasDiscount && deal.absoluteSavings != null && deal.absoluteSavings > 0 ? (
-                <span>
-                  Save{" "}
-                  <span className="font-semibold tabular-nums text-slate-200/95">
-                    {formatListingPrice(deal.absoluteSavings, sym)}
-                  </span>{" "}
-                  vs anchor
-                </span>
-              ) : deal.savingsVsFair != null && deal.savingsVsFair > 0 ? (
-                <span>~{formatListingPrice(deal.savingsVsFair, sym)} under tray median</span>
-              ) : (
-                <span className="text-slate-600">
-                  {deal.hasDiscount ? "No anchor savings in feed" : "Value-led · no headline discount"}
-                </span>
-              )}
-            </div>
-
             <div className="mt-3 flex min-w-0 flex-wrap gap-1.5">
               {scanBadges.map((b) => (
                 <span
@@ -630,63 +630,9 @@ function ProductResultCard({
 
             <p className={`mt-1.5 text-[11px] font-semibold leading-snug ${worthLine.cls}`}>{worthShort}</p>
 
-            <div className="mt-4 flex min-w-0 items-center gap-2 border-t border-white/[0.06] pt-3">
-              <span
-                className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-1 text-[9px] font-bold uppercase tracking-[0.06em] ${stanceUi.border} ${stanceUi.bg} ${stanceUi.text}`}
-              >
-                <StanceIcon className="size-3 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
-                {buyDecision.stanceLabel}
-              </span>
-            </div>
-
-            <div className="mt-3 flex min-w-0 flex-wrap gap-1.5 text-[9px] font-medium leading-tight sm:text-[10px]">
-              <span
-                className="rounded-full border border-white/[0.08] bg-black/25 px-2 py-0.5 tabular-nums text-slate-400/95"
-                title="Heuristic delivery confidence"
-              >
-                Del · {delPct}%
-              </span>
-              <span
-                className="rounded-full border border-white/[0.08] bg-black/25 px-2 py-0.5 tabular-nums text-slate-400/95"
-                title="Availability confidence"
-              >
-                Stock · {stockPct}%
-              </span>
-              <span
-                className={`max-w-[min(100%,10rem)] truncate rounded-full border border-white/[0.08] bg-black/22 px-2 py-0.5 sm:max-w-[12rem] ${mkt.tone === "high" ? "text-emerald-200/75" : mkt.tone === "mid" ? "text-cyan-200/70" : "text-amber-200/75"}`}
-              >
-                {mkt.label}
-              </span>
-              {ratingValue(p.rating) > 0 ? (
-                <span className="inline-flex max-w-[min(100%,9rem)] items-center gap-0.5 truncate rounded-full border border-white/[0.08] bg-black/25 px-2 py-0.5 text-slate-400/95">
-                  <Star className="size-2.5 shrink-0 text-amber-200/55" strokeWidth={1.5} aria-hidden />
-                  {ratingValue(p.rating).toFixed(1)}
-                  {p.reviewsCount != null && (
-                    <span className="text-slate-500/85">
-                      ({p.reviewsCount > 999 ? `${(p.reviewsCount / 1000).toFixed(1)}k` : p.reviewsCount.toLocaleString()})
-                    </span>
-                  )}
-                </span>
-              ) : (
-                shipEst && (
-                  <span className="inline-flex max-w-[min(100%,9rem)] items-center gap-0.5 truncate rounded-full border border-white/[0.08] bg-black/22 px-2 py-0.5 text-slate-500/90">
-                    <Truck className="size-2.5 shrink-0 opacity-70" strokeWidth={1.5} aria-hidden />
-                    {shipEst}
-                  </span>
-                )
-              )}
-            </div>
-
-            <div className="mt-3 min-w-0 rounded-xl border border-white/[0.06] bg-black/22 px-3 py-2 sm:py-2.5">
-              <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-cyan-200/70">QuantAI read</p>
-              <p className="cockpit-body mt-1 text-[11px] font-medium leading-snug text-slate-100/95 line-clamp-2 [overflow-wrap:anywhere]">
-                {buyDecision.headlineVerdict}
-              </p>
-            </div>
-
             <button
               type="button"
-              onClick={() => setIntelOpen((o) => !o)}
+              onClick={toggleIntelOpen}
               className="mt-4 flex w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-white/[0.07] bg-black/28 px-3 py-2.5 text-left transition hover:border-white/[0.12] hover:bg-white/[0.04]"
               aria-expanded={intelOpen}
             >
@@ -708,7 +654,99 @@ function ProductResultCard({
                   transition={{ duration: lite ? 0 : 0.3, ease: [0.22, 1, 0.36, 1] }}
                   className="overflow-hidden"
                 >
+                  {!intelBodyReady ? (
+                    <div className="mt-2 space-y-2 rounded-2xl border border-white/[0.07] bg-black/22 px-3.5 py-5 sm:px-4">
+                      <div className="h-3 w-24 rounded-md bg-white/[0.06] animate-pulse" />
+                      <div className="h-20 rounded-xl bg-white/[0.05] animate-pulse" />
+                      <div className="h-16 rounded-xl bg-white/[0.04] animate-pulse" />
+                    </div>
+                  ) : (
                   <div className="mt-2 space-y-4 rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.04] via-black/25 to-transparent px-3.5 py-4 sm:px-4 sm:py-5">
+                    <div className="space-y-3 border-b border-white/[0.06] pb-4">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">Tray scan</p>
+                      <div>
+                        <div className="flex items-center justify-between gap-2 text-[10px] font-medium text-slate-400">
+                          <span>Deal strength</span>
+                          <span className="tabular-nums text-slate-300">{deal.dealStrength}/100</span>
+                        </div>
+                        <div
+                          className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-black/50"
+                          role="progressbar"
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-valuenow={deal.dealStrength}
+                          aria-label="Deal strength score"
+                        >
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-cyan-400/85 to-emerald-400/75 transition-[width] duration-700 ease-out"
+                            style={{ width: `${deal.dealStrength}%` }}
+                          />
+                        </div>
+                      </div>
+                      <div className="min-h-[1.25rem] text-[11px] text-slate-500">
+                        {deal.hasDiscount && deal.absoluteSavings != null && deal.absoluteSavings > 0 ? (
+                          <span>
+                            Save{" "}
+                            <span className="font-semibold tabular-nums text-slate-200/95">
+                              {formatListingPrice(deal.absoluteSavings, sym)}
+                            </span>{" "}
+                            vs anchor
+                          </span>
+                        ) : deal.savingsVsFair != null && deal.savingsVsFair > 0 ? (
+                          <span>~{formatListingPrice(deal.savingsVsFair, sym)} under tray median</span>
+                        ) : (
+                          <span className="text-slate-600">
+                            {deal.hasDiscount ? "No anchor savings in feed" : "Value-led · no headline discount"}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                        <span
+                          className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-1 text-[9px] font-bold uppercase tracking-[0.06em] ${stanceUi.border} ${stanceUi.bg} ${stanceUi.text}`}
+                        >
+                          <StanceIcon className="size-3 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
+                          {buyDecision.stanceLabel}
+                        </span>
+                      </div>
+                      <div className="flex min-w-0 flex-wrap gap-1.5 text-[9px] font-medium leading-tight sm:text-[10px]">
+                        <span className="rounded-full border border-white/[0.08] bg-black/25 px-2 py-0.5 tabular-nums text-slate-400/95">
+                          Del · {delPct}%
+                        </span>
+                        <span className="rounded-full border border-white/[0.08] bg-black/25 px-2 py-0.5 tabular-nums text-slate-400/95">
+                          Stock · {stockPct}%
+                        </span>
+                        <span
+                          className={`max-w-[min(100%,10rem)] truncate rounded-full border border-white/[0.08] bg-black/22 px-2 py-0.5 sm:max-w-[12rem] ${mkt.tone === "high" ? "text-emerald-200/75" : mkt.tone === "mid" ? "text-cyan-200/70" : "text-amber-200/75"}`}
+                        >
+                          {mkt.label}
+                        </span>
+                        {ratingValue(p.rating) > 0 ? (
+                          <span className="inline-flex max-w-[min(100%,9rem)] items-center gap-0.5 truncate rounded-full border border-white/[0.08] bg-black/25 px-2 py-0.5 text-slate-400/95">
+                            <Star className="size-2.5 shrink-0 text-amber-200/55" strokeWidth={1.5} aria-hidden />
+                            {ratingValue(p.rating).toFixed(1)}
+                            {p.reviewsCount != null && (
+                              <span className="text-slate-500/85">
+                                ({p.reviewsCount > 999 ? `${(p.reviewsCount / 1000).toFixed(1)}k` : p.reviewsCount.toLocaleString()})
+                              </span>
+                            )}
+                          </span>
+                        ) : (
+                          shipEst && (
+                            <span className="inline-flex max-w-[min(100%,9rem)] items-center gap-0.5 truncate rounded-full border border-white/[0.08] bg-black/22 px-2 py-0.5 text-slate-500/90">
+                              <Truck className="size-2.5 shrink-0 opacity-70" strokeWidth={1.5} aria-hidden />
+                              {shipEst}
+                            </span>
+                          )
+                        )}
+                      </div>
+                      <div className="min-w-0 rounded-xl border border-white/[0.06] bg-black/22 px-3 py-2 sm:py-2.5">
+                        <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-cyan-200/70">QuantAI read</p>
+                        <p className="cockpit-body mt-1 text-[11px] font-medium leading-snug text-slate-100/95 [overflow-wrap:anywhere]">
+                          {buyDecision.headlineVerdict}
+                        </p>
+                      </div>
+                    </div>
+
                     <div className="space-y-3 border-b border-white/[0.06] pb-4">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">Worth &amp; timing</p>
                       <p className={`text-[11px] font-semibold leading-snug ${worthLine.cls}`}>
@@ -759,10 +797,13 @@ function ProductResultCard({
                       )}
                       {shipEst && <p className="text-[10px] text-slate-500/90">Shipping · {shipEst}</p>}
                       <p className="text-[9px] leading-snug text-slate-600/90">
-                        Live intel · drop {deal.liveSignals.suddenDropScore} · velocity {deal.liveSignals.dealVelocityBand} ·
-                        rebound {deal.liveSignals.priceReboundBand}
-                        {deal.liveSignals.liveFeedAttached ? " · stream on" : ""}
+                        Live commerce · deal heat {deal.liveSignals.dealHeat} · sudden drop{" "}
+                        {deal.liveSignals.suddenDropScore} · buy timing {deal.liveSignals.buyTimingConfidence} · rebound
+                        risk {deal.liveSignals.reboundPricingRisk}
+                        {deal.liveSignals.rareOpportunity ? " · rare opportunity (tray-confirmed)" : ""}
+                        {deal.liveSignals.liveFeedAttached ? " · price stream on" : ""}
                       </p>
+                      <p className="text-[9px] leading-snug text-slate-600/85">{deal.liveSignals.historicalPriceMemoryLabel}</p>
                     </div>
 
                     <div className="space-y-2 border-b border-white/[0.06] pb-4">
@@ -912,6 +953,7 @@ function ProductResultCard({
                       </span>
                     </div>
                   </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -953,6 +995,7 @@ function ProductResultCard({
                 )}
                 {cardCopyFlash ? "Copied" : "Export"}
               </motion.button>
+              {isValidHttpOfferUrl(p.link) ? (
               <motion.a
                 href={p.link}
                 target="_blank"
@@ -960,6 +1003,7 @@ function ProductResultCard({
                 onClick={() => recordViewedProductLink(p.link)}
                 whileHover={lite ? undefined : { scale: 1.015 }}
                 whileTap={{ scale: 0.985 }}
+                title="Opens the retailer page in a new tab"
                 className={`${btnRow} relative flex min-w-0 flex-[1.1_1_7rem] items-center justify-center overflow-hidden bg-gradient-to-r from-white via-slate-50 to-white px-4 text-slate-900 shadow-[0_10px_28px_-16px_rgba(15,23,42,0.45)] transition-shadow duration-500 hover:brightness-[1.03]`}
               >
                 <span
@@ -968,6 +1012,16 @@ function ProductResultCard({
                 />
                 <span className="relative">View offer</span>
               </motion.a>
+              ) : (
+                <motion.button
+                  type="button"
+                  disabled
+                  title="No reliable outbound link from this listing"
+                  className={`${btnRow} relative flex min-w-0 flex-[1.1_1_7rem] cursor-not-allowed items-center justify-center overflow-hidden bg-gradient-to-r from-white/40 via-slate-100/50 to-white/40 px-4 text-slate-600 opacity-55`}
+                >
+                  <span className="relative">View offer</span>
+                </motion.button>
+              )}
               {addToWatchlist && (
                 <motion.button
                   type="button"
@@ -998,4 +1052,37 @@ function ProductResultCard({
   );
 }
 
-export default memo(ProductResultCard);
+function productResultCardPropsEqual(a: Props, b: Props): boolean {
+  if (a.product.link !== b.product.link) return false;
+  if (a.rank !== b.rank || a.index !== b.index) return false;
+  if (a.lowPower !== b.lowPower || a.imagePriority !== b.imagePriority) return false;
+  const pk = (x: QuantProduct) =>
+    `${x.price}|${x.title}|${x.store}|${x.rating}|${x.image}|${x.displayPrice}|${x.oldPrice ?? ""}|${x.priceTrend}|${x.qiComposite ?? ""}|${x.availability ?? ""}|${x.shipping ?? ""}`;
+  if (pk(a.product) !== pk(b.product)) return false;
+  if (a.list.length !== b.list.length) return false;
+  if (a.list.length > 0) {
+    if (a.list[0]?.link !== b.list[0]?.link) return false;
+    if (a.list[a.list.length - 1]?.link !== b.list[b.list.length - 1]?.link) return false;
+  }
+  if (a.compareLinks.includes(a.product.link) !== b.compareLinks.includes(b.product.link)) return false;
+  if (a.savedLinks.has(a.product.link) !== b.savedLinks.has(b.product.link)) return false;
+  const da = a.dealIntel;
+  const db = b.dealIntel;
+  if (!da && !db) return true;
+  if (!da || !db) return false;
+  return (
+    da.aiDealVerdict === db.aiDealVerdict &&
+    da.dealStrength === db.dealStrength &&
+    da.worthBuyingNow === db.worthBuyingNow &&
+    da.hasDiscount === db.hasDiscount &&
+    (da.discountPct ?? -1) === (db.discountPct ?? -1) &&
+    da.discountConfidence === db.discountConfidence &&
+    da.liveSignals.suddenDropScore === db.liveSignals.suddenDropScore &&
+    da.liveSignals.dealHeat === db.liveSignals.dealHeat &&
+    da.liveSignals.buyTimingConfidence === db.liveSignals.buyTimingConfidence &&
+    da.liveSignals.rareOpportunity === db.liveSignals.rareOpportunity &&
+    da.liveSignals.reboundPricingRisk === db.liveSignals.reboundPricingRisk
+  );
+}
+
+export default memo(ProductResultCard, productResultCardPropsEqual);

@@ -306,10 +306,10 @@ function buildLiveRankExplanation(
   fake: FakeDiscountRisk
 ): string {
   if (suspiciousRisk >= 58) {
-    return "Rank is pulled down: suspicious discount hygiene and trust checks run before raw savings.";
+    return "Rank is conservative: discount hygiene and trust checks run before headline savings.";
   }
   if (hasDiscount && trustAdjustedDiscountScore >= 52 && trust >= 66 && fake === "low") {
-    return "Rank gets a lift from coherent markdown plus workable trust—still not a single-axis discount win.";
+    return "Tray ranks this up: markdown reads clean and retailer trust clears the hygiene bar.";
   }
   if (!hasDiscount && comp >= 70 && trust >= 68) {
     return "No big markdown, yet composite + trust still justify a premium lane in this tray.";
@@ -391,6 +391,15 @@ function deriveLiveShelfLabels(args: {
   if (waitBuy && !pool.includes("Suspicious Discount")) pool.push("Wait Before Buying");
 
   if (!suspicious) {
+    if (
+      fake === "low" &&
+      d >= maxDiscInTray - 1 &&
+      maxDiscInTray >= 12 &&
+      d >= 12 &&
+      trust >= 64
+    ) {
+      pool.push("Best Discount Today");
+    }
     if (fake === "low" && d >= 14 && trust >= 72) pool.push("Verified Discount");
     if (fake === "low" && d >= 12 && trust >= 64 && !pool.includes("Verified Discount")) {
       pool.push("Trusted Discount");
@@ -413,6 +422,7 @@ function deriveLiveShelfLabels(args: {
   const priority: LiveShelfLabel[] = [
     "Suspicious Discount",
     "Wait Before Buying",
+    "Best Discount Today",
     "Discount Not Enough",
     "Weak Discount",
     "Verified Discount",
@@ -777,6 +787,15 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
   const historicalConfidenceLabel = historicalConfidenceText(lowestKnownInTray, fake, inflated);
   const dealStrength = Math.round((retailerAdjustedDealScore + dealConfidence) / 2);
 
+  const unusualUnderpricing =
+    peerMed > 0 &&
+    product.price > 0 &&
+    product.price < peerMed * 0.84 &&
+    fake === "low" &&
+    trust >= 60 &&
+    !inflated &&
+    !underpricedAnomaly;
+
   const liveSignals = buildLiveCommerceSignals({
     product,
     hasDiscount,
@@ -785,6 +804,9 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
     atTrayFloor: lowestKnownInTray,
     shelfHasRareDeal: shelfLabels.includes("Rare Deal"),
     urgency,
+    discountConfidence,
+    discountAuthenticity,
+    unusualUnderpricing,
   });
 
   return {

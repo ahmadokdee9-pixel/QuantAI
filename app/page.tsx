@@ -32,11 +32,14 @@ import type { DealClusterDTO } from "@/lib/deals/types";
 import { buildDealIntelByLink } from "@/lib/intelligence/dealIntelligenceEngine";
 import { sortByVerifiedDealRank } from "@/lib/intelligence/discountRank";
 import {
+  dedupeSearchTray,
+  sortByCompositeRankEnhanced,
+} from "@/lib/intelligence/searchRankEnhance";
+import {
   getFinalComposite,
   getHeuristicScore,
   getStoreTrustScore,
   sortByBestAIScore,
-  sortByCompositeRank,
   sortByTrust,
   type QuantProduct,
 } from "@/lib/shoppingScore";
@@ -245,7 +248,7 @@ export default function Home() {
   }
 
   const sortedProductsMemo = useMemo(() => {
-    const filteredForSort = applyResultsFilters(products, filters);
+    const filteredForSort = dedupeSearchTray(applyResultsFilters(products, filters));
     const sortedList = [...filteredForSort];
     switch (sort) {
       case "ai":
@@ -256,12 +259,12 @@ export default function Home() {
       case "trust":
         return sortByTrust(sortedList);
       case "deals":
-        return sortByVerifiedDealRank(sortedList);
+        return sortByVerifiedDealRank(sortedList, query);
       case "value":
       default:
-        return sortByCompositeRank(sortedList);
+        return sortByCompositeRankEnhanced(sortedList, query);
     }
-  }, [products, filters, sort]);
+  }, [products, filters, sort, query]);
 
   const dealIntelByLink = useMemo(() => buildDealIntelByLink(sortedProductsMemo), [sortedProductsMemo]);
 

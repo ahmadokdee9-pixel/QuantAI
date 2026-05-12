@@ -78,7 +78,21 @@ const PROFILES: Record<ProductCategorySlug, Partial<CategoryWeightProfile>> = {
 function matchCategory(text: string): ProductCategorySlug {
   const t = text.toLowerCase();
   if (
-    /laptop|phone|iphone|android|tablet|gpu|graphics|monitor|tv|oled|qled|headphone|earbud|camera|drone|console|playstation|xbox|nintendo|router|ssd|ram|keyboard|mouse|speaker|smartwatch|charger|cable|usb|hdmi|pc\b|macbook|ipad|steam deck|gaming|mirrorless|dslr|gopro|webcam|microphone|capture card|vr headset/i.test(
+    /\b(128|256|512|1024)\s*gb\b|\b\d{1,3}\s*(gb|tb)\b|\b\d{2}(\.\d)?\s*("|inch|inches)\b|\b(cm|mm)\b|\b(model|series)\b|\b(20\d{2})\b/i.test(
+      t
+    )
+  ) {
+    return "electronics";
+  }
+  if (
+    /samsung|apple|sony|lg\b|dell|hp\b|lenovo|asus|acer|msi|bosch|makita|dewalt|kitchenaid|whirlpool|dyson|canon|nikon|fujifilm|olympus|panasonic|tcl|hisense|anker|jbl|bose|logitech|razer|corsair|steelseries|xiaomi|oneplus|oppo|vivo|huawei/i.test(
+      t
+    )
+  ) {
+    return "electronics";
+  }
+  if (
+    /laptop|phone|iphone|android|tablet|gpu|graphics|monitor|tv|oled|qled|headphone|earbud|camera|drone|console|playstation|xbox|nintendo|router|ssd|ram|keyboard|mouse|speaker|smartwatch|charger|cable|usb|hdmi|pc\b|macbook|ipad|steam deck|gaming|mirrorless|dslr|gopro|webcam|microphone|capture card|vr headset|airpods|galaxy watch|pixel\b|nvidia|amd ryzen|intel core|magsafe|powerbank|bluetooth speaker/i.test(
       t
     )
   ) {
@@ -91,8 +105,11 @@ function matchCategory(text: string): ProductCategorySlug {
   ) {
     return "home";
   }
+  if (/\bnike\b|adidas|puma|reebok|under armour|new balance|crocs|vans\b|timberland|zara|hm\b|uniqlo|gucci|prada/i.test(t)) {
+    return "fashion";
+  }
   if (
-    /shoe|sneaker|boot|dress|shirt|jacket|coat|jeans|pants|skirt|handbag|wallet|watch\b|sunglass|jewelry|ring\b|necklace|apparel|fashion|clothing/i.test(
+    /shoe|sneaker|boot|dress|shirt|jacket|coat|jeans|pants|skirt|handbag|wallet|watch\b|sunglass|jewelry|ring\b|necklace|apparel|fashion|clothing|size\s+(xs|s|m|l|xl|xxl|\d{2,3})|mens|womens|unisex/i.test(
       t
     )
   ) {

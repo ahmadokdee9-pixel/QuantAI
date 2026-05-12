@@ -3,6 +3,7 @@ import type { QuantProduct } from "@/lib/shoppingScore";
 import { ratingValue } from "@/lib/shoppingScore";
 import { getCategoryWeights, inferProductCategory } from "./categoryContext";
 import { scoreDeliverySpeed } from "./deliveryScore";
+import { queryListingRelevance01 } from "./queryRelevance";
 import type { IntelligenceSignals, ListStats, ProductCategorySlug } from "./types";
 
 function clamp01(n: number): number {
@@ -95,6 +96,10 @@ export function scoreProductEngine(
   const trustNorm = clamp01(trust / 100);
   const trustRank = getTrustRankPercentile(p.store) / 100;
 
+  const queryRel = queryListingRelevance01(searchQuery, p);
+  const categoryFitBase = category === "general" ? 0.45 : 0.85;
+  const categoryFitBlend = clamp01(categoryFitBase * 0.52 + queryRel * 0.48);
+
   const priceFit = priceFitScore(p.price, stats);
   const reviewDepth = reviewDepthScore(p.reviewsCount, stats.maxReviews);
   const delivery = scoreDeliverySpeed(p.shipping);
@@ -116,9 +121,7 @@ export function scoreProductEngine(
     w.pricePerformance * valueNorm +
     w.discountQuality * discount;
 
-  // Category fit: small boost when query clearly matches inferred category depth
-  const categoryFit = category === "general" ? 0.5 : 0.72;
-  const composite01 = clamp01(weighted * 0.94 + categoryFit * 0.06);
+  const composite01 = clamp01(weighted * 0.91 + categoryFitBlend * 0.09);
 
   const composite = Math.min(100, Math.round(composite01 * 100));
 
@@ -142,7 +145,7 @@ export function scoreProductEngine(
     popularity: toSignal01(pop),
     pricePerformance: toSignal01(valueNorm),
     discountQuality: toSignal01(discount),
-    categoryFit: toSignal01(category === "general" ? 0.45 : 0.85),
+    categoryFit: toSignal01(categoryFitBlend),
   };
 
   return { composite, modelLayer, signals, category };

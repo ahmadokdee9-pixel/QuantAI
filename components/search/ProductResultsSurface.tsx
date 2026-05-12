@@ -839,21 +839,26 @@ export default function ProductResultsSurface({
           {sortedProducts.map((p, index) => {
             const rank = rankByLink.get(p.link) ?? index;
             return (
-              <ProductResultCard
+              <div
                 key={`${p.id}-${p.link}`}
-                product={p}
-                list={sortedProducts}
-                index={index}
-                rank={rank}
-                dealIntel={dealIntelResolved.get(p.link)}
-                compareLinks={compareLinks}
-                toggleCompare={toggleCompare}
-                saveProduct={saveProduct}
-                savedLinks={savedLinks}
-                addToWatchlist={addToWatchlist}
-                onOpenIntelligence={setDetailProduct}
-                lowPower={mobilePerf}
-              />
+                className="min-w-0 [contain-intrinsic-size:auto_26rem] [content-visibility:auto]"
+              >
+                <ProductResultCard
+                  product={p}
+                  list={sortedProducts}
+                  index={index}
+                  rank={rank}
+                  dealIntel={dealIntelResolved.get(p.link)}
+                  compareLinks={compareLinks}
+                  toggleCompare={toggleCompare}
+                  saveProduct={saveProduct}
+                  savedLinks={savedLinks}
+                  addToWatchlist={addToWatchlist}
+                  onOpenIntelligence={setDetailProduct}
+                  lowPower={mobilePerf}
+                  imagePriority={index < 9 ? "high" : "low"}
+                />
+              </div>
             );
           })}
         </div>
@@ -870,21 +875,26 @@ export default function ProductResultsSurface({
             {sortedProducts.map((p, index) => {
               const rank = rankByLink.get(p.link) ?? index;
               return (
-                <ProductResultCard
+                <div
                   key={`${p.id}-${p.link}`}
-                  product={p}
-                  list={sortedProducts}
-                  index={index}
-                  rank={rank}
-                  dealIntel={dealIntelResolved.get(p.link)}
-                  compareLinks={compareLinks}
-                  toggleCompare={toggleCompare}
-                  saveProduct={saveProduct}
-                  savedLinks={savedLinks}
-                  addToWatchlist={addToWatchlist}
-                  onOpenIntelligence={setDetailProduct}
-                  lowPower={false}
-                />
+                  className="min-w-0 [contain-intrinsic-size:auto_26rem] [content-visibility:auto]"
+                >
+                  <ProductResultCard
+                    product={p}
+                    list={sortedProducts}
+                    index={index}
+                    rank={rank}
+                    dealIntel={dealIntelResolved.get(p.link)}
+                    compareLinks={compareLinks}
+                    toggleCompare={toggleCompare}
+                    saveProduct={saveProduct}
+                    savedLinks={savedLinks}
+                    addToWatchlist={addToWatchlist}
+                    onOpenIntelligence={setDetailProduct}
+                    lowPower={false}
+                    imagePriority={index < 9 ? "high" : "low"}
+                  />
+                </div>
               );
             })}
           </motion.div>

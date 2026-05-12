@@ -1,11 +1,14 @@
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getFinalComposite, getStoreTrustScore } from "@/lib/shoppingScore";
 import { buildDealIntelByLink } from "@/lib/intelligence/dealIntelligenceEngine";
+import { queryListingRelevance01, reviewQuality01 } from "@/lib/intelligence/queryRelevance";
 
 /** Prioritize trusted real discounts, then value/trust — discount never wins alone (tray-only). */
-export function sortByVerifiedDealRank(list: QuantProduct[]): QuantProduct[] {
+export function sortByVerifiedDealRank(list: QuantProduct[], query?: string): QuantProduct[] {
   if (list.length <= 1) return [...list];
   const intel = buildDealIntelByLink(list);
+  const q = query?.trim() ?? "";
+  const maxReviews = Math.max(0, ...list.map((p) => p.reviewsCount ?? 0));
   return [...list].sort((a, b) => {
     const ia = intel.get(a.link);
     const ib = intel.get(b.link);
@@ -16,13 +19,24 @@ export function sortByVerifiedDealRank(list: QuantProduct[]): QuantProduct[] {
       const tad = row?.trustAdjustedDiscountScore ?? 0;
       const discLift = hasD ? tad * 0.34 : tad * 0.08;
       const sus = row?.suspiciousDiscountRisk ?? 0;
+      const fair = row?.fairMarketEstimate ?? 0;
+      const trayMed =
+        fair > 0 && p.price > 0 ? Math.min(8, Math.max(-6, ((fair - p.price) / fair) * 22)) : 0;
+      const relLift = q ? (queryListingRelevance01(q, p) - 0.5) * 12 : 0;
+      const revLift = (reviewQuality01(p, maxReviews) - 0.5) * 9;
+      const del = (p.qiSignals?.delivery ?? 50) / 100;
+      const delLift = (del - 0.5) * 5;
       return (
         discLift +
         (row?.retailerAdjustedDealScore ?? 0) * 0.32 +
-        getFinalComposite(p, list) * 0.24 +
-        getStoreTrustScore(p.store) * 0.18 -
-        sus * 0.14 -
-        fakePen(row)
+        getFinalComposite(p, list) * 0.22 +
+        getStoreTrustScore(p.store) * 0.17 -
+        sus * 0.15 -
+        fakePen(row) +
+        trayMed +
+        relLift +
+        revLift +
+        delLift
       );
     };
     const pa = score(a, ia);
