@@ -179,6 +179,41 @@ function worthBuyingCopy(
   return { headline: "Maybe — verify peers + seller pages", cls: "text-amber-100/90" };
 }
 
+/** Surface scan — short phrases only. */
+function worthBuyingShort(w: ProductDealIntelligence["worthBuyingNow"], hasDiscount: boolean): string {
+  if (w === "yes") return hasDiscount ? "Buy now · Discount + trust aligned" : "Buy now · Value + trust aligned";
+  if (w === "wait") return hasDiscount ? "Wait · Discount or price soft" : "Wait · Value timing soft";
+  return "Maybe · Verify seller";
+}
+
+function analystScanLine(deal: ProductDealIntelligence, trust: number, qiRounded: number): string {
+  const dealWord =
+    deal.dealStrength >= 74 ? "Strong deal" : deal.dealStrength >= 58 ? "Fair deal" : "Soft deal";
+  const trustWord = trust >= 78 ? "Strong trust" : trust >= 60 ? "Moderate trust" : "Low trust";
+  const del = deal.hasDiscount && deal.discountPct != null ? `${deal.discountPct}% off · ` : "";
+  return `${del}${dealWord} · ${trustWord} · QI ${qiRounded}`.slice(0, 96);
+}
+
+function pickScanBadges(
+  deal: ProductDealIntelligence,
+  prof: { key: string; label: string }
+): { label: string; cls: string }[] {
+  const out: { label: string; cls: string }[] = [];
+  const seen = new Set<string>();
+  const add = (raw: string, cls: string) => {
+    const k = raw.toUpperCase();
+    if (seen.has(k) || out.length >= 2) return;
+    seen.add(k);
+    out.push({ label: k, cls });
+  };
+  for (const sl of deal.shelfLabels) {
+    add(sl, liveShelfLabelClass(sl));
+    if (out.length >= 2) return out;
+  }
+  if (out.length < 2 && prof.label) add(prof.label, badgeChipClass(prof.key));
+  return out;
+}
+
 function stancePresentation(stance: BuyStance): {
   border: string;
   bg: string;
@@ -220,24 +255,24 @@ function stancePresentation(stance: BuyStance): {
 function TrendIcon({ trend }: { trend: QuantProduct["priceTrend"] }) {
   if (trend === "down") {
     return (
-      <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-emerald-200/70">
+      <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-emerald-200/75">
         <ArrowDownRight className="size-3 opacity-80" strokeWidth={2} aria-hidden />
-        Below reference
+        Below ref
       </span>
     );
   }
   if (trend === "up") {
     return (
-      <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-rose-200/65">
+      <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-rose-200/68">
         <ArrowUpRight className="size-3 opacity-80" strokeWidth={2} aria-hidden />
-        Above reference
+        Above ref
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-slate-500/85">
       <Minus className="size-3 opacity-70" strokeWidth={2} aria-hidden />
-      Flat vs reference
+      Flat ref
     </span>
   );
 }
@@ -348,6 +383,12 @@ function ProductResultCard({
     () => worthBuyingCopy(deal.worthBuyingNow, deal.hasDiscount),
     [deal.worthBuyingNow, deal.hasDiscount]
   );
+  const scanBadges = useMemo(() => pickScanBadges(deal, badge), [deal, badge]);
+  const scanLine = useMemo(() => analystScanLine(deal, trust, Math.round(scoreNorm)), [deal, trust, scoreNorm]);
+  const worthShort = useMemo(
+    () => worthBuyingShort(deal.worthBuyingNow, deal.hasDiscount),
+    [deal.worthBuyingNow, deal.hasDiscount]
+  );
   const stanceUi = stancePresentation(buyDecision.stance);
   const StanceIcon = stanceUi.Icon;
 
@@ -358,7 +399,7 @@ function ProductResultCard({
   return (
     <MagneticSurface className="h-full min-w-0" strength={0.08} disabled={lite}>
       <motion.article
-        layout={!lite}
+        layout={false}
         initial={lite ? false : { opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ ...transition, delay: lite ? 0 : Math.min(index * 0.032, 0.38) }}
@@ -366,7 +407,7 @@ function ProductResultCard({
           lite
             ? undefined
             : {
-                y: -4,
+                y: -2,
                 transition: { type: "spring", stiffness: 380, damping: 26 },
               }
         }
@@ -380,12 +421,7 @@ function ProductResultCard({
           <div className="pointer-events-none absolute -right-20 -top-20 size-48 rounded-full bg-cyan-400/8 blur-3xl opacity-0 transition duration-700 group-hover:opacity-100" />
           <div className="pointer-events-none absolute -bottom-24 -left-16 size-44 rounded-full bg-violet-500/8 blur-3xl opacity-0 transition duration-700 group-hover:opacity-45" />
 
-          <div className="relative z-[2] flex items-start justify-between gap-2 px-4 pt-4 sm:px-5 sm:pt-5">
-            <span
-              className={`max-w-[min(100%,12rem)] truncate rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${badgeChipClass(badge.key)}`}
-            >
-              {badge.label}
-            </span>
+          <div className="relative z-[2] flex justify-end px-4 pt-3 sm:px-5 sm:pt-4">
             <button
               type="button"
               onClick={() => toggleCompare(p.link)}
@@ -401,7 +437,7 @@ function ProductResultCard({
             </button>
           </div>
 
-          <div className="relative z-[2] mx-4 mt-4 min-w-0 sm:mx-5">
+          <div className="relative z-[2] mx-4 mt-3 min-w-0 sm:mx-5">
             {p.image ? (
               <CardProductImage key={`${p.link}-${p.image}`} src={p.image} reduceMotion={lite} />
             ) : (
@@ -422,7 +458,7 @@ function ProductResultCard({
               {p.title}
             </h3>
 
-            <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[11px] leading-relaxed text-slate-500/90">
+            <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[11px] leading-snug text-slate-500/90">
               <span className="inline-flex min-w-0 max-w-full items-center gap-1.5 font-medium text-slate-400/95">
                 <span
                   className="flex size-6 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.04] text-[9px] font-bold tracking-tight text-slate-300/90"
@@ -440,170 +476,15 @@ function ProductResultCard({
               </span>
             </div>
 
-            <div className="mt-2.5 flex min-w-0 flex-wrap items-center gap-1.5">
-              <span
-                className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${dealVerdictChipClass(deal.aiDealVerdict)}`}
-                title={deal.whyDealGoodOrRisky}
-              >
-                <Percent className="size-2.5 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
-                <span className="truncate">{deal.aiDealVerdict}</span>
-              </span>
-              {deal.hasDiscount && deal.discountPct != null && (
-                <span className="shrink-0 rounded-full border border-white/[0.08] bg-black/30 px-2 py-0.5 text-[9px] font-semibold tabular-nums text-slate-300/95">
-                  −{deal.discountPct}%
-                </span>
-              )}
-              <span
-                className="shrink-0 rounded-full border border-white/[0.07] bg-black/25 px-2 py-0.5 text-[9px] font-medium tabular-nums text-slate-400/95"
-                title="Tray-relative deal confidence blend"
-              >
-                Deal {deal.dealConfidence}
-              </span>
-              {deal.hasDiscount ? (
-                <span
-                  className="shrink-0 rounded-full border border-white/[0.07] bg-black/25 px-2 py-0.5 text-[9px] font-medium tabular-nums text-slate-400/95"
-                  title="Discount authenticity vs peers + trust + feed signals"
-                >
-                  Auth {deal.discountAuthenticity}
-                </span>
-              ) : (
-                <span
-                  className="shrink-0 rounded-full border border-white/[0.07] bg-black/25 px-2 py-0.5 text-[9px] font-medium tabular-nums text-slate-400/95"
-                  title={deal.retailerTrustNote}
-                >
-                  Retail IQ {deal.retailerIntelligenceScore}
-                </span>
-              )}
-              {deal.isBestTrustedDealInSet && (
-                <span className="shrink-0 rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-0.5 text-[9px] font-semibold text-cyan-100/90">
-                  Best trusted lane
-                </span>
-              )}
-              {!deal.isBestTrustedDealInSet &&
-                deal.shelfLabels.some((l) =>
-                  [
-                    "Verified Discount",
-                    "Trusted Discount",
-                    "Safest Buy",
-                    "Best Trusted Option",
-                    "Best Discount Today",
-                  ].includes(l)
-                ) && (
-                  <span className="shrink-0 rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-0.5 text-[9px] font-semibold text-cyan-100/90">
-                    Trusted deal
-                  </span>
-                )}
-            </div>
-
-            <div className="mt-3 min-h-[6.25rem] w-full min-w-0 rounded-xl border border-white/[0.07] bg-black/[0.2] px-3 py-2.5">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="flex min-w-0 flex-[1_1_8rem] flex-wrap items-center gap-1.5">
-                  {deal.shelfLabels.slice(0, 2).map((lb) => (
-                    <span
-                      key={lb}
-                      className={`max-w-full rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide [overflow-wrap:anywhere] ${liveShelfLabelClass(lb)}`}
-                    >
-                      {lb}
-                    </span>
-                  ))}
-                </div>
-                {deal.hasDiscount && (deal.percentOff ?? 0) > 0 && (
-                  <span className="shrink-0 rounded-md border border-emerald-400/25 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold tabular-nums text-emerald-100">
-                    {deal.percentOff}% OFF
-                  </span>
-                )}
-              </div>
-              {deal.hasDiscount && deal.absoluteSavings != null && deal.absoluteSavings > 0 ? (
-                <p className="mt-1.5 text-[10px] text-slate-400">
-                  Save{" "}
-                  <span className="font-semibold tabular-nums text-white/90">
-                    {formatListingPrice(deal.absoluteSavings, sym)}
-                  </span>{" "}
-                  vs listing anchor
-                </p>
-              ) : deal.hasDiscount && deal.savingsVsFair != null && deal.savingsVsFair > 0 ? (
-                <p className="mt-1.5 text-[10px] text-slate-500">
-                  ~{formatListingPrice(deal.savingsVsFair, sym)} under tray median (no list anchor in feed)
-                </p>
-              ) : !deal.hasDiscount && deal.savingsVsFair != null && deal.savingsVsFair > 0 ? (
-                <p className="mt-1.5 text-[10px] text-slate-500">
-                  ~{formatListingPrice(deal.savingsVsFair, sym)} under tray median —{" "}
-                  <span className="text-slate-400/95">value path without headline markdown</span>
-                </p>
-              ) : !deal.hasDiscount ? (
-                <p className="mt-1.5 line-clamp-2 text-[10px] leading-snug text-slate-500/95">{deal.discountVsQualityNote}</p>
-              ) : (
-                <p className="mt-1.5 text-[10px] text-slate-600">No headline savings math in feed</p>
-              )}
-              <div className="mt-2 space-y-1">
-                <div className="flex items-center justify-between gap-2 text-[9px] text-slate-500">
-                  <span>{deal.hasDiscount ? "Discount confidence" : "Listing confidence"}</span>
-                  <span className="tabular-nums text-slate-400">{deal.discountConfidence}/100</span>
-                </div>
-                <div
-                  className="h-1.5 w-full overflow-hidden rounded-full bg-black/50"
-                  role="progressbar"
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-valuenow={deal.discountConfidence}
-                  aria-label={deal.hasDiscount ? "Discount confidence" : "Listing confidence"}
-                >
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-violet-400/78 to-cyan-400/72"
-                    style={{ width: `${deal.discountConfidence}%` }}
-                  />
-                </div>
-              </div>
-              <div className="mt-2 space-y-1">
-                <div className="flex items-center justify-between gap-2 text-[9px] text-slate-500">
-                  <span>Deal strength</span>
-                  <span className="tabular-nums text-slate-400">{deal.dealStrength}/100</span>
-                </div>
-                <div
-                  className="h-1.5 w-full overflow-hidden rounded-full bg-black/50"
-                  role="progressbar"
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-valuenow={deal.dealStrength}
-                  aria-label="Deal strength score"
-                >
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-cyan-400/85 to-emerald-400/75"
-                    style={{ width: `${deal.dealStrength}%` }}
-                  />
-                </div>
-              </div>
-              <p
-                className="mt-1.5 line-clamp-2 text-[9px] leading-snug text-slate-500/95"
-                title={deal.historicalConfidenceLabel}
-              >
-                {deal.historicalConfidenceLabel}
-              </p>
-              <p className="mt-1 line-clamp-2 text-[9px] leading-snug text-slate-400/90" title={deal.liveRankExplanation}>
-                {deal.liveRankExplanation}
-              </p>
-              <p className="mt-0.5 line-clamp-1 text-[9px] text-slate-500/85" title={deal.retailerTrustNote}>
-                {deal.retailerTrustNote}
-              </p>
-              <p className="mt-0.5 line-clamp-2 text-[9px] leading-snug text-slate-600/90" title={deal.discountExplanation}>
-                {deal.discountExplanation}
-              </p>
-              <p className={`mt-1.5 text-[10px] font-semibold leading-snug ${worthLine.cls}`}>
-                Worth buying now? {worthLine.headline}
-              </p>
-            </div>
-
-            <div className="mt-5 flex min-w-0 flex-wrap items-end justify-between gap-4 border-t border-white/[0.06] pt-5">
+            <div className="mt-4 flex min-w-0 flex-wrap items-end justify-between gap-3 border-b border-white/[0.06] pb-4">
               <div className="min-w-0 flex-1">
                 {p.displayPrice ? (
-                  <p className="cockpit-label text-[10px] tracking-[0.1em] text-slate-500/75">
-                    {p.displayPrice}
-                  </p>
+                  <p className="cockpit-label text-[10px] tracking-[0.1em] text-slate-500/75">{p.displayPrice}</p>
                 ) : (
                   <p className="cockpit-label text-[10px] tracking-[0.1em] text-slate-600/90">Listed price</p>
                 )}
-                <div className="mt-1.5 flex flex-wrap items-baseline gap-2">
-                  <p className="text-[1.45rem] font-semibold tabular-nums tracking-tight text-white sm:text-[1.55rem]">
+                <div className="mt-1 flex flex-wrap items-baseline gap-2">
+                  <p className="text-[1.5rem] font-semibold tabular-nums tracking-tight text-white sm:text-[1.6rem]">
                     {formatListingPrice(p.price, sym)}
                   </p>
                   {p.oldPrice != null && p.oldPrice > p.price && (
@@ -611,15 +492,20 @@ function ProductResultCard({
                       {formatListingPrice(p.oldPrice, sym)}
                     </span>
                   )}
+                  {deal.hasDiscount && deal.discountPct != null && (
+                    <span className="shrink-0 rounded-md border border-emerald-400/28 bg-emerald-500/12 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-emerald-100">
+                      −{deal.discountPct}%
+                    </span>
+                  )}
                 </div>
-                <div className="mt-1.5">
+                <div className="mt-1">
                   <TrendIcon trend={p.priceTrend} />
                 </div>
               </div>
-              <div className="flex shrink-0 flex-col items-end gap-1">
-                <div className="relative size-[3.5rem] shrink-0 opacity-95">
+              <div className="flex shrink-0 flex-col items-end gap-0.5">
+                <div className="relative size-[3rem] shrink-0 opacity-95 sm:size-[3.5rem]">
                   <svg
-                    className="size-[3.5rem] -rotate-90"
+                    className="size-[3rem] -rotate-90 sm:size-[3.5rem]"
                     viewBox="0 0 54 54"
                     role="img"
                     aria-label={`QI score ${Math.round(scoreNorm)} of 100`}
@@ -651,157 +537,145 @@ function ProductResultCard({
                       initial={lite ? false : { strokeDashoffset: ringC }}
                       animate={{ strokeDashoffset: ringDash }}
                       transition={
-                        lite
-                          ? { duration: 0 }
-                          : { duration: 1.05, ease: [0.22, 1, 0.36, 1] }
+                        lite ? { duration: 0 } : { duration: 1.05, ease: [0.22, 1, 0.36, 1] }
                       }
                     />
                   </svg>
                   <span
-                    className={`pointer-events-none absolute inset-0 flex items-center justify-center text-[11px] font-bold tabular-nums ${qiCenterLabelClass(qiTier)}`}
+                    className={`pointer-events-none absolute inset-0 flex items-center justify-center text-[10px] font-bold tabular-nums sm:text-[11px] ${qiCenterLabelClass(qiTier)}`}
                   >
                     {Math.round(scoreNorm)}
                   </span>
                 </div>
-                <div className="max-w-[5.5rem] text-right">
-                  <p className="text-[9px] font-semibold uppercase leading-tight tracking-[0.08em] text-slate-500/80">
-                    {p.qiComposite != null ? "QI composite" : "Model layer"}
+                <div className="max-w-[4.5rem] text-right sm:max-w-[5.5rem]">
+                  <p className="text-[8px] font-semibold uppercase leading-tight tracking-[0.08em] text-slate-500/80 sm:text-[9px]">
+                    {p.qiComposite != null ? "QI" : "Model"}
                   </p>
-                  <p className="text-[10px] font-medium leading-tight text-slate-500/80">/ 100</p>
+                  <p className="text-[9px] font-medium leading-tight text-slate-500/80 sm:text-[10px]">/ 100</p>
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 flex min-w-0 flex-wrap gap-2 text-[10px] leading-relaxed">
+            <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2">
               <span
-                className="rounded-full border border-white/[0.08] bg-black/25 px-2 py-0.5 font-medium tabular-nums text-slate-400/95"
-                title="Heuristic delivery confidence from listing + trust"
+                className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${dealVerdictChipClass(deal.aiDealVerdict)}`}
+                title={deal.whyDealGoodOrRisky}
               >
-                Delivery · {delPct}%
+                <Percent className="size-2.5 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
+                <span className="truncate">{deal.aiDealVerdict}</span>
+              </span>
+            </div>
+
+            <div className="mt-3">
+              <div className="flex items-center justify-between gap-2 text-[10px] font-medium text-slate-400">
+                <span>Deal strength</span>
+                <span className="tabular-nums text-slate-300">{deal.dealStrength}/100</span>
+              </div>
+              <div
+                className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-black/50"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={deal.dealStrength}
+                aria-label="Deal strength score"
+              >
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-cyan-400/85 to-emerald-400/75"
+                  style={{ width: `${deal.dealStrength}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="mt-2.5 min-h-[1.25rem] text-[11px] text-slate-500">
+              {deal.hasDiscount && deal.absoluteSavings != null && deal.absoluteSavings > 0 ? (
+                <span>
+                  Save{" "}
+                  <span className="font-semibold tabular-nums text-slate-200/95">
+                    {formatListingPrice(deal.absoluteSavings, sym)}
+                  </span>{" "}
+                  vs anchor
+                </span>
+              ) : deal.savingsVsFair != null && deal.savingsVsFair > 0 ? (
+                <span>~{formatListingPrice(deal.savingsVsFair, sym)} under tray median</span>
+              ) : (
+                <span className="text-slate-600">
+                  {deal.hasDiscount ? "No anchor savings in feed" : "Value-led · no headline discount"}
+                </span>
+              )}
+            </div>
+
+            <div className="mt-3 flex min-w-0 flex-wrap gap-1.5">
+              {scanBadges.map((b) => (
+                <span
+                  key={b.label}
+                  className={`max-w-[min(100%,11rem)] truncate rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide ${b.cls}`}
+                >
+                  {b.label}
+                </span>
+              ))}
+            </div>
+
+            <p
+              className="mt-2.5 text-[11px] leading-snug text-slate-400/95 line-clamp-2"
+              title={`${scanLine} — ${deal.whyDealGoodOrRisky}`}
+            >
+              {scanLine}
+            </p>
+
+            <p className={`mt-1.5 text-[11px] font-semibold leading-snug ${worthLine.cls}`}>{worthShort}</p>
+
+            <div className="mt-4 flex min-w-0 items-center gap-2 border-t border-white/[0.06] pt-3">
+              <span
+                className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-1 text-[9px] font-bold uppercase tracking-[0.06em] ${stanceUi.border} ${stanceUi.bg} ${stanceUi.text}`}
+              >
+                <StanceIcon className="size-3 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
+                {buyDecision.stanceLabel}
+              </span>
+            </div>
+
+            <div className="mt-3 flex min-w-0 flex-wrap gap-1.5 text-[9px] font-medium leading-tight sm:text-[10px]">
+              <span
+                className="rounded-full border border-white/[0.08] bg-black/25 px-2 py-0.5 tabular-nums text-slate-400/95"
+                title="Heuristic delivery confidence"
+              >
+                Del · {delPct}%
               </span>
               <span
-                className="rounded-full border border-white/[0.08] bg-black/25 px-2 py-0.5 font-medium tabular-nums text-slate-400/95"
-                title="Availability language confidence"
+                className="rounded-full border border-white/[0.08] bg-black/25 px-2 py-0.5 tabular-nums text-slate-400/95"
+                title="Availability confidence"
               >
                 Stock · {stockPct}%
               </span>
               <span
-                className={`max-w-[min(100%,14rem)] truncate rounded-full border border-white/[0.08] bg-black/22 px-2 py-0.5 text-slate-400/95 ${mkt.tone === "high" ? "text-emerald-200/75" : mkt.tone === "mid" ? "text-cyan-200/70" : "text-amber-200/75"}`}
+                className={`max-w-[min(100%,10rem)] truncate rounded-full border border-white/[0.08] bg-black/22 px-2 py-0.5 sm:max-w-[12rem] ${mkt.tone === "high" ? "text-emerald-200/75" : mkt.tone === "mid" ? "text-cyan-200/70" : "text-amber-200/75"}`}
               >
                 {mkt.label}
               </span>
-              {ratingValue(p.rating) > 0 && (
-                <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-white/[0.08] bg-black/25 px-2 py-0.5 text-slate-400/95">
+              {ratingValue(p.rating) > 0 ? (
+                <span className="inline-flex max-w-[min(100%,9rem)] items-center gap-0.5 truncate rounded-full border border-white/[0.08] bg-black/25 px-2 py-0.5 text-slate-400/95">
                   <Star className="size-2.5 shrink-0 text-amber-200/55" strokeWidth={1.5} aria-hidden />
                   {ratingValue(p.rating).toFixed(1)}
                   {p.reviewsCount != null && (
-                    <span className="truncate text-slate-500/85">({p.reviewsCount.toLocaleString()})</span>
+                    <span className="text-slate-500/85">
+                      ({p.reviewsCount > 999 ? `${(p.reviewsCount / 1000).toFixed(1)}k` : p.reviewsCount.toLocaleString()})
+                    </span>
                   )}
                 </span>
-              )}
-              {shipEst && (
-                <span className="inline-flex max-w-[min(100%,11rem)] items-center gap-1 truncate rounded-full border border-white/[0.08] bg-black/22 px-2 py-0.5 text-slate-500/90">
-                  <Truck className="size-2.5 shrink-0 opacity-70" strokeWidth={1.5} aria-hidden />
-                  {shipEst}
-                </span>
-              )}
-              {p.availability && (
-                <span className="rounded-full border border-white/[0.08] bg-black/25 px-2 py-0.5 text-slate-400/95">
-                  {p.availability}
-                </span>
-              )}
-              {riskHint && (
-                <span className="max-w-full rounded-full border border-amber-400/18 bg-amber-500/[0.07] px-2 py-0.5 text-amber-100/75">
-                  {riskHint}
-                </span>
-              )}
-              {ltHint && (
-                <span className="max-w-full rounded-full border border-white/[0.08] bg-black/22 px-2 py-0.5 text-slate-400/90">
-                  {ltHint}
-                </span>
+              ) : (
+                shipEst && (
+                  <span className="inline-flex max-w-[min(100%,9rem)] items-center gap-0.5 truncate rounded-full border border-white/[0.08] bg-black/22 px-2 py-0.5 text-slate-500/90">
+                    <Truck className="size-2.5 shrink-0 opacity-70" strokeWidth={1.5} aria-hidden />
+                    {shipEst}
+                  </span>
+                )
               )}
             </div>
 
-            <div className="mt-4 min-w-0 rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.03] to-black/30 px-3 py-3 sm:px-3.5">
-              <div className="flex min-w-0 flex-wrap items-start gap-2">
-                <span
-                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.06em] ${stanceUi.border} ${stanceUi.bg} ${stanceUi.text}`}
-                >
-                  <StanceIcon className="size-3.5 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
-                  {buyDecision.stanceLabel}
-                </span>
-                <div className="flex min-w-0 flex-1 flex-wrap gap-1" aria-hidden>
-                  {(["buy", "wait", "compare", "avoid"] as const).map((s) => {
-                    const on = buyDecision.stance === s;
-                    const short =
-                      s === "buy" ? "Buy" : s === "wait" ? "Wait" : s === "compare" ? "Compare" : "Avoid";
-                    return (
-                      <span
-                        key={s}
-                        className={`rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
-                          on
-                            ? "border-cyan-400/35 bg-cyan-500/15 text-cyan-100/95"
-                            : "border-white/[0.05] bg-black/20 text-slate-600"
-                        }`}
-                      >
-                        {short}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-              <p className="cockpit-body mt-2 text-[11px] leading-relaxed text-slate-400 [overflow-wrap:anywhere]">
-                {buyDecision.stanceDetail}
-              </p>
-              <p className="mt-2 text-[10px] leading-relaxed text-slate-500/90 [overflow-wrap:anywhere]">
-                <span className="font-semibold text-slate-400/95">Why this rank · </span>
-                {buyDecision.rankWhy}
-              </p>
-              <p className="mt-2 text-[10px] leading-relaxed text-violet-200/80 [overflow-wrap:anywhere]">
-                <span className="font-semibold text-violet-200/90">Buyer fit · </span>
-                {buyDecision.buyerFit}
-              </p>
-              <div className="mt-3 grid min-w-0 gap-2.5 border-t border-white/[0.06] pt-3 sm:grid-cols-2">
-                <div className="min-w-0">
-                  <p className="text-[9px] font-semibold uppercase tracking-wider text-emerald-200/75">Pros</p>
-                  <ul className="mt-1.5 space-y-1 text-[10.5px] leading-snug text-slate-400/95">
-                    {(buyDecision.pros.length ? buyDecision.pros : ["No standout positive axis vs peers—neutral band."]).map(
-                      (line, i) => (
-                        <li key={`pro-${i}`} className="flex gap-1.5 [overflow-wrap:anywhere]">
-                          <span className="mt-1.5 size-1 shrink-0 rounded-full bg-emerald-400/55" aria-hidden />
-                          <span>{line}</span>
-                        </li>
-                      )
-                    )}
-                  </ul>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[9px] font-semibold uppercase tracking-wider text-rose-200/70">Watch / risk</p>
-                  <ul className="mt-1.5 space-y-1 text-[10.5px] leading-snug text-slate-400/95">
-                    {(buyDecision.cons.length ? buyDecision.cons : ["No acute flags in heuristics—still verify seller pages."]).map(
-                      (line, i) => (
-                        <li key={`con-${i}`} className="flex gap-1.5 [overflow-wrap:anywhere]">
-                          <span className="mt-1.5 size-1 shrink-0 rounded-full bg-rose-400/50" aria-hidden />
-                          <span>{line}</span>
-                        </li>
-                      )
-                    )}
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 min-w-0 rounded-xl border border-white/[0.06] bg-black/22 px-3 py-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-cyan-200/75">QuantAI verdict</p>
-              <p className="cockpit-body mt-1.5 text-[12px] font-medium leading-relaxed text-slate-100/95 [overflow-wrap:anywhere] line-clamp-4 sm:line-clamp-3">
+            <div className="mt-3 min-w-0 rounded-xl border border-white/[0.06] bg-black/22 px-3 py-2 sm:py-2.5">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-cyan-200/70">QuantAI read</p>
+              <p className="cockpit-body mt-1 text-[11px] font-medium leading-snug text-slate-100/95 line-clamp-2 [overflow-wrap:anywhere]">
                 {buyDecision.headlineVerdict}
               </p>
-              {(p.qiReason?.trim() || ai.reason) && (
-                <p className="cockpit-body mt-2 border-t border-white/[0.05] pt-2 text-[11px] leading-relaxed text-slate-500/90 line-clamp-2 [overflow-wrap:anywhere]">
-                  <span className="text-slate-500">Model note · </span>
-                  {p.qiReason?.trim() || ai.reason}
-                </p>
-              )}
             </div>
 
             <button
@@ -810,8 +684,8 @@ function ProductResultCard({
               className="mt-4 flex w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-white/[0.07] bg-black/28 px-3 py-2.5 text-left transition hover:border-white/[0.12] hover:bg-white/[0.04]"
               aria-expanded={intelOpen}
             >
-              <span className="cockpit-label text-[10px] tracking-[0.1em] text-slate-500/90 group-hover:text-slate-400">
-                Signals &amp; transparency
+              <span className="cockpit-label text-[10px] tracking-[0.12em] text-slate-500/90 group-hover:text-slate-400">
+                Full signals
               </span>
               <ChevronDown
                 className={`size-4 shrink-0 text-slate-500 transition duration-300 ${intelOpen ? "rotate-180" : ""}`}
@@ -829,18 +703,127 @@ function ProductResultCard({
                   className="overflow-hidden"
                 >
                   <div className="mt-2 space-y-4 rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.04] via-black/25 to-transparent px-3.5 py-4 sm:px-4 sm:py-5">
+                    <div className="space-y-3 border-b border-white/[0.06] pb-4">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">Worth &amp; timing</p>
+                      <p className={`text-[11px] font-semibold leading-snug ${worthLine.cls}`}>
+                        Worth buying? {worthLine.headline}
+                      </p>
+                      <div>
+                        <div className="flex items-center justify-between gap-2 text-[9px] text-slate-500">
+                          <span>{deal.hasDiscount ? "Discount confidence" : "Listing confidence"}</span>
+                          <span className="tabular-nums text-slate-400">{deal.discountConfidence}/100</span>
+                        </div>
+                        <div
+                          className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-black/50"
+                          role="progressbar"
+                          aria-valuenow={deal.discountConfidence}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-label={deal.hasDiscount ? "Discount confidence" : "Listing confidence"}
+                        >
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-violet-400/78 to-cyan-400/72"
+                            style={{ width: `${deal.discountConfidence}%` }}
+                          />
+                        </div>
+                      </div>
+                      <p className="text-[9px] tabular-nums text-slate-600">
+                        Blend {deal.dealConfidence} · Auth {deal.discountAuthenticity} · Retail IQ{" "}
+                        {deal.retailerIntelligenceScore}
+                      </p>
+                      <p className="text-[10px] leading-snug text-slate-500/95">{deal.historicalConfidenceLabel}</p>
+                      <p className="text-[10px] leading-snug text-slate-400/95">{deal.liveRankExplanation}</p>
+                      <p className="text-[10px] leading-snug text-slate-400/95">{deal.discountVsQualityNote}</p>
+                      <p className="text-[10px] leading-snug text-slate-500/90">{deal.retailerTrustNote}</p>
+                      <p className="text-[10px] leading-snug text-slate-500/85">{deal.discountExplanation}</p>
+                      {(p.qiReason?.trim() || ai.reason) && (
+                        <p className="text-[10px] leading-snug text-slate-500/90 [overflow-wrap:anywhere]">
+                          <span className="text-slate-600">Model · </span>
+                          {p.qiReason?.trim() || ai.reason}
+                        </p>
+                      )}
+                      {riskHint && (
+                        <p className="text-[10px] leading-snug text-amber-100/80 [overflow-wrap:anywhere]">{riskHint}</p>
+                      )}
+                      {ltHint && (
+                        <p className="text-[10px] leading-snug text-slate-500/90 [overflow-wrap:anywhere]">{ltHint}</p>
+                      )}
+                      {p.availability && (
+                        <p className="text-[10px] text-slate-500/90">Availability · {p.availability}</p>
+                      )}
+                      {shipEst && <p className="text-[10px] text-slate-500/90">Shipping · {shipEst}</p>}
+                    </div>
+
+                    <div className="space-y-2 border-b border-white/[0.06] pb-4">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">Buy matrix</p>
+                      <p className="text-[10px] leading-relaxed text-slate-400/95 [overflow-wrap:anywhere]">
+                        {buyDecision.stanceDetail}
+                      </p>
+                      <p className="text-[10px] leading-relaxed text-slate-500/90 [overflow-wrap:anywhere]">
+                        <span className="font-semibold text-slate-400/95">Rank · </span>
+                        {buyDecision.rankWhy}
+                      </p>
+                      <p className="text-[10px] leading-relaxed text-violet-200/80 [overflow-wrap:anywhere]">
+                        <span className="font-semibold text-violet-200/90">Fit · </span>
+                        {buyDecision.buyerFit}
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-1" aria-hidden>
+                        {(["buy", "wait", "compare", "avoid"] as const).map((s) => {
+                          const on = buyDecision.stance === s;
+                          const short =
+                            s === "buy" ? "Buy" : s === "wait" ? "Wait" : s === "compare" ? "Compare" : "Avoid";
+                          return (
+                            <span
+                              key={s}
+                              className={`rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
+                                on
+                                  ? "border-cyan-400/35 bg-cyan-500/15 text-cyan-100/95"
+                                  : "border-white/[0.05] bg-black/20 text-slate-600"
+                              }`}
+                            >
+                              {short}
+                            </span>
+                          );
+                        })}
+                      </div>
+                      <div className="mt-3 grid min-w-0 gap-2.5 sm:grid-cols-2">
+                        <div className="min-w-0">
+                          <p className="text-[9px] font-semibold uppercase tracking-wider text-emerald-200/75">Pros</p>
+                          <ul className="mt-1.5 space-y-1 text-[10px] leading-snug text-slate-400/95">
+                            {(buyDecision.pros.length
+                              ? buyDecision.pros
+                              : ["Neutral vs tray — no standout positive axis."]
+                            ).map((line, i) => (
+                              <li key={`pro-${i}`} className="flex gap-1.5 [overflow-wrap:anywhere]">
+                                <span className="mt-1.5 size-1 shrink-0 rounded-full bg-emerald-400/55" aria-hidden />
+                                <span>{line}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[9px] font-semibold uppercase tracking-wider text-rose-200/70">Watch</p>
+                          <ul className="mt-1.5 space-y-1 text-[10px] leading-snug text-slate-400/95">
+                            {(buyDecision.cons.length
+                              ? buyDecision.cons
+                              : ["No acute flags — still verify seller."]
+                            ).map((line, i) => (
+                              <li key={`con-${i}`} className="flex gap-1.5 [overflow-wrap:anywhere]">
+                                <span className="mt-1.5 size-1 shrink-0 rounded-full bg-rose-400/50" aria-hidden />
+                                <span>{line}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="space-y-2 border-b border-white/[0.06] pb-4">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-emerald-200/75">
                         Deal intelligence engine
                       </p>
                       <p className="cockpit-body text-[11px] leading-relaxed text-slate-300/95 [overflow-wrap:anywhere]">
                         {deal.whyDealGoodOrRisky}
-                      </p>
-                      <p className="cockpit-body text-[10.5px] leading-relaxed text-slate-400/95 [overflow-wrap:anywhere]">
-                        {deal.liveRankExplanation}
-                      </p>
-                      <p className="cockpit-body text-[10.5px] leading-relaxed text-slate-400/95 [overflow-wrap:anywhere]">
-                        {deal.discountVsQualityNote}
                       </p>
                       <p className="cockpit-body text-[10.5px] leading-relaxed text-slate-500/90 [overflow-wrap:anywhere]">
                         Fair-band estimate (peer median in this tray) ≈ {formatListingPrice(deal.fairMarketEstimate, sym)}{" "}
