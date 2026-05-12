@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   AlertTriangle,
   ArrowRight,
   BarChart3,
   CheckCircle2,
+  ChevronDown,
   Globe2,
   MapPin,
   Shield,
@@ -21,6 +22,8 @@ type Props = {
   intel: SearchIntelligenceDTO;
   /** Free plan shows condensed synthesis; Pro/Premium see full layers. */
   displayLevel?: SearchIntelligenceLevel;
+  /** Mobile / touch: deep tables & persona lane load behind an expand control. */
+  performanceMode?: boolean;
 };
 
 function finalTone(kind: SearchIntelligenceDTO["finalRecommendation"]): string {
@@ -48,9 +51,14 @@ function tierLabel(t: SearchIntelligenceDTO["confidenceTier"]): string {
   return "Verify manually";
 }
 
-export default function GlobalIntelligencePanel({ intel, displayLevel = "full" }: Props) {
+export default function GlobalIntelligencePanel({
+  intel,
+  displayLevel = "full",
+  performanceMode = false,
+}: Props) {
   const reduceMotion = useReducedMotion();
   const showDeepLayers = displayLevel !== "summary";
+  const [deepOpen, setDeepOpen] = useState(!performanceMode);
   const confPct = Math.max(8, 100 - intel.buyerUncertaintyScore);
   const radarVals = useMemo(() => {
     const clarity = Math.max(10, 100 - intel.buyerUncertaintyScore);
@@ -166,7 +174,11 @@ export default function GlobalIntelligencePanel({ intel, displayLevel = "full" }
           <div className="w-full shrink-0 lg:w-64">
             <p className="cockpit-overline text-slate-500/85">AI confidence radar</p>
             <div className="mt-4 flex justify-center lg:justify-start">
-              <ConfidenceTriRadar values={radarVals} reduceMotion={!!reduceMotion} />
+              <ConfidenceTriRadar
+                values={radarVals}
+                reduceMotion={!!reduceMotion}
+                disableInfinitePulse={!!reduceMotion || performanceMode}
+              />
             </div>
             <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500/80">
               {tierLabel(intel.confidenceTier)}
@@ -220,7 +232,24 @@ export default function GlobalIntelligencePanel({ intel, displayLevel = "full" }
         </div>
       )}
 
-      {showDeepLayers && (
+      {showDeepLayers && performanceMode && !deepOpen && (
+        <div className="cockpit-glass-panel p-4 sm:p-5">
+          <button
+            type="button"
+            onClick={() => setDeepOpen(true)}
+            className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/[0.08] bg-black/25 px-3 py-2.5 text-left transition hover:border-cyan-400/22"
+            aria-expanded={false}
+          >
+            <span className="text-sm font-medium text-white/90">Expand full intelligence layers</span>
+            <ChevronDown className="size-4 text-slate-500" aria-hidden />
+          </button>
+          <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
+            Retailer graph, persona lane, and price lanes stay hidden until you expand—saves GPU on mobile.
+          </p>
+        </div>
+      )}
+
+      {showDeepLayers && (!performanceMode || deepOpen) && (
         <>
       <div className="grid gap-5 lg:grid-cols-3">
         <div className="cockpit-glass-panel p-5">
@@ -390,12 +419,15 @@ function triRadarPoints(values: readonly [number, number, number]): string {
 function ConfidenceTriRadar({
   values,
   reduceMotion,
+  disableInfinitePulse,
 }: {
   values: readonly [number, number, number];
   reduceMotion: boolean;
+  disableInfinitePulse?: boolean;
 }) {
   const shell = triRadarPoints([100, 100, 100]);
   const fill = triRadarPoints(values);
+  const pulseOff = reduceMotion || disableInfinitePulse;
   return (
     <div className="relative">
       <svg width="132" height="124" viewBox="0 0 100 100" role="img" aria-label="Tri-axis confidence radar">
@@ -414,12 +446,12 @@ function ConfidenceTriRadar({
           strokeWidth="0.75"
           initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }}
           animate={
-            reduceMotion
+            pulseOff
               ? { opacity: 1, scale: 1 }
               : { opacity: 1, scale: [1, 1.012, 1] }
           }
           transition={
-            reduceMotion
+            pulseOff
               ? { duration: 0 }
               : {
                   opacity: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },

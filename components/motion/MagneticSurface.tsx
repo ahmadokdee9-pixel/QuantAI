@@ -9,12 +9,19 @@ type Props = {
   /** 0.05–0.15 typical */
   strength?: number;
   className?: string;
+  /** Skip springs / pointer tracking (mobile, reduced motion). */
+  disabled?: boolean;
 };
 
 /**
  * Subtle magnetic tilt toward cursor. Disabled when prefers-reduced-motion.
  */
-export default function MagneticSurface({ children, strength = 0.11, className = "" }: Props) {
+export default function MagneticSurface({
+  children,
+  strength = 0.11,
+  className = "",
+  disabled = false,
+}: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
   const x = useMotionValue(0);
@@ -22,7 +29,7 @@ export default function MagneticSurface({ children, strength = 0.11, className =
   const sx = useSpring(x, { stiffness: 280, damping: 22, mass: 0.4 });
   const sy = useSpring(y, { stiffness: 280, damping: 22, mass: 0.4 });
 
-  if (reduce) {
+  if (reduce || disabled) {
     return <div className={className}>{children}</div>;
   }
 

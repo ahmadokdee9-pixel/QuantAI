@@ -31,6 +31,28 @@ const FOLLOW_UP_CHIPS: { label: string; prompt: string }[] = [
   { label: "Price vs trust", prompt: "How do price and store trust trade off in my top results?" },
 ];
 
+const DEEPER_CHIPS: { label: string; prompt: string }[] = [
+  {
+    label: "Retailer risk",
+    prompt:
+      "Why might retailer risk be elevated on any row in my current tray? Explain the heuristics transparently and what I should verify manually.",
+  },
+  {
+    label: "Confidence score",
+    prompt:
+      "Explain how to read QuantAI confidence on these listings—what increases it, what caps it, and where the model is uncertain.",
+  },
+  {
+    label: "Safer alternatives",
+    prompt: "List safer retailer alternatives in my tray for the same intent, even if they cost a bit more.",
+  },
+  {
+    label: "Reasoning depth",
+    prompt:
+      "Expand the reasoning behind the top-ranked pick versus the second-ranked pick using only fields you can see in my tray.",
+  },
+];
+
 function OptionBlock({
   title,
   opt,
@@ -111,6 +133,14 @@ export default function CopilotDrawer() {
         prompt: "If I compared the top 3 listings by composite score, what tradeoffs would you highlight?",
       });
     }
+    const suspicious = prods.filter((p) => p.priceAnomaly === "suspicious_low" || p.priceAnomaly === "deep_discount");
+    if (suspicious.length > 0) {
+      out.push({
+        label: "Price realism check",
+        prompt:
+          "Some rows look like deep discounts or suspiciously low prices relative to the tray—walk me through how to validate them before checkout.",
+      });
+    }
     if (top) {
       out.push({
         label: "Why ranked first?",
@@ -134,7 +164,8 @@ export default function CopilotDrawer() {
   const inFlight = useRef(false);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end" });
+    if (!open) return;
+    endRef.current?.scrollIntoView({ block: "end", behavior: "auto" });
   }, [msgs, open, busy]);
 
   const send = useCallback(
@@ -282,7 +313,7 @@ export default function CopilotDrawer() {
                     <p id="copilot-title" className="text-sm font-semibold text-white">
                       QuantAI Copilot
                     </p>
-                    <p className="text-[10px] text-slate-500">Session-aware · JSON-backed</p>
+                    <p className="text-[10px] text-slate-500">Tray-aware · compares · saved context</p>
                   </div>
                 </div>
                 <button
@@ -384,21 +415,35 @@ export default function CopilotDrawer() {
                 ))}
                 <TypingRow active={busy} reduce={reduce} />
                 {!busy && msgs.length > 0 && msgs[msgs.length - 1]?.role === "assistant" && (
-                  <div className="flex flex-wrap gap-1.5 border-t border-white/[0.04] pt-2">
-                    <span className="w-full text-[10px] font-semibold uppercase tracking-wider text-slate-600">
-                      Follow-ups
-                    </span>
-                    {FOLLOW_UP_CHIPS.map((c) => (
-                      <button
-                        key={c.label}
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void send(c.prompt)}
-                        className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[10px] font-medium text-slate-400 transition hover:border-cyan-400/20 hover:text-slate-200 disabled:opacity-50"
-                      >
-                        {c.label}
-                      </button>
-                    ))}
+                  <div className="flex flex-col gap-1.5 border-t border-white/[0.04] pt-2">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-600">Ask deeper</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {DEEPER_CHIPS.map((c) => (
+                        <button
+                          key={c.label}
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void send(c.prompt)}
+                          className="rounded-full border border-cyan-400/15 bg-cyan-500/[0.06] px-2.5 py-1 text-[10px] font-medium text-cyan-100/90 transition hover:border-cyan-400/30 disabled:opacity-50"
+                        >
+                          {c.label}
+                        </button>
+                      ))}
+                    </div>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-600">Follow-ups</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {FOLLOW_UP_CHIPS.map((c) => (
+                        <button
+                          key={c.label}
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void send(c.prompt)}
+                          className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[10px] font-medium text-slate-400 transition hover:border-cyan-400/20 hover:text-slate-200 disabled:opacity-50"
+                        >
+                          {c.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
                 <div ref={endRef} />

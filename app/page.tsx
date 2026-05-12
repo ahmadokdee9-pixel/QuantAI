@@ -12,6 +12,7 @@ import PricingCards from "../components/subscription/PricingCards";
 import FeedbackLauncher from "../components/feedback/FeedbackLauncher";
 import TrustRibbon from "../components/trust/TrustRibbon";
 import QuantAITransparencySection from "../components/trust/QuantAITransparencySection";
+import DeferredBelowFold from "../components/home/DeferredBelowFold";
 import AILoadingPhase from "../components/loading/AILoadingPhase";
 import SearchStreamRibbon from "../components/loading/SearchStreamRibbon";
 import MagneticSurface from "../components/motion/MagneticSurface";
@@ -48,6 +49,7 @@ import { logDevError } from "@/lib/log/devLog";
 import { toCopilotProductBrief } from "@/lib/copilot/mapProduct";
 import type { CopilotSessionPayload } from "@/lib/copilot/sessionTypes";
 import { appendLocalRecentSearch, recordInterestTag } from "@/lib/personalization/localSignals";
+import { useMobilePerf } from "@/lib/hooks/useMobilePerf";
 import {
   ArrowRight,
   Bell,
@@ -68,6 +70,7 @@ type SearchHistoryRow = {
 
 export default function Home() {
   const { isSignedIn } = useUser();
+  const mobilePerf = useMobilePerf();
   const { registerPrimarySearch, pulseIntelligence } = useCockpit();
   const [query, setQuery] = useState("");
   const [products, setProducts] = useState<QuantProduct[]>([]);
@@ -199,9 +202,9 @@ export default function Home() {
   }, [isSignedIn]);
 
   useEffect(() => {
-    if (loading || !searchIntelligence) return;
+    if (mobilePerf || loading || !searchIntelligence) return;
     pulseIntelligence();
-  }, [loading, searchIntelligence, pulseIntelligence]);
+  }, [mobilePerf, loading, searchIntelligence, pulseIntelligence]);
 
   function decision(score: number) {
     if (score >= 85) return "Buy now";
@@ -331,9 +334,6 @@ export default function Home() {
     setFilters(defaultResultsFilters());
     trackEvent(QuantAnalyticsEvents.SEARCH_RUN, { queryLength: q.length });
     setLoading(true);
-    setProducts([]);
-    setDealClusters([]);
-    setSearchIntelligence(null);
     setSearchError(null);
 
     try {
@@ -410,6 +410,9 @@ export default function Home() {
           resultCount: searchData.products.length,
         });
       } else {
+        setProducts([]);
+        setDealClusters([]);
+        setSearchIntelligence(null);
         setSearchError("No products found for this query.");
         trackEvent(QuantAnalyticsEvents.SEARCH_ERROR, { code: "empty" });
       }
@@ -564,7 +567,7 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-[#020617] text-slate-100">
-      <AmbientBackdrop />
+      <AmbientBackdrop lite={mobilePerf} />
 
       <div className="relative z-10">
         <LandingNav />
@@ -620,7 +623,11 @@ export default function Home() {
                       className="min-w-0 flex-1 bg-transparent py-3.5 text-[15px] font-medium tracking-tight text-white placeholder:text-slate-500/75 placeholder:font-normal outline-none"
                     />
                   </div>
-                  <MagneticSurface className="inline-flex min-h-[56px] shrink-0" strength={0.1}>
+                  <MagneticSurface
+                    className="inline-flex min-h-[56px] shrink-0"
+                    strength={0.1}
+                    disabled={mobilePerf}
+                  >
                     <button
                       type="button"
                       onClick={() => void search()}
@@ -1037,7 +1044,6 @@ export default function Home() {
           products.length > 0 ||
           (searchError != null && !loading)) && (
           <ProductResultsSurface
-            key={resultsKey}
             products={products}
             sortedProducts={sortedProducts}
             dealClusters={dealClusters}
@@ -1063,13 +1069,14 @@ export default function Home() {
           />
         )}
 
-        <MarketingSections />
+        <DeferredBelowFold>
+          <MarketingSections />
 
-        {/* Pricing */}
-        <section
-          id="pricing"
-          className="mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-28 scroll-mt-24 border-t border-white/[0.06]"
-        >
+          {/* Pricing */}
+          <section
+            id="pricing"
+            className="mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-28 scroll-mt-24 border-t border-white/[0.06]"
+          >
           <div className="text-center max-w-2xl mx-auto mb-14 sm:mb-16">
             <p className="text-xs font-medium uppercase tracking-[0.22em] text-cyan-300/80 mb-4">
               QuantAI plans
@@ -1105,6 +1112,7 @@ export default function Home() {
           <QuantAITransparencySection />
           <TrustRibbon />
         </div>
+        </DeferredBelowFold>
 
         <footer className="border-t border-white/[0.06] py-10 text-center">
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-slate-500">
@@ -1130,7 +1138,7 @@ export default function Home() {
           </p>
         </footer>
 
-        <div className="fixed bottom-5 right-5 z-50 lg:hidden">
+        <div className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom,0px))] right-[max(1.25rem,env(safe-area-inset-right,0px))] z-50 lg:hidden">
           <FeedbackLauncher variant="floating" />
         </div>
       </div>

@@ -10,6 +10,7 @@ import { readApiJson } from "@/lib/api/readJson";
 import { useCopilotSession } from "@/components/copilot/CopilotContext";
 import { defaultCopilotSession } from "@/lib/copilot/sessionTypes";
 import type { CopilotSessionPayload } from "@/lib/copilot/sessionTypes";
+import { buildSavedItemInsights } from "@/lib/liveSignals/savedInsights";
 
 type SavedRow = {
   id?: string;
@@ -161,6 +162,23 @@ export default function SavedProductsPage() {
                 {item.ai_score != null && (
                   <p className="mt-1 text-xs text-slate-500">AI score · {item.ai_score}</p>
                 )}
+                <ul className="mt-3 space-y-2 text-left">
+                  {buildSavedItemInsights(item, items).map((ins) => (
+                    <li
+                      key={`${item.link}-${ins.headline}`}
+                      className={`rounded-lg border px-3 py-2 text-[11px] leading-relaxed ${
+                        ins.tone === "positive"
+                          ? "border-emerald-400/20 bg-emerald-500/[0.06] text-emerald-50/90"
+                          : ins.tone === "watch"
+                            ? "border-amber-400/20 bg-amber-500/[0.06] text-amber-50/90"
+                            : "border-white/[0.06] bg-white/[0.03] text-slate-400"
+                      }`}
+                    >
+                      <span className="font-semibold text-white/85">{ins.headline}</span>
+                      <span className="mt-0.5 block text-slate-400">{ins.detail}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
               <div className="flex flex-wrap justify-center gap-2 sm:flex-col sm:justify-end">
                 <a

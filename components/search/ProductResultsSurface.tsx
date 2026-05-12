@@ -2,7 +2,7 @@
 
 import type { Dispatch, SetStateAction } from "react";
 import dynamic from "next/dynamic";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { AlertCircle, BarChart3, GitCompare, Loader2, Sparkles, X } from "lucide-react";
@@ -28,6 +28,8 @@ import type { QuantProduct } from "@/lib/shoppingScore";
 import ProductIntelligenceDrawer from "./ProductIntelligenceDrawer";
 import ProductResultCard from "./ProductResultCard";
 import ResultsToolbar from "./ResultsToolbar";
+import LiveIntelligenceLayer from "@/components/live/LiveIntelligenceLayer";
+import { useMobilePerf } from "@/lib/hooks/useMobilePerf";
 
 const IntelligenceEducationStrip = dynamic(() => import("./IntelligenceEducationStrip"), {
   loading: () => (
@@ -108,8 +110,9 @@ export default function ProductResultsSurface({
   onRetrySearch,
   onCompareTrayChange,
 }: Props) {
-  const { registerQuickHandlers, intelligenceEpoch } = useCockpit();
+  const { registerQuickHandlers } = useCockpit();
   const reduceMotion = useReducedMotion();
+  const mobilePerf = useMobilePerf();
   const anchorRef = useRef<HTMLDivElement>(null);
   const prevLoading = useRef(false);
   const [detailProduct, setDetailProduct] = useState<QuantProduct | null>(null);
@@ -152,13 +155,17 @@ export default function ProductResultsSurface({
     : { type: "spring" as const, stiffness: 380, damping: 32 };
 
   useEffect(() => {
-    if (reduceMotion) return;
+    if (reduceMotion || mobilePerf) return;
     const finished = prevLoading.current && !loading && products.length > 0;
     prevLoading.current = loading;
-    if (finished && resultsKey > 0) {
-      anchorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [loading, products.length, resultsKey, reduceMotion]);
+    if (!finished || resultsKey <= 0) return;
+    const el = anchorRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const vh = window.visualViewport?.height ?? window.innerHeight;
+    if (rect.top >= 0 && rect.top < vh * 0.9) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [loading, products.length, resultsKey, reduceMotion, mobilePerf]);
 
   useEffect(() => {
     if (sortedProducts.length > 0) return;
@@ -231,7 +238,7 @@ export default function ProductResultsSurface({
     return () => registerQuickHandlers(null);
   }, [sortedProducts.length, registerQuickHandlers, trayHandlers]);
 
-  const toggleCompare = (link: string) => {
+  const toggleCompare = useCallback((link: string) => {
     setVerdict(null);
     setVerdictError(null);
     setVerdictSource(null);
@@ -242,7 +249,7 @@ export default function ProductResultsSurface({
       if (prev.length >= 3) return prev;
       return [...prev, link];
     });
-  };
+  }, []);
 
   async function runCompareVerdict() {
     if (compareProducts.length === 0) return;
@@ -305,7 +312,7 @@ export default function ProductResultsSurface({
     return (
       <section
         id="quantai-results-anchor"
-        className="relative mx-auto max-w-7xl px-4 sm:px-6 pb-12"
+        className="relative mx-auto min-h-[45vh] max-w-7xl px-4 sm:px-6 pb-12"
         aria-busy="true"
         aria-label="Loading search results"
       >
@@ -401,12 +408,16 @@ export default function ProductResultsSurface({
   }
 
   const advisorPad =
-    filteredDealClusters.length > 0 ? "pb-[min(40rem,52vh)] sm:pb-60" : "pb-24";
+    mobilePerf && filteredDealClusters.length === 0
+      ? "pb-16"
+      : filteredDealClusters.length > 0
+        ? "pb-[min(40rem,52vh)] sm:pb-60"
+        : "pb-24";
 
   return (
     <section
       id="quantai-results-anchor"
-      className={`relative mx-auto max-w-7xl px-4 sm:px-6 ${advisorPad}`}
+      className={`relative mx-auto max-w-7xl scroll-mt-[max(5.5rem,env(safe-area-inset-top,0px)+3rem)] px-4 sm:px-6 ${advisorPad}`}
       ref={anchorRef}
     >
       <div className="pointer-events-none absolute inset-x-0 -top-8 h-56 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(34,211,238,0.12),transparent_65%)]" />
@@ -423,6 +434,17 @@ export default function ProductResultsSurface({
         onClearFilters={onClearFilters}
       />
 
+      {loading && products.length > 0 ? (
+        <div
+          className="mb-4 flex items-center justify-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-500/10 px-3 py-2.5 text-center text-[11px] font-medium text-cyan-50/95"
+          role="status"
+          aria-live="polite"
+        >
+          <Loader2 className="size-3.5 shrink-0 animate-spin" aria-hidden />
+          Updating results — tray stays pinned so scroll does not jump.
+        </div>
+      ) : null}
+
       <div className="mb-6">
         <ShareSnapshotBar
           query={searchQuery}
@@ -430,6 +452,13 @@ export default function ProductResultsSurface({
           intelligence={searchIntelligence}
         />
       </div>
+
+      <LiveIntelligenceLayer
+        key={searchQuery}
+        query={searchQuery}
+        products={sortedProducts}
+        defaultCollapsed={mobilePerf}
+      />
       {sortedProducts.length >= 2 && compareLinks.length === 0 && (
         <p className="cockpit-body -mt-1 mb-4 text-center text-[11px] leading-relaxed text-slate-500">
           Pin <span className="font-medium text-slate-400">Compare</span> on two or three finalists to unlock QuantAI
@@ -441,14 +470,21 @@ export default function ProductResultsSurface({
 
       {searchIntelligence && (
         <motion.div
-          key={`gi-${intelligenceEpoch}`}
-          initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0.88, y: 10 }}
+          initial={reduceMotion || mobilePerf ? { opacity: 1, y: 0 } : { opacity: 0.88, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring", stiffness: 360, damping: 34 }}
+          transition={
+            reduceMotion || mobilePerf
+              ? { duration: 0 }
+              : { type: "spring", stiffness: 360, damping: 34 }
+          }
           className="intel-panel-shimmer relative z-0 mb-12 min-w-0 overflow-hidden rounded-[1.75rem]"
         >
           <div className="relative z-[1] min-w-0">
-            <GlobalIntelligencePanel intel={searchIntelligence} displayLevel={intelligenceLevel} />
+            <GlobalIntelligencePanel
+              intel={searchIntelligence}
+              displayLevel={intelligenceLevel}
+              performanceMode={mobilePerf}
+            />
           </div>
         </motion.div>
       )}
@@ -726,15 +762,8 @@ export default function ProductResultsSurface({
         onClose={() => setDetailProduct(null)}
       />
 
-      <AnimatePresence mode="popLayout">
-        <motion.div
-          key={resultsKey}
-          initial={reduceMotion ? { opacity: 1 } : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: reduceMotion ? 0 : 0.22 }}
-          className="grid min-w-0 gap-7 sm:grid-cols-2 xl:grid-cols-3"
-        >
+      {mobilePerf ? (
+        <div className="grid min-w-0 gap-7 sm:grid-cols-2 xl:grid-cols-3">
           {sortedProducts.map((p, index) => {
             const rank = rankByLink.get(p.link) ?? index;
             return (
@@ -750,11 +779,43 @@ export default function ProductResultsSurface({
                 savedLinks={savedLinks}
                 addToWatchlist={addToWatchlist}
                 onOpenIntelligence={setDetailProduct}
+                lowPower={mobilePerf}
               />
             );
           })}
-        </motion.div>
-      </AnimatePresence>
+        </div>
+      ) : (
+        <AnimatePresence mode="popLayout">
+          <motion.div
+            key="product-grid"
+            initial={reduceMotion ? { opacity: 1 } : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: reduceMotion ? 0 : 0.22 }}
+            className="grid min-w-0 gap-7 sm:grid-cols-2 xl:grid-cols-3"
+          >
+            {sortedProducts.map((p, index) => {
+              const rank = rankByLink.get(p.link) ?? index;
+              return (
+                <ProductResultCard
+                  key={`${p.id}-${p.link}`}
+                  product={p}
+                  list={sortedProducts}
+                  index={index}
+                  rank={rank}
+                  compareLinks={compareLinks}
+                  toggleCompare={toggleCompare}
+                  saveProduct={saveProduct}
+                  savedLinks={savedLinks}
+                  addToWatchlist={addToWatchlist}
+                  onOpenIntelligence={setDetailProduct}
+                  lowPower={false}
+                />
+              );
+            })}
+          </motion.div>
+        </AnimatePresence>
+      )}
 
       {filteredDealClusters.length > 0 && (
         <MultiStoreDealAdvisor

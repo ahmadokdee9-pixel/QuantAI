@@ -1,11 +1,20 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { CockpitProvider } from "@/components/cockpit/cockpitContext";
 import CommandPalette from "@/components/cockpit/CommandPalette";
 import FloatingIntelDock from "@/components/cockpit/FloatingIntelDock";
 import { CopilotProvider } from "@/components/copilot/CopilotContext";
-import CopilotDrawer from "@/components/copilot/CopilotDrawer";
-import OnboardingWelcome from "@/components/onboarding/OnboardingWelcome";
+
+const CopilotDrawer = dynamic(() => import("@/components/copilot/CopilotDrawer"), {
+  ssr: false,
+  loading: () => null,
+});
+
+const OnboardingWelcome = dynamic(() => import("@/components/onboarding/OnboardingWelcome"), {
+  ssr: false,
+  loading: () => null,
+});
 
 export default function QuantShell({ children }: { children: React.ReactNode }) {
   return (

@@ -16,6 +16,7 @@ import { logDevError } from "@/lib/log/devLog";
 import { useCopilotSession } from "@/components/copilot/CopilotContext";
 import { defaultCopilotSession } from "@/lib/copilot/sessionTypes";
 import type { CopilotSessionPayload } from "@/lib/copilot/sessionTypes";
+import { buildSessionDigest } from "@/lib/liveSignals/sessionDigest";
 
 type HistoryRow = { id?: string; query: string; result_count?: number; created_at?: string };
 type WatchRow = { id?: string; product?: Record<string, unknown>; created_at?: string };
@@ -175,6 +176,18 @@ export default function DashboardPage() {
     ] as const;
   }, [saved.length, watchlist.length, history.length]);
 
+  const digestLines = useMemo(
+    () =>
+      buildSessionDigest({
+        savedCount: saved.length,
+        watchlistCount: watchlist.length,
+        historyQueries: history.map((h) => h.query),
+        compareCount: compareHistory.length,
+        memoryLine,
+      }),
+    [saved.length, watchlist.length, history, compareHistory.length, memoryLine]
+  );
+
   return (
     <div className="space-y-8">
       <EntitlementBanner />
@@ -264,6 +277,28 @@ export default function DashboardPage() {
           </Link>
         ))}
       </section>
+
+      {!loading && !err && digestLines.length > 0 ? (
+        <section className="cockpit-glass-panel p-6 sm:p-8" aria-label="AI digest">
+          <div className="mb-4 flex items-center gap-2">
+            <Sparkles className="size-4 text-cyan-200/85" strokeWidth={1.5} aria-hidden />
+            <h2 className="text-lg font-semibold text-white/95">Daily AI digest</h2>
+          </div>
+          <p className="text-xs text-slate-500">
+            Session-style briefing from your account signals only—no synthetic urgency or crowd counters.
+          </p>
+          <ul className="mt-4 space-y-2">
+            {digestLines.map((line) => (
+              <li
+                key={line.id}
+                className="rounded-xl border border-white/[0.06] bg-black/25 px-4 py-3 text-sm leading-relaxed text-slate-300"
+              >
+                {line.text}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section id="watchlist" className="cockpit-glass-panel scroll-mt-24 p-6 sm:p-8">
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

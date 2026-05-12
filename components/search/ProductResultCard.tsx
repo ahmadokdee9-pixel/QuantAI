@@ -125,6 +125,8 @@ type Props = {
   savedLinks: Set<string>;
   addToWatchlist?: (p: QuantProduct) => void;
   onOpenIntelligence: (p: QuantProduct) => void;
+  /** Mobile / touch: skip magnetic tilt and heavy hover motion. */
+  lowPower?: boolean;
 };
 
 const btnRow =
@@ -179,8 +181,10 @@ function ProductResultCard({
   savedLinks,
   addToWatchlist,
   onOpenIntelligence,
+  lowPower = false,
 }: Props) {
   const reduceMotion = useReducedMotion();
+  const lite = reduceMotion || lowPower;
   const ringGradId = useId().replace(/:/g, "");
   const [intelOpen, setIntelOpen] = useState(false);
   const [cardCopyFlash, setCardCopyFlash] = useState(false);
@@ -203,19 +207,19 @@ function ProductResultCard({
   const ringC = 2 * Math.PI * ringR;
   const ringDash = ringC * (1 - scoreNorm / 100);
 
-  const transition = reduceMotion
+  const transition = lite
     ? { duration: 0 }
     : { type: "spring" as const, stiffness: 400, damping: 34 };
 
   return (
-    <MagneticSurface className="h-full min-w-0" strength={0.08}>
+    <MagneticSurface className="h-full min-w-0" strength={0.08} disabled={lite}>
       <motion.article
-        layout
-        initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+        layout={!lite}
+        initial={lite ? false : { opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ ...transition, delay: Math.min(index * 0.032, 0.38) }}
+        transition={{ ...transition, delay: lite ? 0 : Math.min(index * 0.032, 0.38) }}
         whileHover={
-          reduceMotion
+          lite
             ? undefined
             : {
                 y: -4,
@@ -228,7 +232,7 @@ function ProductResultCard({
             : "bg-gradient-to-br from-white/[0.1] via-cyan-400/6 to-violet-500/10"
         }`}
       >
-        <div className="qi-product-card-inner relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.48rem] border border-white/[0.07] bg-gradient-to-b from-white/[0.08] via-white/[0.03] to-[#040912]/98 backdrop-blur-2xl transition-[border-color,box-shadow] duration-500 group-hover:border-cyan-400/18">
+        <div className="qi-product-card-inner relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.48rem] border border-white/[0.07] bg-gradient-to-b from-white/[0.08] via-white/[0.03] to-[#040912]/98 backdrop-blur-2xl transition-[border-color,box-shadow,transform] duration-500 group-hover:border-cyan-400/18 group-hover:shadow-[0_0_0_1px_rgba(34,211,238,0.08),0_24px_48px_-28px_rgba(34,211,238,0.18)]">
           <div className="pointer-events-none absolute -right-20 -top-20 size-48 rounded-full bg-cyan-400/8 blur-3xl opacity-0 transition duration-700 group-hover:opacity-100" />
           <div className="pointer-events-none absolute -bottom-24 -left-16 size-44 rounded-full bg-violet-500/8 blur-3xl opacity-0 transition duration-700 group-hover:opacity-45" />
 
@@ -255,7 +259,7 @@ function ProductResultCard({
 
           <div className="relative z-[2] mx-4 mt-4 min-w-0 sm:mx-5">
             {p.image ? (
-              <CardProductImage key={`${p.link}-${p.image}`} src={p.image} reduceMotion={reduceMotion} />
+              <CardProductImage key={`${p.link}-${p.image}`} src={p.image} reduceMotion={lite} />
             ) : (
               <div
                 className="flex aspect-[4/3] max-h-[8.5rem] min-h-[6.75rem] w-full flex-col items-center justify-center gap-2 rounded-[1.05rem] border border-dashed border-white/[0.12] bg-gradient-to-br from-slate-900/80 via-[#0a1220]/95 to-slate-900/90 text-center"
@@ -347,10 +351,10 @@ function ProductResultCard({
                       strokeWidth="4"
                       strokeLinecap="round"
                       strokeDasharray={ringC}
-                      initial={reduceMotion ? false : { strokeDashoffset: ringC }}
+                      initial={lite ? false : { strokeDashoffset: ringC }}
                       animate={{ strokeDashoffset: ringDash }}
                       transition={
-                        reduceMotion
+                        lite
                           ? { duration: 0 }
                           : { duration: 1.05, ease: [0.22, 1, 0.36, 1] }
                       }
@@ -443,10 +447,10 @@ function ProductResultCard({
             <AnimatePresence initial={false}>
               {intelOpen && (
                 <motion.div
-                  initial={reduceMotion ? false : { height: 0, opacity: 0 }}
+                  initial={lite ? false : { height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: reduceMotion ? 0 : 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: lite ? 0 : 0.3, ease: [0.22, 1, 0.36, 1] }}
                   className="overflow-hidden"
                 >
                   <div className="mt-2 space-y-4 rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.04] via-black/25 to-transparent px-3.5 py-4 sm:px-4 sm:py-5">
@@ -508,7 +512,7 @@ function ProductResultCard({
                     }
                   })();
                 }}
-                whileHover={reduceMotion ? undefined : { scale: 1.02 }}
+                whileHover={lite ? undefined : { scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className={`${btnRow} inline-flex min-w-0 flex-[1_1_5.5rem] items-center justify-center gap-1.5 border border-white/[0.1] bg-white/[0.05] px-3 text-slate-300 hover:border-white/[0.14] hover:bg-white/[0.07]`}
               >
@@ -524,7 +528,7 @@ function ProductResultCard({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => recordViewedProductLink(p.link)}
-                whileHover={reduceMotion ? undefined : { scale: 1.02 }}
+                whileHover={lite ? undefined : { scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className={`${btnRow} relative flex min-w-[7.5rem] flex-[1.1_1_7rem] items-center justify-center overflow-hidden bg-gradient-to-r from-white via-slate-50 to-white px-4 text-slate-900 shadow-[0_10px_28px_-16px_rgba(15,23,42,0.45)] hover:brightness-[1.02]`}
               >
@@ -538,7 +542,7 @@ function ProductResultCard({
                 <motion.button
                   type="button"
                   onClick={() => addToWatchlist(p)}
-                  whileHover={reduceMotion ? undefined : { scale: 1.02 }}
+                  whileHover={lite ? undefined : { scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className={`${btnRow} border border-violet-400/22 bg-violet-500/10 px-3.5 text-violet-100/90 hover:bg-violet-500/16`}
                   title="Add to watchlist"
@@ -550,7 +554,7 @@ function ProductResultCard({
                 type="button"
                 onClick={() => saveProduct(p)}
                 disabled={savedLinks.has(p.link)}
-                whileHover={reduceMotion ? undefined : { scale: 1.02 }}
+                whileHover={lite ? undefined : { scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className={`${btnRow} border border-cyan-400/22 bg-cyan-500/[0.1] px-4 text-cyan-50/95 hover:border-cyan-400/30 hover:bg-cyan-500/[0.14] disabled:opacity-45`}
               >
