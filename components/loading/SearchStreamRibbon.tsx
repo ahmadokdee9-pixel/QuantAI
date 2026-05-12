@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
 const STAGES = [
-  { id: "query", label: "Query understanding", sub: "Intent & constraints" },
-  { id: "retail", label: "Global retailer scan", sub: "Listing fusion" },
-  { id: "trust", label: "Trust synthesis", sub: "Store & deal signals" },
-  { id: "final", label: "Final intelligence", sub: "QI field + tray ranking" },
+  { id: "query", label: "Query & constraints", sub: "Intent, budget band, must-have tokens" },
+  { id: "retail", label: "Retailer graph", sub: "Fusing visible offers into one tray" },
+  { id: "trust", label: "Trust & discount hygiene", sub: "Store priors, anchor risk, fake-sale cues" },
+  { id: "final", label: "QI field & tray rank", sub: "Composite, delivery text, peer median" },
 ] as const;
 
 type Props = {
@@ -61,7 +61,7 @@ export default function SearchStreamRibbon({ active, className = "" }: Props) {
       aria-live="polite"
     >
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <p className="cockpit-label text-[10px] text-cyan-200/70">Live pipeline</p>
+        <p className="cockpit-label text-[10px] text-cyan-200/75">Searching live offers</p>
         <span className="rounded-full border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[10px] font-semibold tabular-nums text-slate-400">
           Stage {Math.min(stage + 1, STAGES.length)}/{STAGES.length}
         </span>
@@ -91,7 +91,7 @@ export default function SearchStreamRibbon({ active, className = "" }: Props) {
                       animate={reduce ? undefined : { opacity: [0.55, 1, 0.55] }}
                       transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
                     >
-                      Streaming
+                      Live
                     </motion.span>
                   )}
                 </div>

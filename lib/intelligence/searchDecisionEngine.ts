@@ -340,7 +340,7 @@ function computeFinal(
   if (uncertainty >= 66) {
     return {
       kind: "compare_alternatives",
-      headline: "Compare alternatives — confidence is capped",
+      headline: "Tray uncertainty high — compare before you buy",
       body: "Review depth, missing list prices, or noisy pricing spread pulled uncertainty up. QuantAI is guiding, not guaranteeing—verify SKU, seller, and returns on your shortlist.",
     };
   }
@@ -388,7 +388,7 @@ function computeFinal(
   if (comp >= 80 && trust >= 72 && !susp) {
     return {
       kind: "buy_now",
-      headline: "Buy-ready posture — with normal checkout hygiene",
+      headline: "Buy-ready tray signal — lock checkout hygiene",
       body: "Price, trust, and composite line up for the lead listing. Capture shipping/return screenshots and reconcile tax before you pay.",
     };
   }

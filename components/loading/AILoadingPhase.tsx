@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 
 const PHASES = [
-  "Building retailer graph…",
-  "Scoring marketplace trust…",
-  "Normalizing regional pricing…",
-  "Generating confidence field…",
-  "Detecting suspicious discounts…",
-  "Computing long-term value…",
+  "Mapping retailer graph…",
+  "Scoring trust priors & delivery cues…",
+  "Normalizing tray median & anchors…",
+  "Stress-testing discount hygiene…",
+  "Locking QI field for this snapshot…",
+  "Publishing ranked tray…",
 ] as const;
 
 type Props = {
@@ -30,7 +30,7 @@ export default function AILoadingPhase({ className = "", intervalMs = 2200 }: Pr
     return () => window.clearInterval(t);
   }, [reduce, intervalMs]);
 
-  const label = reduce ? "Running intelligence pipeline…" : PHASES[i];
+  const label = reduce ? "Scanning live listings for this query…" : PHASES[i];
 
   return (
     <div

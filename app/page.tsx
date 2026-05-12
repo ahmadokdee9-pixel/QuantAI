@@ -55,6 +55,7 @@ import { logDevError } from "@/lib/log/devLog";
 import { toCopilotProductBrief } from "@/lib/copilot/mapProduct";
 import type { CopilotSessionPayload } from "@/lib/copilot/sessionTypes";
 import { appendLocalRecentSearch, recordInterestTag } from "@/lib/personalization/localSignals";
+import { HERO_SEARCH_PROMPTS } from "@/lib/search/heroPrompts";
 import { useMobilePerf } from "@/lib/hooks/useMobilePerf";
 import {
   ArrowRight,
@@ -596,7 +597,7 @@ export default function Home() {
               <span className="relative flex size-1.5 rounded-full bg-emerald-400/90 shadow-[0_0_8px_rgba(52,211,153,0.45)]">
                 <span className="absolute inset-0 motion-reduce:animate-none animate-ping rounded-full bg-emerald-400/25" />
               </span>
-              Live neural commerce layer
+              Live commerce intelligence
             </div>
 
             <h1 className="cockpit-display mt-12 text-[2.65rem] sm:text-5xl lg:text-[3.75rem] text-white motion-safe:animate-[fadeIn_0.65s_ease-out]">
@@ -607,8 +608,8 @@ export default function Home() {
             </h1>
 
             <p className="cockpit-body mx-auto mt-8 max-w-2xl text-base sm:text-lg text-slate-400/95 motion-safe:animate-[fadeIn_0.7s_ease-out]">
-              One surface: fused offers, quantitative QI scoring, cross-retailer deal graphs, and language you can
-              defend—stripped of generic ecommerce noise.
+              One command surface: fused listings, QI composite, cross-retailer deal read, and language you can defend—
+              stripped of generic storefront noise.
             </p>
 
             {/* Search — hero instrument */}
@@ -616,18 +617,18 @@ export default function Home() {
               className="cockpit-search-aurora mx-auto mt-14 max-w-3xl motion-safe:animate-[fadeIn_0.75s_ease-out] rounded-[1.5rem] p-px shadow-[0_28px_80px_-40px_rgba(15,23,42,0.85)]"
               data-loading={loading ? "true" : "false"}
             >
-              <div className="cockpit-hero-scanlines relative overflow-hidden rounded-[1.45rem] border border-white/[0.08] bg-[#060b18]/90 p-3 sm:p-3.5 backdrop-blur-[32px]">
-                {loading && (
+              <div className="cockpit-hero-scanlines relative overflow-hidden rounded-[1.45rem] border border-white/[0.08] bg-[#060b18]/90 px-3.5 py-3.5 sm:p-4 backdrop-blur-[32px]">
+                {loading && !mobilePerf && (
                   <div
-                    className="pointer-events-none absolute inset-0 bg-[conic-gradient(from_180deg_at_50%_50%,transparent_0deg,rgba(34,211,238,0.07)_120deg,transparent_240deg)] animate-spin opacity-45"
-                    style={{ animationDuration: "4s" }}
+                    className="pointer-events-none absolute inset-0 bg-[conic-gradient(from_180deg_at_50%_50%,transparent_0deg,rgba(34,211,238,0.06)_120deg,transparent_240deg)] motion-reduce:animate-none animate-spin opacity-40"
+                    style={{ animationDuration: "5s" }}
                     aria-hidden
                   />
                 )}
-                <div className="relative flex flex-col gap-3 sm:flex-row sm:items-stretch">
-                  <div className="relative flex min-h-[56px] flex-1 items-center gap-3.5 rounded-2xl border border-white/[0.06] bg-black/35 px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition focus-within:border-cyan-400/22 focus-within:shadow-[0_0_0_1px_rgba(34,211,238,0.12),0_12px_40px_-18px_rgba(34,211,238,0.08)]">
+                <div className="relative flex flex-col gap-3.5 sm:flex-row sm:items-stretch sm:gap-3">
+                  <div className="relative flex min-h-[52px] sm:min-h-[56px] flex-1 items-center gap-3 rounded-2xl border border-white/[0.07] bg-black/40 px-3.5 sm:px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-[border-color,box-shadow,transform] duration-300 ease-out motion-safe:focus-within:scale-[1.002] focus-within:border-cyan-400/35 focus-within:shadow-[0_0_0_1px_rgba(34,211,238,0.2),0_0_48px_-20px_rgba(34,211,238,0.14)]">
                     <Search
-                      className={`size-5 shrink-0 ${loading ? "text-cyan-300/80 motion-reduce:animate-none animate-pulse" : "text-slate-500"}`}
+                      className={`size-[1.15rem] shrink-0 sm:size-5 ${loading ? "text-cyan-300/85 motion-reduce:animate-none animate-pulse" : "text-cyan-400/35"}`}
                       strokeWidth={1.5}
                       aria-hidden
                     />
@@ -636,12 +637,14 @@ export default function Home() {
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && void search()}
-                      placeholder="Command a search — SKU, category, brand, use case…"
-                      className="min-w-0 flex-1 bg-transparent py-3.5 text-[15px] font-medium tracking-tight text-white placeholder:text-slate-500/75 placeholder:font-normal outline-none"
+                      placeholder="Ask the tray — brand, model, budget band, or risk posture…"
+                      autoComplete="off"
+                      enterKeyHint="search"
+                      className="min-w-0 flex-1 bg-transparent py-3 text-[15px] font-medium leading-snug tracking-tight text-white placeholder:text-slate-500/70 placeholder:font-normal outline-none"
                     />
                   </div>
                   <MagneticSurface
-                    className="inline-flex min-h-[56px] shrink-0"
+                    className="inline-flex min-h-[52px] w-full shrink-0 sm:min-h-[56px] sm:w-auto"
                     strength={0.1}
                     disabled={mobilePerf}
                   >
@@ -649,7 +652,7 @@ export default function Home() {
                       type="button"
                       onClick={() => void search()}
                       disabled={loading}
-                      className="group relative inline-flex min-h-[56px] w-full items-center justify-center gap-2 overflow-hidden rounded-2xl px-8 text-[15px] font-semibold tracking-tight text-slate-950 shadow-[0_16px_48px_-20px_rgba(34,211,238,0.35)] transition enabled:hover:shadow-[0_20px_52px_-18px_rgba(100,116,139,0.35)] disabled:opacity-55"
+                      className="group relative inline-flex min-h-[52px] w-full items-center justify-center gap-2 overflow-hidden rounded-2xl px-7 text-[14px] font-semibold tracking-tight text-slate-950 shadow-[0_16px_48px_-20px_rgba(34,211,238,0.35)] transition enabled:hover:shadow-[0_20px_52px_-18px_rgba(100,116,139,0.35)] disabled:opacity-55 sm:min-h-[56px] sm:px-8 sm:text-[15px]"
                     >
                       <span className="absolute inset-0 bg-gradient-to-r from-cyan-300 via-sky-400 to-violet-500 transition duration-500 group-hover:scale-[1.02]" />
                       <span className="absolute inset-0 opacity-0 transition group-hover:opacity-100 bg-gradient-to-r from-white/25 via-transparent to-white/10" />
@@ -657,11 +660,11 @@ export default function Home() {
                         {loading ? (
                           <>
                             <Loader2 className="size-[1.05rem] animate-spin" aria-hidden />
-                            Thinking
+                            Scanning live offers…
                           </>
                         ) : (
                           <>
-                            Run intelligence
+                            Run QuantAI scan
                             <ArrowRight className="size-4 transition group-hover:translate-x-0.5" aria-hidden />
                           </>
                         )}
@@ -669,33 +672,61 @@ export default function Home() {
                     </button>
                   </MagneticSurface>
                 </div>
-                {loading ? (
-                  <div className="relative mt-3 space-y-3 px-0">
-                    <SearchStreamRibbon active={loading} />
-                    <AILoadingPhase />
-                  </div>
-                ) : (
-                  <p className="relative mt-3 px-1 text-left text-[11px] font-medium leading-relaxed text-slate-500/90">
-                    Press Enter or tap run — results open the live cockpit below.
+
+                <div className="relative mt-3.5 text-left">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500/90">
+                    Analyst prompts · tap to run
                   </p>
-                )}
+                  <div className="mt-2 flex gap-2 overflow-x-auto pb-1 pt-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]">
+                    {HERO_SEARCH_PROMPTS.map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        disabled={loading}
+                        onClick={() => void search(p)}
+                        className="max-w-[min(88vw,20rem)] shrink-0 snap-start rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-left text-[11px] font-medium leading-snug text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition hover:border-cyan-400/30 hover:bg-white/[0.07] hover:text-slate-100 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-45"
+                      >
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="relative mt-3 min-h-[128px] sm:min-h-[118px]">
+                  {loading ? (
+                    <div className="space-y-2.5">
+                      <SearchStreamRibbon active={loading} />
+                      <AILoadingPhase intervalMs={2600} />
+                    </div>
+                  ) : (
+                    <div className="space-y-2 px-0.5">
+                      <p className="text-left text-[11px] font-medium leading-relaxed text-slate-500/90">
+                        <span className="text-cyan-200/75">Tray memory is session-local.</span> Enter refines the
+                        composite field; Compare pins stress-test trust without leaving the scan lane.
+                      </p>
+                      <p className="text-left text-[10px] text-slate-600/95">
+                        Enter runs the scan · results anchor below · compare pins stay put on refresh
+                      </p>
+                    </div>
+                  )}
+                </div>
 
                 <div className="relative mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
                   {[
                     {
                       icon: Radar,
-                      title: "Live global tray",
-                      sub: "Listings fused into one intelligence surface",
+                      title: "Single merged tray",
+                      sub: "Listings normalized into one analyst field",
                     },
                     {
                       icon: TrendingUp,
-                      title: "Quant + QI scoring",
-                      sub: "Price, reviews, trust & delivery as one signal",
+                      title: "QI composite field",
+                      sub: "Price, reviews, trust & delivery fused into one score",
                     },
                     {
                       icon: Lock,
-                      title: "Private by design",
-                      sub: "Signed-in search with fair rate limits",
+                      title: "Account-grade pacing",
+                      sub: "Signed-in search with fair daily limits",
                     },
                   ].map((item) => (
                     <div
@@ -752,7 +783,7 @@ export default function Home() {
             {!isSignedIn && (
               <div className="mx-auto mt-8 flex max-w-md flex-col items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-5 py-4 backdrop-blur-md sm:flex-row sm:justify-center">
                 <p className="text-center text-sm font-normal text-slate-400">
-                  Sign in to run live shopping search and unlock the AI assistant.
+                  Sign in to run live tray search and open the QuantAI cockpit assistant.
                 </p>
                 <SignInButton mode="modal" forceRedirectUrl="/dashboard">
                   <button

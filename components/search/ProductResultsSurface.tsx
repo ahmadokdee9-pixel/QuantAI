@@ -332,7 +332,7 @@ export default function ProductResultsSurface({
     return (
       <section
         id="quantai-results-anchor"
-        className="relative mx-auto min-h-[45vh] max-w-7xl px-4 sm:px-6 pb-12"
+        className="relative mx-auto min-h-[min(52rem,78vh)] max-w-7xl px-4 sm:px-6 pb-12"
         aria-busy="true"
         aria-label="Loading search results"
       >
@@ -461,7 +461,7 @@ export default function ProductResultsSurface({
           aria-live="polite"
         >
           <Loader2 className="size-3.5 shrink-0 animate-spin" aria-hidden />
-          Updating results — tray stays pinned so scroll does not jump.
+          Updating tray — QI rank below stays pinned so the viewport does not jump.
         </div>
       ) : null}
 
@@ -547,9 +547,9 @@ export default function ProductResultsSurface({
           <div className="mb-5 flex items-start gap-2.5">
             <Sparkles className="mt-0.5 size-4 shrink-0 text-slate-500" strokeWidth={1.5} aria-hidden />
             <div className="min-w-0">
-              <h2 className="text-sm font-semibold tracking-tight text-white/[0.96]">Neural top lane</h2>
+              <h2 className="text-sm font-semibold tracking-tight text-white/[0.96]">QI top lane</h2>
               <p className="cockpit-body mt-1 text-[11px] leading-relaxed text-slate-500">
-                Highest composite signal in this tray—fastest path from browse to conviction.
+                Strongest composite in this tray—fastest path from scan to conviction.
               </p>
             </div>
           </div>
