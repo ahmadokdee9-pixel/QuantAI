@@ -17,6 +17,7 @@ import {
   Wallet,
 } from "lucide-react";
 import type { DealClusterDTO, ListingDealInsight, PrimaryDealAction } from "@/lib/deals/types";
+import { buildClusterDealLanes } from "@/lib/intelligence/dealIntelligenceEngine";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getFinalComposite, getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
 import { scoreDeliverySpeed } from "@/lib/intelligence/deliveryScore";
@@ -112,6 +113,11 @@ export default function MultiStoreDealAdvisor({
     const match = clusters.find((c) => c.id === activeId);
     return match ?? clusters[0];
   }, [clusters, activeId]);
+
+  const clusterDealLanes = useMemo(
+    () => (cluster ? buildClusterDealLanes(cluster.listings) : []),
+    [cluster]
+  );
 
   const transition = reduceMotion
     ? { duration: 0 }
@@ -376,6 +382,29 @@ export default function MultiStoreDealAdvisor({
                             );
                           })}
                         </div>
+                        {clusterDealLanes.length > 0 && (
+                          <div className="mt-3 rounded-xl border border-emerald-400/15 bg-emerald-500/[0.05] px-3 py-2.5">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-200/80">
+                              AI deal lanes · this cluster
+                            </p>
+                            <ul className="mt-2 space-y-2">
+                              {clusterDealLanes.map((lane) => (
+                                <li key={`${lane.label}-${lane.link}`} className="min-w-0 text-[11px] leading-snug text-slate-300/95">
+                                  <a
+                                    href={lane.link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="font-semibold text-emerald-100/95 underline-offset-2 hover:underline"
+                                  >
+                                    {lane.label}
+                                  </a>
+                                  <span className="text-slate-600"> · </span>
+                                  <span className="text-slate-400 [overflow-wrap:anywhere]">{lane.hint}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
                     </div>
 

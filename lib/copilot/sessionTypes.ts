@@ -18,6 +18,13 @@ export type CopilotProductBrief = {
   commerceConfidence?: number;
   priceAnomaly?: "none" | "deep_discount" | "premium_outlier" | "suspicious_low";
   risks?: { code: string; label: string }[];
+  /** Deal intelligence engine (tray-relative when batch-computed on home). */
+  aiDealVerdict?: string;
+  dealConfidence?: number;
+  discountAuthenticity?: number;
+  valueOpportunityScore?: number;
+  retailerDealScore?: number;
+  dealTimingNote?: string;
 };
 
 export type CopilotSavedBrief = { title: string; link: string; price: number | null };

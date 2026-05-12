@@ -16,10 +16,16 @@ import { logDevError } from "@/lib/log/devLog";
 import { useCopilotSession } from "@/components/copilot/CopilotContext";
 import { defaultCopilotSession } from "@/lib/copilot/sessionTypes";
 import type { CopilotSessionPayload } from "@/lib/copilot/sessionTypes";
+import { buildWatchlistEvolutionSignals } from "@/lib/intelligence/watchlistDealSignals";
 import { buildSessionDigest } from "@/lib/liveSignals/sessionDigest";
 
 type HistoryRow = { id?: string; query: string; result_count?: number; created_at?: string };
-type WatchRow = { id?: string; product?: Record<string, unknown>; created_at?: string };
+type WatchRow = {
+  id?: string;
+  product?: Record<string, unknown>;
+  target_price?: number | null;
+  created_at?: string;
+};
 type CompareHistoryRow = { id: string; payload: Record<string, unknown>; created_at: string };
 type SavedRow = {
   id?: string;
@@ -327,20 +333,35 @@ export default function DashboardPage() {
               const title =
                 p && typeof p.title === "string" ? p.title : "Watched listing";
               const link = p && typeof p.link === "string" ? p.link : null;
+              const signals = buildWatchlistEvolutionSignals({
+                product: p ?? null,
+                target_price: w.target_price ?? null,
+              });
               return (
                 <li
                   key={w.id ?? `${title}-${w.created_at ?? ""}`}
-                  className="flex flex-col gap-2 rounded-xl border border-white/[0.06] bg-black/25 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-2 rounded-xl border border-white/[0.06] bg-black/25 px-4 py-3 text-sm sm:flex-row sm:items-start sm:justify-between"
                 >
-                  <span className="min-w-0 font-medium leading-snug text-white/90 [overflow-wrap:anywhere]">
-                    {title}
-                  </span>
+                  <div className="min-w-0 flex-1">
+                    <span className="font-medium leading-snug text-white/90 [overflow-wrap:anywhere]">
+                      {title}
+                    </span>
+                    {signals.length > 0 && (
+                      <ul className="mt-2 space-y-1 text-[11px] leading-relaxed text-slate-500">
+                        {signals.map((s, i) => (
+                          <li key={i} className="[overflow-wrap:anywhere]">
+                            · {s}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                   {link ? (
                     <a
                       href={link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="shrink-0 text-xs font-semibold text-cyan-300 hover:underline"
+                      className="shrink-0 text-xs font-semibold text-cyan-300 hover:underline sm:pt-0.5"
                     >
                       Open listing
                     </a>

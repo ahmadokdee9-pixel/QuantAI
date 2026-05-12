@@ -29,9 +29,11 @@ import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTyp
 import type { SearchEntitlementsDTO } from "@/lib/subscription/entitlements";
 import type { QuantPlanTier } from "@/lib/subscription/plans";
 import type { DealClusterDTO } from "@/lib/deals/types";
+import { buildDealIntelByLink } from "@/lib/intelligence/dealIntelligenceEngine";
 import {
   getFinalComposite,
   getHeuristicScore,
+  getStoreTrustScore,
   sortByBestAIScore,
   sortByCompositeRank,
   sortByTrust,
@@ -258,6 +260,8 @@ export default function Home() {
     }
   }, [products, filters, sort]);
 
+  const dealIntelByLink = useMemo(() => buildDealIntelByLink(sortedProductsMemo), [sortedProductsMemo]);
+
   const searchIntelHeadline = searchIntelligence?.finalHeadline;
   const searchIntelBody = searchIntelligence?.finalBody;
 
@@ -265,7 +269,7 @@ export default function Home() {
     return {
       route: "home",
       lastSearchQuery: query,
-      products: sortedProductsMemo.map(toCopilotProductBrief),
+      products: sortedProductsMemo.map((p) => toCopilotProductBrief(p, dealIntelByLink.get(p.link))),
       savedSummaries: saved.map((s) => ({
         title: s.title,
         link: s.link,
@@ -285,6 +289,7 @@ export default function Home() {
   }, [
     query,
     sortedProductsMemo,
+    dealIntelByLink,
     saved,
     compareTrayLinks,
     subscriptionTier,
@@ -532,6 +537,12 @@ export default function Home() {
             store: product.store,
             image: product.image,
             qiComposite: product.qiComposite,
+            watchBaseline: {
+              capturedAt: new Date().toISOString(),
+              listingPrice: product.price,
+              trustPrior: getStoreTrustScore(product.store),
+              qiComposite: product.qiComposite ?? null,
+            },
           },
           targetPrice: null,
         }),
@@ -1066,6 +1077,7 @@ export default function Home() {
             searchQuery={query}
             onRetrySearch={() => void search()}
             onCompareTrayChange={setCompareTrayLinks}
+            dealIntelByLink={dealIntelByLink}
           />
         )}
 

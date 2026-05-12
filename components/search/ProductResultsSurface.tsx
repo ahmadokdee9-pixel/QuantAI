@@ -16,6 +16,11 @@ import SearchStreamRibbon from "@/components/loading/SearchStreamRibbon";
 import { useCockpit, type CockpitQuickHandlers } from "@/components/cockpit/cockpitContext";
 import ShareSnapshotBar from "@/components/share/ShareSnapshotBar";
 import { buildCompareTrayInsights } from "@/lib/intelligence/compareTrayInsights";
+import {
+  buildDealIntelByLink,
+  buildTrayDealHighlights,
+  type ProductDealIntelligence,
+} from "@/lib/intelligence/dealIntelligenceEngine";
 import type { CompareVerdictPayload } from "@/lib/intelligence/compareVerdict";
 import { analyzeDealCluster } from "@/lib/deals";
 import type { DealClusterDTO } from "@/lib/deals/types";
@@ -67,6 +72,8 @@ type Props = {
   onRetrySearch?: () => void;
   /** Reports compare tray link selection for copilot / analytics context. */
   onCompareTrayChange?: (links: string[]) => void;
+  /** Precomputed tray deal map (optional — avoids duplicate work from home). */
+  dealIntelByLink?: Map<string, ProductDealIntelligence>;
 };
 
 function ResultSkeleton() {
@@ -110,6 +117,7 @@ export default function ProductResultsSurface({
   searchQuery = "",
   onRetrySearch,
   onCompareTrayChange,
+  dealIntelByLink: dealIntelByLinkProp,
 }: Props) {
   const { registerQuickHandlers } = useCockpit();
   const reduceMotion = useReducedMotion();
@@ -138,6 +146,12 @@ export default function ProductResultsSurface({
     compositeRanked.forEach((p, i) => m.set(p.link, i));
     return m;
   }, [compositeRanked]);
+
+  const dealIntelResolved = useMemo(() => {
+    if (dealIntelByLinkProp) return dealIntelByLinkProp;
+    return buildDealIntelByLink(sortedProducts);
+  }, [dealIntelByLinkProp, sortedProducts]);
+  const trayDealHighlights = useMemo(() => buildTrayDealHighlights(sortedProducts), [sortedProducts]);
 
   const aiTopPicks = useMemo(() => compositeRanked.slice(0, 3), [compositeRanked]);
 
@@ -474,6 +488,34 @@ export default function ProductResultsSurface({
 
       <IntelligenceEducationStrip />
 
+      {sortedProducts.length >= 2 && trayDealHighlights.length > 0 && (
+        <div className="mb-8 min-w-0">
+          <div className="mb-2 flex items-center justify-center gap-2">
+            <BarChart3 className="size-3.5 text-emerald-300/80" aria-hidden />
+            <p className="cockpit-label text-center text-[10px] tracking-[0.14em] text-slate-500">
+              Cross-retailer deal intelligence · this tray
+            </p>
+          </div>
+          <div className="flex min-w-0 gap-2 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch]">
+            {trayDealHighlights.map((h) => (
+              <a
+                key={h.id}
+                href={h.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="min-w-[min(14rem,78vw)] shrink-0 rounded-2xl border border-white/[0.08] bg-black/35 px-3 py-2.5 text-left transition hover:border-cyan-400/25 hover:bg-white/[0.04]"
+              >
+                <p className="text-[11px] font-semibold text-cyan-100/90">{h.label}</p>
+                <p className="mt-0.5 truncate text-[10px] text-slate-500">{h.store}</p>
+                <p className="mt-1 line-clamp-3 text-[10px] leading-relaxed text-slate-400 [overflow-wrap:anywhere]">
+                  {h.blurb}
+                </p>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       {searchIntelligence && (
         <motion.div
           initial={reduceMotion || mobilePerf ? { opacity: 1, y: 0 } : { opacity: 0.88, y: 10 }}
@@ -803,6 +845,7 @@ export default function ProductResultsSurface({
                 list={sortedProducts}
                 index={index}
                 rank={rank}
+                dealIntel={dealIntelResolved.get(p.link)}
                 compareLinks={compareLinks}
                 toggleCompare={toggleCompare}
                 saveProduct={saveProduct}
@@ -833,6 +876,7 @@ export default function ProductResultsSurface({
                   list={sortedProducts}
                   index={index}
                   rank={rank}
+                  dealIntel={dealIntelResolved.get(p.link)}
                   compareLinks={compareLinks}
                   toggleCompare={toggleCompare}
                   saveProduct={saveProduct}

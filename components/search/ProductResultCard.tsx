@@ -13,6 +13,7 @@ import {
   Minus,
   PanelRight,
   PauseCircle,
+  Percent,
   Scale,
   Shield,
   Sparkles,
@@ -46,6 +47,10 @@ import {
   buildVerdictExpansion,
   type BuyStance,
 } from "@/lib/intelligence/productBuyDecision";
+import {
+  buildProductDealIntelligence,
+  type ProductDealIntelligence,
+} from "@/lib/intelligence/dealIntelligenceEngine";
 
 function badgeChipClass(key: string): string {
   switch (key) {
@@ -94,6 +99,24 @@ function qiCenterLabelClass(tier: ReturnType<typeof qiConfidenceTier>): string {
       return "text-amber-100";
     default:
       return "text-slate-200";
+  }
+}
+
+function dealVerdictChipClass(v: ProductDealIntelligence["aiDealVerdict"]): string {
+  switch (v) {
+    case "Buy Now":
+    case "Great Deal":
+    case "High-Confidence Discount":
+    case "Best Trusted Option":
+      return "border-emerald-400/30 bg-emerald-500/[0.1] text-emerald-100/95";
+    case "Risky Discount":
+      return "border-amber-400/35 bg-amber-500/[0.1] text-amber-100/95";
+    case "Wait for Better Deal":
+      return "border-rose-400/28 bg-rose-500/[0.08] text-rose-100/90";
+    case "Premium but Trusted":
+      return "border-violet-400/28 bg-violet-500/[0.09] text-violet-100/90";
+    default:
+      return "border-white/[0.1] bg-white/[0.05] text-slate-200/90";
   }
 }
 
@@ -171,6 +194,8 @@ type Props = {
   savedLinks: Set<string>;
   addToWatchlist?: (p: QuantProduct) => void;
   onOpenIntelligence: (p: QuantProduct) => void;
+  /** Tray deal intelligence (preferred when parent batch-computes). */
+  dealIntel?: ProductDealIntelligence;
   /** Mobile / touch: skip magnetic tilt and heavy hover motion. */
   lowPower?: boolean;
 };
@@ -227,6 +252,7 @@ function ProductResultCard({
   savedLinks,
   addToWatchlist,
   onOpenIntelligence,
+  dealIntel: dealIntelProp,
   lowPower = false,
 }: Props) {
   const reduceMotion = useReducedMotion();
@@ -255,6 +281,10 @@ function ProductResultCard({
 
   const buyDecision = useMemo(() => buildProductBuyDecision(p, list, rank), [p, list, rank]);
   const analystFrame = useMemo(() => buildVerdictExpansion(p, list, buyDecision), [p, list, buyDecision]);
+  const deal = useMemo(
+    () => dealIntelProp ?? buildProductDealIntelligence(p, list),
+    [dealIntelProp, p, list]
+  );
   const stanceUi = stancePresentation(buyDecision.stance);
   const StanceIcon = stanceUi.Icon;
 
@@ -345,6 +375,38 @@ function ProductResultCard({
                 <span className="text-slate-500/80">Trust</span>{" "}
                 <span className="text-slate-300/95">{trust}</span>
               </span>
+            </div>
+
+            <div className="mt-2.5 flex min-w-0 flex-wrap items-center gap-1.5">
+              <span
+                className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${dealVerdictChipClass(deal.aiDealVerdict)}`}
+                title={deal.whyDealGoodOrRisky}
+              >
+                <Percent className="size-2.5 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
+                <span className="truncate">{deal.aiDealVerdict}</span>
+              </span>
+              {deal.discountPct != null && (
+                <span className="shrink-0 rounded-full border border-white/[0.08] bg-black/30 px-2 py-0.5 text-[9px] font-semibold tabular-nums text-slate-300/95">
+                  −{deal.discountPct}%
+                </span>
+              )}
+              <span
+                className="shrink-0 rounded-full border border-white/[0.07] bg-black/25 px-2 py-0.5 text-[9px] font-medium tabular-nums text-slate-400/95"
+                title="Tray-relative deal confidence blend"
+              >
+                Deal {deal.dealConfidence}
+              </span>
+              <span
+                className="shrink-0 rounded-full border border-white/[0.07] bg-black/25 px-2 py-0.5 text-[9px] font-medium tabular-nums text-slate-400/95"
+                title="Discount authenticity vs peers + trust + feed signals"
+              >
+                Auth {deal.discountAuthenticity}
+              </span>
+              {deal.isBestTrustedDealInSet && (
+                <span className="shrink-0 rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2 py-0.5 text-[9px] font-semibold text-cyan-100/90">
+                  Best trusted lane
+                </span>
+              )}
             </div>
 
             <div className="mt-5 flex min-w-0 flex-wrap items-end justify-between gap-4 border-t border-white/[0.06] pt-5">
@@ -583,6 +645,31 @@ function ProductResultCard({
                   className="overflow-hidden"
                 >
                   <div className="mt-2 space-y-4 rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.04] via-black/25 to-transparent px-3.5 py-4 sm:px-4 sm:py-5">
+                    <div className="space-y-2 border-b border-white/[0.06] pb-4">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-emerald-200/75">
+                        Deal intelligence engine
+                      </p>
+                      <p className="cockpit-body text-[11px] leading-relaxed text-slate-300/95 [overflow-wrap:anywhere]">
+                        {deal.whyDealGoodOrRisky}
+                      </p>
+                      <p className="cockpit-body text-[10.5px] leading-relaxed text-slate-500/90 [overflow-wrap:anywhere]">
+                        Fair-band estimate (peer median in this tray) ≈ {formatListingPrice(deal.fairMarketEstimate, sym)}{" "}
+                        · category baseline ≈ {formatListingPrice(deal.categoryBaselineEstimate, sym)}.{" "}
+                        {deal.overpricedVsTray ? "Listed above that band." : deal.savingsVsFair != null && deal.savingsVsFair > 0 ? `Listed below median by ~${formatListingPrice(deal.savingsVsFair, sym)}.` : "Near median."}{" "}
+                        {deal.inflatedAnchorSuspected ? "Inflated anchor vs peers suspected." : ""}
+                        {deal.urgencySuspected === "elevated" ? " Urgency language flagged in feed." : ""}
+                      </p>
+                      <p className="cockpit-body text-[10.5px] leading-relaxed text-slate-400/95 [overflow-wrap:anywhere]">
+                        Timing read · {deal.timingSummary}
+                      </p>
+                      <ul className="space-y-1 text-[10px] leading-snug text-slate-500/90">
+                        {deal.authenticityLines.slice(0, 3).map((line, i) => (
+                          <li key={`auth-${i}`} className="[overflow-wrap:anywhere]">
+                            · {line}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                     <div className="space-y-2">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-cyan-200/70">
                         Verdict depth &amp; tradeoffs

@@ -17,6 +17,11 @@ type Msg = {
 };
 
 const CHIPS: { label: string; prompt: string }[] = [
+  { label: "Is this discount real?", prompt: "Using only my current tray, which headline discounts look authentic versus inflated anchors or suspiciously low asks? Be explicit about heuristics and what to verify." },
+  { label: "Buy now or wait?", prompt: "For my current search results, should I buy now or wait for better pricing? Use QuantAI timing reads (tray volatility, fair-band, trust) — no fabricated price history." },
+  { label: "Trusted deals only", prompt: "Filter mentally to trusted-deal rows only: which listings combine strong store trust with sane discount hygiene in my tray?" },
+  { label: "Stronger discounts", prompt: "Where are the strongest real discounts in my tray after authenticity and trust adjustments—not just the biggest % off?" },
+  { label: "Why risky?", prompt: "If any row looks like a risky discount, explain exactly which signals triggered that label and what I should verify before checkout." },
   { label: "Best buy", prompt: "Which one should I buy and why? Pick the best buy from my current tray." },
   { label: "Cheapest safe option", prompt: "What is the cheapest safe option here for my budget?" },
   { label: "Long-term value", prompt: "Compare these products for long-term value." },
