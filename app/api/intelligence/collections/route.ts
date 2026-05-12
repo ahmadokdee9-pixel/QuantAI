@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { supabaseAdmin, supabaseAdminConfigured } from "@/lib/supabaseAdmin";
 
 export async function GET() {
   const { userId } = await auth();
@@ -8,7 +8,7 @@ export async function GET() {
     return jsonErr(401, "Unauthorized");
   }
   if (!supabaseAdmin) {
-    return jsonOk({ collections: [] });
+    return jsonOk({ collections: [], configured: supabaseAdminConfigured });
   }
 
   const { data, error } = await supabaseAdmin
@@ -18,9 +18,9 @@ export async function GET() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    return jsonOk({ collections: [], storageError: error.message });
+    return jsonOk({ collections: [], configured: true, storageError: error.message });
   }
-  return jsonOk({ collections: data ?? [] });
+  return jsonOk({ collections: data ?? [], configured: true });
 }
 
 export async function POST(req: Request) {
@@ -29,7 +29,9 @@ export async function POST(req: Request) {
     return jsonErr(401, "Unauthorized");
   }
   if (!supabaseAdmin) {
-    return jsonErr(503, "Collections storage is not configured.");
+    return jsonErr(503, "Collections storage is not configured.", {
+      code: "STORAGE_UNAVAILABLE",
+    });
   }
 
   try {

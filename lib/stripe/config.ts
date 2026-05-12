@@ -23,9 +23,14 @@ export function stripeWebhookSecret(): string | null {
 }
 
 export function appUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
-    process.env.VERCEL_URL?.replace(/^(?!https)/, "https://").replace(/\/$/, "") ||
-    "http://localhost:3000"
-  );
+  const fromEnv = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
+
+  const vercel = process.env.VERCEL_URL?.trim().replace(/\/$/, "");
+  if (vercel) {
+    if (vercel.startsWith("https://") || vercel.startsWith("http://")) return vercel;
+    return `https://${vercel}`;
+  }
+
+  return "http://localhost:3000";
 }

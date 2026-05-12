@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { supabaseAdmin, supabaseAdminConfigured } from "@/lib/supabaseAdmin";
 
 export async function GET() {
   const { userId } = await auth();
@@ -8,7 +8,7 @@ export async function GET() {
     return jsonErr(401, "Unauthorized");
   }
   if (!supabaseAdmin) {
-    return jsonOk({ memory: {} });
+    return jsonOk({ memory: {}, configured: supabaseAdminConfigured });
   }
 
   const { data, error } = await supabaseAdmin
@@ -18,11 +18,12 @@ export async function GET() {
     .maybeSingle();
 
   if (error || !data) {
-    return jsonOk({ memory: {} });
+    return jsonOk({ memory: {}, configured: true });
   }
 
   return jsonOk({
     memory: typeof data.memory === "object" && data.memory !== null ? data.memory : {},
+    configured: true,
   });
 }
 
@@ -32,7 +33,7 @@ export async function PUT(req: Request) {
     return jsonErr(401, "Unauthorized");
   }
   if (!supabaseAdmin) {
-    return jsonErr(503, "Database not configured");
+    return jsonErr(503, "Database not configured", { code: "STORAGE_UNAVAILABLE" });
   }
 
   try {

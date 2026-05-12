@@ -10,7 +10,7 @@ export async function POST(req: Request, ctx: RouteContext) {
     return jsonErr(401, "Unauthorized");
   }
   if (!supabaseAdmin) {
-    return jsonErr(503, "Database not configured");
+    return jsonErr(503, "Database not configured", { code: "STORAGE_UNAVAILABLE" });
   }
 
   const { id: collectionId } = await ctx.params;

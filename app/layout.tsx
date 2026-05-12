@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import QuantShell from "@/components/shell/QuantShell";
+import { appUrl } from "@/lib/stripe/config";
 
 const quantaiSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -11,9 +12,7 @@ const quantaiSans = Plus_Jakarta_Sans({
   weight: ["400", "500", "600", "700", "800"],
 });
 
-const defaultSite =
-  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL.replace(/\/$/, "")}` : "http://localhost:3000");
+const defaultSite = appUrl();
 
 const description =
   "Live product search with quantitative scoring, store trust signals, and an AI assistant for confident buying decisions.";

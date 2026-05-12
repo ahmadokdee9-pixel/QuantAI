@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     }
 
     if (!supabaseAdmin) {
-      return jsonErr(503, "Database is not configured.");
+      return jsonErr(503, "Database is not configured.", { code: "STORAGE_UNAVAILABLE" });
     }
 
     const user = await currentUser();

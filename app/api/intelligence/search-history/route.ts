@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { supabaseAdmin, supabaseAdminConfigured } from "@/lib/supabaseAdmin";
 
 export async function GET() {
   const { userId } = await auth();
@@ -8,7 +8,7 @@ export async function GET() {
     return jsonErr(401, "Unauthorized");
   }
   if (!supabaseAdmin) {
-    return jsonOk({ items: [] });
+    return jsonOk({ items: [], configured: supabaseAdminConfigured });
   }
 
   const { data, error } = await supabaseAdmin
@@ -19,8 +19,8 @@ export async function GET() {
     .limit(40);
 
   if (error) {
-    return jsonOk({ items: [], storageError: error.message });
+    return jsonOk({ items: [], configured: true, storageError: error.message });
   }
 
-  return jsonOk({ items: data ?? [] });
+  return jsonOk({ items: data ?? [], configured: true });
 }

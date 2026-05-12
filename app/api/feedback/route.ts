@@ -21,39 +21,43 @@ const FeedbackSchema = z.object({
  * Persists to Supabase table `quantai_feedback` when configured; otherwise acknowledges for UX.
  */
 export async function POST(req: Request) {
-  let parsed: z.infer<typeof FeedbackSchema>;
   try {
-    parsed = FeedbackSchema.parse(await req.json());
-  } catch {
-    return jsonErr(400, "Invalid feedback payload");
-  }
-
-  const { userId } = await auth();
-
-  const row = {
-    user_id: userId ?? null,
-    category: parsed.category,
-    message: parsed.message,
-    context: parsed.context ?? null,
-    created_at: new Date().toISOString(),
-  };
-
-  if (supabaseAdmin) {
-    const { error } = await supabaseAdmin.from("quantai_feedback").insert(row);
-    if (error) {
-      logDevWarn("feedback", error.message);
-      return jsonOk({
-        ok: true,
-        stored: false,
-        note: "Received. Storage table may be missing — feedback was not persisted.",
-      });
+    let parsed: z.infer<typeof FeedbackSchema>;
+    try {
+      parsed = FeedbackSchema.parse(await req.json());
+    } catch {
+      return jsonErr(400, "Invalid feedback payload");
     }
-    return jsonOk({ ok: true, stored: true });
-  }
 
-  return jsonOk({
-    ok: true,
-    stored: false,
-    note: "Received locally. Connect Supabase and create table quantai_feedback to archive.",
-  });
+    const { userId } = await auth();
+
+    const row = {
+      user_id: userId ?? null,
+      category: parsed.category,
+      message: parsed.message,
+      context: parsed.context ?? null,
+      created_at: new Date().toISOString(),
+    };
+
+    if (supabaseAdmin) {
+      const { error } = await supabaseAdmin.from("quantai_feedback").insert(row);
+      if (error) {
+        logDevWarn("feedback", error.message);
+        return jsonOk({
+          ok: true,
+          stored: false,
+          note: "Received. Storage table may be missing — feedback was not persisted.",
+        });
+      }
+      return jsonOk({ ok: true, stored: true });
+    }
+
+    return jsonOk({
+      ok: true,
+      stored: false,
+      note: "Received locally. Connect Supabase and create table quantai_feedback to archive.",
+    });
+  } catch {
+    return jsonErr(500, "Could not process feedback.");
+  }
 }
