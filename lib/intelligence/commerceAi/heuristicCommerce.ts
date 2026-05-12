@@ -2,6 +2,11 @@ import type {
   CommerceRiskFlag,
   ProductCommerceAI,
 } from "@/lib/intelligence/commerceAnalysisTypes";
+import { inferBuyerPersonasFromQuery, personaGuidanceLine } from "@/lib/intelligence/commerceIntel/buyerPersona";
+import { buildCategoryLensBullets, categorySlugForProduct } from "@/lib/intelligence/commerceIntel/categoryDeepIntel";
+import { buildPriceFieldIntel } from "@/lib/intelligence/commerceIntel/fieldPriceIntel";
+import { buildRetailerRiskIntel } from "@/lib/intelligence/commerceIntel/retailerRiskIntel";
+import { buildSignalConfidence } from "@/lib/intelligence/commerceIntel/signalConfidence";
 import { getStoreTrustScore } from "@/lib/retailTrust";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { ratingValue } from "@/lib/shoppingScore";
@@ -55,27 +60,88 @@ function risksFromProduct(p: QuantProduct, list: QuantProduct[]): CommerceRiskFl
   return out.slice(0, 5);
 }
 
-function valueForMoneyScore(p: QuantProduct): number {
+function valueForMoneyFromSignals(
+  p: QuantProduct,
+  priceIntel: ReturnType<typeof buildPriceFieldIntel>,
+  risk: ReturnType<typeof buildRetailerRiskIntel>
+): number {
   const sig = p.qiSignals;
-  const base =
-    50 +
-    (sig?.pricePerformance ?? 50) * 0.22 +
-    (sig?.discountQuality ?? 50) * 0.18 +
-    (sig?.priceFit ?? 50) * 0.2 +
-    (sig?.retailerTrust ?? 50) * 0.15 +
-    (sig?.rating ?? 50) * 0.15 +
+  let v =
+    48 +
+    (sig?.pricePerformance ?? 50) * 0.2 +
+    (sig?.discountQuality ?? 50) * 0.16 +
+    (sig?.priceFit ?? 50) * 0.18 +
+    (sig?.retailerTrust ?? 50) * 0.14 +
+    (sig?.rating ?? 50) * 0.14 +
     (sig?.reviewDepth ?? 50) * 0.1;
-  return clamp(Math.round(base), 0, 100);
+
+  if (priceIntel.percentile <= 18) v += 8;
+  if (priceIntel.percentile >= 85) v -= 6;
+  if (priceIntel.anomaly === "suspicious_low") v -= 22;
+  if (priceIntel.anomaly === "deep_discount") v -= 6;
+  if (risk.riskScore >= 72) v -= 12;
+  if (risk.riskScore <= 28) v += 4;
+
+  return clamp(Math.round(v), 0, 100);
 }
 
-function confidenceScore(p: QuantProduct): number {
-  const sig = p.qiSignals;
-  const spread =
-    (sig?.rating ?? 0) +
-    (sig?.reviewDepth ?? 0) +
-    (sig?.retailerTrust ?? 0) +
-    (p.reviewsCount != null && p.reviewsCount > 30 ? 25 : 10);
-  return clamp(Math.round(38 + spread * 0.22), 15, 88);
+function composeBuyingVerdict(
+  p: QuantProduct,
+  query: string,
+  list: QuantProduct[],
+  priceIntel: ReturnType<typeof buildPriceFieldIntel>,
+  risk: ReturnType<typeof buildRetailerRiskIntel>,
+  personas: ReturnType<typeof inferBuyerPersonasFromQuery>
+): string {
+  const qc = Math.round(p.qiComposite ?? 0);
+  const rt = getStoreTrustScore(p.store);
+  const rv = ratingValue(p.rating);
+  const parts: string[] = [];
+
+  if (priceIntel.anomaly === "suspicious_low") {
+    parts.push(
+      "Price sits unusually low versus tray peers—could be a sharp deal or a thin-seller / mismatch risk; verify SKU and seller."
+    );
+  } else if (priceIntel.anomaly === "deep_discount") {
+    parts.push("Aggressive discount versus the tray median—worth validating list-price history and warranty terms.");
+  } else if (priceIntel.anomaly === "premium_outlier") {
+    parts.push("Priced toward the top of this tray—often justified by spec tier, bundle, or brand tax; confirm what you are paying for.");
+  }
+
+  if (rv >= 4.5 && (p.reviewsCount ?? 0) >= 40) {
+    parts.push("High review volume improves confidence in the visible rating signal.");
+  } else if ((p.reviewsCount ?? 0) < 15 && rv > 0) {
+    parts.push("Review depth is thin—treat stars as directional until you read qualitative feedback.");
+  }
+
+  if (qc >= 74) {
+    parts.push(
+      `Strong QuantAI composite (${qc}/100) for this query—${priceIntel.oneLiner}`.replace(/\s+/g, " ").trim()
+    );
+  } else if (qc >= 58) {
+    parts.push(
+      `Balanced composite (${qc}/100) with ${rt >= 68 ? "solid" : "mixed"} retailer trust (${rt}/100 heuristic prior).`
+    );
+  } else {
+    parts.push(
+      `Composite (${qc}/100) trails leaders here—only compelling if price niche or spec rarity justifies the tradeoffs.`
+    );
+  }
+
+  if (risk.riskScore >= 62) {
+    parts.push(`Retailer-risk read is elevated (${risk.riskScore}/100 feed heuristic)—${risk.flags[0] ?? "verify seller and returns."}`);
+  } else if (rt >= 78) {
+    parts.push("Retailer trust prior is comparatively strong for this tray—checkout friction should be lower if specs match.");
+  }
+
+  parts.push(personaGuidanceLine(personas));
+
+  const base = (p.qiVerdict ?? "").trim();
+  if (base.length > 24 && !parts.some((x) => x.includes(base.slice(0, 20)))) {
+    parts.push(base.slice(0, 140));
+  }
+
+  return parts.join(" ").replace(/\s+/g, " ").trim().slice(0, 380);
 }
 
 export function heuristicCommerceForProduct(
@@ -83,27 +149,40 @@ export function heuristicCommerceForProduct(
   query: string,
   list: QuantProduct[]
 ): ProductCommerceAI {
-  const verdict = (p.qiVerdict ?? "").trim() || "Neutral tray position — compare shipping and final checkout price.";
-  const reason = (p.qiReason ?? "").trim();
+  const slug = categorySlugForProduct(query, p.title);
+  const { bullets: categoryLens } = buildCategoryLensBullets(query, p.title, slug);
+  const priceIntel = buildPriceFieldIntel(p, list);
+  const risk = buildRetailerRiskIntel(p, list);
+  const personas = inferBuyerPersonasFromQuery(query);
+  const conf = buildSignalConfidence(p, list);
+
+  const buyingVerdict = composeBuyingVerdict(p, query, list, priceIntel, risk, personas);
+
   const pros: string[] = [];
   const cons: string[] = [];
 
-  if ((p.qiComposite ?? 0) >= 72) pros.push("Strong QuantAI composite versus this search tray.");
-  else if ((p.qiComposite ?? 0) >= 58) pros.push("Balanced signal mix — viable if logistics fit.");
-  else pros.push("Worth a look if price or niche availability is the priority.");
+  if ((p.qiComposite ?? 0) >= 72) pros.push("Composite clears most peers in this live tray.");
+  else if ((p.qiComposite ?? 0) >= 58) pros.push("Balanced signal stack—viable if logistics and specs line up.");
 
-  const rt = getStoreTrustScore(p.store);
-  if (rt >= 78) pros.push(`Retailer trust prior is high (${rt}/100 heuristic).`);
-  if (ratingValue(p.rating) >= 4.5) pros.push("Rating looks healthy for the category.");
-
-  if ((p.qiComposite ?? 0) < 52) cons.push("Composite trails top picks — verify why before committing.");
-  if (rt < 62) cons.push("Store signal is thinner — read return and dispute policies carefully.");
-  if ((p.reviewsCount ?? 0) < 20) cons.push("Limited public review depth in the feed.");
-
-  if (reason.length > 12) {
-    const half = Math.min(reason.length, 220);
-    pros.push(reason.slice(0, half));
+  if (getStoreTrustScore(p.store) >= 76) pros.push(`Store trust prior is high for a shopping feed (${getStoreTrustScore(p.store)}/100).`);
+  if (ratingValue(p.rating) >= 4.5) pros.push("Visible rating is healthy versus typical listings.");
+  if (priceIntel.percentile <= 22 && priceIntel.anomaly !== "suspicious_low") {
+    pros.push("Sits near the cheapest trusted band in this tray—good relative value if quality checks out.");
   }
+
+  pros.push(priceIntel.oneLiner);
+  if (categoryLens[0]) pros.push(categoryLens[0]!);
+
+  if ((p.qiComposite ?? 0) < 54) cons.push("Composite lags top picks—need a clear reason (price, spec, availability) to choose this row.");
+  if (getStoreTrustScore(p.store) < 62) cons.push("Store signal is thinner—read dispute and return paths before paying.");
+  if ((p.reviewsCount ?? 0) < 20) cons.push("Limited public review depth in the feed snapshot.");
+  if (priceIntel.anomaly === "suspicious_low") {
+    cons.push("Price anomaly vs peers—extra verification recommended before treating as a safe deal.");
+  }
+  if (risk.riskScore >= 58) cons.push(risk.flags[0] ?? "Elevated marketplace risk heuristics on this row.");
+
+  const reason = (p.qiReason ?? "").trim();
+  if (reason.length > 20) pros.push(reason.slice(0, 200));
 
   const ship = (p.shipping ?? "").trim();
   const deliveryIntel =
@@ -112,14 +191,7 @@ export function heuristicCommerceForProduct(
   const returnsIntel =
     "Return policy not in shopping feed — check retailer policy and restocking fees before purchase.";
 
-  const prices = list.map((x) => x.price).filter((x) => x > 0);
-  const minP = prices.length ? Math.min(...prices) : p.price;
-  const maxP = prices.length ? Math.max(...prices) : p.price;
-
-  const comparedToFieldNote =
-    prices.length > 1
-      ? `Price sits ${p.price <= minP * 1.02 ? "at or near" : "above"} the cheapest visible listing in this tray (spread €${minP}–€${maxP}).`
-      : "Single visible price point in this slice — widen search for spread context.";
+  const comparedToFieldNote = priceIntel.oneLiner.slice(0, 200);
 
   const q = query.trim().toLowerCase();
   const title = p.title.toLowerCase();
@@ -131,18 +203,31 @@ export function heuristicCommerceForProduct(
         : "Semantic match is uncertain — compare specs to your intent.";
 
   return {
-    buyingVerdict: verdict,
-    pros: pros.slice(0, 4).map((s) => s.slice(0, 200)),
-    cons: cons.slice(0, 4).map((s) => s.slice(0, 200)),
+    buyingVerdict,
+    pros: pros.filter(Boolean).slice(0, 4).map((s) => s.slice(0, 200)),
+    cons: cons.filter(Boolean).slice(0, 4).map((s) => s.slice(0, 200)),
     risks: risksFromProduct(p, list),
-    valueForMoney: valueForMoneyScore(p),
-    confidence: confidenceScore(p),
+    valueForMoney: valueForMoneyFromSignals(p, priceIntel, risk),
+    confidence: conf.score,
+    confidenceExplanation: conf.explanation,
+    signalGaps: conf.gaps.length ? conf.gaps : undefined,
+    needsManualVerification: conf.needsManualVerification,
+    retailerRiskScore: risk.riskScore,
+    retailerRiskNote: risk.note,
+    pricePercentile: priceIntel.percentile,
+    priceFieldNote: comparedToFieldNote,
+    priceAnomaly: priceIntel.anomaly,
+    categoryLens: categoryLens.slice(0, 3),
+    inferredPersonas: personas.slice(),
     deliveryIntel,
     returnsIntel,
-    trustWeightedNote: `Trust-weighted read: store prior ${rt}/100; composite ${Math.round(p.qiComposite ?? 0)}.`,
+    trustWeightedNote: `Trust-weighted read: store prior ${getStoreTrustScore(p.store)}/100; retailer-risk heuristic ${risk.riskScore}/100; composite ${Math.round(p.qiComposite ?? 0)}.`.slice(
+      0,
+      200
+    ),
     semanticVsQuery: semanticVsQuery.slice(0, 200),
     comparedToFieldNote: comparedToFieldNote.slice(0, 200),
-    modelId: "heuristic-v1",
+    modelId: "heuristic-v2",
     source: "heuristic",
   };
 }
@@ -154,5 +239,7 @@ export function heuristicFieldComparisonSummary(list: QuantProduct[], query: str
   const maxP = prices.length ? Math.max(...prices) : 0;
   const bestTrust = [...list].sort((a, b) => getStoreTrustScore(b.store) - getStoreTrustScore(a.store))[0];
   const n = list.length;
-  return `Tray (${n}): “${query.slice(0, 80)}${query.length > 80 ? "…" : ""}”. €${minP}–€${maxP} visible spread; strongest store prior: ${bestTrust?.store ?? "n/a"}.`;
+  const med = [...prices].sort((a, b) => a - b);
+  const mid = med.length ? med[Math.floor(med.length / 2)]! : 0;
+  return `Tray (${n}) · “${query.slice(0, 72)}${query.length > 72 ? "…" : ""}” · €${minP}–€${maxP} spread · median ≈ €${mid}. Strongest storefront prior: ${bestTrust?.store ?? "n/a"}. QuantAI ranks on composite + trust + review depth—verify specs before checkout.`;
 }

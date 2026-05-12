@@ -15,12 +15,22 @@ const RiskSchema = z.object({
 
 const ProductRowSchema = z.object({
   id: z.number(),
-  buyingVerdict: z.string().max(260),
+  buyingVerdict: z.string().max(380),
   pros: z.array(z.string()).max(4).default([]),
   cons: z.array(z.string()).max(4).default([]),
   risks: z.array(RiskSchema).max(5).default([]),
   valueForMoney: z.number().min(0).max(100),
   confidence: z.number().min(0).max(100),
+  confidenceExplanation: z.string().max(280).optional(),
+  signalGaps: z.array(z.string().max(140)).max(4).optional(),
+  needsManualVerification: z.boolean().optional(),
+  retailerRiskScore: z.number().min(0).max(100).optional(),
+  retailerRiskNote: z.string().max(220).optional(),
+  pricePercentile: z.number().min(0).max(100).optional(),
+  priceFieldNote: z.string().max(220).optional(),
+  priceAnomaly: z.enum(["none", "deep_discount", "premium_outlier", "suspicious_low"]).optional(),
+  categoryLens: z.array(z.string().max(180)).max(4).optional(),
+  inferredPersonas: z.array(z.string().max(28)).max(5).optional(),
   deliveryIntel: z.union([z.string().max(180), z.null()]).optional(),
   returnsIntel: z.union([z.string().max(180), z.null()]).optional(),
   trustWeightedNote: z.union([z.string().max(200), z.null()]).optional(),
@@ -30,7 +40,7 @@ const ProductRowSchema = z.object({
 
 const BatchSchema = z.object({
   products: z.array(ProductRowSchema),
-  fieldComparisonSummary: z.string().max(420).optional(),
+  fieldComparisonSummary: z.string().max(520).optional(),
 });
 
 function compactProduct(p: QuantProduct) {
@@ -47,6 +57,9 @@ function compactProduct(p: QuantProduct) {
     trust: getStoreTrustScore(p.store),
     qc: Math.round(p.qiComposite ?? 0),
     ex: (p.extensions ?? []).slice(0, 3),
+    cat: p.qiCategory ?? "general",
+    disc: p.qiSignals?.discountQuality ?? null,
+    pp: p.qiSignals?.pricePerformance ?? null,
   };
 }
 
@@ -67,8 +80,7 @@ export async function runOpenAiCommerceBatch(
   if (!apiKey || products.length === 0) return null;
 
   const client = new OpenAI({ apiKey });
-  const model =
-    process.env.QUANTAI_COMMERCE_AI_MODEL?.trim() || "gpt-4.1-mini";
+  const model = process.env.QUANTAI_COMMERCE_AI_MODEL?.trim() || "gpt-4.1-mini";
   const slice = products.slice(0, Math.min(maxItems, 14));
   const rows = slice.map(compactProduct);
 
@@ -79,26 +91,36 @@ export async function runOpenAiCommerceBatch(
     const response = await client.responses.create(
       {
         model,
-        input: `You are QuantAI commerce analysis. Output ONE JSON object only (no markdown).
+        input: `You are QuantAI senior commerce analyst. Output ONE JSON object only (no markdown).
 
 User query: ${query.slice(0, 200)}
 
-Listings (abbreviated):
+Listings (abbreviated, feed-only — never invent specs, prices, or policies not implied):
 ${JSON.stringify(rows)}
 
-Return JSON shape:
-{"fieldComparisonSummary":"1-2 sentences comparing these listings vs the query and each other (price/trust/reviews).",
+Return JSON:
+{"fieldComparisonSummary":"3-4 sentences: tray price spread, trust/review story, discount risk, category nuance vs query.",
 "products":[
-  {"id":number,"buyingVerdict":"max 220 chars: buy/caution/avoid style",
-   "pros":["max4 short bullets"],"cons":["max4 short bullets"],
+  {"id":number,
+   "buyingVerdict":"2-4 sentences. Sound like Bloomberg for shopping: cite price vs peers in THIS tray (not global history), retailer trust prior, review volume confidence, delivery/returns uncertainty, long-term value vs discount risk, fake-urgency in availability text if present. Avoid hype; acknowledge uncertainty.",
+   "pros":["max4"],"cons":["max4"],
    "risks":[{"code":"SNAKE","severity":"low|medium|high","label":"short"}],
-   "valueForMoney":0-100,"confidence":0-100 model certainty,
+   "valueForMoney":0-100,"confidence":0-100,
+   "confidenceExplanation":"why this confidence level given sparse/conflicting signals",
+   "signalGaps":["max4 short items: what is missing in feed"],
+   "needsManualVerification":boolean,
+   "retailerRiskScore":0-100 higher=riskier based on trust+discount+review inconsistency heuristics,
+   "retailerRiskNote":"one line why risky or calm",
+   "pricePercentile":0-100 within this tray price distribution,
+   "priceFieldNote":"one line vs peers in tray",
+   "priceAnomaly":"none|deep_discount|premium_outlier|suspicious_low",
+   "categoryLens":["max4 checklist lines tailored to electronics/home/etc from title keywords—no fabricated RAM/CPU numbers"],
+   "inferredPersonas":["budget_buyer|premium_buyer|gamer|student|office_setup|creator_pro|general pick subset"],
    "deliveryIntel":"string or null","returnsIntel":"string or null if unknown",
-   "trustWeightedNote":"one line using trust field","semanticVsQuery":"match to query intent",
-   "comparedToFieldNote":"one line vs other rows in array"}
+   "trustWeightedNote":"one line","semanticVsQuery":"intent match","comparedToFieldNote":"vs peers"}
 ]}
 
-Rules: never invent exact return windows; use null if unknown. Never invent prices. Use trust field as prior not fact. Keep risks ≤5 total per row. JSON only.`,
+Rules: never invent exact return windows; null if unknown. Never invent prices beyond input. Use trust as prior not legal fact. JSON only. Keep risks ≤5 per row.`,
       },
       { signal: controller.signal }
     );
@@ -120,6 +142,16 @@ Rules: never invent exact return windows; use null if unknown. Never invent pric
         })),
         valueForMoney: Math.round(row.valueForMoney),
         confidence: Math.round(row.confidence),
+        confidenceExplanation: row.confidenceExplanation?.trim(),
+        signalGaps: row.signalGaps?.map((x) => x.slice(0, 140)),
+        needsManualVerification: row.needsManualVerification,
+        retailerRiskScore: row.retailerRiskScore != null ? Math.round(row.retailerRiskScore) : undefined,
+        retailerRiskNote: row.retailerRiskNote?.trim(),
+        pricePercentile: row.pricePercentile != null ? Math.round(row.pricePercentile) : undefined,
+        priceFieldNote: row.priceFieldNote?.trim(),
+        priceAnomaly: row.priceAnomaly,
+        categoryLens: row.categoryLens?.map((x) => x.slice(0, 180)),
+        inferredPersonas: row.inferredPersonas?.map((x) => x.slice(0, 28)),
         deliveryIntel: row.deliveryIntel ?? null,
         returnsIntel: row.returnsIntel ?? null,
         trustWeightedNote: row.trustWeightedNote ?? null,
@@ -132,7 +164,7 @@ Rules: never invent exact return windows; use null if unknown. Never invent pric
 
     const fieldComparisonSummary =
       (parsed.fieldComparisonSummary ?? "").trim() ||
-      "Compared listings on price, trust prior, and review depth visible in the feed.";
+      "Compared listings on price position in-tray, retailer trust priors, review depth, and discount story visible in the feed.";
 
     return { byId, fieldComparisonSummary, modelId: model };
   } catch (e) {

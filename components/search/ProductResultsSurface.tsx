@@ -15,6 +15,7 @@ import AILoadingPhase from "@/components/loading/AILoadingPhase";
 import SearchStreamRibbon from "@/components/loading/SearchStreamRibbon";
 import { useCockpit, type CockpitQuickHandlers } from "@/components/cockpit/cockpitContext";
 import ShareSnapshotBar from "@/components/share/ShareSnapshotBar";
+import type { CompareVerdictPayload } from "@/lib/intelligence/compareVerdict";
 import { analyzeDealCluster } from "@/lib/deals";
 import type { DealClusterDTO } from "@/lib/deals/types";
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
@@ -116,13 +117,7 @@ export default function ProductResultsSurface({
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
   const [verdictLoading, setVerdictLoading] = useState(false);
   const [verdictError, setVerdictError] = useState<string | null>(null);
-  const [verdict, setVerdict] = useState<{
-    winnerTitle: string;
-    winnerLink: string;
-    verdict: string;
-    rationale: string[];
-    confidence: string;
-  } | null>(null);
+  const [verdict, setVerdict] = useState<CompareVerdictPayload | null>(null);
   const [verdictSource, setVerdictSource] = useState<string | null>(null);
   const [compareExportFlash, setCompareExportFlash] = useState(false);
 
@@ -261,13 +256,7 @@ export default function ProductResultsSurface({
         body: JSON.stringify({ products: compareProducts }),
       });
       const parsed = await readApiJson<{
-        verdict?: {
-          winnerTitle: string;
-          winnerLink: string;
-          verdict: string;
-          rationale: string[];
-          confidence: string;
-        };
+        verdict?: CompareVerdictPayload;
         source?: string;
         error?: string;
         retryAfter?: number;
@@ -676,6 +665,54 @@ export default function ProductResultsSurface({
                     </li>
                   ))}
                 </ul>
+                {verdict.tradeoffAnalysis && verdict.tradeoffAnalysis.length > 0 && (
+                  <div className="mt-4 border-t border-white/[0.06] pt-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Tradeoff axes</p>
+                    <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] leading-relaxed text-slate-400">
+                      {verdict.tradeoffAnalysis.map((t) => (
+                        <li key={t} className="[overflow-wrap:anywhere]">
+                          {t}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {verdict.bestForPersonas && verdict.bestForPersonas.length > 0 && (
+                  <div className="mt-3 border-t border-white/[0.06] pt-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Best for</p>
+                    <ul className="mt-2 space-y-2 text-[11px] text-slate-400">
+                      {verdict.bestForPersonas.map((b) => (
+                        <li key={`${b.persona}-${b.pick}`} className="rounded-lg border border-white/[0.06] bg-black/25 px-2.5 py-2">
+                          <span className="font-semibold text-slate-200">{b.persona.replace(/_/g, " ")}</span>
+                          <span className="text-slate-600"> · </span>
+                          <span className="text-slate-300">{b.pick}</span>
+                          <span className="mt-0.5 block text-slate-500">{b.reason}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {(verdict.shortTermPick || verdict.longTermPick) && (
+                  <div className="mt-3 grid gap-2 border-t border-white/[0.06] pt-3 sm:grid-cols-2">
+                    {verdict.shortTermPick ? (
+                      <div className="rounded-lg border border-white/[0.06] bg-black/20 px-2.5 py-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-200/80">Short-term</p>
+                        <p className="mt-1 text-[11px] leading-relaxed text-slate-400">{verdict.shortTermPick}</p>
+                      </div>
+                    ) : null}
+                    {verdict.longTermPick ? (
+                      <div className="rounded-lg border border-white/[0.06] bg-black/20 px-2.5 py-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-200/80">Long-term</p>
+                        <p className="mt-1 text-[11px] leading-relaxed text-slate-400">{verdict.longTermPick}</p>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+                {verdict.verificationNote ? (
+                  <p className="mt-3 rounded-lg border border-amber-400/20 bg-amber-500/5 px-2.5 py-2 text-[11px] leading-relaxed text-amber-100/90">
+                    {verdict.verificationNote}
+                  </p>
+                ) : null}
               </div>
             )}
           </motion.div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { MessageCircle, Send, Sparkles, X } from "lucide-react";
 import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
@@ -74,6 +74,58 @@ function TypingRow({ active, reduce }: { active: boolean; reduce: boolean | null
 export default function CopilotDrawer() {
   const reduce = useReducedMotion();
   const { session } = useCopilotSession();
+
+  const contextualChips = useMemo(() => {
+    const out: { label: string; prompt: string }[] = [];
+    const prods = session.products;
+    if (prods.length === 0) return out;
+
+    const minTrust = Math.min(...prods.map((p) => p.storeTrust ?? 70));
+    const sorted = [...prods].sort((a, b) => (b.qiComposite ?? 0) - (a.qiComposite ?? 0));
+    const maxQi = sorted[0]?.qiComposite ?? 0;
+    const secondQi = sorted[1]?.qiComposite ?? 0;
+    const top = sorted[0];
+
+    out.push({
+      label: "Show safer retailers",
+      prompt:
+        "Which listings come from the safest retailers in my current tray and why? Rank by trust, not just price.",
+    });
+    if (minTrust < 65) {
+      out.push({
+        label: "Only trusted stores",
+        prompt: "Which options should I drop because store trust is too weak for a cautious buyer?",
+      });
+    }
+    out.push({
+      label: "Best long-term option",
+      prompt: "What is the best long-term value pick in this tray considering trust, reviews, and price realism?",
+    });
+    out.push({
+      label: "Best value under budget",
+      prompt: "Which pick balances price and risk best without chasing sketchy discounts?",
+    });
+    if (session.compareTrayLinks.length < 2 && prods.length >= 2) {
+      out.push({
+        label: "Compare top 3",
+        prompt: "If I compared the top 3 listings by composite score, what tradeoffs would you highlight?",
+      });
+    }
+    if (top) {
+      out.push({
+        label: "Why ranked first?",
+        prompt: `Why is "${top.title.slice(0, 80)}" ranked first in my current tray? Explain the main signals transparently.`,
+      });
+    }
+    if (maxQi - secondQi < 6 && prods.length > 1) {
+      out.push({
+        label: "Tie-break advice",
+        prompt: "Top listings are close in composite—what should break ties for a cautious buyer?",
+      });
+    }
+    return out.slice(0, 6);
+  }, [session.products, session.compareTrayLinks]);
+
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -243,18 +295,35 @@ export default function CopilotDrawer() {
                 </button>
               </div>
 
-              <div className="flex flex-wrap gap-1.5 border-b border-white/[0.05] px-3 py-2">
-                {CHIPS.map((c) => (
-                  <button
-                    key={c.label}
-                    type="button"
-                    disabled={busy}
-                    onClick={() => void send(c.prompt)}
-                    className="rounded-full border border-white/[0.1] bg-white/[0.04] px-2.5 py-1 text-[10px] font-medium text-slate-300 transition hover:border-cyan-400/25 hover:text-white disabled:opacity-50"
-                  >
-                    {c.label}
-                  </button>
-                ))}
+              <div className="flex max-h-[28%] min-h-0 flex-col gap-1.5 border-b border-white/[0.05] px-3 py-2">
+                {contextualChips.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {contextualChips.map((c) => (
+                      <button
+                        key={c.label}
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void send(c.prompt)}
+                        className="rounded-full border border-cyan-400/22 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-medium text-cyan-100/95 transition hover:border-cyan-400/35 hover:bg-cyan-500/15 disabled:opacity-50"
+                      >
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-1.5">
+                  {CHIPS.map((c) => (
+                    <button
+                      key={c.label}
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void send(c.prompt)}
+                      className="rounded-full border border-white/[0.1] bg-white/[0.04] px-2.5 py-1 text-[10px] font-medium text-slate-300 transition hover:border-cyan-400/25 hover:text-white disabled:opacity-50"
+                    >
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-3 py-3">

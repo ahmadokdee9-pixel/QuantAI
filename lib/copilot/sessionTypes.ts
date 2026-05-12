@@ -13,6 +13,10 @@ export type CopilotProductBrief = {
   qiVerdict?: string;
   buyingVerdict?: string;
   valueForMoney?: number;
+  /** Store trust prior 0-100 for lightweight copilot chips (no extra client compute). */
+  storeTrust?: number;
+  commerceConfidence?: number;
+  priceAnomaly?: "none" | "deep_discount" | "premium_outlier" | "suspicious_low";
   risks?: { code: string; label: string }[];
 };
 

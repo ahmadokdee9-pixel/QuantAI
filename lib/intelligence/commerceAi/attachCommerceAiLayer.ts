@@ -79,9 +79,25 @@ export async function attachCommerceAiLayer(
   }
 
   const merged: QuantProduct[] = products.map((p) => {
+    const h = heuristicCommerceForProduct(p, query, products);
     const fromAi = byId.get(p.id);
-    const qiCommerce: ProductCommerceAI =
-      fromAi ?? heuristicCommerceForProduct(p, query, products);
+    if (!fromAi) {
+      return { ...p, qiCommerce: h };
+    }
+    const qiCommerce: ProductCommerceAI = {
+      ...h,
+      ...fromAi,
+      confidenceExplanation: fromAi.confidenceExplanation ?? h.confidenceExplanation,
+      signalGaps: fromAi.signalGaps?.length ? fromAi.signalGaps : h.signalGaps,
+      needsManualVerification: fromAi.needsManualVerification ?? h.needsManualVerification,
+      retailerRiskScore: fromAi.retailerRiskScore ?? h.retailerRiskScore,
+      retailerRiskNote: fromAi.retailerRiskNote ?? h.retailerRiskNote,
+      pricePercentile: fromAi.pricePercentile ?? h.pricePercentile,
+      priceFieldNote: fromAi.priceFieldNote ?? h.priceFieldNote,
+      priceAnomaly: fromAi.priceAnomaly ?? h.priceAnomaly,
+      categoryLens: fromAi.categoryLens?.length ? fromAi.categoryLens : h.categoryLens,
+      inferredPersonas: fromAi.inferredPersonas?.length ? fromAi.inferredPersonas : h.inferredPersonas,
+    };
     return { ...p, qiCommerce };
   });
 

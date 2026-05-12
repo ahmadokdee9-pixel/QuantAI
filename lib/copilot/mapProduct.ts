@@ -1,4 +1,5 @@
 import type { CopilotProductBrief } from "@/lib/copilot/sessionTypes";
+import { getStoreTrustScore } from "@/lib/retailTrust";
 import type { QuantProduct } from "@/lib/shoppingScore";
 
 export function toCopilotProductBrief(p: QuantProduct): CopilotProductBrief {
@@ -14,6 +15,9 @@ export function toCopilotProductBrief(p: QuantProduct): CopilotProductBrief {
     qiVerdict: p.qiVerdict,
     buyingVerdict: p.qiCommerce?.buyingVerdict,
     valueForMoney: p.qiCommerce?.valueForMoney,
+    storeTrust: getStoreTrustScore(p.store),
+    commerceConfidence: p.qiCommerce?.confidence,
+    priceAnomaly: p.qiCommerce?.priceAnomaly,
     risks: p.qiCommerce?.risks?.map((r) => ({ code: r.code, label: r.label })),
   };
 }

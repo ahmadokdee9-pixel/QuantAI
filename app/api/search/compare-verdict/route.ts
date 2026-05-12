@@ -9,6 +9,7 @@ import { parseJsonObject } from "@/lib/openai/safeJson";
 import { compareVerdictRatelimit, enforceLimit } from "@/lib/rate-limit";
 import { logDevError } from "@/lib/log/devLog";
 import { recordCompareSession } from "@/lib/intelligence/persistence";
+import { getStoreTrustScore } from "@/lib/retailTrust";
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -18,8 +19,22 @@ const VerdictSchema = z.object({
   winnerTitle: z.string(),
   winnerLink: z.string(),
   verdict: z.string(),
-  rationale: z.array(z.string()).max(6),
+  rationale: z.array(z.string()).max(8),
   confidence: z.enum(["high", "medium", "low"]),
+  tradeoffAnalysis: z.array(z.string()).max(6).optional(),
+  bestForPersonas: z
+    .array(
+      z.object({
+        persona: z.string(),
+        pick: z.string(),
+        reason: z.string(),
+      })
+    )
+    .max(5)
+    .optional(),
+  shortTermPick: z.string().max(220).optional(),
+  longTermPick: z.string().max(220).optional(),
+  verificationNote: z.string().max(280).optional(),
 });
 
 export async function POST(req: Request) {
@@ -62,28 +77,38 @@ export async function POST(req: Request) {
       rating: p.rating,
       reviewsCount: p.reviewsCount,
       link: p.link,
+      storeTrustPrior: getStoreTrustScore(p.store),
       qiComposite: p.qiComposite ?? null,
       qiReason: p.qiReason ?? null,
       qiVerdict: p.qiVerdict ?? null,
       qiPsychology: p.qiPsychology ?? null,
+      commerce: p.qiCommerce
+        ? {
+            buyingVerdict: p.qiCommerce.buyingVerdict,
+            valueForMoney: p.qiCommerce.valueForMoney,
+            confidence: p.qiCommerce.confidence,
+            retailerRiskScore: p.qiCommerce.retailerRiskScore ?? null,
+            priceAnomaly: p.qiCommerce.priceAnomaly ?? null,
+          }
+        : null,
     }));
 
     const response = await client.responses.create({
       model: "gpt-4.1-mini",
-      input: `You are QuantAI compare mode—analytical, concise, non-salesy.
+      input: `You are QuantAI Compare Lab — analytical commerce strategist (not salesy).
 
-Pick one winner from the JSON (exact winnerLink). Output JSON ONLY (no markdown) with:
-- winnerTitle, winnerLink (exact from input)
-- verdict: max 2 tight sentences—WHY that row wins on balance, not hype
-- rationale: 4–6 bullets, each under 140 chars, covering in order when possible:
-  (1) decisive QI / trust / rating edge,
-  (2) explicit tradeoff vs runner-up (price vs trust vs reviews),
-  (3) hidden risk on the winner,
-  (4) opportunity cost of choosing #2 instead,
-  (5) optional third-row angle if useful
-- confidence: high|medium|low from signal separation + data completeness
+Pick one winner from the JSON (exact winnerLink from input). Output JSON ONLY (no markdown):
+- winnerTitle, winnerLink (exact)
+- verdict: max 3 sentences — transparent, cites tradeoffs, no fake certainty
+- rationale: 5–8 bullets, ≤150 chars each, ordered: composite edge, trust/rating/reviews, discount risk, opportunity cost vs #2, optional third-row angle
+- confidence: high|medium|low from separation + data completeness
+- tradeoffAnalysis: 3–5 strings (short-term vs long-term, performance vs price, reliability vs discount)
+- bestForPersonas: 2–4 objects {persona,pick,reason} using persona labels like budget_buyer, premium_buyer, gamer, student, office_setup, creator_pro, risk_averse, value_max
+- shortTermPick: one sentence which row if you optimize for immediate price
+- longTermPick: one sentence which row if you optimize for fewer surprises over years
+- verificationNote: what the user must still verify manually (warranty, seller, specs)
 
-Tie-break: qiComposite if present, else trust, rating, review depth, then price-to-value. Never invent specs or prices.
+Never invent specs or prices. Use only fields present. Tie-break: qiComposite, then trust, rating, review depth, then value-for-money if present.
 
 Products JSON:\n${JSON.stringify(compact, null, 2)}`,
     });
