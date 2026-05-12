@@ -1,24 +1,27 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 
 const QUERY = "(max-width: 768px), (pointer: coarse)";
 
-function subscribe(onStoreChange: () => void) {
-  const mq = window.matchMedia(QUERY);
-  mq.addEventListener("change", onStoreChange);
-  return () => mq.removeEventListener("change", onStoreChange);
-}
-
-function getSnapshot() {
-  return window.matchMedia(QUERY).matches;
-}
-
-function getServerSnapshot() {
-  return false;
-}
-
-/** True on small viewports or touch-primary devices — tone down motion, layers, and scroll hacks. */
+/**
+ * True on small viewports or touch-primary devices — tone down motion, layers, and scroll hacks.
+ * First paint is always `false` (matches SSR) to avoid hydration mismatches; updates after mount.
+ */
 export function useMobilePerf(): boolean {
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const [mobile, setMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia(QUERY);
+    const apply = () => setMobile(mq.matches);
+    apply();
+    if (typeof mq.addEventListener === "function") {
+      mq.addEventListener("change", apply);
+      return () => mq.removeEventListener("change", apply);
+    }
+    mq.addListener(apply);
+    return () => mq.removeListener(apply);
+  }, []);
+
+  return mobile;
 }
