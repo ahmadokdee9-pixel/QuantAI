@@ -17,13 +17,29 @@ export type CommerceSearchIntents = {
   dealHunter: boolean;
   /** Cheapest acceptable row from a trusted storefront. */
   cheapestTrusted: boolean;
+  /** Delivery reliability / low-risk shipping language. */
+  deliveryCare: boolean;
+  /** User wants plausible markdowns, not inflated anchors. */
+  realDiscountOnly: boolean;
+  /** Time-pressured purchase language. */
+  buyNowUrgency: boolean;
+  /** “Like X but cheaper”, alternatives, substitutes. */
+  alternativeSeeking: boolean;
+  /** “Which store”, “best deal now” — retailer outcome focus. */
+  storeDealHunter: boolean;
+  /** School / student use case. */
+  schoolUse: boolean;
+  /** Gift-oriented language. */
+  giftUse: boolean;
 };
 
 export function parseCommerceSearchIntents(q: string): CommerceSearchIntents {
   const s = q.toLowerCase();
   return {
     budget:
-      /\b(cheap|budget|affordable|lowest|under\s+(\$|€|£)|save|discount|clearance|bargain)\b/.test(s),
+      /\b(cheap|budget|affordable|lowest|under\s+(\$|€|£|eur|gbp|usd)|save|discount|clearance|bargain)\b/.test(
+        s
+      ),
     premium:
       /\b(premium|flagship|pro\b|max\b|ultra|studio|workstation|oled|luxury tier|high.end)\b/.test(s),
     gaming:
@@ -32,7 +48,9 @@ export function parseCommerceSearchIntents(q: string): CommerceSearchIntents {
       /\b(work|office|business|student|ultrabook|macbook pro|thinkpad|productivity|wfh|remote work)\b/.test(s),
     luxury: /\b(luxury|designer|boutique|haute|limited edition|collector)\b/.test(s),
     trustedOnly:
-      /\b(trusted|reputable|safe seller|official store|first.party|authorized|warranty|no marketplace)\b/.test(s),
+      /\b(trusted|reputable|safe(r)?\s+seller|safest\s+seller|official store|first.party|authorized|warranty|no marketplace)\b/.test(
+        s
+      ),
     explicitBestValue:
       /\b(best value|bang for (the )?buck|price.to.quality|value leader|value\s+pick)\b/.test(s),
     dealHunter:
@@ -42,6 +60,28 @@ export function parseCommerceSearchIntents(q: string): CommerceSearchIntents {
     cheapestTrusted:
       /\b(cheapest\s+trusted|trusted\s+cheapest|lowest\s+.+\s+trusted|cheap(er)?\s+.+\s+trusted)\b/.test(s) ||
       /\btrusted\s+(cheap|cheapest|lowest)\b/.test(s),
+    deliveryCare:
+      /\b(low\s*risk\s+delivery|safe(r)?\s+delivery|reliable\s+shipping|trusted\s+shipping|delivery\s+risk|insured\s+shipping|track(ed)?\s+shipping)\b/.test(
+        s
+      ),
+    realDiscountOnly:
+      /\b(real|actual|genuine|true)\s+(discount|deal|markdown|price\s*drop)\b|\bonly\s+(real\s+)?discounts?\b|\bno\s+fake\s+discount/i.test(
+        s
+      ),
+    buyNowUrgency:
+      /\b(buy\s+now|purchase\s+today|need\s+it\s+(today|this\s+week)|asap|urgent|order\s+today|ship\s+today)\b/.test(
+        s
+      ),
+    alternativeSeeking:
+      /\b(something\s+like|similar\s+to|instead\s+of|cheaper\s+(than|alternative)|alternative\s+to|comparable\s+to|like\s+a\s+)\b/.test(
+        s
+      ),
+    storeDealHunter:
+      /\b(which|what)\s+store\b|\bbest\s+deal\s+now\b|\bcheapest\s+store\b|\blowest\s+price\s+where\b|\bwhere\s+to\s+buy\b/.test(
+        s
+      ),
+    schoolUse: /\b(for\s+)?school|uni(versity)?|college(\s+laptop)?\b/.test(s),
+    giftUse: /\bgift\s+for|present\s+for|birthday\s+gift\b/.test(s),
   };
 }
 
@@ -82,8 +122,16 @@ export function intentCompositeLift(
           : 0.005;
   }
   const d = opts?.headlineDiscount01;
-  if (intents.dealHunter && d != null && d > 0.1) {
+  if ((intents.dealHunter || intents.realDiscountOnly) && d != null && d > 0.1) {
     lift += Math.min(0.042, 0.01 + d * 0.055);
   }
+  if (intents.schoolUse && (category === "electronics" || category === "general")) lift += 0.014;
+  if (intents.giftUse && (category === "general" || category === "fashion" || category === "electronics")) {
+    lift += 0.01;
+  }
+  if (intents.alternativeSeeking && priceVsMedian != null && priceVsMedian > 0.03 && trustNorm >= 0.58) {
+    lift += 0.012;
+  }
+  if (intents.storeDealHunter && trustNorm >= 0.76) lift += 0.011;
   return lift;
 }

@@ -45,10 +45,10 @@ function finalTone(kind: SearchIntelligenceDTO["finalRecommendation"]): string {
 }
 
 function tierLabel(t: SearchIntelligenceDTO["confidenceTier"]): string {
-  if (t === "high") return "Confidence · high";
-  if (t === "moderate") return "Confidence · moderate";
-  if (t === "low") return "Confidence · low";
-  return "Verify manually";
+  if (t === "high") return "Strong confidence in this read";
+  if (t === "moderate") return "Moderate confidence—double-check details";
+  if (t === "low") return "Limited signal—verify before you buy";
+  return "Treat as a starting point only";
 }
 
 export default function GlobalIntelligencePanel({

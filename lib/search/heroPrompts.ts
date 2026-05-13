@@ -1,24 +1,23 @@
-/** One-tap prompts for the home hero — concise, commerce-analyst phrasing. */
+/** One-tap examples — natural sentences QuantAI already understands. */
 export const HERO_SEARCH_PROMPTS: readonly string[] = [
-  "Trusted laptop under €1200 — lowest checkout risk",
-  "iPhone — official or tier-1 retailer, real discount check",
-  "Sofa — first-party or national chain, delivery clarity",
-  "Cheapest vs safest — same SKU, EU sellers",
-  "Wireless earbuds under €150 — warranty-forward pick",
-  "27 inch monitor — IPS or OLED hint, trusted seller",
-  "GPU under €500 — model-locked, scam-anchor scan",
-  "Ultrabook — battery class, returns, EU retail graph",
-  "144Hz gaming monitor — Coolblue / MediaMarkt lane",
-  "OLED TV — anchor vs peer median, trusted checkout",
+  "Best laptop under €900 for school",
+  "iPhone with a real discount from a trusted seller",
+  "Cheap sofa but good quality",
+  "Compare OLED TVs with low-risk delivery",
+  "Safest seller for AirPods",
+  "Gaming monitor 144Hz under €300",
+  "Something like a MacBook Air but cheaper",
+  "Best gift for my wife under €150",
+  "Show me products with real discounts only",
+  "Which store has the best deal right now?",
 ];
 
-/** Rotating hero input placeholders — short, intent-rich, same voice as prompts. */
+/** Rotating placeholders — same “ask anything” voice as the examples. */
 export const HERO_INPUT_PLACEHOLDERS: readonly string[] = [
-  "Brand · model · budget — QuantAI ranks the tray…",
-  "Trusted retailers — add region and warranty must-haves…",
-  "PC parts — lock GPU/CPU tokens, we match listings…",
-  "Flagship phone — safe checkout, EU graph bias…",
-  "Value vs trust — name the SKU; we explain the spread…",
-  "Deep discount — we stress-test list anchors vs peers…",
-  "Cheapest trusted — product + store tier hint…",
+  "Ask in one sentence: product, budget, store, delivery, or deal…",
+  "Try: “best phone under €600, trusted retailer only”…",
+  "Try: “cheap but good quality noise-cancelling headphones”…",
+  "Try: “OLED TV, compare delivery risk across sellers”…",
+  "Try: “gaming laptop, student budget, EU stores”…",
+  "Try: “real discounts only on wireless earbuds”…",
 ];

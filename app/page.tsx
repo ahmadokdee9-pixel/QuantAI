@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import AmbientBackdrop from "../components/cockpit/AmbientBackdrop";
-import SearchBox from "../components/SearchBox";
 import LandingNav from "../components/landing/LandingNav";
 import MarketingSections from "../components/landing/MarketingSections";
 import PricingCards from "../components/subscription/PricingCards";
@@ -36,8 +35,6 @@ import {
   sortByCompositeRankEnhanced,
 } from "@/lib/intelligence/searchRankEnhance";
 import {
-  getFinalComposite,
-  getHeuristicScore,
   getStoreTrustScore,
   sortByBestAIScore,
   sortByTrust,
@@ -58,16 +55,7 @@ import { appendLocalRecentSearch, readLocalSignals, recordInterestTag } from "@/
 import { HERO_INPUT_PLACEHOLDERS, HERO_SEARCH_PROMPTS } from "@/lib/search/heroPrompts";
 import { useMobilePerf } from "@/lib/hooks/useMobilePerf";
 import { useReducedMotion, motion } from "framer-motion";
-import {
-  ArrowRight,
-  Bell,
-  Loader2,
-  Lock,
-  Radar,
-  Search,
-  Sparkles,
-  TrendingUp,
-} from "lucide-react";
+import { ArrowRight, Loader2, Search } from "lucide-react";
 
 /** Deterministic SSR + first client paint — no localStorage; must match hydration. */
 const SSR_HERO_DATALIST_HINTS: readonly string[] = HERO_SEARCH_PROMPTS;
@@ -106,8 +94,6 @@ export default function Home() {
   const [sort, setSort] = useState("value");
   const [filters, setFilters] = useState(defaultResultsFilters());
   const [saved, setSaved] = useState<QuantProduct[]>([]);
-  const [question, setQuestion] = useState("");
-  const [aiReply, setAiReply] = useState("");
   const [searchError, setSearchError] = useState<string | null>(null);
   const [resultsKey, setResultsKey] = useState(0);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryRow[]>([]);
@@ -235,41 +221,6 @@ export default function Home() {
     pulseIntelligence();
   }, [mobilePerf, loading, searchIntelligence, pulseIntelligence]);
 
-  function decision(score: number) {
-    if (score >= 85) return "Buy now";
-    if (score >= 70) return "Good choice";
-    if (score >= 55) return "Compare first";
-    return "Risky";
-  }
-
-  function decisionStyle(score: number) {
-    if (score >= 85)
-      return "text-emerald-200 border-emerald-400/25 bg-emerald-400/[0.12]";
-    if (score >= 70)
-      return "text-cyan-200 border-cyan-400/25 bg-cyan-400/[0.1]";
-    if (score >= 55)
-      return "text-amber-200 border-amber-400/25 bg-amber-400/[0.1]";
-    return "text-rose-200 border-rose-400/25 bg-rose-400/[0.1]";
-  }
-
-  function whyImportant(p: QuantProduct) {
-    const score = getHeuristicScore(p);
-
-    if (score >= 85) {
-      return "This is a strong buy right now. The product has a strong balance of price, rating, and store reliability.";
-    }
-
-    if (score >= 70) {
-      return "This is a good option, but QuantAI recommends comparing it with cheaper alternatives before buying.";
-    }
-
-    if (score >= 55) {
-      return "This product is average. It may be better to wait or check other options first.";
-    }
-
-    return "This option looks weak compared with other available results. Better to avoid or wait.";
-  }
-
   const sortedProductsMemo = useMemo(() => {
     const filteredForSort = dedupeSearchTray(applyResultsFilters(products, filters));
     const sortedList = [...filteredForSort];
@@ -334,27 +285,7 @@ export default function Home() {
 
   const sortedProducts = sortedProductsMemo;
 
-  function smartDecisionText(p: QuantProduct) {
-    const score = getFinalComposite(p, sortedProducts);
-
-    if (score >= 85) {
-      return "Leads this field—price, reviews, and seller trust align for a decisive checkout if specs match.";
-    }
-
-    if (score >= 70) {
-      return "Strong lane—confirm delivery and final landed price, then execute with confidence.";
-    }
-
-    if (score >= 55) {
-      return "Acceptable but not dominant—wait for a sharper row or widen the scan.";
-    }
-
-    return "Weak vs this tray—preserve capital until a cleaner listing appears.";
-  }
-
   const activeFilterCount = countActiveFilters(filters);
-
-  const best = sortedProducts[0];
 
   async function search(overrideQuery?: string) {
     const q = (overrideQuery ?? query).trim();
@@ -643,18 +574,19 @@ export default function Home() {
               <span className="relative flex size-1.5 rounded-full bg-emerald-400/90 shadow-[0_0_8px_rgba(52,211,153,0.45)]">
                 <span className="absolute inset-0 motion-reduce:animate-none animate-ping rounded-full bg-emerald-400/25" />
               </span>
-              Live commerce intelligence
+              Live shopping intelligence
             </div>
 
             <h1 className="cockpit-display mt-12 text-[2.65rem] sm:text-5xl lg:text-[3.75rem] text-white motion-safe:animate-[fadeIn_0.65s_ease-out]">
-              <span className="block text-white">Clarity at the speed of live listings</span>
+              <span className="block text-white">Search in plain language. Buy with confidence.</span>
               <span className="mt-4 block cockpit-gradient-text font-semibold">
-                A decision field for every cart you care about.
+                QuantAI turns messy shopping searches into ranked buying decisions.
               </span>
             </h1>
 
             <p className="cockpit-body mx-auto mt-8 max-w-2xl text-base sm:text-lg text-slate-400/95 motion-safe:animate-[fadeIn_0.7s_ease-out]">
-              One surface: live offers, clear scores, and a calm read on risk—without the noise of a typical storefront.
+              Ask for any product, budget, store, risk, or discount. Search naturally—QuantAI understands product,
+              budget, trust, and deal intent.
             </p>
 
             {/* Search — hero instrument */}
@@ -724,7 +656,7 @@ export default function Home() {
                           </>
                         ) : (
                           <>
-                            Run QuantAI scan
+                            Search
                             <ArrowRight className="size-4 transition group-hover:translate-x-0.5" aria-hidden />
                           </>
                         )}
@@ -735,7 +667,7 @@ export default function Home() {
 
                 <div className="relative mt-3.5 text-left">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500/90">
-                    Analyst prompts · tap to run
+                    Examples
                   </p>
                   <div className="mt-2 flex gap-2 overflow-x-auto pb-1 pt-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]">
                     {HERO_SEARCH_PROMPTS.map((p) => (
@@ -752,60 +684,18 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="relative mt-3 min-h-[128px] sm:min-h-[118px]">
+                <div className="relative mt-3 min-h-[72px] sm:min-h-[68px]">
                   {loading ? (
                     <div className="space-y-2.5">
                       <SearchStreamRibbon active={loading} />
                       <AILoadingPhase intervalMs={2600} />
                     </div>
                   ) : (
-                    <div className="space-y-2 px-0.5">
-                      <p className="text-left text-[11px] font-medium leading-relaxed text-slate-500/90">
-                        <span className="text-cyan-200/75">Tray memory is session-local.</span> Enter refines the
-                        composite field; Compare pins stress-test trust without leaving the scan lane.
-                      </p>
-                      <p className="text-left text-[10px] text-slate-600/95">
-                        Enter runs the scan · results anchor below · compare pins stay put on refresh
-                      </p>
-                    </div>
+                    <p className="px-0.5 text-left text-[11px] font-normal leading-relaxed text-slate-500/90">
+                      Results and the reasoning console appear below. Compare pins stay on your tray while you refine
+                      the search.
+                    </p>
                   )}
-                </div>
-
-                <div className="relative mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-                  {[
-                    {
-                      icon: Radar,
-                      title: "Single merged tray",
-                      sub: "Listings normalized into one analyst field",
-                    },
-                    {
-                      icon: TrendingUp,
-                      title: "QI composite field",
-                      sub: "Price, reviews, trust & delivery fused into one score",
-                    },
-                    {
-                      icon: Lock,
-                      title: "Account-grade pacing",
-                      sub: "Signed-in search with fair daily limits",
-                    },
-                  ].map((item) => (
-                    <div
-                      key={item.title}
-                      className="flex items-start gap-3 rounded-2xl border border-white/[0.05] bg-white/[0.025] px-4 py-3.5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-sm transition hover:border-white/[0.1]"
-                    >
-                      <item.icon
-                        className="size-4 shrink-0 text-slate-500 mt-0.5"
-                        strokeWidth={1.5}
-                        aria-hidden
-                      />
-                      <div>
-                        <p className="text-[13px] font-semibold tracking-tight text-white/88">{item.title}</p>
-                        <p className="text-[11px] font-normal text-slate-500/90 mt-1 leading-relaxed">
-                          {item.sub}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </div>
             </motion.div>
@@ -843,7 +733,7 @@ export default function Home() {
             {!isSignedIn && (
               <div className="mx-auto mt-8 flex max-w-md flex-col items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-5 py-4 backdrop-blur-md sm:flex-row sm:justify-center">
                 <p className="text-center text-sm font-normal text-slate-400">
-                  Sign in to run live tray search and open the QuantAI cockpit assistant.
+                  Sign in to run live search, save products, and sync your tray.
                 </p>
                 <SignInButton mode="modal" forceRedirectUrl="/dashboard">
                   <button
@@ -858,7 +748,7 @@ export default function Home() {
           </div>
         </section>
 
-        {products.length > 0 && saved.length > 0 && (
+        {saved.length > 0 && (
           <div className="mx-auto max-w-6xl px-4 sm:px-6 pb-6 space-y-6">
             <section className={`${glassCard} p-6 sm:p-8`}>
                 <div className="flex items-center justify-between gap-4 mb-6">
@@ -916,236 +806,6 @@ export default function Home() {
                 </div>
               </section>
           </div>
-        )}
-
-        {best && !loading && (
-          <>
-            <section className="mx-auto max-w-6xl px-4 sm:px-6 pb-6">
-              <div
-                className={`relative overflow-hidden ${glassCard} p-6 sm:p-8 lg:p-10 before:pointer-events-none before:absolute before:inset-0 before:bg-gradient-to-br before:from-cyan-400/10 before:via-transparent before:to-violet-500/10`}
-              >
-                <div className="pointer-events-none absolute -right-20 -top-20 size-64 rounded-full bg-cyan-400/10 blur-3xl" />
-                <p className="relative text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-300/90 mb-4">
-                  Top pick (QI)
-                </p>
-                <div className="relative grid gap-8 md:grid-cols-[minmax(0,200px)_1fr_minmax(0,160px)] md:items-center">
-                  {best.image && (
-                    <div className="relative mx-auto aspect-square w-full max-w-[200px] rounded-2xl border border-white/[0.08] bg-white p-4 shadow-inner">
-                      <Image
-                        src={best.image}
-                        alt=""
-                        fill
-                        sizes="200px"
-                        className="object-contain p-2"
-                        unoptimized
-                      />
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold tracking-tight text-white/95 leading-snug">
-                      {best.title}
-                    </h2>
-                    <p className="mt-1.5 text-sm font-medium text-slate-500">{best.store}</p>
-                    <p className="mt-5 text-4xl sm:text-5xl font-semibold tracking-tight text-emerald-300/95">
-                      €{best.price}
-                    </p>
-                    <p
-                      className={`mt-4 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${decisionStyle(getFinalComposite(best, sortedProducts))}`}
-                    >
-                      {decision(getFinalComposite(best, sortedProducts))}
-                    </p>
-                    <p className="mt-4 max-w-xl text-sm font-normal leading-relaxed text-slate-400">
-                      {best.qiReason?.trim() || whyImportant(best)}
-                    </p>
-                    <div className="mt-6 flex flex-wrap gap-3">
-                      <a
-                        href={best.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
-                      >
-                        View offer
-                      </a>
-                      <button
-                        type="button"
-                        onClick={() => saveProduct(best)}
-                        className="inline-flex items-center justify-center rounded-full border border-emerald-400/35 bg-emerald-400/15 px-6 py-2.5 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-400/25"
-                      >
-                        Save
-                      </button>
-                    </div>
-                  </div>
-                  <div className="rounded-2xl border border-white/[0.08] bg-black/30 p-6 text-center backdrop-blur-md">
-                    <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
-                      QI composite
-                    </p>
-                    <p className="mt-2 text-4xl font-semibold tabular-nums text-white/95">
-                      {getFinalComposite(best, sortedProducts)}
-                      <span className="text-lg font-medium text-slate-500">/100</span>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="mx-auto max-w-6xl px-4 sm:px-6 pb-6">
-              <div
-                className={`${glassCard} p-6 sm:p-8 transition duration-500 hover:border-cyan-400/20 hover:shadow-[0_32px_90px_-36px_rgba(34,211,238,0.15)]`}
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  <Sparkles className="size-5 text-violet-300/80" strokeWidth={1.5} aria-hidden />
-                  <h3 className="text-lg font-semibold tracking-tight text-white/95">
-                    QuantAI decision
-                  </h3>
-                </div>
-                <p className="text-sm sm:text-base font-normal leading-relaxed text-slate-400 max-w-3xl">
-                  {smartDecisionText(best)}
-                </p>
-                <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                  {[
-                    "Price signal weighted against this result set.",
-                    "Rating signal rewards consistently strong feedback.",
-                    "Store signal boosts recognized retailers you can trust.",
-                  ].map((t) => (
-                    <div
-                      key={t}
-                      className="rounded-2xl border border-white/[0.06] bg-black/20 px-4 py-3 text-xs font-normal leading-relaxed text-slate-500"
-                    >
-                      {t}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            <section className="mx-auto max-w-6xl px-4 sm:px-6 pb-10">
-              <div className={`${glassCard} border-violet-400/15 p-6 sm:p-8`}>
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
-                  <div>
-                    <h3 className="text-lg font-semibold tracking-tight text-white/95">
-                      AI assistant
-                    </h3>
-                    <p className="mt-1 text-sm font-normal text-slate-500 max-w-xl">
-                      Ask QuantAI to compare options, pressure-test price, or explain store
-                      trust—grounded in your current results.
-                    </p>
-                  </div>
-                  <Bell className="size-6 text-violet-300/50 hidden sm:block shrink-0" strokeWidth={1.25} aria-hidden />
-                </div>
-
-                <div className="grid gap-2 sm:grid-cols-3">
-                  {[
-                    {
-                      label: "Compare alternatives",
-                      text: "QuantAI found cheaper alternatives with similar ratings. Compare price, store trust, and delivery before buying.",
-                    },
-                    {
-                      label: "Should I buy now?",
-                      text: "QuantAI recommends buying this product now. Price, rating, and trust score are currently strong.",
-                    },
-                    {
-                      label: "Track price drop",
-                      text: "QuantAI will track this product and notify you when the price becomes a stronger deal.",
-                    },
-                  ].map((b) => (
-                    <button
-                      key={b.label}
-                      type="button"
-                      onClick={() => setAiReply(b.text)}
-                      className="rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-left text-sm font-medium text-white/85 transition hover:border-cyan-400/25 hover:bg-cyan-400/[0.06]"
-                    >
-                      {b.label}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:gap-3">
-                  <input
-                    placeholder="Ask QuantAI anything…"
-                    value={question}
-                    onChange={(e) => setQuestion(e.target.value)}
-                    className="min-h-[48px] flex-1 rounded-2xl border border-white/[0.08] bg-black/30 px-4 text-sm font-normal text-white placeholder:text-slate-500 outline-none backdrop-blur-md transition focus:border-cyan-400/35"
-                  />
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        if (!isSignedIn) {
-                          setAiReply("Sign in to ask the AI assistant.");
-                          return;
-                        }
-
-                        setAiReply("QuantAI is thinking…");
-
-                        const res = await fetch("/api/ai-chat", {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
-                          credentials: "same-origin",
-                          body: JSON.stringify({
-                            question,
-                            products: sortedProducts,
-                          }),
-                        });
-
-                        const parsed = await readApiJson<{
-                          reply?: string;
-                          highlights?: string[];
-                          caution?: string;
-                          error?: string;
-                          detail?: string;
-                          retryAfter?: number;
-                        }>(res);
-                        const data = parsed.data;
-
-                        if (res.status === 429) {
-                          const wait =
-                            data && typeof data.retryAfter === "number"
-                              ? ` Try again in ~${data.retryAfter}s.`
-                              : "";
-                          setAiReply(apiErrorText(parsed, "Too many requests.") + wait);
-                          return;
-                        }
-
-                        if (!res.ok || isApiFailure(parsed)) {
-                          setAiReply(
-                            (data?.error ||
-                              (typeof data?.detail === "string" ? data.detail : null) ||
-                              apiErrorText(parsed, "QuantAI could not analyze this request.")) ??
-                              "QuantAI could not analyze this request."
-                          );
-                          return;
-                        }
-
-                        let out =
-                          data?.reply ||
-                          data?.error ||
-                          apiErrorText(parsed, "No reply returned.");
-                        if (data?.highlights?.length) {
-                          out += `\n\n${data.highlights.map((h) => `• ${h}`).join("\n")}`;
-                        }
-                        if (data?.caution?.trim()) {
-                          out += `\n\nCaution: ${data.caution.trim()}`;
-                        }
-                        setAiReply(out);
-                      } catch {
-                        setAiReply("QuantAI could not analyze this request.");
-                      }
-                    }}
-                    className="inline-flex min-h-[48px] items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-400 to-violet-500 px-6 text-sm font-semibold text-slate-950 transition hover:brightness-105 sm:shrink-0"
-                  >
-                    Ask AI
-                  </button>
-                </div>
-                {aiReply && (
-                  <div className="mt-4 rounded-2xl border border-cyan-400/20 bg-cyan-400/[0.06] p-4 text-sm font-normal leading-relaxed text-cyan-50/95">
-                    {aiReply}
-                  </div>
-                )}
-              </div>
-            </section>
-          </>
         )}
 
         {(loading ||
@@ -1208,14 +868,6 @@ export default function Home() {
 
           <PricingCards currentTier={subscriptionTier} />
 
-          <div className="mx-auto mt-14 max-w-3xl">
-            <div className={`${glassCard} p-6 sm:p-8`}>
-              <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 mb-4">
-                Secondary search
-              </p>
-              <SearchBox />
-            </div>
-          </div>
         </section>
 
         <div className="mx-auto w-full min-w-0 max-w-6xl px-4 sm:px-6 pb-8">
