@@ -41,75 +41,75 @@ export function buildProductBuyDecision(product: QuantProduct, list: QuantProduc
     product.qiVerdict?.trim() ||
     product.qiCommerce?.buyingVerdict?.trim() ||
     (qi >= 72
-      ? "Strong composite vs this tray — still verify seller and returns."
+      ? "Leads this tray on composite—trusted checkout path if specs match."
       : qi >= 58
-        ? "Balanced signal set — read the tradeoffs before checkout."
-        : "Softer composite — treat as research, not a green light.");
+        ? "Solid field position—pair with a quick policy scan at checkout."
+        : "Softer composite—use as research unless price resets the trade.");
 
   const pros: string[] = [];
   const cons: string[] = [];
 
-  if (qi >= 62) pros.push(`QI ${qi}/100 vs this search — relative strength in the tray.`);
-  if (trust >= 68) pros.push(`Store-trust prior ${trust}/100 — lower heuristic checkout friction.`);
-  if (stars >= 4.2 && reviews >= 40) pros.push(`Public feedback density (${stars.toFixed(1)}★, ${reviews.toLocaleString()} reviews) supports star signal.`);
-  if (priceVsMed <= 0.92 && med > 0) pros.push("Listed below tray median on visible asks — price position helps.");
+  if (qi >= 62) pros.push(`QI ${qi}/100 in this search field.`);
+  if (trust >= 68) pros.push(`Seller trust ${trust}/100—cleaner fulfillment prior.`);
+  if (stars >= 4.2 && reviews >= 40)
+    pros.push(`${stars.toFixed(1)}★, ${reviews.toLocaleString()} reviews—signal density is real.`);
+  if (priceVsMed <= 0.92 && med > 0) pros.push("Priced under visible tray median.");
 
   if (listingSignalsRefurbished(product)) {
-    cons.push("Listing reads refurbished / open-box / renewed — confirm warranty, battery, and SKU vs new retail.");
+    cons.push("Refurb / open-box lane—warranty and battery merit a hard look.");
   }
-  if (trust < 58) cons.push(`Trust prior ${trust}/100 — manually confirm seller identity and policy pages.`);
-  if (risk >= 62) cons.push(`Retailer-risk heuristic ${risk}/100 — extra scrutiny on warranty and fulfilment.`);
-  if (stars > 0 && stars < 3.9 && reviews < 25) cons.push("Thin or mixed star signal — read recent negatives, not just the headline score.");
-  if (del < 48) cons.push("Delivery-language confidence is weak — confirm lead times and who ships.");
+  if (trust < 58) cons.push(`Seller trust ${trust}/100—use protected checkout.`);
+  if (risk >= 62) cons.push(`Fulfillment risk ${risk}/100—confirm who ships and warranties.`);
+  if (stars > 0 && stars < 3.9 && reviews < 25) cons.push("Review depth is thin—scan recent 1–2★ notes.");
+  if (del < 48) cons.push("Delivery read is soft—confirm ship-by and carrier.");
   const anomaly = product.qiCommerce?.priceAnomaly;
   if (anomaly === "suspicious_low" || anomaly === "deep_discount") {
-    cons.push("Price looks aggressive vs peers — confirm SKU match and final checkout total.");
+    cons.push("Price sits aggressive vs peers—lock the SKU before you pay.");
   }
 
   let stance: BuyStance = "compare";
   let stanceLabel = "Compare";
-  let stanceDetail =
-    "Sits in the competitive band — pin peers in Compare lab before you anchor on one checkout.";
-  let buyerFit = "Generalist cart — weigh price vs trust with your personal risk budget.";
+  let stanceDetail = "Tight cluster at the top—pin two finalists in Compare before you commit.";
+  let buyerFit = "Strong alternative if you prioritize value and like side-by-side proof.";
 
   if (trust < 44 || qi < 40 || risk >= 72) {
     stance = "avoid";
     stanceLabel = "Avoid for now";
-    stanceDetail = "Trust, composite, or retailer-risk heuristics flag elevated checkout risk — skip or dig much deeper first.";
-    buyerFit = "Not a default pick for cautious buyers until signals improve.";
+    stanceDetail = "Trust or fulfillment risk dominates—pause until a cleaner row appears.";
+    buyerFit = "Capital-preserving move until signals improve.";
   } else if (qi < 52 || trust < 52 || (stars > 0 && stars < 3.7)) {
     stance = "wait";
-    stanceLabel = "Wait / research";
-    stanceDetail = "Signals are not decisive enough to treat as buy-ready — gather seller proof or wait for cleaner listings.";
-    buyerFit = "Patience-first — better after more verification or a stronger alternative appears.";
+    stanceLabel = "Wait";
+    stanceDetail = "Mixed lane—let a stronger listing or price move come to you.";
+    buyerFit = "Disciplined hold until the tray sharpens.";
   } else if (rank <= 1 && qi >= 64 && trust >= 58 && gapToTop <= 6) {
     stance = "buy";
     stanceLabel = "Buy-ready";
-    stanceDetail = "Top-lane composite with acceptable trust for many buyers — still confirm returns and SKU at checkout.";
-    buyerFit = "Strong fit if you want the tray’s current best-balanced execution pick.";
+    stanceDetail = "Top of this tray on balance—confirm returns and exact configuration.";
+    buyerFit = "Primary pick when you want the calm default.";
   } else if (rank <= 2 && qi >= 68 && trust >= 62) {
     stance = "buy";
     stanceLabel = "Buy-ready";
-    stanceDetail = "High composite and trust priors — good candidate if specs match your need.";
-    buyerFit = "Performance-first buyers who still read policy pages.";
+    stanceDetail = "High QI with tiered trust—execute once specs line up.";
+    buyerFit = "Confident lane for decisive buyers who still read policy footnotes.";
   } else if (gapToTop <= 5 && rank <= 3) {
     stance = "compare";
     stanceLabel = "Compare";
-    stanceDetail = "Near the top on composite — small listing changes could reorder; run a side-by-side verdict.";
-    buyerFit = "Analytical buyers who like to stress-test two finalists.";
+    stanceDetail = "Neck-and-neck with the leader—small deltas in trust or delivery decide it.";
+    buyerFit = "Strong alternative if you prioritize value.";
   } else if (priceVsMed <= 0.88 && trust >= 58 && qi >= 55) {
     stance = "buy";
     stanceLabel = "Value buy";
-    stanceDetail = "Price sits under median with workable trust — attractive if specs line up.";
-    buyerFit = "Budget-conscious shoppers who accept some seller homework.";
+    stanceDetail = "Under median with workable trust—value-forward if the build matches.";
+    buyerFit = "Best when budget leads and seller checks stay light.";
   }
 
   const rankWhy =
     rank === 0
-      ? "Ranked #1 in this tray on composite (QI) — blends price position, reviews, and store trust vs peers."
+      ? "#1 composite here—price, reviews, and seller trust align."
       : rank <= 2
-        ? `Ranked #${rank + 1} — still in the leading pack; differences vs #1 are often trust, reviews, or euros.`
-        : `Ranked #${rank + 1} of ${list.length} — further from the composite leader; Compare lab helps explain the gap.`;
+        ? `#${rank + 1} in the lead pack—often separated by delivery or a few points of trust.`
+        : `#${rank + 1} of ${list.length}—Compare surfaces the gap to #1.`;
 
   return {
     stance,
@@ -135,23 +135,23 @@ export function buildVerdictExpansion(product: QuantProduct, list: QuantProduct[
   const conf = product.qiCommerce?.confidence;
   const confLine =
     conf != null
-      ? `Structured model confidence ${conf}/100 reflects signal density in this feed—not a guarantee of seller quality.`
-      : "No structured commerce confidence on this row — lean more on trust prior, reviews, and manual seller checks.";
+      ? `Model confidence ${conf}/100 mirrors signal density in this feed—not a legal read on the seller.`
+      : "No structured commerce confidence on this row—weight trust prior and reviews a touch heavier.";
 
   const strengths =
     d.pros.length > 0
-      ? `What reads well: ${d.pros.join(" ")}`
-      : "What reads well: composite and trust are in a neutral band — no single axis screams outlier advantage.";
+      ? `Strengths · ${d.pros.join(" ")}`
+      : "Strengths · neutral composite—no single axis is carrying the win yet.";
 
   const risks =
     d.cons.length > 0
-      ? `What to watch: ${d.cons.join(" ")}`
-      : "What to watch: standard marketplace variance still applies—read return windows and who fulfils.";
+      ? `Watch · ${d.cons.join(" ")}`
+      : "Watch · standard marketplace variance—returns and fulfiller still matter.";
 
   const verify =
-    "Before paying: confirm SKU/condition, final landed price, who ships, warranty scope, and recent 1–2★ reviews for your region.";
+    "At checkout: confirm SKU, landed price, shipper, warranty, and your last two negative reviews.";
 
-  const limits = `Store-trust ${trust}/100 is a prior from storefront heuristics, not a legal verdict. QI ranks within this search only.`;
+  const limits = `Store trust ${trust}/100 is a storefront prior, not legal advice. QI ranks inside this search only.`;
 
   return { strengths, risks, verify, limits: `${limits} ${confLine}` };
 }

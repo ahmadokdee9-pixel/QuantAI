@@ -66,15 +66,15 @@ export default function PricingPage() {
       <div className="relative z-10">
         <LandingNav />
         <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-24">
-          <p className="text-center text-[10px] font-semibold uppercase tracking-[0.28em] text-cyan-300/80">
-            QuantAI plans
+          <p className="text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-300/75">
+            Plans
           </p>
           <h1 className="cockpit-display mt-4 text-center text-3xl text-white sm:text-4xl lg:text-5xl">
-            One cockpit. <span className="cockpit-gradient-text">Three power levels.</span>
+            Clarity that scales <span className="cockpit-gradient-text">with your cart.</span>
           </h1>
-          <p className="cockpit-body mx-auto mt-5 max-w-2xl text-center text-base text-slate-400">
-            Elevate limits and unlock full-spectrum intelligence when your cart stakes are real. Checkout routes to
-            Stripe when keys are set; otherwise you land on a safe billing preview.
+          <p className="cockpit-body mx-auto mt-5 max-w-2xl text-center text-base text-slate-400/95">
+            Upgrade when you want more daily runway and richer intelligence. Checkout uses Stripe when configured;
+            otherwise you can still preview billing safely.
           </p>
           <div className="mt-14">
             <PricingCards currentTier={tier} />

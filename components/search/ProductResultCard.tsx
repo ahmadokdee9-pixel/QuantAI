@@ -17,9 +17,7 @@ import {
   Scale,
   Shield,
   Sparkles,
-  Star,
   Store,
-  Truck,
 } from "lucide-react";
 import MagneticSurface from "@/components/motion/MagneticSurface";
 import { calculateAIScore } from "@/app/api/search/lib/aiScoring";
@@ -41,7 +39,6 @@ import type { QuantProduct } from "@/lib/shoppingScore";
 import {
   getProfessionalBadge,
   getStoreTrustScore,
-  ratingValue,
 } from "@/lib/shoppingScore";
 import {
   buildProductBuyDecision,
@@ -53,6 +50,13 @@ import {
   type LiveShelfLabel,
   type ProductDealIntelligence,
 } from "@/lib/intelligence/dealIntelligenceEngine";
+
+function clip(s: string, max: number): string {
+  const t = s.trim();
+  if (!t) return "";
+  if (t.length <= max) return t;
+  return `${t.slice(0, max - 1).trimEnd()}…`;
+}
 
 function badgeChipClass(key: string): string {
   switch (key) {
@@ -429,6 +433,23 @@ function ProductResultCard({
   const stanceUi = stancePresentation(buyDecision.stance);
   const StanceIcon = stanceUi.Icon;
 
+  const signalsTerminalWhy = useMemo(() => {
+    const w = worthLine.headline.trim();
+    const d = deal.whyDealGoodOrRisky.trim();
+    const raw = d ? `${w} · ${d}` : w;
+    return clip(raw, 128);
+  }, [worthLine.headline, deal.whyDealGoodOrRisky]);
+  const signalsTerminalRisk = useMemo(() => {
+    if (riskHint) return clip(riskHint, 112);
+    const r = analystFrame.risks.replace(/^Watch ·\s*/, "").trim();
+    if (r.length > 8) return clip(r, 112);
+    return "Clean risk surface for this field.";
+  }, [riskHint, analystFrame.risks]);
+  const signalsTerminalAction = useMemo(
+    () => clip(`${buyDecision.stanceLabel} · ${buyDecision.stanceDetail}`, 128),
+    [buyDecision.stanceLabel, buyDecision.stanceDetail]
+  );
+
   const transition = lite
     ? { duration: 0 }
     : { type: "spring" as const, stiffness: 320, damping: 36 };
@@ -637,7 +658,7 @@ function ProductResultCard({
               aria-expanded={intelOpen}
             >
               <span className="cockpit-label text-[10px] tracking-[0.12em] text-slate-500/85 group-hover:text-slate-400/95">
-                Full signals
+                Signals
               </span>
               <ChevronDown
                 className={`size-4 shrink-0 text-slate-500/90 transition duration-200 ${intelOpen ? "rotate-180" : ""}`}
@@ -661,297 +682,170 @@ function ProductResultCard({
                       <div className="h-16 rounded-xl bg-white/[0.04] animate-pulse" />
                     </div>
                   ) : (
-                  <div className="mt-2 space-y-4 rounded-2xl border border-white/[0.06] bg-gradient-to-b from-white/[0.035] via-black/22 to-transparent px-3.5 py-4 sm:px-4 sm:py-5">
-                    <div className="space-y-3 border-b border-white/[0.06] pb-4">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">Tray scan</p>
-                      <div>
-                        <div className="flex items-center justify-between gap-2 text-[10px] font-medium text-slate-400">
-                          <span>Deal strength</span>
-                          <span className="tabular-nums text-slate-300">{deal.dealStrength}/100</span>
-                        </div>
-                        <div
-                          className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-black/50"
-                          role="progressbar"
-                          aria-valuemin={0}
-                          aria-valuemax={100}
-                          aria-valuenow={deal.dealStrength}
-                          aria-label="Deal strength score"
-                        >
-                          <div
-                            className="h-full rounded-full bg-gradient-to-r from-cyan-400/85 to-emerald-400/75 transition-[width] duration-700 ease-out"
-                            style={{ width: `${deal.dealStrength}%` }}
-                          />
-                        </div>
-                      </div>
-                      <div className="min-h-[1.25rem] text-[11px] text-slate-500">
-                        {deal.hasDiscount && deal.absoluteSavings != null && deal.absoluteSavings > 0 ? (
-                          <span>
-                            Save{" "}
-                            <span className="font-semibold tabular-nums text-slate-200/95">
-                              {formatListingPrice(deal.absoluteSavings, sym)}
-                            </span>{" "}
-                            vs anchor
-                          </span>
-                        ) : deal.savingsVsFair != null && deal.savingsVsFair > 0 ? (
-                          <span>~{formatListingPrice(deal.savingsVsFair, sym)} under tray median</span>
-                        ) : (
-                          <span className="text-slate-600">
-                            {deal.hasDiscount ? "No anchor savings in feed" : "Value-led · no headline discount"}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex min-w-0 flex-wrap items-center gap-2">
-                        <span
-                          className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-1 text-[9px] font-bold uppercase tracking-[0.06em] ${stanceUi.border} ${stanceUi.bg} ${stanceUi.text}`}
-                        >
-                          <StanceIcon className="size-3 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
-                          {buyDecision.stanceLabel}
-                        </span>
-                      </div>
-                      <div className="flex min-w-0 flex-wrap gap-1.5 text-[9px] font-medium leading-tight sm:text-[10px]">
-                        <span className="rounded-full border border-white/[0.08] bg-black/25 px-2 py-0.5 tabular-nums text-slate-400/95">
-                          Del · {delPct}%
-                        </span>
-                        <span className="rounded-full border border-white/[0.08] bg-black/25 px-2 py-0.5 tabular-nums text-slate-400/95">
-                          Stock · {stockPct}%
-                        </span>
-                        <span
-                          className={`max-w-[min(100%,10rem)] truncate rounded-full border border-white/[0.08] bg-black/22 px-2 py-0.5 sm:max-w-[12rem] ${mkt.tone === "high" ? "text-emerald-200/75" : mkt.tone === "mid" ? "text-cyan-200/70" : "text-amber-200/75"}`}
-                        >
-                          {mkt.label}
-                        </span>
-                        {ratingValue(p.rating) > 0 ? (
-                          <span className="inline-flex max-w-[min(100%,9rem)] items-center gap-0.5 truncate rounded-full border border-white/[0.08] bg-black/25 px-2 py-0.5 text-slate-400/95">
-                            <Star className="size-2.5 shrink-0 text-amber-200/55" strokeWidth={1.5} aria-hidden />
-                            {ratingValue(p.rating).toFixed(1)}
-                            {p.reviewsCount != null && (
-                              <span className="text-slate-500/85">
-                                ({p.reviewsCount > 999 ? `${(p.reviewsCount / 1000).toFixed(1)}k` : p.reviewsCount.toLocaleString()})
-                              </span>
-                            )}
-                          </span>
-                        ) : (
-                          shipEst && (
-                            <span className="inline-flex max-w-[min(100%,9rem)] items-center gap-0.5 truncate rounded-full border border-white/[0.08] bg-black/22 px-2 py-0.5 text-slate-500/90">
-                              <Truck className="size-2.5 shrink-0 opacity-70" strokeWidth={1.5} aria-hidden />
-                              {shipEst}
-                            </span>
-                          )
-                        )}
-                      </div>
-                      <div className="min-w-0 rounded-xl border border-white/[0.06] bg-black/22 px-3 py-2 sm:py-2.5">
-                        <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-cyan-200/70">QuantAI read</p>
-                        <p className="cockpit-body mt-1 text-[11px] font-medium leading-snug text-slate-100/95 [overflow-wrap:anywhere]">
-                          {buyDecision.headlineVerdict}
-                        </p>
-                      </div>
+                  <div className="mt-2 rounded-2xl border border-white/[0.07] bg-gradient-to-b from-[#070d1a]/95 via-black/35 to-black/20 px-3 py-3.5 sm:px-4 sm:py-4">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">Verdict</p>
+                      <span
+                        className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] ${stanceUi.border} ${stanceUi.bg} ${stanceUi.text}`}
+                      >
+                        <StanceIcon className="size-3 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
+                        {buyDecision.stanceLabel}
+                      </span>
                     </div>
-
-                    <div className="space-y-3 border-b border-white/[0.06] pb-4">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">Worth &amp; timing</p>
-                      <p className={`text-[11px] font-semibold leading-snug ${worthLine.cls}`}>
-                        Worth buying? {worthLine.headline}
-                      </p>
+                    <p className="mt-1 text-[11px] font-semibold leading-snug text-white/95 [overflow-wrap:anywhere]">
+                      {clip(buyDecision.headlineVerdict, 120)}
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      <span
+                        className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${dealVerdictChipClass(deal.aiDealVerdict)}`}
+                      >
+                        <Percent className="size-2.5 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
+                        <span className="truncate">{deal.aiDealVerdict}</span>
+                      </span>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-3">
                       <div>
-                        <div className="flex items-center justify-between gap-2 text-[9px] text-slate-500">
-                          <span>{deal.hasDiscount ? "Discount confidence" : "Listing confidence"}</span>
-                          <span className="tabular-nums text-slate-400">{deal.discountConfidence}/100</span>
+                        <p className="text-[9px] uppercase tracking-wider text-slate-500">QI field</p>
+                        <p className="text-lg font-semibold tabular-nums text-white">{Math.round(scoreNorm)}</p>
+                        <div className="mt-1 h-1 overflow-hidden rounded-full bg-black/50">
+                          <div className="h-full rounded-full bg-cyan-400/80" style={{ width: `${scoreNorm}%` }} />
                         </div>
-                        <div
-                          className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-black/50"
-                          role="progressbar"
-                          aria-valuenow={deal.discountConfidence}
-                          aria-valuemin={0}
-                          aria-valuemax={100}
-                          aria-label={deal.hasDiscount ? "Discount confidence" : "Listing confidence"}
-                        >
+                      </div>
+                      <div>
+                        <p className="text-[9px] uppercase tracking-wider text-slate-500">
+                          {deal.hasDiscount ? "Deal trust" : "List trust"}
+                        </p>
+                        <p className="text-lg font-semibold tabular-nums text-slate-100">{deal.discountConfidence}</p>
+                        <div className="mt-1 h-1 overflow-hidden rounded-full bg-black/50">
                           <div
-                            className="h-full rounded-full bg-gradient-to-r from-violet-400/78 to-cyan-400/72"
+                            className="h-full rounded-full bg-violet-400/80"
                             style={{ width: `${deal.discountConfidence}%` }}
                           />
                         </div>
                       </div>
-                      <p className="text-[9px] tabular-nums text-slate-600">
-                        Blend {deal.dealConfidence} · Auth {deal.discountAuthenticity} · Retail IQ{" "}
-                        {deal.retailerIntelligenceScore}
-                      </p>
-                      <p className="text-[10px] leading-snug text-slate-500/95">{deal.historicalConfidenceLabel}</p>
-                      <p className="text-[10px] leading-snug text-slate-400/95">{deal.liveRankExplanation}</p>
-                      <p className="text-[10px] leading-snug text-slate-400/95">{deal.discountVsQualityNote}</p>
-                      <p className="text-[10px] leading-snug text-slate-500/90">{deal.retailerTrustNote}</p>
-                      <p className="text-[10px] leading-snug text-slate-500/85">{deal.discountExplanation}</p>
-                      {(p.qiReason?.trim() || ai.reason) && (
-                        <p className="text-[10px] leading-snug text-slate-500/90 [overflow-wrap:anywhere]">
-                          <span className="text-slate-600">Model · </span>
-                          {p.qiReason?.trim() || ai.reason}
+                    </div>
+                    <div className="mt-3 border-t border-white/[0.05] pt-2.5">
+                      <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-500">Why it matters</p>
+                      <p className="mt-0.5 text-[10px] leading-snug text-slate-300/95">{signalsTerminalWhy}</p>
+                    </div>
+                    <div className="mt-2">
+                      <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-rose-200/50">Risk</p>
+                      <p className="mt-0.5 text-[10px] leading-snug text-amber-100/85">{signalsTerminalRisk}</p>
+                    </div>
+                    <div className="mt-2">
+                      <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-emerald-200/60">Best action</p>
+                      <p className="mt-0.5 text-[10px] font-medium leading-snug text-cyan-50/95">{signalsTerminalAction}</p>
+                    </div>
+                    <div className="mt-2.5 flex flex-wrap gap-1.5 text-[9px] text-slate-500">
+                      <span className="rounded-full border border-white/[0.07] bg-black/30 px-2 py-0.5 tabular-nums">
+                        #{rank + 1}
+                      </span>
+                      <span className="rounded-full border border-white/[0.07] bg-black/30 px-2 py-0.5 tabular-nums">
+                        Trust {trust}
+                      </span>
+                      <span className="rounded-full border border-white/[0.07] bg-black/30 px-2 py-0.5 tabular-nums">
+                        Del {delPct}%
+                      </span>
+                      <span className="rounded-full border border-white/[0.07] bg-black/30 px-2 py-0.5 tabular-nums">
+                        Stock {stockPct}%
+                      </span>
+                      <span className="rounded-md border border-white/[0.06] bg-black/25 px-2 py-0.5">{mkt.label}</span>
+                    </div>
+                    <details className="group mt-3 overflow-hidden rounded-xl border border-white/[0.06] bg-black/25">
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 transition hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
+                        <span>Signal depth</span>
+                        <ChevronDown
+                          className="size-3.5 shrink-0 text-slate-500 transition group-open:rotate-180"
+                          strokeWidth={2}
+                          aria-hidden
+                        />
+                      </summary>
+                      <div className="space-y-3 border-t border-white/[0.05] px-2.5 pb-3 pt-2.5">
+                        <div>
+                          <div className="flex items-center justify-between gap-2 text-[9px] font-medium text-slate-500">
+                            <span>Deal strength</span>
+                            <span className="tabular-nums text-slate-300">{deal.dealStrength}/100</span>
+                          </div>
+                          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-black/50">
+                            <div
+                              className="h-full rounded-full bg-gradient-to-r from-cyan-400/85 to-emerald-400/75"
+                              style={{ width: `${deal.dealStrength}%` }}
+                            />
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-slate-500 [overflow-wrap:anywhere]">
+                          {clip(deal.historicalConfidenceLabel, 110)}
+                          {deal.liveRankExplanation ? ` · ${clip(deal.liveRankExplanation, 90)}` : ""}
                         </p>
-                      )}
-                      {riskHint && (
-                        <p className="text-[10px] leading-snug text-amber-100/80 [overflow-wrap:anywhere]">{riskHint}</p>
-                      )}
-                      {ltHint && (
-                        <p className="text-[10px] leading-snug text-slate-500/90 [overflow-wrap:anywhere]">{ltHint}</p>
-                      )}
-                      {p.availability && (
-                        <p className="text-[10px] text-slate-500/90">Availability · {p.availability}</p>
-                      )}
-                      {shipEst && <p className="text-[10px] text-slate-500/90">Shipping · {shipEst}</p>}
-                      <p className="text-[9px] leading-snug text-slate-600/90">
-                        Live commerce · deal heat {deal.liveSignals.dealHeat} · sudden drop{" "}
-                        {deal.liveSignals.suddenDropScore} · buy timing {deal.liveSignals.buyTimingConfidence} · rebound
-                        risk {deal.liveSignals.reboundPricingRisk}
-                        {deal.liveSignals.rareOpportunity ? " · rare opportunity (tray-confirmed)" : ""}
-                        {deal.liveSignals.liveFeedAttached ? " · price stream on" : ""}
-                      </p>
-                      <p className="text-[9px] leading-snug text-slate-600/85">{deal.liveSignals.historicalPriceMemoryLabel}</p>
-                    </div>
-
-                    <div className="space-y-2 border-b border-white/[0.06] pb-4">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">Buy matrix</p>
-                      <p className="text-[10px] leading-relaxed text-slate-400/95 [overflow-wrap:anywhere]">
-                        {buyDecision.stanceDetail}
-                      </p>
-                      <p className="text-[10px] leading-relaxed text-slate-500/90 [overflow-wrap:anywhere]">
-                        <span className="font-semibold text-slate-400/95">Rank · </span>
-                        {buyDecision.rankWhy}
-                      </p>
-                      <p className="text-[10px] leading-relaxed text-violet-200/80 [overflow-wrap:anywhere]">
-                        <span className="font-semibold text-violet-200/90">Fit · </span>
-                        {buyDecision.buyerFit}
-                      </p>
-                      <div className="mt-2 flex flex-wrap gap-1" aria-hidden>
-                        {(["buy", "wait", "compare", "avoid"] as const).map((s) => {
-                          const on = buyDecision.stance === s;
-                          const short =
-                            s === "buy" ? "Buy" : s === "wait" ? "Wait" : s === "compare" ? "Compare" : "Avoid";
-                          return (
-                            <span
-                              key={s}
-                              className={`rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
-                                on
-                                  ? "border-cyan-400/35 bg-cyan-500/15 text-cyan-100/95"
-                                  : "border-white/[0.05] bg-black/20 text-slate-600"
-                              }`}
-                            >
-                              {short}
-                            </span>
-                          );
-                        })}
-                      </div>
-                      <div className="mt-3 grid min-w-0 gap-2.5 sm:grid-cols-2">
-                        <div className="min-w-0">
-                          <p className="text-[9px] font-semibold uppercase tracking-wider text-emerald-200/75">Pros</p>
-                          <ul className="mt-1.5 space-y-1 text-[10px] leading-snug text-slate-400/95">
-                            {(buyDecision.pros.length
-                              ? buyDecision.pros
-                              : ["Neutral vs tray — no standout positive axis."]
-                            ).map((line, i) => (
-                              <li key={`pro-${i}`} className="flex gap-1.5 [overflow-wrap:anywhere]">
-                                <span className="mt-1.5 size-1 shrink-0 rounded-full bg-emerald-400/55" aria-hidden />
-                                <span>{line}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[9px] font-semibold uppercase tracking-wider text-rose-200/70">Watch</p>
-                          <ul className="mt-1.5 space-y-1 text-[10px] leading-snug text-slate-400/95">
-                            {(buyDecision.cons.length
-                              ? buyDecision.cons
-                              : ["No acute flags — still verify seller."]
-                            ).map((line, i) => (
-                              <li key={`con-${i}`} className="flex gap-1.5 [overflow-wrap:anywhere]">
-                                <span className="mt-1.5 size-1 shrink-0 rounded-full bg-rose-400/50" aria-hidden />
-                                <span>{line}</span>
-                              </li>
-                            ))}
-                          </ul>
+                        <p className="text-[10px] text-slate-500/90 [overflow-wrap:anywhere]">{clip(buyDecision.rankWhy, 110)}</p>
+                        <p className="text-[10px] text-violet-200/75 [overflow-wrap:anywhere]">{clip(buyDecision.buyerFit, 100)}</p>
+                        <div className="space-y-2.5 text-[10px] leading-snug text-slate-400/95">
+                          <div>
+                            <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">Deal engine</p>
+                            <p className="mt-1 [overflow-wrap:anywhere]">{clip(deal.whyDealGoodOrRisky, 140)}</p>
+                            <p className="mt-1 text-slate-500 [overflow-wrap:anywhere]">
+                              {clip(
+                                `Fair ≈ ${formatListingPrice(deal.fairMarketEstimate, sym)}${
+                                  deal.overpricedVsTray
+                                    ? " — high vs peers."
+                                    : deal.savingsVsFair != null && deal.savingsVsFair > 0
+                                      ? ` — ~${formatListingPrice(deal.savingsVsFair, sym)} under median.`
+                                      : " — near median."
+                                }${deal.inflatedAnchorSuspected ? " Anchor may be inflated." : ""}${
+                                  deal.urgencySuspected === "elevated" ? " Urgency wording in feed." : ""
+                                }`,
+                                180
+                              )}
+                            </p>
+                            <p className="mt-1 text-slate-500 [overflow-wrap:anywhere]">{clip(deal.timingSummary, 96)}</p>
+                          </div>
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            <div>
+                              <p className="text-[9px] font-semibold uppercase text-emerald-200/70">Pros</p>
+                              <ul className="mt-1 space-y-0.5">
+                                {(buyDecision.pros.length ? buyDecision.pros : ["No standout edge vs peers."]).map(
+                                  (line, i) => (
+                                    <li key={`dpro-${i}`} className="[overflow-wrap:anywhere]">
+                                      · {clip(line, 100)}
+                                    </li>
+                                  )
+                                )}
+                              </ul>
+                            </div>
+                            <div>
+                              <p className="text-[9px] font-semibold uppercase text-rose-200/65">Watch</p>
+                              <ul className="mt-1 space-y-0.5">
+                                {(buyDecision.cons.length ? buyDecision.cons : ["Confirm seller before checkout."]).map(
+                                  (line, i) => (
+                                    <li key={`dcon-${i}`} className="[overflow-wrap:anywhere]">
+                                      · {clip(line, 100)}
+                                    </li>
+                                  )
+                                )}
+                              </ul>
+                            </div>
+                          </div>
+                          <p className="text-slate-500 [overflow-wrap:anywhere]">{clip(analystFrame.strengths, 130)}</p>
+                          <p className="text-amber-100/80 [overflow-wrap:anywhere]">{clip(analystFrame.verify, 110)}</p>
+                          <p className="text-slate-500 [overflow-wrap:anywhere]">
+                            {clip(
+                              p.qiReason?.trim() ||
+                                ai.reason ||
+                                "Blend of price, reviews, and seller trust in this set.",
+                              140
+                            )}
+                          </p>
+                          {ltHint ? (
+                            <p className="text-slate-500 [overflow-wrap:anywhere]">{clip(ltHint, 100)}</p>
+                          ) : null}
+                          {p.availability ? <p className="text-slate-500">Availability · {p.availability}</p> : null}
+                          {shipEst ? <p className="text-slate-500">Ship · {shipEst}</p> : null}
+                          <p className="text-[9px] text-slate-600 [overflow-wrap:anywhere]">
+                            {clip(deal.liveSignals.historicalPriceMemoryLabel, 100)}
+                          </p>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="space-y-2 border-b border-white/[0.06] pb-4">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-emerald-200/75">
-                        Deal intelligence engine
-                      </p>
-                      <p className="cockpit-body text-[11px] leading-relaxed text-slate-300/95 [overflow-wrap:anywhere]">
-                        {deal.whyDealGoodOrRisky}
-                      </p>
-                      <p className="cockpit-body text-[10.5px] leading-relaxed text-slate-500/90 [overflow-wrap:anywhere]">
-                        Fair-band estimate (peer median in this tray) ≈ {formatListingPrice(deal.fairMarketEstimate, sym)}{" "}
-                        · category baseline ≈ {formatListingPrice(deal.categoryBaselineEstimate, sym)}.{" "}
-                        {deal.overpricedVsTray ? "Listed above that band." : deal.savingsVsFair != null && deal.savingsVsFair > 0 ? `Listed below median by ~${formatListingPrice(deal.savingsVsFair, sym)}.` : "Near median."}{" "}
-                        {deal.inflatedAnchorSuspected ? "Inflated anchor vs peers suspected." : ""}
-                        {deal.urgencySuspected === "elevated" ? " Urgency language flagged in feed." : ""}
-                      </p>
-                      <p className="cockpit-body text-[10.5px] leading-relaxed text-slate-400/95 [overflow-wrap:anywhere]">
-                        Timing read · {deal.timingSummary}
-                      </p>
-                      <ul className="space-y-1 text-[10px] leading-snug text-slate-500/90">
-                        {deal.authenticityLines.slice(0, 3).map((line, i) => (
-                          <li key={`auth-${i}`} className="[overflow-wrap:anywhere]">
-                            · {line}
-                          </li>
-                        ))}
-                      </ul>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Live shelf labels</p>
-                      <p className="cockpit-body text-[10.5px] text-slate-400 [overflow-wrap:anywhere]">
-                        {deal.shelfLabels.join(" · ")}
-                      </p>
-                      <p className="cockpit-body text-[10px] leading-relaxed text-slate-500/90 [overflow-wrap:anywhere]">
-                        Tray price memory (heuristic, no off-feed archive): visible floor{" "}
-                        {formatListingPrice(deal.priceMemory.trayFloorPrice, sym)}, fair estimate{" "}
-                        {formatListingPrice(deal.priceMemory.estimatedFairPrice, sym)}
-                        {deal.priceMemory.suspiciousFakeDiscount ? " · suspicious markdown pattern vs peers." : "."}
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-cyan-200/70">
-                        Verdict depth &amp; tradeoffs
-                      </p>
-                      <p className="cockpit-body text-[11.5px] leading-relaxed text-slate-300/95 [overflow-wrap:anywhere]">
-                        {analystFrame.strengths}
-                      </p>
-                      <p className="cockpit-body text-[11.5px] leading-relaxed text-slate-400/95 [overflow-wrap:anywhere]">
-                        {analystFrame.risks}
-                      </p>
-                      <p className="cockpit-body text-[11.5px] leading-relaxed text-amber-100/85 [overflow-wrap:anywhere]">
-                        {analystFrame.verify}
-                      </p>
-                      <p className="cockpit-body text-[10.5px] leading-relaxed text-slate-500/90 [overflow-wrap:anywhere]">
-                        {analystFrame.limits}
-                      </p>
-                    </div>
-                    <div className="space-y-2 border-t border-white/[0.06] pt-4">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">
-                        Model read
-                      </p>
-                      <p className="cockpit-body text-[12px] leading-relaxed text-slate-200/95">
-                        <span className="font-semibold text-slate-200/95">{ai.label}</span>
-                        <span className="text-slate-500"> — </span>
-                        {ai.reason}
-                      </p>
-                    </div>
-                    <div className="space-y-2 border-t border-white/[0.06] pt-4">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-500/90">
-                        QI narrative
-                      </p>
-                      <p className="cockpit-body text-[12px] leading-relaxed text-slate-400">
-                        {p.qiReason?.trim() ||
-                          "Composite index blends price position, review strength, and retailer trust for this result set."}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2 border-t border-white/[0.05] pt-4">
-                      <span className="rounded-full border border-white/[0.08] bg-black/30 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-slate-400">
-                        Rank #{rank + 1}
-                      </span>
-                      <span className="rounded-full border border-white/[0.08] bg-black/30 px-2.5 py-1 text-[10px] font-semibold tabular-nums text-slate-400">
-                        Trust prior {trust}
-                      </span>
-                      <span className="rounded-full border border-white/[0.08] bg-black/30 px-2.5 py-1 text-[10px] text-slate-500">
-                        Heuristics only — not legal advice
-                      </span>
-                    </div>
+                    </details>
                   </div>
                   )}
                 </motion.div>
@@ -968,7 +862,7 @@ function ProductResultCard({
               className="mt-4 flex w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-cyan-400/18 bg-gradient-to-r from-cyan-400/[0.08] to-violet-500/[0.07] py-2.5 text-[11px] font-semibold text-slate-100/95 transition hover:border-cyan-400/26 hover:from-cyan-400/[0.11] hover:to-violet-500/[0.09]"
             >
               <Sparkles className="size-3.5 text-slate-400" strokeWidth={1.5} aria-hidden />
-              QuantAI Verdict &amp; tradeoffs
+              QuantAI verdict
               <PanelRight className="size-3.5 opacity-80" strokeWidth={1.5} aria-hidden />
             </motion.button>
 

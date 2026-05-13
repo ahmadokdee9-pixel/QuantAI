@@ -55,9 +55,9 @@ export function shippingEstimateLabel(p: QuantProduct): string | null {
 
 export function marketplaceVerifiedLabel(p: QuantProduct): { label: string; tone: "high" | "mid" | "low" } {
   const t = getStoreTrustScore(p.store);
-  if (t >= 82) return { label: "Verified-tier retailer signal", tone: "high" };
-  if (t >= 68) return { label: "Recognized storefront pattern", tone: "mid" };
-  return { label: "Higher variance — verify seller", tone: "low" };
+  if (t >= 82) return { label: "Tier-1 seller graph", tone: "high" };
+  if (t >= 68) return { label: "Recognized storefront", tone: "mid" };
+  return { label: "Higher variance lane", tone: "low" };
 }
 
 /** Non-judgmental fraud/risk hint from discount quality + trust (when signals exist). */
@@ -65,10 +65,10 @@ export function riskHintFromProduct(p: QuantProduct): string | null {
   const dq = p.qiSignals?.discountQuality;
   const trust = getStoreTrustScore(p.store);
   if (dq != null && dq < 35 && trust < 70) {
-    return "Discount narrative weak vs. peers—verify list price.";
+    return "Discount story is thin vs peers—re-anchor list price before you buy.";
   }
   if (trust < 58) {
-    return "Unfamiliar seller—use protected checkout when available.";
+    return "Less familiar seller—stay on protected checkout.";
   }
   return null;
 }
@@ -77,7 +77,7 @@ export function longTermValueHint(p: QuantProduct, list: QuantProduct[]): string
   if (list.length < 2) return null;
   const pp = p.qiSignals?.pricePerformance;
   const r = ratingValue(p.rating);
-  if (pp != null && pp >= 72 && r >= 4.2) return "Strong long-term value signal in this tray.";
-  if (pp != null && pp < 40) return "Value fragile vs. alternatives—compare warranty.";
+  if (pp != null && pp >= 72 && r >= 4.2) return "Durable value read vs this tray.";
+  if (pp != null && pp < 40) return "Value is fragile vs alternatives—warranty decides it.";
   return null;
 }

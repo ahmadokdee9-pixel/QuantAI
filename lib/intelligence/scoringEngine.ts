@@ -1,5 +1,6 @@
 import { listingTextQuality01 } from "@/lib/commerce/listingQuality";
 import {
+  getElitePreferredRetailerBonus,
   getMarketplaceSellerRiskTier,
   getRetailerDiscoveryBoost,
   getStoreTrustScore,
@@ -7,7 +8,7 @@ import {
 } from "@/lib/retailTrust";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { ratingValue } from "@/lib/shoppingScore";
-import { getCategoryWeights, inferProductCategory } from "./categoryContext";
+import { getCategoryWeightsForQuery, inferProductCategory } from "./categoryContext";
 import { scoreDeliverySpeed } from "./deliveryScore";
 import { queryListingRelevance01 } from "./queryRelevance";
 import type { CommerceSearchIntents } from "./searchIntentV2";
@@ -109,7 +110,7 @@ export function scoreProductEngine(
 ): EngineResult {
   const intentsResolved = intents ?? parseCommerceSearchIntents(searchQuery);
   const category = inferProductCategory(searchQuery, p.title);
-  const w = getCategoryWeights(category);
+  const w = getCategoryWeightsForQuery(searchQuery, p.title);
   const rating = ratingValue(p.rating);
   const ratingNorm = clamp01(rating / 5);
   const trust = getStoreTrustScore(p.store);
@@ -164,7 +165,9 @@ export function scoreProductEngine(
 
   const composite = Math.min(
     100,
-    Math.round(composite01 * 100) + Math.min(4, Math.round(getRetailerDiscoveryBoost(p.store) * 0.55))
+    Math.round(composite01 * 100) +
+      Math.min(4, Math.round(getRetailerDiscoveryBoost(p.store) * 0.55)) +
+      Math.min(3, Math.round(getElitePreferredRetailerBonus(p.store) * 0.28))
   );
 
   // “Model layer” — emphasizes absolute quality + trust vs pure deal-chasing

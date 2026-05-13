@@ -172,3 +172,49 @@ export function getCategoryWeights(slug: ProductCategorySlug): CategoryWeightPro
     discountQuality: merged.discountQuality * f,
   };
 }
+
+/** Luxury / gaming / business phrasing nudges weights without new category enums. */
+function queryCommercePersonaPatch(searchQuery: string): Partial<CategoryWeightProfile> | null {
+  const q = searchQuery.toLowerCase();
+  if (
+    /\b(gaming|esports|rtx|gtx|\bgpu\b|144hz|165hz|240hz|360hz|steam deck|console|playstation|xbox|nintendo)\b/.test(q)
+  ) {
+    return { pricePerformance: 0.18, retailerTrust: 0.17, delivery: 0.09, discountQuality: 0.04 };
+  }
+  if (/\b(luxury|designer|flagship|prestige|limited edition)\b/.test(q)) {
+    return { retailerTrust: 0.2, rating: 0.2, reviewDepth: 0.16, discountQuality: 0.05 };
+  }
+  if (/\b(business|office|workstation|productivity|invoice|warranty)\b/.test(q)) {
+    return { retailerTrust: 0.19, delivery: 0.1, rating: 0.17, discountQuality: 0.05 };
+  }
+  return null;
+}
+
+export function getCategoryWeightsForQuery(searchQuery: string, productTitle: string): CategoryWeightProfile {
+  const slug = inferProductCategory(searchQuery, productTitle);
+  const base = getCategoryWeights(slug);
+  const patch = queryCommercePersonaPatch(searchQuery);
+  if (!patch) return base;
+  const merged: CategoryWeightProfile = { ...base, ...patch };
+  const sum =
+    merged.price +
+    merged.rating +
+    merged.reviewDepth +
+    merged.retailerTrust +
+    merged.delivery +
+    merged.popularity +
+    merged.pricePerformance +
+    merged.discountQuality;
+  if (sum <= 0) return base;
+  const f = 1 / sum;
+  return {
+    price: merged.price * f,
+    rating: merged.rating * f,
+    reviewDepth: merged.reviewDepth * f,
+    retailerTrust: merged.retailerTrust * f,
+    delivery: merged.delivery * f,
+    popularity: merged.popularity * f,
+    pricePerformance: merged.pricePerformance * f,
+    discountQuality: merged.discountQuality * f,
+  };
+}

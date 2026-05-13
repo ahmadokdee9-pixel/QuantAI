@@ -8,6 +8,7 @@ import {
   computeListStats,
   scoreProductEngine,
 } from "./scoringEngine";
+import { applyEliteFirstWindowCuration } from "./trayCuration";
 import { parseCommerceSearchIntents } from "./searchIntentV2";
 
 export function enrichProductsWithIntelligence(
@@ -42,7 +43,8 @@ export function enrichProductsWithIntelligence(
   });
 
   scored.sort((a, b) => (b.qiComposite ?? 0) - (a.qiComposite ?? 0));
-  return scored.map((p, i) => ({
+  const curated = applyEliteFirstWindowCuration(scored, 12);
+  return curated.map((p, i) => ({
     ...p,
     qiRank: i,
   }));

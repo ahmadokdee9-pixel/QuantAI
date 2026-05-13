@@ -4,6 +4,7 @@ import { planDefinition } from "@/lib/subscription/plans";
 import { subscriptionTierFromClerkUser } from "@/lib/subscription/resolveTier";
 import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
 import { logDevError } from "@/lib/log/devLog";
+import { isBenignStorageSchemaError } from "@/lib/supabase/benignStorageError";
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 
 export async function POST(req: Request) {
@@ -36,6 +37,10 @@ export async function POST(req: Request) {
 
     const { product_id, title, price, image, link, ai_score } = body as Record<string, unknown>;
 
+    if (typeof link !== "string" || !link.trim()) {
+      return jsonErr(400, "Missing product link.", { code: "VALIDATION" });
+    }
+
     const now = new Date().toISOString();
     const { error } = await supabaseAdmin.from("saved_products").upsert(
       {
@@ -52,7 +57,13 @@ export async function POST(req: Request) {
     );
 
     if (error) {
-      return jsonErr(500, error.message);
+      if (isBenignStorageSchemaError(error.message)) {
+        return jsonErr(503, "Saves are temporarily unavailable. Try again in a moment.", {
+          code: "STORAGE_SCHEMA",
+        });
+      }
+      logDevError("save-product", error.message);
+      return jsonErr(500, "Couldn’t save this item. Try again.", { code: "SAVE_FAILED" });
     }
 
     return jsonOk({});

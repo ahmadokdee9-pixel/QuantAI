@@ -45,9 +45,9 @@ function finalTone(kind: SearchIntelligenceDTO["finalRecommendation"]): string {
 }
 
 function tierLabel(t: SearchIntelligenceDTO["confidenceTier"]): string {
-  if (t === "high") return "Model confidence · high";
-  if (t === "moderate") return "Model confidence · moderate";
-  if (t === "low") return "Model confidence · low";
+  if (t === "high") return "Confidence · high";
+  if (t === "moderate") return "Confidence · moderate";
+  if (t === "low") return "Confidence · low";
   return "Verify manually";
 }
 
@@ -96,7 +96,7 @@ export default function GlobalIntelligencePanel({
     <motion.section
       initial={reduceMotion ? false : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 380, damping: 32 }}
+      transition={{ type: "spring", stiffness: 300, damping: 36 }}
       className="mb-12 space-y-8"
       aria-label="Global shopping intelligence"
     >
@@ -109,12 +109,12 @@ export default function GlobalIntelligencePanel({
             <div className="flex flex-wrap items-center gap-2.5">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-300/95">
                 <Globe2 className="size-3.5 text-slate-500" aria-hidden />
-                Live global synthesis
+                Tray read
               </span>
               <span className="rounded-full border border-white/[0.08] bg-black/22 px-2 py-0.5 text-[10px] font-medium text-slate-500/90">
                 {intel.basketRegionBias === "unknown" || intel.basketRegionBias === "mixed"
-                  ? "Region mix · inferred from store names"
-                  : `Store-name bias · ${intel.basketRegionBias.toUpperCase()}`}
+                  ? "Region mix"
+                  : `Bias · ${intel.basketRegionBias.toUpperCase()}`}
               </span>
             </div>
             <h3 className="cockpit-display mt-5 text-xl text-white sm:text-[1.65rem]">
@@ -122,8 +122,8 @@ export default function GlobalIntelligencePanel({
             </h3>
             <p className="cockpit-body mt-3 max-w-3xl text-sm leading-relaxed text-slate-400/95">{intel.finalBody}</p>
             <p className="cockpit-body mt-4 max-w-3xl text-[11px] leading-relaxed text-slate-500/85">
-              Confidence reflects signal alignment in this tray—not a promise of market truth. Sparse listings or uneven
-              stores increase uncertainty; cross-check price and seller before you commit.
+              Confidence is how well this tray agrees with itself—not a market guarantee. Light data or uneven stores
+              raise uncertainty; still verify price and seller.
             </p>
             <div className="mt-5 flex flex-wrap gap-2.5">
               {intel.globalDeal && (
@@ -133,7 +133,7 @@ export default function GlobalIntelligencePanel({
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/22 bg-emerald-500/[0.07] px-3 py-1.5 text-xs font-semibold text-emerald-100/90 transition hover:bg-emerald-500/12"
                 >
-                  Best global pick · {intel.globalDeal.store}
+                  Best pick · {intel.globalDeal.store}
                   <ArrowRight className="size-3.5" aria-hidden />
                 </a>
               )}
@@ -145,7 +145,7 @@ export default function GlobalIntelligencePanel({
                   className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/18 bg-cyan-500/[0.06] px-3 py-1.5 text-xs font-semibold text-cyan-50/90 transition hover:bg-cyan-500/12"
                 >
                   <MapPin className="size-3.5" aria-hidden />
-                  Local lean · {intel.localDeal.store}
+                  Regional lean · {intel.localDeal.store}
                 </a>
               )}
               {intel.cheapestReliable && (
@@ -172,7 +172,7 @@ export default function GlobalIntelligencePanel({
             </div>
           </div>
           <div className="w-full shrink-0 lg:w-64">
-            <p className="cockpit-overline text-slate-500/85">AI confidence radar</p>
+            <p className="cockpit-overline text-slate-500/85">Confidence radar</p>
             <div className="mt-4 flex justify-center lg:justify-start">
               <ConfidenceTriRadar
                 values={radarVals}
@@ -192,7 +192,8 @@ export default function GlobalIntelligencePanel({
               />
             </div>
             <p className="mt-1.5 text-[11px] text-slate-500">
-              Uncertainty · {intel.buyerUncertaintyScore}/100 (↑ means verify more)
+              Verification depth · {intel.buyerUncertaintyScore}/100
+              <span className="text-slate-600"> — higher means more diligence suggested.</span>
             </p>
             {intel.insufficientDataWarnings.length > 0 && (
               <ul className="mt-3 space-y-1.5 text-[11px] text-amber-200/90">
@@ -214,18 +215,17 @@ export default function GlobalIntelligencePanel({
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-                Intelligence locked
+                Intelligence preview
               </p>
               <p className="mt-1 max-w-xl text-sm font-medium text-white/90">
-                Upgrade to Pro or Power Buyer for retailer trust graphs, persona reasoning, and full
-                global deal synthesis on every search.
+                Pro and Power Buyer unlock retailer trust graphs, persona lanes, and full global synthesis on every scan.
               </p>
             </div>
             <Link
               href="/pricing"
               className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-[0_12px_36px_-14px_rgba(15,23,42,0.55)] transition hover:brightness-[1.02]"
             >
-              View plans
+              View plans & limits
               <ArrowRight className="size-4" aria-hidden />
             </Link>
           </div>
@@ -390,7 +390,7 @@ export default function GlobalIntelligencePanel({
           <p className="text-xs font-semibold text-white/90">Upgrade projection</p>
           <p className="mt-3 text-[12px] leading-relaxed text-slate-400/95">
             {intel.upgradeWorthItNote ??
-              "No strong upgrade signal for this query—QuantAI did not detect a clear spec cliff worth paying for yet."}
+              "No forced upgrade signal on this query—the field looks flat on spec deltas."}
           </p>
         </div>
       </div>

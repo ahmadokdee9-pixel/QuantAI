@@ -55,7 +55,7 @@ async function runSearchPipeline(query: string): Promise<{
 /** Cross-request tray cache (short TTL) — pairs with in-flight dedupe in `fetchShoppingProductsDeduped`. */
 const getCachedSearchPipeline = unstable_cache(
   async (query: string) => runSearchPipeline(query),
-  ["quantai-search-pipeline-v2"],
+  ["quantai-search-pipeline-v3"],
   { revalidate: 90 }
 );
 
@@ -181,13 +181,21 @@ async function handleSearch(q: string | null | undefined): Promise<NextResponse>
       entitlements: entitlementsForTier(tier),
       meta: {
         category: topCategory,
-        intelligenceVersion: 5,
+        intelligenceVersion: 6,
         commerceAI: commerceMeta,
         commerceAiEngine: resolveCommerceAiEngine(),
       },
     };
 
-    return jsonSearch({ success: true, data });
+    return jsonSearch(
+      { success: true, data },
+      {
+        headers: {
+          "Cache-Control": "private, s-maxage=75, stale-while-revalidate=150",
+          Vary: "Cookie",
+        },
+      }
+    );
   } catch (e) {
     return fail(
       500,

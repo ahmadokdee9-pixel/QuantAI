@@ -252,10 +252,25 @@ body {
   opacity: 0.38;
   pointer-events: none;
 }
+.cockpit-search-aurora[data-loading="false"]::before {
+  animation: cockpit-aurora-idle 5.5s ease-in-out infinite;
+}
+
 .cockpit-search-aurora[data-loading="true"]::before {
   animation: cockpit-border-flow 3.2s linear infinite;
   opacity: 0.55;
 }
+
+@keyframes cockpit-aurora-idle {
+  0%,
+  100% {
+    opacity: 0.32;
+  }
+  50% {
+    opacity: 0.44;
+  }
+}
+
 
 @keyframes cockpit-border-flow {
   0% {
@@ -375,6 +390,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .cockpit-hero-scanlines::after,
   .cockpit-search-aurora[data-loading="true"]::before,
+  .cockpit-search-aurora[data-loading="false"]::before,
   .ai-grid-motion {
     animation: none !important;
   }

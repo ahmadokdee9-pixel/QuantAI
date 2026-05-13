@@ -57,7 +57,18 @@ function unwrapGoogleRedirectParams(href: string): string | null {
   return null;
 }
 
+/** Order matters: first non-Google wins in `resolveShoppingListingLink`. */
 function collectCandidateUrls(row: Record<string, unknown>): string[] {
+  const orderedKeys: (keyof typeof row)[] = [
+    "merchant_link",
+    "retailer_link",
+    "source_link",
+    "direct_link",
+    "product_link",
+    "link",
+    "store_link",
+  ];
+
   const out: string[] = [];
   const push = (v: unknown) => {
     if (typeof v !== "string") return;
@@ -65,22 +76,21 @@ function collectCandidateUrls(row: Record<string, unknown>): string[] {
     if (t.startsWith("http://") || t.startsWith("https://")) out.push(t);
   };
 
-  push(row.link);
-  push(row.product_link);
-  push(row.merchant_link);
-  push(row.retailer_link);
-  push(row.store_link);
-  push(row.source_link);
-  push(row.direct_link);
+  for (const k of orderedKeys) {
+    push(row[k]);
+  }
 
   const offers = row.offers;
   if (Array.isArray(offers)) {
     for (const o of offers) {
       if (o && typeof o === "object") {
         const r = o as Record<string, unknown>;
+        push(r.merchant_link);
+        push(r.retailer_link);
+        push(r.source_link);
+        push(r.direct_link);
         push(r.link);
         push(r.url);
-        push(r.direct_link);
       }
     }
   }
@@ -91,6 +101,18 @@ function collectCandidateUrls(row: Record<string, unknown>): string[] {
     seen.add(u);
     return true;
   });
+}
+
+function unwrapChain(href: string, depth: number): string {
+  if (depth <= 0) return href;
+  const next = unwrapGoogleRedirectParams(href);
+  if (!next || next === href) return href;
+  try {
+    if (!isGoogleHost(new URL(next).hostname)) return next;
+  } catch {
+    return next;
+  }
+  return unwrapChain(next, depth - 1);
 }
 
 export function resolveShoppingListingLink(row: Record<string, unknown>): string {
@@ -107,8 +129,12 @@ export function resolveShoppingListingLink(row: Record<string, unknown>): string
   }
 
   for (const href of candidates) {
-    const unwrapped = unwrapGoogleRedirectParams(href);
-    if (unwrapped) return unwrapped;
+    const unwrapped = unwrapChain(href, 4);
+    try {
+      if (!isGoogleHost(new URL(unwrapped).hostname)) return unwrapped;
+    } catch {
+      if (!isGoogleShoppingInterstitial(unwrapped)) return unwrapped;
+    }
   }
 
   for (const href of candidates) {

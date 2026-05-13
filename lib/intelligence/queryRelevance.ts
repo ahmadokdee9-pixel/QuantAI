@@ -1,6 +1,7 @@
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { ratingValue } from "@/lib/shoppingScore";
 import { extractQueryCommerceHints } from "@/lib/deals/productIdentity";
+import { hardCategoryMismatch } from "@/lib/commerce/trayListingFilter";
 
 const STOP = new Set([
   "the",
@@ -127,6 +128,10 @@ export function queryListingRelevance01(query: string, p: QuantProduct): number 
   if (hints.models.length > 0) {
     if (modelHit > 0) adj += Math.min(0.12, modelHit * 0.055);
     if (modelMiss > 0 && modelHit === 0) adj -= Math.min(0.15, modelMiss * 0.065);
+  }
+
+  if (hardCategoryMismatch(query, p.title)) {
+    adj -= 0.42;
   }
 
   return Math.min(1, Math.max(0.1, base + adj));

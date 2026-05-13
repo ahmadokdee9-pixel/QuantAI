@@ -57,6 +57,7 @@ import type { CopilotSessionPayload } from "@/lib/copilot/sessionTypes";
 import { appendLocalRecentSearch, readLocalSignals, recordInterestTag } from "@/lib/personalization/localSignals";
 import { HERO_INPUT_PLACEHOLDERS, HERO_SEARCH_PROMPTS } from "@/lib/search/heroPrompts";
 import { useMobilePerf } from "@/lib/hooks/useMobilePerf";
+import { useReducedMotion, motion } from "framer-motion";
 import {
   ArrowRight,
   Bell,
@@ -95,6 +96,7 @@ type SearchHistoryRow = {
 export default function Home() {
   const { isSignedIn } = useUser();
   const mobilePerf = useMobilePerf();
+  const reduceHeroMotion = useReducedMotion();
   const { registerPrimarySearch, pulseIntelligence } = useCockpit();
   const [query, setQuery] = useState("");
   const [products, setProducts] = useState<QuantProduct[]>([]);
@@ -336,18 +338,18 @@ export default function Home() {
     const score = getFinalComposite(p, sortedProducts);
 
     if (score >= 85) {
-      return "QuantAI recommends buying this now. The price looks competitive, the rating is strong, and the store signal is reliable compared with other results.";
+      return "Leads this field—price, reviews, and seller trust align for a decisive checkout if specs match.";
     }
 
     if (score >= 70) {
-      return "This is a good buying option, but not perfect. Compare delivery, final checkout price, and similar products before making a final decision.";
+      return "Strong lane—confirm delivery and final landed price, then execute with confidence.";
     }
 
     if (score >= 55) {
-      return "This product is acceptable, but the deal is not strong enough. Waiting or checking alternatives may give you better value.";
+      return "Acceptable but not dominant—wait for a sharper row or widen the scan.";
     }
 
-    return "QuantAI does not recommend this option right now. The score is weak compared with other products in the search results.";
+    return "Weak vs this tray—preserve capital until a cleaner listing appears.";
   }
 
   const activeFilterCount = countActiveFilters(filters);
@@ -631,7 +633,11 @@ export default function Home() {
         <LandingNav />
 
         {/* Hero */}
-        <section className="relative px-4 sm:px-6 pt-14 pb-24 sm:pt-20 sm:pb-32">
+        <section
+          className={`relative px-4 sm:px-6 ${
+            products.length > 0 ? "pt-12 pb-12 sm:pt-16 sm:pb-14" : "pt-14 pb-24 sm:pt-20 sm:pb-32"
+          }`}
+        >
           <div className="mx-auto max-w-7xl text-center">
             <div className="inline-flex items-center gap-2.5 rounded-full border border-white/[0.1] bg-white/[0.04] px-5 py-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-300/95 shadow-[0_12px_40px_-20px_rgba(0,0,0,0.5)] backdrop-blur-xl motion-safe:animate-[fadeIn_0.6s_ease-out]">
               <span className="relative flex size-1.5 rounded-full bg-emerald-400/90 shadow-[0_0_8px_rgba(52,211,153,0.45)]">
@@ -648,14 +654,23 @@ export default function Home() {
             </h1>
 
             <p className="cockpit-body mx-auto mt-8 max-w-2xl text-base sm:text-lg text-slate-400/95 motion-safe:animate-[fadeIn_0.7s_ease-out]">
-              One command surface: fused listings, QI composite, cross-retailer deal read, and language you can defend—
-              stripped of generic storefront noise.
+              One surface: live offers, clear scores, and a calm read on risk—without the noise of a typical storefront.
             </p>
 
             {/* Search — hero instrument */}
-            <div
+            <motion.div
               className="cockpit-search-aurora mx-auto mt-14 max-w-3xl motion-safe:animate-[fadeIn_0.75s_ease-out] rounded-[1.5rem] p-px shadow-[0_32px_90px_-44px_rgba(15,23,42,0.88),0_0_64px_-40px_rgba(34,211,238,0.12)]"
               data-loading={loading ? "true" : "false"}
+              animate={
+                reduceHeroMotion || mobilePerf
+                  ? undefined
+                  : { opacity: loading ? 1 : [0.92, 1, 0.94, 1] }
+              }
+              transition={
+                reduceHeroMotion || mobilePerf || loading
+                  ? undefined
+                  : { duration: 5.5, repeat: Infinity, ease: "easeInOut" }
+              }
             >
               <div className="cockpit-hero-scanlines relative overflow-hidden rounded-[1.45rem] border border-white/[0.08] bg-[#060b18]/90 px-3.5 py-3.5 sm:p-4 backdrop-blur-[32px]">
                 {loading && !mobilePerf && (
@@ -793,7 +808,7 @@ export default function Home() {
                   ))}
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {isSignedIn && searchHistory.length > 0 && (
               <div className="mx-auto mt-8 max-w-3xl text-left">
@@ -1160,6 +1175,7 @@ export default function Home() {
             onRetrySearch={() => void search()}
             onCompareTrayChange={setCompareTrayLinks}
             dealIntelByLink={dealIntelByLink}
+            onRunRelatedQuery={(q) => void search(q)}
           />
         )}
 

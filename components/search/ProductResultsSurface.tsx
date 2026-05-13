@@ -37,6 +37,7 @@ import ProductResultCard from "./ProductResultCard";
 import ResultsToolbar from "./ResultsToolbar";
 import LiveIntelligenceLayer from "@/components/live/LiveIntelligenceLayer";
 import { useMobilePerf } from "@/lib/hooks/useMobilePerf";
+import { relatedTrayQueries } from "@/lib/search/relatedTrayQueries";
 
 const IntelligenceEducationStrip = dynamic(() => import("./IntelligenceEducationStrip"), {
   loading: () => (
@@ -75,6 +76,8 @@ type Props = {
   onCompareTrayChange?: (links: string[]) => void;
   /** Precomputed tray deal map (optional — avoids duplicate work from home). */
   dealIntelByLink?: Map<string, ProductDealIntelligence>;
+  /** Sparse-tray follow-up scans (hero prompts / token match). */
+  onRunRelatedQuery?: (q: string) => void;
 };
 
 function ResultSkeleton() {
@@ -119,6 +122,7 @@ export default function ProductResultsSurface({
   onRetrySearch,
   onCompareTrayChange,
   dealIntelByLink: dealIntelByLinkProp,
+  onRunRelatedQuery,
 }: Props) {
   const { registerQuickHandlers } = useCockpit();
   const reduceMotion = useReducedMotion();
@@ -155,6 +159,18 @@ export default function ProductResultsSurface({
   const trayDealHighlights = useMemo(() => buildTrayDealHighlights(sortedProducts), [sortedProducts]);
 
   const aiTopPicks = useMemo(() => compositeRanked.slice(0, 3), [compositeRanked]);
+  const compactTray = sortedProducts.length > 0 && sortedProducts.length <= 4;
+  const sparseTray = sortedProducts.length > 0 && sortedProducts.length <= 3;
+  const relatedQueries = useMemo(
+    () => (sparseTray && searchQuery.trim() ? relatedTrayQueries(searchQuery, 5) : []),
+    [sparseTray, searchQuery]
+  );
+  const gridCols =
+    sortedProducts.length === 1
+      ? "grid-cols-1 sm:grid-cols-1 max-w-md mx-auto"
+      : "sm:grid-cols-2 xl:grid-cols-3";
+  const gridMax =
+    sortedProducts.length === 2 ? "max-w-4xl mx-auto" : sortedProducts.length === 3 ? "max-w-6xl mx-auto" : "";
 
   const filteredDealClusters = useMemo(() => {
     if (!dealClusters.length) return [];
@@ -433,10 +449,14 @@ export default function ProductResultsSurface({
 
   const advisorPad =
     mobilePerf && filteredDealClusters.length === 0
-      ? "pb-16"
+      ? compactTray
+        ? "pb-12"
+        : "pb-16"
       : filteredDealClusters.length > 0
         ? "pb-[min(40rem,52vh)] sm:pb-60"
-        : "pb-24";
+        : compactTray
+          ? "pb-16"
+          : "pb-24";
 
   return (
     <section
@@ -469,7 +489,7 @@ export default function ProductResultsSurface({
         </div>
       ) : null}
 
-      <div className="mb-6">
+      <div className={compactTray ? "mb-4" : "mb-6"}>
         <ShareSnapshotBar
           query={searchQuery}
           products={sortedProducts}
@@ -489,8 +509,40 @@ export default function ProductResultsSurface({
           Intelligence at the bottom of the tray.
         </p>
       )}
+      {sortedProducts.length === 1 && compareLinks.length === 0 && (
+        <p className="cockpit-body -mt-1 mb-4 text-center text-[11px] leading-relaxed text-slate-500">
+          Single listing in field—run an adjacent scan below or pin Compare when a second row lands.
+        </p>
+      )}
 
-      <IntelligenceEducationStrip />
+      {sparseTray && onRunRelatedQuery && relatedQueries.length > 0 ? (
+        <div className="mb-6 rounded-[1.35rem] border border-cyan-400/15 bg-gradient-to-br from-cyan-500/[0.07] via-black/35 to-violet-500/[0.06] px-4 py-4 sm:px-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-200/80">
+              Similar intelligence cluster
+            </p>
+            <span className="text-[10px] text-slate-500">Extend the analyst field</span>
+          </div>
+          <p className="mt-1.5 text-[11px] leading-snug text-slate-400">
+            Thin tray—launch a sibling query to populate density without breaking your scan lane.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {relatedQueries.map((rq) => (
+              <button
+                key={rq}
+                type="button"
+                disabled={loading}
+                onClick={() => onRunRelatedQuery(rq)}
+                className="max-w-[min(100%,20rem)] rounded-full border border-white/[0.1] bg-black/35 px-3 py-1.5 text-left text-[10px] font-medium leading-snug text-slate-200 transition hover:border-cyan-400/28 hover:bg-white/[0.06] disabled:opacity-40"
+              >
+                {rq}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {!compactTray ? <IntelligenceEducationStrip /> : null}
 
       {sortedProducts.length >= 2 && trayDealHighlights.length > 0 && (
         <div className="mb-8 min-w-0">
@@ -529,7 +581,7 @@ export default function ProductResultsSurface({
               ? { duration: 0 }
               : { type: "spring", stiffness: 300, damping: 36 }
           }
-          className="intel-panel-shimmer relative z-0 mb-12 min-w-0 overflow-hidden rounded-[1.75rem]"
+          className={`intel-panel-shimmer relative z-0 min-w-0 overflow-hidden rounded-[1.75rem] ${compactTray ? "mb-6" : "mb-12"}`}
         >
           <div className="relative z-[1] min-w-0">
             <GlobalIntelligencePanel
@@ -541,7 +593,7 @@ export default function ProductResultsSurface({
         </motion.div>
       )}
 
-      {aiTopPicks.length > 0 && (
+      {aiTopPicks.length > 0 && sortedProducts.length > 3 && (
         <motion.div
           initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -648,7 +700,9 @@ export default function ProductResultsSurface({
       />
 
       {mobilePerf ? (
-        <div className="grid min-w-0 gap-7 sm:grid-cols-2 xl:grid-cols-3">
+        <div
+          className={`grid min-w-0 ${gridCols} ${compactTray ? "gap-5 sm:gap-6" : "gap-7"} ${gridMax}`}
+        >
           {sortedProducts.map((p, index) => {
             const rank = rankByLink.get(p.link) ?? index;
             return (
@@ -683,7 +737,7 @@ export default function ProductResultsSurface({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: reduceMotion ? 0 : 0.22 }}
-            className="grid min-w-0 gap-7 sm:grid-cols-2 xl:grid-cols-3"
+            className={`grid min-w-0 ${gridCols} ${compactTray ? "gap-5 sm:gap-6" : "gap-7"} ${gridMax}`}
           >
             {sortedProducts.map((p, index) => {
               const rank = rankByLink.get(p.link) ?? index;

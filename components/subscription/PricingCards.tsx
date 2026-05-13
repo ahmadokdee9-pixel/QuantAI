@@ -67,21 +67,21 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
             } ${isPremium ? "ring-1 ring-white/10 shadow-[0_36px_90px_-52px_rgba(99,102,241,0.18)]" : ""}`}
           >
             {isPro && (
-              <span className="absolute right-6 top-6 rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-950 shadow-[0_0_24px_-4px_rgba(34,211,238,0.5)]">
-                Most popular
+              <span className="absolute right-6 top-6 rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-950 shadow-[0_0_20px_-4px_rgba(34,211,238,0.45)]">
+                Popular
               </span>
             )}
             {isPremium && (
-              <span className="absolute left-6 top-6 rounded-full border border-white/15 bg-white/[0.07] px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-100">
-                Best for professionals
+              <span className="absolute left-6 top-6 rounded-full border border-white/12 bg-white/[0.06] px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-100/95">
+                For power buyers
               </span>
             )}
             <h3 className="cockpit-display text-lg tracking-tight text-white/95">{plan.name}</h3>
             <p className="cockpit-body mt-2 text-sm leading-relaxed text-slate-500">{plan.tagline}</p>
             {isPro && (
-              <p className="cockpit-body mt-3 rounded-xl border border-cyan-400/18 bg-cyan-500/[0.07] px-3 py-2 text-[11px] leading-relaxed text-cyan-50/90">
-                <span className="font-semibold text-cyan-100">Power Buyer path: </span>
-                unlocks full global intelligence, deeper compare, and the daily headroom serious shoppers need.
+              <p className="cockpit-body mt-3 rounded-xl border border-cyan-400/14 bg-cyan-500/[0.06] px-3 py-2 text-[11px] leading-relaxed text-cyan-50/88">
+                <span className="font-semibold text-cyan-100/95">Pro: </span>
+                advanced intelligence, higher daily limits, and unlimited saves—ideal when you shop often.
               </p>
             )}
             <p className="mt-9 text-4xl font-semibold tracking-tight text-white/95 tabular-nums">

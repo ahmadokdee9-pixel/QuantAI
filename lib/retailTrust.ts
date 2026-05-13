@@ -32,6 +32,7 @@ export const TRUSTED_SUBSTRINGS = [
   "lenovo",
   "microsoft",
   "asus",
+  "acer",
   "hp store",
   "dell",
   "costco",
@@ -89,6 +90,7 @@ const TIER1 = new Set(
     "samsung store",
     "lenovo",
     "asus",
+    "acer",
     "hp store",
     "dell",
     "zalando",
@@ -124,7 +126,12 @@ const TIER2 = new Set(
 
 /** High-signal omnichannel / first-party names — discovery weight (not legal endorsement). */
 const PREFERRED_RETAIL_SUBSTRINGS = [
+  "apple",
   "amazon",
+  "lenovo",
+  "asus",
+  "acer",
+  "dell",
   "bol.com",
   "bol ",
   "coolblue",
@@ -137,9 +144,33 @@ const PREFERRED_RETAIL_SUBSTRINGS = [
   "alternate",
   "alternate.de",
   "otto",
+  "zalando",
   "target",
   "walmart",
   "decathlon",
+] as const;
+
+/** Curated first-party / tier-1 graph — extra ranking lift (not a legal endorsement). */
+const ELITE_RETAIL_SUBSTRINGS = [
+  "apple",
+  "lenovo",
+  "asus",
+  "acer",
+  "dell",
+  "coolblue",
+  "bol.com",
+  "bol ",
+  "ikea",
+  "amazon",
+  "mediamarkt",
+  "media markt",
+  "alternate",
+  "alternate.de",
+  "best buy",
+  "bestbuy",
+  "decathlon",
+  "otto",
+  "zalando",
 ] as const;
 
 /** Domains / names treated as high-variance marketplaces — down-ranked vs first-party retail. */
@@ -168,6 +199,16 @@ export function getRetailerDiscoveryBoost(store: string): number {
   if (!s || LOW_TRUST_MARKETPLACE.test(s)) return 0;
   for (const p of PREFERRED_RETAIL_SUBSTRINGS) {
     if (s.includes(p)) return 6;
+  }
+  return 0;
+}
+
+/** Stronger lift for curated elite retailers (QI composite / tray curation). */
+export function getElitePreferredRetailerBonus(store: string): number {
+  const s = store.toLowerCase().trim();
+  if (!s || LOW_TRUST_MARKETPLACE.test(s)) return 0;
+  for (const p of ELITE_RETAIL_SUBSTRINGS) {
+    if (s.includes(p)) return 10;
   }
   return 0;
 }
