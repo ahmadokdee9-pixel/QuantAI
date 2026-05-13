@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { AlertCircle, BarChart3, GitCompare, Loader2, Sparkles, X } from "lucide-react";
+import { AlertCircle, BarChart3, Loader2, Sparkles } from "lucide-react";
 import { QuantAnalyticsEvents } from "@/lib/analytics/events";
 import { trackEvent } from "@/lib/analytics/track";
 import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
@@ -15,7 +15,7 @@ import AILoadingPhase from "@/components/loading/AILoadingPhase";
 import SearchStreamRibbon from "@/components/loading/SearchStreamRibbon";
 import { useCockpit, type CockpitQuickHandlers } from "@/components/cockpit/cockpitContext";
 import ShareSnapshotBar from "@/components/share/ShareSnapshotBar";
-import { buildCompareTrayInsights } from "@/lib/intelligence/compareTrayInsights";
+import { buildCompareIntelligenceSnapshot } from "@/lib/intelligence/compareIntelligence";
 import {
   buildDealIntelByLink,
   buildTrayDealHighlights,
@@ -29,8 +29,9 @@ import type { SearchIntelligenceLevel } from "@/lib/subscription/plans";
 import type { ResultsFiltersState } from "@/lib/resultsFilters";
 import { buildCompareExport, buildTraySummary, copyText } from "@/lib/share/intelligenceExport";
 import { currencySymbolFromListing, formatListingPrice } from "@/lib/commerce/cues";
-import { getFinalComposite, getStoreTrustScore, ratingValue, sortByCompositeRank } from "@/lib/shoppingScore";
+import { getFinalComposite, sortByCompositeRank } from "@/lib/shoppingScore";
 import type { QuantProduct } from "@/lib/shoppingScore";
+import CompareIntelligencePanel from "./CompareIntelligencePanel";
 import ProductIntelligenceDrawer from "./ProductIntelligenceDrawer";
 import ProductResultCard from "./ProductResultCard";
 import ResultsToolbar from "./ResultsToolbar";
@@ -266,6 +267,13 @@ export default function ProductResultsSurface({
     });
   }, []);
 
+  const compareProducts = sortedProducts.filter((p) => compareLinks.includes(p.link));
+
+  const compareIntelligence = useMemo(
+    () => buildCompareIntelligenceSnapshot(compareProducts, sortedProducts),
+    [compareProducts, sortedProducts]
+  );
+
   async function runCompareVerdict() {
     if (compareProducts.length === 0) return;
     setVerdictLoading(true);
@@ -275,7 +283,10 @@ export default function ProductResultsSurface({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ products: compareProducts }),
+        body: JSON.stringify({
+          products: compareProducts,
+          tray: sortedProducts.slice(0, 48),
+        }),
       });
       const parsed = await readApiJson<{
         verdict?: CompareVerdictPayload;
@@ -311,13 +322,6 @@ export default function ProductResultsSurface({
       setVerdictLoading(false);
     }
   }
-
-  const compareProducts = sortedProducts.filter((p) => compareLinks.includes(p.link));
-
-  const compareTrayInsightLines = useMemo(() => {
-    const pinned = sortedProducts.filter((p) => compareLinks.includes(p.link));
-    return buildCompareTrayInsights(pinned, sortedProducts);
-  }, [compareLinks, sortedProducts]);
 
   const prevCompareCount = useRef(0);
   useEffect(() => {
@@ -481,8 +485,8 @@ export default function ProductResultsSurface({
       />
       {sortedProducts.length >= 2 && compareLinks.length === 0 && (
         <p className="cockpit-body -mt-1 mb-4 text-center text-[11px] leading-relaxed text-slate-500">
-          Pin <span className="font-medium text-slate-400">Compare</span> on two or three finalists to unlock QuantAI
-          verdicts in Compare lab.
+          Pin <span className="font-medium text-slate-400">Compare</span> on two or three finalists to open Compare
+          Intelligence at the bottom of the tray.
         </p>
       )}
 
@@ -604,228 +608,37 @@ export default function ProductResultsSurface({
         </motion.div>
       )}
 
-      <AnimatePresence>
-        {compareProducts.length > 0 && (
-          <motion.div
-            id="quantai-compare-lab"
-            initial={reduceMotion ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 28, scale: 0.985 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 18, scale: 0.99 }}
-            transition={{ type: "spring", stiffness: 380, damping: 34, mass: 0.85 }}
-            className="qa-scroll-touch fixed bottom-[max(0.75rem,env(safe-area-inset-bottom,0px))] left-3 right-3 z-40 mx-auto max-w-5xl rounded-3xl border border-cyan-400/22 bg-[#050a14]/97 p-4 shadow-[0_36px_100px_-24px_rgba(34,211,238,0.2),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-2xl sm:left-4 sm:right-4 sm:p-5 md:left-1/2 md:-translate-x-1/2 md:right-auto max-md:max-h-[min(72dvh,30rem)] max-md:overflow-y-auto"
-            role="region"
-            aria-label="Product compare"
-          >
-            <div className="mb-4 flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] pb-3">
-              <span className="cockpit-display flex min-w-0 items-center gap-2 text-sm text-white/92">
-                <GitCompare className="size-4 shrink-0 text-cyan-300" aria-hidden />
-                <BarChart3 className="size-4 shrink-0 text-violet-300/80" aria-hidden />
-                <span className="truncate">Compare lab · {compareProducts.length}/3</span>
-              </span>
-              <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => void runCompareVerdict()}
-                  disabled={verdictLoading}
-                  className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-cyan-400/35 bg-cyan-400/15 px-3.5 py-2 text-[11px] font-semibold uppercase tracking-wide text-cyan-100 transition hover:bg-cyan-400/22 disabled:opacity-50"
-                >
-                  {verdictLoading ? (
-                    <>
-                      <Loader2 className="size-3.5 animate-spin" aria-hidden />
-                      Verdict
-                    </>
-                  ) : (
-                    "QuantAI verdict"
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    void (async () => {
-                      const ok = await copyText(buildCompareExport(compareProducts));
-                      if (ok) {
-                        setCompareExportFlash(true);
-                        window.setTimeout(() => setCompareExportFlash(false), 2000);
-                      }
-                    })();
-                  }}
-                  className="min-h-11 rounded-full border border-white/12 bg-white/[0.07] px-3 py-2 text-[11px] font-semibold text-slate-200 transition hover:bg-white/12"
-                >
-                  {compareExportFlash ? "Copied" : "Export compare"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCompareLinks([]);
-                    setVerdict(null);
-                    setVerdictError(null);
-                  }}
-                  className="rounded-full p-2 text-slate-400 transition hover:bg-white/10 hover:text-white"
-                  aria-label="Clear compare"
-                >
-                  <X className="size-4" />
-                </button>
-              </div>
-            </div>
-            {compareTrayInsightLines.length > 0 && (
-              <div className="mb-3 min-w-0 rounded-2xl border border-white/[0.07] bg-black/35 px-3 py-3 sm:px-4">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                  Analyst snapshot (heuristic)
-                </p>
-                <ul className="mt-2 space-y-2.5">
-                  {compareTrayInsightLines.map((line) => (
-                    <li key={line.id} className="min-w-0">
-                      <p className="text-[11px] font-semibold text-slate-200/95">{line.title}</p>
-                      <p className="cockpit-body mt-0.5 text-[11px] leading-relaxed text-slate-400 [overflow-wrap:anywhere]">
-                        {line.body}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            <div className="grid min-w-0 gap-3 sm:gap-4 lg:grid-cols-3">
-              {compareProducts.map((p, cIdx) => {
-                const qi = getFinalComposite(p, sortedProducts);
-                const trustScore = getStoreTrustScore(p.store);
-                const sym = currencySymbolFromListing(p);
-                return (
-                  <motion.div
-                    key={p.link}
-                    layout
-                    initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ ...transition, delay: cIdx * 0.04 }}
-                    className="min-w-0 rounded-2xl border border-white/[0.09] bg-gradient-to-b from-white/[0.08] to-black/45 p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:p-4"
-                  >
-                    <p className="cockpit-body text-[12px] font-semibold leading-snug text-white/[0.95] line-clamp-2">
-                      {p.title}
-                    </p>
-                    <p className="cockpit-body mt-1.5 text-[11px] leading-snug text-slate-500 [overflow-wrap:anywhere]">
-                      <span className="text-slate-400">{p.store}</span>
-                      <span className="text-slate-600"> · </span>
-                      <span className="tabular-nums text-slate-300">Trust prior {trustScore}</span>
-                    </p>
-                    <div className="mt-3.5 grid grid-cols-2 gap-2 sm:gap-2.5">
-                      <div className="rounded-xl border border-white/[0.07] bg-black/35 px-2.5 py-2">
-                        <p className="cockpit-label text-[9px] text-slate-500">Price</p>
-                        <p className="mt-0.5 text-sm font-semibold tabular-nums text-emerald-200/95">
-                          {formatListingPrice(p.price, sym)}
-                        </p>
-                      </div>
-                      <div className="rounded-xl border border-white/[0.07] bg-black/35 px-2.5 py-2">
-                        <p className="cockpit-label text-[9px] text-slate-500">QI</p>
-                        <p className="mt-0.5 text-sm font-semibold tabular-nums text-cyan-100">{qi}</p>
-                      </div>
-                      <div className="rounded-xl border border-white/[0.07] bg-black/35 px-2.5 py-2">
-                        <p className="cockpit-label text-[9px] text-slate-500">Trust</p>
-                        <p className="mt-0.5 text-sm font-semibold tabular-nums text-slate-200">{trustScore}</p>
-                      </div>
-                      <div className="rounded-xl border border-white/[0.07] bg-black/35 px-2.5 py-2">
-                        <p className="cockpit-label text-[9px] text-slate-500">Rating</p>
-                        <p className="mt-0.5 text-sm font-semibold text-amber-200/90">
-                          {ratingValue(p.rating) > 0 ? ratingValue(p.rating).toFixed(1) : "—"}
-                        </p>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-            {verdictError && (
-              <p className="mt-3 text-xs text-rose-200/90" role="alert">
-                {verdictError}
-              </p>
-            )}
-            {verdict && (
-              <div className="mt-4 rounded-2xl border border-violet-400/28 bg-gradient-to-b from-violet-500/[0.1] to-black/30 p-4 text-xs sm:p-4">
-                <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-200/70">
-                      Compare analyst report
-                    </p>
-                    <p className="cockpit-display text-sm text-violet-100">QuantAI verdict</p>
-                  </div>
-                  {verdictSource && (
-                    <span className="shrink-0 rounded-full border border-white/10 bg-black/35 px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-400">
-                      {verdictSource}
-                    </span>
-                  )}
-                </div>
-                <p className="cockpit-body mt-3 text-[13px] leading-relaxed text-slate-100/95">{verdict.verdict}</p>
-                <p className="cockpit-body mt-2 text-[11px] leading-relaxed text-slate-400">
-                  Winner:{" "}
-                  <a
-                    href={verdict.winnerLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-semibold text-cyan-200 underline-offset-2 hover:underline"
-                  >
-                    {verdict.winnerTitle}
-                  </a>
-                  <span className="mx-1 text-slate-600">·</span>
-                  Confidence · {verdict.confidence}
-                </p>
-                <ul className="cockpit-body mt-3 list-disc space-y-1.5 pl-4 text-[12px] leading-relaxed text-slate-400">
-                  {verdict.rationale.map((r) => (
-                    <li key={r} className="[overflow-wrap:anywhere]">
-                      {r}
-                    </li>
-                  ))}
-                </ul>
-                {verdict.tradeoffAnalysis && verdict.tradeoffAnalysis.length > 0 && (
-                  <div className="mt-4 border-t border-white/[0.06] pt-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Tradeoff axes</p>
-                    <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] leading-relaxed text-slate-400">
-                      {verdict.tradeoffAnalysis.map((t) => (
-                        <li key={t} className="[overflow-wrap:anywhere]">
-                          {t}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {verdict.bestForPersonas && verdict.bestForPersonas.length > 0 && (
-                  <div className="mt-3 border-t border-white/[0.06] pt-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Best for</p>
-                    <ul className="mt-2 space-y-2 text-[11px] text-slate-400">
-                      {verdict.bestForPersonas.map((b) => (
-                        <li key={`${b.persona}-${b.pick}`} className="rounded-lg border border-white/[0.06] bg-black/25 px-2.5 py-2">
-                          <span className="font-semibold text-slate-200">{b.persona.replace(/_/g, " ")}</span>
-                          <span className="text-slate-600"> · </span>
-                          <span className="text-slate-300">{b.pick}</span>
-                          <span className="mt-0.5 block text-slate-500">{b.reason}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {(verdict.shortTermPick || verdict.longTermPick) && (
-                  <div className="mt-3 grid gap-2 border-t border-white/[0.06] pt-3 sm:grid-cols-2">
-                    {verdict.shortTermPick ? (
-                      <div className="rounded-lg border border-white/[0.06] bg-black/20 px-2.5 py-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-200/80">Short-term</p>
-                        <p className="mt-1 text-[11px] leading-relaxed text-slate-400">{verdict.shortTermPick}</p>
-                      </div>
-                    ) : null}
-                    {verdict.longTermPick ? (
-                      <div className="rounded-lg border border-white/[0.06] bg-black/20 px-2.5 py-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-200/80">Long-term</p>
-                        <p className="mt-1 text-[11px] leading-relaxed text-slate-400">{verdict.longTermPick}</p>
-                      </div>
-                    ) : null}
-                  </div>
-                )}
-                {verdict.verificationNote ? (
-                  <p className="mt-3 rounded-lg border border-amber-400/20 bg-amber-500/5 px-2.5 py-2 text-[11px] leading-relaxed text-amber-100/90">
-                    {verdict.verificationNote}
-                  </p>
-                ) : null}
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {compareProducts.length > 0 && (
+        <CompareIntelligencePanel
+          key={compareProducts.map((p) => p.link).join("|")}
+          compareProducts={compareProducts}
+          sortedProducts={sortedProducts}
+          intelligence={compareIntelligence}
+          verdict={verdict}
+          verdictLoading={verdictLoading}
+          verdictError={verdictError}
+          verdictSource={verdictSource}
+          onRunVerdict={runCompareVerdict}
+          compareExportFlash={compareExportFlash}
+          onExportCompare={() => {
+            void (async () => {
+              const ok = await copyText(buildCompareExport(compareProducts, verdict));
+              if (ok) {
+                setCompareExportFlash(true);
+                window.setTimeout(() => setCompareExportFlash(false), 2000);
+              }
+            })();
+          }}
+          onClearAll={() => {
+            setCompareLinks([]);
+            setVerdict(null);
+            setVerdictError(null);
+            setVerdictSource(null);
+          }}
+          reduceMotion={Boolean(reduceMotion)}
+          mobilePerf={mobilePerf}
+        />
+      )}
 
       <ProductIntelligenceDrawer
         product={detailProduct}
@@ -900,6 +713,10 @@ export default function ProductResultsSurface({
           </motion.div>
         </AnimatePresence>
       )}
+
+      {compareProducts.length > 0 ? (
+        <div className="pointer-events-none h-[min(11rem,26dvh)] sm:h-36" aria-hidden />
+      ) : null}
 
       {filteredDealClusters.length > 0 && (
         <MultiStoreDealAdvisor

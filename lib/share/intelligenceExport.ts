@@ -1,4 +1,6 @@
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
+import { COMPARE_VERDICT_LABEL_DISPLAY } from "@/lib/intelligence/compareIntelligence";
+import type { CompareVerdictPayload } from "@/lib/intelligence/compareVerdict";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getFinalComposite, getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
 
@@ -47,18 +49,30 @@ export function buildProductSnapshot(p: QuantProduct, list: QuantProduct[]): str
     .join("\n");
 }
 
-export function buildCompareExport(products: QuantProduct[]): string {
+export function buildCompareExport(products: QuantProduct[], verdict?: CompareVerdictPayload | null): string {
   const list = products;
-  return [
-    `QuantAI · Compare lab (${products.length})`,
+  const lines = [
+    `QuantAI · Compare Intelligence (${products.length})`,
     "",
     ...products.map((p, i) => {
       const q = getFinalComposite(p, list);
       return `${i + 1}. ${p.title}\n   ${p.store} · QI ${q} · ${ratingValue(p.rating).toFixed(1)}★ · ${p.displayPrice || p.price}\n   ${p.link}`;
     }),
     "",
-    "Verify price and seller before purchase.",
-  ].join("\n");
+  ];
+  if (verdict) {
+    lines.push(
+      `Decision confidence: ${verdict.comparisonConfidenceScore}%`,
+      `Primary stance: ${COMPARE_VERDICT_LABEL_DISPLAY[verdict.primaryVerdictLabel]}`,
+      "",
+      verdict.verdict.trim(),
+      "",
+      ...verdict.rationale.map((r) => `• ${r}`),
+      ""
+    );
+  }
+  lines.push("Verify price and seller before purchase.");
+  return lines.join("\n");
 }
 
 export async function copyText(text: string): Promise<boolean> {

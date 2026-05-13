@@ -468,8 +468,8 @@ function ProductResultCard({
               aria-pressed={inCompare}
               className={`shrink-0 rounded-full border px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] transition active:scale-[0.98] ${
                 inCompare
-                  ? "border-cyan-400/28 bg-cyan-400/12 text-cyan-100/90"
-                  : "border-white/10 bg-black/35 text-slate-500 hover:border-white/16 hover:bg-white/[0.05] hover:text-slate-300 disabled:opacity-40"
+                  ? "border-cyan-400/28 bg-cyan-400/12 text-cyan-100/90 shadow-[0_0_22px_-12px_rgba(34,211,238,0.35)]"
+                  : "border-white/10 bg-black/35 text-slate-500 hover:border-cyan-400/22 hover:bg-cyan-500/[0.07] hover:text-cyan-50/90 hover:shadow-[0_0_24px_-14px_rgba(34,211,238,0.14)] disabled:opacity-40"
               }`}
             >
               Compare

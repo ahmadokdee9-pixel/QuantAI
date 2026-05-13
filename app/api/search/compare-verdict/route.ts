@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
-import { heuristicCompareVerdict } from "@/lib/intelligence/compareVerdict";
+import { enrichVerdictWithCompareIntelligence, heuristicCompareVerdict } from "@/lib/intelligence/compareVerdict";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { extractResponsesApiText } from "@/lib/openai-response-text";
 import { parseJsonObject } from "@/lib/openai/safeJson";
@@ -51,14 +51,15 @@ export async function POST(req: Request) {
       });
     }
 
-    const body = (await req.json()) as { products?: QuantProduct[] };
+    const body = (await req.json()) as { products?: QuantProduct[]; tray?: QuantProduct[] };
     const products = Array.isArray(body.products) ? body.products.slice(0, 3) : [];
+    const tray = Array.isArray(body.tray) ? body.tray.slice(0, 48) : undefined;
 
     if (products.length === 0) {
       return jsonErr(400, "Send 1–3 products to compare.");
     }
 
-    const fallback = heuristicCompareVerdict(products);
+    const fallback = heuristicCompareVerdict(products, tray);
 
     if (!process.env.OPENAI_API_KEY) {
       void recordCompareSession(userId, {
@@ -95,18 +96,18 @@ export async function POST(req: Request) {
 
     const response = await client.responses.create({
       model: "gpt-4.1-mini",
-      input: `You are QuantAI Compare Lab — analytical commerce strategist (not salesy).
+      input: `You are QuantAI Compare Intelligence — senior retail analyst. Tone: concise, professional, non-promotional, decisive.
 
 Pick one winner from the JSON (exact winnerLink from input). Output JSON ONLY (no markdown):
 - winnerTitle, winnerLink (exact)
-- verdict: max 3 sentences — transparent, cites tradeoffs, no fake certainty
-- rationale: 5–8 bullets, ≤150 chars each, ordered: composite edge, trust/rating/reviews, discount risk, opportunity cost vs #2, optional third-row angle
-- confidence: high|medium|low from separation + data completeness
-- tradeoffAnalysis: 3–5 strings (short-term vs long-term, performance vs price, reliability vs discount)
-- bestForPersonas: 2–4 objects {persona,pick,reason} using persona labels like budget_buyer, premium_buyer, gamer, student, office_setup, creator_pro, risk_averse, value_max
-- shortTermPick: one sentence which row if you optimize for immediate price
-- longTermPick: one sentence which row if you optimize for fewer surprises over years
-- verificationNote: what the user must still verify manually (warranty, seller, specs)
+- verdict: max 2 sentences — lead with the decision, name the key tradeoff, avoid filler ("robust", "comprehensive", "great option")
+- rationale: 5–7 bullets, ≤140 chars each, non-repetitive phrasing; cover: composite edge, trust vs fulfillment, discount/listing hygiene, price vs #2, third-row hedge if present, shipping/returns if inferable from fields
+- confidence: high|medium|low from score separation + review depth + commerce layer presence
+- tradeoffAnalysis: 3–4 short strings; each must contrast two different tensions (not parallel restatements)
+- bestForPersonas: 2–3 objects {persona,pick,reason} — persona snake_case; each reason must differ in structure from the others
+- shortTermPick: one crisp sentence — price-led checkout bias
+- longTermPick: one crisp sentence — risk-led ownership bias
+- verificationNote: one sentence — concrete manual checks only
 
 Never invent specs or prices. Use only fields present. Tie-break: qiComposite, then trust, rating, review depth, then value-for-money if present.
 
@@ -117,13 +118,14 @@ Products JSON:\n${JSON.stringify(compact, null, 2)}`,
     const parsed = raw ? parseJsonObject(raw, VerdictSchema) : null;
 
     if (parsed && products.some((p) => p.link === parsed.winnerLink)) {
+      const verdict = enrichVerdictWithCompareIntelligence(parsed, products, tray);
       void recordCompareSession(userId, {
         at: new Date().toISOString(),
         links: products.map((p) => p.link),
-        verdict: parsed,
+        verdict,
         source: "openai",
       });
-      return jsonOk({ verdict: parsed, source: "openai" });
+      return jsonOk({ verdict, source: "openai" });
     }
 
     void recordCompareSession(userId, {
