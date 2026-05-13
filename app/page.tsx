@@ -103,6 +103,8 @@ export default function Home() {
   const [heroHintOptions, setHeroHintOptions] = useState<string[]>(() => [...SSR_HERO_DATALIST_HINTS]);
   const bootedSearchFromUrl = useRef(false);
   const searchAbortRef = useRef<AbortController | null>(null);
+  /** Skip duplicate in-flight requests for the same trimmed query (double-submit / double-tap). */
+  const searchInflightQueryRef = useRef<string | null>(null);
   const [heroPlaceholderIdx, setHeroPlaceholderIdx] = useState(0);
   const { setSession: setCopilotSession } = useCopilotSession();
 
@@ -290,6 +292,9 @@ export default function Home() {
   async function search(overrideQuery?: string) {
     const q = (overrideQuery ?? query).trim();
     if (!q) return;
+
+    if (loading && searchInflightQueryRef.current === q) return;
+    searchInflightQueryRef.current = q;
 
     if (overrideQuery != null) {
       setQuery(overrideQuery);
@@ -591,7 +596,7 @@ export default function Home() {
 
             {/* Search — hero instrument */}
             <motion.div
-              className="cockpit-search-aurora mx-auto mt-14 max-w-3xl motion-safe:animate-[fadeIn_0.75s_ease-out] rounded-[1.5rem] p-px shadow-[0_32px_90px_-44px_rgba(15,23,42,0.88),0_0_64px_-40px_rgba(34,211,238,0.12)]"
+              className="cockpit-search-aurora mx-auto mt-10 max-w-3xl sm:mt-14 sm:max-w-[52rem] motion-safe:animate-[fadeIn_0.75s_ease-out] rounded-[1.5rem] p-px shadow-[0_32px_90px_-44px_rgba(15,23,42,0.88),0_0_64px_-40px_rgba(34,211,238,0.1)]"
               data-loading={loading ? "true" : "false"}
               animate={
                 reduceHeroMotion || mobilePerf
@@ -604,7 +609,7 @@ export default function Home() {
                   : { duration: 5.5, repeat: Infinity, ease: "easeInOut" }
               }
             >
-              <div className="cockpit-hero-scanlines relative overflow-hidden rounded-[1.45rem] border border-white/[0.08] bg-[#060b18]/90 px-3.5 py-3.5 sm:p-4 backdrop-blur-[32px]">
+              <div className="cockpit-hero-scanlines relative overflow-hidden rounded-[1.45rem] border border-white/[0.07] bg-[#050a14]/92 px-3.5 py-4 sm:p-5 backdrop-blur-[36px]">
                 {loading && !mobilePerf && (
                   <div
                     className="pointer-events-none absolute inset-0 bg-[conic-gradient(from_180deg_at_50%_50%,transparent_0deg,rgba(34,211,238,0.06)_120deg,transparent_240deg)] motion-reduce:animate-none animate-spin opacity-40"
@@ -612,13 +617,13 @@ export default function Home() {
                     aria-hidden
                   />
                 )}
-                <div className="relative flex flex-col gap-3.5 sm:flex-row sm:items-stretch sm:gap-3">
+                <div className="relative flex flex-col gap-3.5 sm:flex-row sm:items-stretch sm:gap-3.5">
                   <datalist id="quantai-hero-hints">
                     {heroHintOptions.map((h) => (
                       <option key={h} value={h} />
                     ))}
                   </datalist>
-                  <div className="relative flex min-h-[52px] sm:min-h-[56px] flex-1 items-center gap-3 rounded-2xl border border-white/[0.06] bg-black/40 px-3.5 sm:px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-[border-color,box-shadow,transform] duration-300 ease-out motion-safe:focus-within:scale-[1.001] focus-within:border-cyan-400/38 focus-within:shadow-[0_0_0_1px_rgba(34,211,238,0.14),0_0_48px_-28px_rgba(34,211,238,0.14)]">
+                  <div className="qa-search-field relative flex min-h-[52px] sm:min-h-[58px] flex-1 items-center gap-3 rounded-2xl border border-white/[0.06] bg-black/45 px-3.5 sm:px-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] motion-safe:focus-within:scale-[1.002]">
                     <Search
                       className={`size-[1.15rem] shrink-0 sm:size-5 ${loading ? "text-cyan-300/85 motion-reduce:animate-none animate-pulse" : "text-cyan-400/35"}`}
                       strokeWidth={1.5}
@@ -632,11 +637,11 @@ export default function Home() {
                       placeholder={HERO_INPUT_PLACEHOLDERS[heroPlaceholderIdx] ?? HERO_INPUT_PLACEHOLDERS[0]}
                       list="quantai-hero-hints"
                       enterKeyHint="search"
-                      className="min-w-0 flex-1 bg-transparent py-3 text-[15px] font-medium leading-snug tracking-tight text-white placeholder:text-slate-500/60 placeholder:font-normal outline-none"
+                      className="min-w-0 flex-1 bg-transparent py-3.5 text-[15px] font-medium leading-snug tracking-[-0.02em] text-white placeholder:text-slate-500/55 placeholder:font-normal outline-none sm:text-[16px]"
                     />
                   </div>
                   <MagneticSurface
-                    className="inline-flex min-h-[52px] w-full shrink-0 sm:min-h-[56px] sm:w-auto"
+                    className="inline-flex min-h-[52px] w-full shrink-0 sm:min-h-[58px] sm:w-auto"
                     strength={0.1}
                     disabled={mobilePerf}
                   >
@@ -644,7 +649,7 @@ export default function Home() {
                       type="button"
                       onClick={() => void search()}
                       disabled={loading}
-                      className="group relative inline-flex min-h-[52px] w-full items-center justify-center gap-2 overflow-hidden rounded-2xl px-7 text-[14px] font-semibold tracking-tight text-slate-950 shadow-[0_14px_40px_-18px_rgba(34,211,238,0.28)] transition duration-300 enabled:hover:shadow-[0_18px_44px_-16px_rgba(100,116,139,0.28)] disabled:opacity-55 sm:min-h-[56px] sm:px-8 sm:text-[15px]"
+                      className="group relative inline-flex min-h-[52px] w-full items-center justify-center gap-2 overflow-hidden rounded-2xl px-7 text-[14px] font-semibold tracking-[-0.02em] text-slate-950 shadow-[0_14px_40px_-18px_rgba(34,211,238,0.26)] transition duration-300 enabled:hover:shadow-[0_20px_48px_-18px_rgba(34,211,238,0.32)] disabled:opacity-55 sm:min-h-[58px] sm:px-9 sm:text-[15px]"
                     >
                       <span className="absolute inset-0 bg-gradient-to-r from-cyan-300/95 via-sky-400/95 to-violet-500/90 transition duration-500 group-hover:scale-[1.01]" />
                       <span className="absolute inset-0 opacity-0 transition group-hover:opacity-100 bg-gradient-to-r from-white/25 via-transparent to-white/10" />
@@ -676,7 +681,7 @@ export default function Home() {
                         type="button"
                         disabled={loading}
                         onClick={() => void search(p)}
-                        className="max-w-[min(88vw,20rem)] shrink-0 snap-start touch-manipulation rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-left text-[11px] font-medium leading-snug text-slate-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 hover:border-cyan-400/30 hover:bg-white/[0.07] hover:text-slate-100 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-45"
+                        className="max-w-[min(88vw,20rem)] shrink-0 snap-start touch-manipulation rounded-full border border-white/[0.07] bg-white/[0.035] px-3.5 py-2.5 text-left text-[12px] font-medium leading-snug tracking-[-0.01em] text-slate-300/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 hover:border-cyan-400/28 hover:bg-white/[0.07] hover:text-slate-100 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-45"
                       >
                         {p}
                       </button>

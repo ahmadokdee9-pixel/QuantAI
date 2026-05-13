@@ -50,7 +50,7 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
   const order: QuantPlanTier[] = ["free", "pro", "premium"];
 
   return (
-    <div className={`grid gap-6 lg:grid-cols-3 lg:gap-5 lg:items-stretch ${className}`}>
+    <div className={`grid gap-7 lg:grid-cols-3 lg:gap-6 lg:items-stretch ${className}`}>
       {order.map((id) => {
         const plan = QUANT_PLANS[id];
         const isCurrent = resolvedTier !== null && resolvedTier === id;
@@ -60,67 +60,83 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
         return (
           <div
             key={id}
-            className={`relative flex flex-col ${glassCard} p-8 transition duration-500 hover:border-white/15 ${
+            className={`relative flex flex-col ${glassCard} overflow-hidden p-8 sm:p-9 transition duration-500 ease-out hover:border-white/14 ${
               isPro
-                ? "border-cyan-400/30 shadow-[0_44px_110px_-48px_rgba(34,211,238,0.28)] ring-1 ring-cyan-400/18 lg:scale-[1.03] lg:z-[1]"
+                ? "border-cyan-400/28 shadow-[0_48px_120px_-52px_rgba(34,211,238,0.22)] ring-1 ring-cyan-400/16 lg:scale-[1.02] lg:z-[1]"
                 : ""
-            } ${isPremium ? "ring-1 ring-white/10 shadow-[0_36px_90px_-52px_rgba(99,102,241,0.18)]" : ""}`}
+            } ${isPremium ? "ring-1 ring-violet-400/12 shadow-[0_40px_100px_-56px_rgba(99,102,241,0.16)]" : ""} ${
+              id === "free" ? "border-white/[0.05]" : ""
+            }`}
           >
             {isPro && (
-              <span className="absolute right-6 top-6 rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-950 shadow-[0_0_20px_-4px_rgba(34,211,238,0.45)]">
-                Popular
+              <span className="absolute right-6 top-6 rounded-full bg-gradient-to-r from-cyan-300 to-violet-500 px-3.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-950 shadow-[0_0_24px_-6px_rgba(34,211,238,0.4)]">
+                Most chosen
               </span>
             )}
             {isPremium && (
-              <span className="absolute left-6 top-6 rounded-full border border-white/12 bg-white/[0.06] px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-100/95">
-                For power buyers
+              <span className="absolute left-6 top-6 rounded-full border border-white/14 bg-white/[0.05] px-3.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-100/95">
+                Power Buyer
               </span>
             )}
-            <h3 className="cockpit-display text-lg tracking-tight text-white/95">{plan.name}</h3>
-            <p className="cockpit-body mt-2 text-sm leading-snug text-slate-500">{plan.tagline}</p>
+            <h3 className="cockpit-display text-xl tracking-[-0.04em] text-white/96">{plan.name}</h3>
+            <p className="cockpit-body mt-3 text-[15px] leading-relaxed text-slate-400/95">{plan.tagline}</p>
             {isPro && (
-              <p className="cockpit-body mt-3 text-[12px] leading-snug text-slate-400">
-                The calm upgrade when checkout decisions stack up during the week.
+              <p className="cockpit-body mt-3 text-[13px] leading-relaxed text-slate-400/90">
+                For people who buy often and want deeper intelligence on every scan—not more noise.
               </p>
             )}
-            <p className="mt-9 text-4xl font-semibold tracking-tight text-white/95 tabular-nums">
+            <p className="mt-10 text-4xl font-semibold tracking-[-0.04em] text-white/96 tabular-nums sm:text-[2.75rem]">
               {plan.monthlyPriceEur == null ? "—" : `€${plan.monthlyPriceEur}`}
               {plan.monthlyPriceEur != null && (
                 <span className="text-base font-medium text-slate-500">/mo</span>
               )}
             </p>
-            <ul className="mt-8 flex-1 space-y-2.5 text-[13px] leading-snug text-slate-300">
+            <ul className="mt-9 flex-1 space-y-3 text-[14px] leading-snug tracking-[-0.01em] text-slate-300/95">
               {plan.highlights.map((h) => (
-                <li key={h} className="flex gap-2.5">
-                  <span className="mt-1.5 flex size-3.5 shrink-0 items-center justify-center rounded-full bg-emerald-400/18 text-emerald-300/95">
+                <li key={h} className="flex gap-3">
+                  <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-400/16 text-emerald-200/95">
                     <Check className="size-2.5" strokeWidth={2.5} aria-hidden />
                   </span>
                   <span>{h}</span>
                 </li>
               ))}
             </ul>
-            <p className="mt-6 border-t border-white/[0.06] pt-4 text-[11px] leading-snug text-slate-500">
-              <span className="font-medium text-slate-400">Throughput · </span>
-              <span className="tabular-nums text-slate-300">
-                {plan.searchesPerDay} searches
-              </span>
-              <span className="text-slate-600"> · </span>
-              <span className="tabular-nums text-slate-300">{plan.aiIntelligencePerDay} AI</span>
-              <span className="text-slate-600"> · </span>
-              <span className="tabular-nums text-slate-300">
-                Watch {plan.watchlistMax == null ? "∞" : plan.watchlistMax}
-              </span>
-              <span className="text-slate-600"> · </span>
-              <span className="tabular-nums text-slate-300">
-                Saves {plan.savedProductsMax == null ? "∞" : plan.savedProductsMax}
-              </span>
-              <span className="text-slate-600"> · </span>
-              <span className="tabular-nums text-slate-300">Compare {plan.compareMax}</span>
-              <span className="text-slate-600"> · </span>
-              <span className="capitalize text-slate-300">{plan.globalDealIntelligence} layer</span>
-              <span className="text-slate-600"> · </span>
-              <span className="text-slate-300">Alerts {plan.premiumAlerts ? "on" : "roadmap"}</span>
-            </p>
+            <div className="mt-8 rounded-2xl border border-white/[0.06] bg-black/25 px-4 py-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500/90">Included capacity</p>
+              <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2.5 text-[12px] text-slate-400/95">
+                <div>
+                  <dt className="text-slate-500">Searches / day</dt>
+                  <dd className="mt-0.5 font-semibold tabular-nums text-slate-200/95">{plan.searchesPerDay}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">AI depth / day</dt>
+                  <dd className="mt-0.5 font-semibold tabular-nums text-slate-200/95">{plan.aiIntelligencePerDay}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">Watchlist</dt>
+                  <dd className="mt-0.5 font-semibold tabular-nums text-slate-200/95">
+                    {plan.watchlistMax == null ? "Unlimited" : plan.watchlistMax}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">Saved items</dt>
+                  <dd className="mt-0.5 font-semibold tabular-nums text-slate-200/95">
+                    {plan.savedProductsMax == null ? "Unlimited" : plan.savedProductsMax}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">Compare tray</dt>
+                  <dd className="mt-0.5 font-semibold tabular-nums text-slate-200/95">{plan.compareMax}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">Deal layer</dt>
+                  <dd className="mt-0.5 font-semibold capitalize text-slate-200/95">{plan.globalDealIntelligence}</dd>
+                </div>
+              </dl>
+              <p className="mt-3 border-t border-white/[0.05] pt-3 text-[11px] leading-relaxed text-slate-500/90">
+                Alerts: {plan.premiumAlerts ? "included where noted" : "on the roadmap for this tier"}.
+              </p>
+            </div>
 
             <div className="mt-10">
               {id === "free" && (

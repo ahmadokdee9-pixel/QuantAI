@@ -1,21 +1,28 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Inter, Noto_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import QuantShell from "@/components/shell/QuantShell";
 import { appUrl } from "@/lib/stripe/config";
 
-const quantaiSans = Plus_Jakarta_Sans({
-  subsets: ["latin"],
+const fontLatin = Inter({
+  subsets: ["latin", "latin-ext"],
   variable: "--font-quantai",
   display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const fontArabic = Noto_Sans_Arabic({
+  subsets: ["arabic"],
+  variable: "--font-quantai-ar",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 const defaultSite = appUrl();
 
 const description =
-  "Live product search with quantitative scoring, store trust signals, and an AI assistant for confident buying decisions.";
+  "Commerce search that reads intent—price, trust, and deals in one calm scan. Built for confident checkout decisions.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultSite),
@@ -58,7 +65,7 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang="en" className={`${quantaiSans.variable} scroll-smooth`}>
+      <html lang="en" className={`${fontLatin.variable} ${fontArabic.variable} scroll-smooth`}>
         <body className="min-h-dvh min-h-[100dvh] overflow-x-hidden bg-[#020617] pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-[env(safe-area-inset-top)] font-sans text-slate-100 antialiased selection:bg-cyan-500/30 selection:text-cyan-50">
           <QuantShell>
             <div id="qa-main">{children}</div>

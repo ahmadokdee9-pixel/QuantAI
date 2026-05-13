@@ -4,6 +4,8 @@
  * use-case hints so natural-language commands still resolve to strong listing queries.
  */
 
+import { appendArabicCommerceGlosses } from "@/lib/search/queryScriptNormalize";
+
 const LEADING_NOISE =
   /^\s*(find|show|get|give|need|want|looking\s+for|search\s+for|please|can\s+you|help\s+me(\s+to)?|tell\s+me|bring\s+me|fetch|list|surface)\s+/i;
 
@@ -70,6 +72,7 @@ export function buildUpstreamShoppingQuery(userQuery: string): string {
   let q = userQuery.trim();
   if (!q) return q;
 
+  q = appendArabicCommerceGlosses(q);
   q = q.replace(LEADING_COMPARE, "").replace(LEADING_WHICH, "").replace(LEADING_NOISE, "");
   q = q.replace(TRAILING_INTENT_STRIP, "");
 

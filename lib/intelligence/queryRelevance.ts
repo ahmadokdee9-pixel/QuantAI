@@ -2,6 +2,7 @@ import type { QuantProduct } from "@/lib/shoppingScore";
 import { ratingValue } from "@/lib/shoppingScore";
 import { extractQueryCommerceHints } from "@/lib/deals/productIdentity";
 import { hardCategoryMismatch } from "@/lib/commerce/trayListingFilter";
+import { latinSkeletonForMatching } from "@/lib/search/queryScriptNormalize";
 
 const STOP = new Set([
   "the",
@@ -90,11 +91,22 @@ function modelTokenAppearsInHaystack(model: string, hay: string): boolean {
   return compact.length >= 4 && hay.includes(compact);
 }
 
+function consecutiveTokenPhraseBonus(tokens: string[], hay: string): number {
+  if (tokens.length < 2) return 0;
+  let b = 0;
+  for (let i = 0; i < tokens.length - 1; i++) {
+    const phrase = `${tokens[i]} ${tokens[i + 1]}`;
+    if (phrase.length >= 5 && hay.includes(phrase)) b += 0.038;
+  }
+  return Math.min(0.12, b);
+}
+
 /**
  * 0–1 overlap between query tokens and listing title + store (broad + specific queries).
  */
 export function queryListingRelevance01(query: string, p: QuantProduct): number {
-  const tokens = tokenizeQuery(query);
+  const merged = `${query} ${latinSkeletonForMatching(query)}`;
+  const tokens = tokenizeQuery(merged);
   const hay = `${p.title} ${p.store}`.toLowerCase();
   let base: number;
   if (tokens.length === 0) {
@@ -133,6 +145,8 @@ export function queryListingRelevance01(query: string, p: QuantProduct): number 
   if (hardCategoryMismatch(query, p.title)) {
     adj -= 0.42;
   }
+
+  adj += consecutiveTokenPhraseBonus(tokens, hay);
 
   return Math.min(1, Math.max(0.1, base + adj));
 }

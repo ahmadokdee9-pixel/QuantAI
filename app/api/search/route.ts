@@ -17,6 +17,7 @@ import { enforceLimit, searchRatelimit } from "@/lib/rate-limit";
 import { entitlementsForTier } from "@/lib/subscription/entitlements";
 import { planDefinition } from "@/lib/subscription/plans";
 import { subscriptionTierFromClerkUser } from "@/lib/subscription/resolveTier";
+import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import type { DealClusterDTO } from "@/lib/deals/types";
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
 import type { SearchEntitlementsDTO } from "@/lib/subscription/entitlements";
@@ -52,11 +53,11 @@ async function runSearchPipeline(query: string): Promise<{
   };
 }
 
-/** Cross-request tray cache (short TTL) — pairs with in-flight dedupe in `fetchShoppingProductsDeduped`. */
+/** Cross-request tray cache — normalized key improves hit rate; short TTL keeps prices fresh. */
 const getCachedSearchPipeline = unstable_cache(
-  async (query: string) => runSearchPipeline(query),
-  ["quantai-search-pipeline-v3"],
-  { revalidate: 90 }
+  async (pipelineQuery: string) => runSearchPipeline(pipelineQuery),
+  ["quantai-search-pipeline-v4"],
+  { revalidate: 120 }
 );
 
 type SearchDataPayload = {
@@ -139,12 +140,14 @@ async function handleSearch(q: string | null | undefined): Promise<NextResponse>
       }
     }
 
+    const pipelineKey = normalizeSearchCacheKey(query);
+
     let products: QuantProduct[];
     let dealClusters: DealClusterDTO[];
     let searchIntelligence: SearchIntelligenceDTO | null;
     let commerceMeta: SearchCommerceAIMeta;
     try {
-      const tray = await getCachedSearchPipeline(query);
+      const tray = await getCachedSearchPipeline(pipelineKey);
       products = tray.products;
       dealClusters = tray.dealClusters;
       searchIntelligence = tray.searchIntelligence;
@@ -181,7 +184,7 @@ async function handleSearch(q: string | null | undefined): Promise<NextResponse>
       entitlements: entitlementsForTier(tier),
       meta: {
         category: topCategory,
-        intelligenceVersion: 6,
+        intelligenceVersion: 7,
         commerceAI: commerceMeta,
         commerceAiEngine: resolveCommerceAiEngine(),
       },
@@ -191,7 +194,7 @@ async function handleSearch(q: string | null | undefined): Promise<NextResponse>
       { success: true, data },
       {
         headers: {
-          "Cache-Control": "private, s-maxage=75, stale-while-revalidate=150",
+          "Cache-Control": "private, s-maxage=90, stale-while-revalidate=180",
           Vary: "Cookie",
         },
       }

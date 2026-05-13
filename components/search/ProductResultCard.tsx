@@ -487,7 +487,7 @@ function ProductResultCard({
               onClick={() => toggleCompare(p.link)}
               disabled={!inCompare && compareLinks.length >= 3}
               aria-pressed={inCompare}
-              className={`shrink-0 rounded-full border px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] transition duration-200 active:scale-[0.98] ${
+              className={`shrink-0 touch-manipulation rounded-full border px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] transition duration-200 active:scale-[0.98] ${
                 inCompare
                   ? "border-cyan-400/22 bg-cyan-400/10 text-cyan-100/88 shadow-[0_0_20px_-12px_rgba(34,211,238,0.28)]"
                   : "border-white/[0.08] bg-black/30 text-slate-500/95 hover:border-cyan-400/18 hover:bg-cyan-500/[0.06] hover:text-cyan-50/88 hover:shadow-[0_0_20px_-14px_rgba(34,211,238,0.1)] disabled:opacity-40"

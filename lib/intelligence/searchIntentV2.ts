@@ -3,6 +3,7 @@
  */
 
 import type { ProductCategorySlug } from "./types";
+import { arabicIntentGlossTokens, latinSkeletonForMatching, normalizeEasternDigitsInString } from "@/lib/search/queryScriptNormalize";
 
 export type CommerceSearchIntents = {
   budget: boolean;
@@ -31,10 +32,15 @@ export type CommerceSearchIntents = {
   schoolUse: boolean;
   /** Gift-oriented language. */
   giftUse: boolean;
+  /** Side-by-side or “vs” style shopping. */
+  comparisonIntent: boolean;
 };
 
 export function parseCommerceSearchIntents(q: string): CommerceSearchIntents {
-  const s = q.toLowerCase();
+  const s = `${q} ${latinSkeletonForMatching(q)} ${arabicIntentGlossTokens(normalizeEasternDigitsInString(q))}`
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
   return {
     budget:
       /\b(cheap|budget|affordable|lowest|under\s+(\$|€|£|eur|gbp|usd)|save|discount|clearance|bargain)\b/.test(
@@ -80,8 +86,11 @@ export function parseCommerceSearchIntents(q: string): CommerceSearchIntents {
       /\b(which|what)\s+store\b|\bbest\s+deal\s+now\b|\bcheapest\s+store\b|\blowest\s+price\s+where\b|\bwhere\s+to\s+buy\b/.test(
         s
       ),
-    schoolUse: /\b(for\s+)?school|uni(versity)?|college(\s+laptop)?\b/.test(s),
+    schoolUse: /\b(for\s+)?school|uni(versity)?|college(\s+laptop)?|student\s+school\b/.test(s),
     giftUse: /\bgift\s+for|present\s+for|birthday\s+gift\b/.test(s),
+    comparisonIntent:
+      /\b(compare|vs\.?|versus|side\s*by\s*side|which\s+is\s+better|stack\s+up|head\s*to\s*head)\b/.test(s) ||
+      /\bمقارنة\b/.test(q),
   };
 }
 
@@ -133,5 +142,6 @@ export function intentCompositeLift(
     lift += 0.012;
   }
   if (intents.storeDealHunter && trustNorm >= 0.76) lift += 0.011;
+  if (intents.comparisonIntent && trustNorm >= 0.68) lift += 0.009;
   return lift;
 }

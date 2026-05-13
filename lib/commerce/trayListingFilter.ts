@@ -6,10 +6,13 @@ import {
   listingSignalsRefurbished,
   userQuerySeeksUsedOrRefurb,
 } from "@/lib/commerce/listingQuality";
+import { latinSkeletonForMatching } from "@/lib/search/queryScriptNormalize";
 
 /** Drop listings whose category clearly diverges from a specific query (e.g. sofa rows on a laptop search). */
 export function hardCategoryMismatch(query: string, title: string): boolean {
-  const q = query.toLowerCase();
+  const qRaw = query.toLowerCase();
+  const qLatin = latinSkeletonForMatching(query).toLowerCase();
+  const q = `${qRaw} ${qLatin}`.replace(/\s+/g, " ").trim();
   const t = title.toLowerCase();
   const furniture = /\b(sofa|couch|loveseat|sectional|futon|ottoman|rug|curtain|dining\s+table|coffee\s+table|bookshelf)\b/;
   const compute =
