@@ -5,10 +5,14 @@ import {
 import {
   isLowConfidenceListing,
   isSpammyListingTitle,
+  isShadyGenericMarketplaceRow,
+  listingSignalsRefurbished,
   normalizeMarketplaceTitle,
+  userQuerySeeksUsedOrRefurb,
 } from "@/lib/commerce/listingQuality";
 import { combinedTitleSimilarity } from "@/lib/deals/normalizeTitle";
 import { buildUpstreamShoppingQuery } from "@/lib/search/shoppingQueryV3";
+import { getStoreTrustScore } from "@/lib/retailTrust";
 import { resolveShoppingListingLink } from "./resolveOfferUrl";
 
 function extractNumberFromPrice(val: unknown): number | null {
@@ -72,7 +76,7 @@ function dedupeShoppingFeedOverlap(rows: QuantProduct[]): QuantProduct[] {
         continue;
       }
       const rel = Math.abs(p.price - o.price) / Math.max(p.price, o.price);
-      if (rel < 0.035) {
+      if (rel < 0.032) {
         isDup = true;
         break;
       }
@@ -169,6 +173,12 @@ export async function fetchShoppingProducts(
       if (title === "unknown product" || title.length < 3) return false;
       if (isSpammyListingTitle(p.title)) return false;
       if (isLowConfidenceListing(p.title, p.store)) return false;
+      if (isShadyGenericMarketplaceRow(p)) return false;
+      if (!userQuerySeeksUsedOrRefurb(trimmed) && listingSignalsRefurbished(p)) {
+        const trust = getStoreTrustScore(p.store);
+        const rev = p.reviewsCount ?? 0;
+        if (trust < 78 || rev < 12) return false;
+      }
       if (p.store.toLowerCase() === "unknown store") return false;
       if (p.price <= 0 && !String(p.displayPrice || "").trim()) return false;
       if (p.link === "#" || p.link.length < 8) return false;

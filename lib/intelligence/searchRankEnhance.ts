@@ -8,6 +8,7 @@ import {
 import { queryListingRelevance01 } from "@/lib/intelligence/queryRelevance";
 import { intentCompositeLift, parseCommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
 import type { ProductCategorySlug } from "@/lib/intelligence/types";
+import { getMarketplaceSellerRiskTier } from "@/lib/retailTrust";
 
 export type PurchaseIntent =
   | "neutral"
@@ -65,7 +66,7 @@ export function dedupeProductList(list: QuantProduct[]): QuantProduct[] {
           continue;
         }
         const rel = Math.abs(p.price - ref.price) / Math.max(ref.price, p.price);
-        if (rel < 0.028) {
+        if (rel < 0.022) {
           c.push(p);
           placed = true;
           break;
@@ -104,10 +105,10 @@ function dedupeLowTrustNoiseAcrossStores(list: QuantProduct[]): QuantProduct[] {
       const b = sorted[i];
       const ta = getStoreTrustScore(head.store);
       const tb = getStoreTrustScore(b.store);
-      if (ta >= 50 || tb >= 50) continue;
+      if (ta >= 55 || tb >= 55) continue;
       if (head.price <= 0 || b.price <= 0) continue;
       const rel = Math.abs(head.price - b.price) / Math.max(head.price, b.price);
-      if (rel < 0.02) drop.add(b.link);
+      if (rel < 0.026) drop.add(b.link);
     }
   }
   if (drop.size === 0) return list;
@@ -250,6 +251,9 @@ export function sortByCompositeRankEnhanced(list: QuantProduct[], query: string)
     c += intentCompositeLift(intents, cat, trust / 100, priceVsMedian, { headlineDiscount01: disc01 }) * 92;
     c += (listingTextQuality01(p.title) - 0.55) * 5.8;
     c += (queryListingRelevance01(query, p) - 0.5) * 10;
+    const mp = getMarketplaceSellerRiskTier(p.store, p.title);
+    if (mp === "high") c -= 3.4;
+    else if (mp === "medium") c -= 1.05;
     return c;
   };
 

@@ -671,7 +671,7 @@ export default function Home() {
                       <option key={h} value={h} />
                     ))}
                   </datalist>
-                  <div className="relative flex min-h-[52px] sm:min-h-[56px] flex-1 items-center gap-3 rounded-2xl border border-white/[0.07] bg-black/40 px-3.5 sm:px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-[border-color,box-shadow,transform] duration-300 ease-out motion-safe:focus-within:scale-[1.002] focus-within:border-cyan-400/45 focus-within:shadow-[0_0_0_1px_rgba(34,211,238,0.2),0_0_64px_-24px_rgba(34,211,238,0.2)]">
+                  <div className="relative flex min-h-[52px] sm:min-h-[56px] flex-1 items-center gap-3 rounded-2xl border border-white/[0.06] bg-black/40 px-3.5 sm:px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-[border-color,box-shadow,transform] duration-300 ease-out motion-safe:focus-within:scale-[1.001] focus-within:border-cyan-400/38 focus-within:shadow-[0_0_0_1px_rgba(34,211,238,0.14),0_0_48px_-28px_rgba(34,211,238,0.14)]">
                     <Search
                       className={`size-[1.15rem] shrink-0 sm:size-5 ${loading ? "text-cyan-300/85 motion-reduce:animate-none animate-pulse" : "text-cyan-400/35"}`}
                       strokeWidth={1.5}
@@ -685,7 +685,7 @@ export default function Home() {
                       placeholder={HERO_INPUT_PLACEHOLDERS[heroPlaceholderIdx] ?? HERO_INPUT_PLACEHOLDERS[0]}
                       list="quantai-hero-hints"
                       enterKeyHint="search"
-                      className="min-w-0 flex-1 bg-transparent py-3 text-[15px] font-medium leading-snug tracking-tight text-white placeholder:text-slate-500/70 placeholder:font-normal outline-none"
+                      className="min-w-0 flex-1 bg-transparent py-3 text-[15px] font-medium leading-snug tracking-tight text-white placeholder:text-slate-500/60 placeholder:font-normal outline-none"
                     />
                   </div>
                   <MagneticSurface
@@ -697,9 +697,9 @@ export default function Home() {
                       type="button"
                       onClick={() => void search()}
                       disabled={loading}
-                      className="group relative inline-flex min-h-[52px] w-full items-center justify-center gap-2 overflow-hidden rounded-2xl px-7 text-[14px] font-semibold tracking-tight text-slate-950 shadow-[0_16px_48px_-20px_rgba(34,211,238,0.35)] transition enabled:hover:shadow-[0_20px_52px_-18px_rgba(100,116,139,0.35)] disabled:opacity-55 sm:min-h-[56px] sm:px-8 sm:text-[15px]"
+                      className="group relative inline-flex min-h-[52px] w-full items-center justify-center gap-2 overflow-hidden rounded-2xl px-7 text-[14px] font-semibold tracking-tight text-slate-950 shadow-[0_14px_40px_-18px_rgba(34,211,238,0.28)] transition duration-300 enabled:hover:shadow-[0_18px_44px_-16px_rgba(100,116,139,0.28)] disabled:opacity-55 sm:min-h-[56px] sm:px-8 sm:text-[15px]"
                     >
-                      <span className="absolute inset-0 bg-gradient-to-r from-cyan-300 via-sky-400 to-violet-500 transition duration-500 group-hover:scale-[1.02]" />
+                      <span className="absolute inset-0 bg-gradient-to-r from-cyan-300/95 via-sky-400/95 to-violet-500/90 transition duration-500 group-hover:scale-[1.01]" />
                       <span className="absolute inset-0 opacity-0 transition group-hover:opacity-100 bg-gradient-to-r from-white/25 via-transparent to-white/10" />
                       <span className="relative flex items-center gap-2">
                         {loading ? (

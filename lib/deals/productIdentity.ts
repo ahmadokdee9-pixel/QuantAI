@@ -153,3 +153,20 @@ export function jaccardSets(a: Set<string>, b: Set<string>): number {
   const u = a.size + b.size - inter;
   return u > 0 ? inter / u : 0;
 }
+
+export type QueryCommerceHints = {
+  brands: string[];
+  models: string[];
+  identifiers: string[];
+};
+
+/** Deterministic tokens from the analyst query for OEM / SKU alignment (no feed image signals). */
+export function extractQueryCommerceHints(query: string): QueryCommerceHints {
+  const blob = query.trim();
+  if (!blob) return { brands: [], models: [], identifiers: [] };
+  return {
+    brands: extractBrands(blob),
+    models: extractModels(blob),
+    identifiers: extractIdentifiers(blob),
+  };
+}

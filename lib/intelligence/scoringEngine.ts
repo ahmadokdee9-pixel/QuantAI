@@ -1,5 +1,10 @@
 import { listingTextQuality01 } from "@/lib/commerce/listingQuality";
-import { getRetailerDiscoveryBoost, getStoreTrustScore, getTrustRankPercentile } from "@/lib/retailTrust";
+import {
+  getMarketplaceSellerRiskTier,
+  getRetailerDiscoveryBoost,
+  getStoreTrustScore,
+  getTrustRankPercentile,
+} from "@/lib/retailTrust";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { ratingValue } from "@/lib/shoppingScore";
 import { getCategoryWeights, inferProductCategory } from "./categoryContext";
@@ -150,7 +155,12 @@ export function scoreProductEngine(
   });
   const listingFit = clamp01(0.52 + (listingQ - 0.5) * 0.22);
 
-  const composite01 = clamp01(weighted * 0.86 + categoryFitBlend * 0.085 + listingFit * 0.035 + intentLift);
+  const mp = getMarketplaceSellerRiskTier(p.store, p.title);
+  const mpAdj = mp === "high" ? -0.042 : mp === "medium" ? -0.015 : 0;
+
+  const composite01 = clamp01(
+    weighted * 0.86 + categoryFitBlend * 0.085 + listingFit * 0.035 + intentLift + mpAdj
+  );
 
   const composite = Math.min(
     100,

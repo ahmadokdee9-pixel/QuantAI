@@ -1,4 +1,5 @@
 import type { QuantProduct } from "@/lib/shoppingScore";
+import { listingSignalsRefurbished } from "@/lib/commerce/listingQuality";
 import { getFinalComposite, getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
 
 export type BuyStance = "buy" | "wait" | "compare" | "avoid";
@@ -53,6 +54,9 @@ export function buildProductBuyDecision(product: QuantProduct, list: QuantProduc
   if (stars >= 4.2 && reviews >= 40) pros.push(`Public feedback density (${stars.toFixed(1)}★, ${reviews.toLocaleString()} reviews) supports star signal.`);
   if (priceVsMed <= 0.92 && med > 0) pros.push("Listed below tray median on visible asks — price position helps.");
 
+  if (listingSignalsRefurbished(product)) {
+    cons.push("Listing reads refurbished / open-box / renewed — confirm warranty, battery, and SKU vs new retail.");
+  }
   if (trust < 58) cons.push(`Trust prior ${trust}/100 — manually confirm seller identity and policy pages.`);
   if (risk >= 62) cons.push(`Retailer-risk heuristic ${risk}/100 — extra scrutiny on warranty and fulfilment.`);
   if (stars > 0 && stars < 3.9 && reviews < 25) cons.push("Thin or mixed star signal — read recent negatives, not just the headline score.");

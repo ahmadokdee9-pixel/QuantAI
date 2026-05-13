@@ -14,13 +14,13 @@ const DEFAULT_WEIGHTS: CategoryWeightProfile = {
 const PROFILES: Record<ProductCategorySlug, Partial<CategoryWeightProfile>> = {
   electronics: {
     rating: 0.19,
-    retailerTrust: 0.16,
-    reviewDepth: 0.14,
+    retailerTrust: 0.17,
+    reviewDepth: 0.15,
     pricePerformance: 0.15,
-    price: 0.16,
+    price: 0.15,
     delivery: 0.07,
     popularity: 0.08,
-    discountQuality: 0.05,
+    discountQuality: 0.04,
   },
   fashion: {
     retailerTrust: 0.18,

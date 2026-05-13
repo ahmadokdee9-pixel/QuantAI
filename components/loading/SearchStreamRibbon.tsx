@@ -56,7 +56,7 @@ export default function SearchStreamRibbon({ active, className = "" }: Props) {
 
   return (
     <div
-      className={`stream-ribbon rounded-2xl border border-cyan-400/18 bg-gradient-to-br from-cyan-500/[0.09] via-[#0a1628]/90 to-violet-500/[0.06] p-4 backdrop-blur-lg ${className}`}
+      className={`stream-ribbon rounded-2xl border border-cyan-400/12 bg-gradient-to-br from-cyan-500/[0.06] via-[#0a1628]/94 to-violet-500/[0.045] p-4 backdrop-blur-lg ${className}`}
       role="status"
       aria-live="polite"
     >

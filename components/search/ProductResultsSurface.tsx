@@ -168,7 +168,7 @@ export default function ProductResultsSurface({
 
   const transition = reduceMotion
     ? { duration: 0 }
-    : { type: "spring" as const, stiffness: 380, damping: 32 };
+    : { type: "spring" as const, stiffness: 300, damping: 36 };
 
   useEffect(() => {
     if (reduceMotion || mobilePerf) return;
@@ -527,7 +527,7 @@ export default function ProductResultsSurface({
           transition={
             reduceMotion || mobilePerf
               ? { duration: 0 }
-              : { type: "spring", stiffness: 360, damping: 34 }
+              : { type: "spring", stiffness: 300, damping: 36 }
           }
           className="intel-panel-shimmer relative z-0 mb-12 min-w-0 overflow-hidden rounded-[1.75rem]"
         >
@@ -568,7 +568,7 @@ export default function ProductResultsSurface({
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ ...transition, delay: idx * 0.05 }}
                   whileHover={
-                    reduceMotion ? undefined : { y: -3, transition: { type: "spring", stiffness: 400, damping: 28 } }
+                    reduceMotion ? undefined : { y: -2, transition: { type: "spring", stiffness: 340, damping: 34 } }
                   }
                   className="min-w-[min(100%,280px)] max-w-[280px] shrink-0 snap-start rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.06] via-white/[0.03] to-black/35 p-4 shadow-[0_20px_50px_-30px_rgba(0,0,0,0.55)] backdrop-blur-xl"
                 >
@@ -676,7 +676,7 @@ export default function ProductResultsSurface({
           })}
         </div>
       ) : (
-        <AnimatePresence mode="popLayout">
+        <AnimatePresence mode="sync">
           <motion.div
             key="product-grid"
             initial={reduceMotion ? { opacity: 1 } : { opacity: 0 }}

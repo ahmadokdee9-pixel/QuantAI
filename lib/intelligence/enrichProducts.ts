@@ -1,3 +1,4 @@
+import { filterTrayNoise } from "@/lib/commerce/trayListingFilter";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getAdaptiveVerdict, getPsychologyInsight } from "./narrativeEngine";
 import { simulatePriceTrend } from "./priceTrendSim";
@@ -14,16 +15,18 @@ export function enrichProductsWithIntelligence(
   searchQuery: string
 ): QuantProduct[] {
   if (products.length === 0) return [];
-  const stats = computeListStats(products);
-  const listMaxValueRaw = computeListMaxValueRaw(products);
+  const productsIn = filterTrayNoise(products, searchQuery);
+  if (productsIn.length === 0) return [];
+  const stats = computeListStats(productsIn);
+  const listMaxValueRaw = computeListMaxValueRaw(productsIn);
   const intents = parseCommerceSearchIntents(searchQuery);
 
-  const scored = products.map((p) => {
+  const scored = productsIn.map((p) => {
     const engine = scoreProductEngine(p, searchQuery, stats, listMaxValueRaw, intents);
-    const reason = buildScoreReasoning(p, products, stats, engine.signals, engine.category);
+    const reason = buildScoreReasoning(p, productsIn, stats, engine.signals, engine.category);
     const trend = simulatePriceTrend(p, stats);
-    const qiVerdict = getAdaptiveVerdict(p, products, stats, engine.signals);
-    const qiPsychology = getPsychologyInsight(p, products, stats, engine.signals, engine.category);
+    const qiVerdict = getAdaptiveVerdict(p, productsIn, stats, engine.signals);
+    const qiPsychology = getPsychologyInsight(p, productsIn, stats, engine.signals, engine.category);
     return {
       ...p,
       qiComposite: engine.composite,

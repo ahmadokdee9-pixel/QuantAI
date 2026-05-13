@@ -15,6 +15,7 @@ const META_PHRASES: RegExp[] = [
   /\b(no\s+)?marketplace(s)?\s+only\b/gi,
   /\bofficial\s+store\s+only\b/gi,
   /\bauthorized\s+dealer\s+only\b/gi,
+  /\bonly\s+(from\s+)?ebay\b/gi,
 ];
 
 /** Light synonym expansion for family detection (single trailing token). */

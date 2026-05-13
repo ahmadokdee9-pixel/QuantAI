@@ -25,11 +25,56 @@ export function isSpammyListingTitle(title: string): boolean {
 const FAKE_OR_NOISE_TITLE =
   /\b(replica|not\s+authentic|oem\s+only|read\s+description\s+only|stock\s+photo|random\s+color|assorted\s+lot|for\s+parts|as.is)\b/i;
 
+const REFURB_OR_USED_SIGNAL =
+  /\b(refurb|refurbished|factory renewed|certified renewed|open[-\s]?box|open box|pre[-\s]?owned|scratch\s*[&+]\s*dent|grade\s*[abc]\b|ex[-\s]?display|demo unit|second[-\s]?hand)\b/i;
+
+const GENERIC_MARKETPLACE_NOISE =
+  /\b(lot of|bulk lot|wholesale|assorted|styles?\s+may\s+vary|read\s+desc|sold as[-\s]?is|untested|for parts only|no returns|mystery box)\b/i;
+
+/** User explicitly wants used / refurb inventory — do not treat those rows as irrelevant. */
+export function userQuerySeeksUsedOrRefurb(query: string): boolean {
+  return /\b(refurb|refurbished|renewed|open[-\s]?box|open box|pre[-\s]?owned|used\b|second[-\s]?hand|preowned)\b/i.test(
+    query.trim()
+  );
+}
+
+export function listingSignalsRefurbished(p: {
+  title: string;
+  availability: string | null;
+  extensions: string[];
+}): boolean {
+  const blob = `${p.title} ${p.availability ?? ""} ${p.extensions.join(" ")}`;
+  const t = blob.toLowerCase();
+  if (REFURB_OR_USED_SIGNAL.test(t)) return true;
+  if (/\bused\s*\/\s*second-hand\b/i.test(t)) return true;
+  return false;
+}
+
+/**
+ * Generic third-party marketplace rows with thin titles / weak proof — often SKU noise vs analyst queries.
+ */
+export function isShadyGenericMarketplaceRow(p: {
+  title: string;
+  store: string;
+  reviewsCount: number | null;
+}): boolean {
+  const s = p.store.toLowerCase();
+  if (!/\bebay\b|etsy|facebook marketplace|mercari|bonanza|depop\b/i.test(s)) return false;
+  const t = p.title.trim();
+  const rev = p.reviewsCount ?? 0;
+  if (GENERIC_MARKETPLACE_NOISE.test(t) && rev < 14) return true;
+  if (/\bebay\b/i.test(s) && t.length < 24 && rev < 8) return true;
+  if (/\bread\s+desc|read description\b/i.test(t) && rev < 20) return true;
+  return false;
+}
+
 /** Marketplace / drop-ship style noise — drop from tray when store is also thin. */
 export function isLowConfidenceListing(title: string, store: string): boolean {
   const t = title.trim();
   if (FAKE_OR_NOISE_TITLE.test(t)) return true;
   if (/\b(wholesale|dropship|bulk\s+lot)\b/i.test(t) && store.trim().length < 2) return true;
+  const sl = store.toLowerCase();
+  if (/\bebay\b/i.test(sl) && GENERIC_MARKETPLACE_NOISE.test(t)) return true;
   return false;
 }
 

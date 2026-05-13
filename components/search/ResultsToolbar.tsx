@@ -30,19 +30,18 @@ export default function ResultsToolbar({
 }: Props) {
   return (
     <motion.div
-      layout
-      className="sticky top-[3.25rem] z-30 -mx-4 px-4 py-3.5 sm:-mx-6 sm:px-6 mb-8 touch-manipulation border-b border-white/[0.08] bg-[#030712]/82 backdrop-blur-[32px] backdrop-saturate-150 supports-[backdrop-filter]:bg-[#030712]/52 shadow-[0_28px_70px_-34px_rgba(0,0,0,0.92),0_0_56px_-40px_rgba(34,211,238,0.1)]"
+      className="sticky top-[3.25rem] z-30 -mx-4 px-4 py-3 sm:-mx-6 sm:px-6 mb-8 touch-manipulation border-b border-white/[0.07] bg-[#030712]/78 backdrop-blur-[28px] backdrop-saturate-[1.35] supports-[backdrop-filter]:bg-[#030712]/48 shadow-[0_24px_60px_-32px_rgba(0,0,0,0.88),0_0_48px_-36px_rgba(34,211,238,0.08)]"
     >
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="cockpit-overline flex items-center gap-1.5 text-slate-500">
+          <span className="cockpit-overline flex items-center gap-1.5 text-slate-500/90">
             <SlidersHorizontal className="size-3.5 text-cyan-400/50" aria-hidden />
             Tray controls
           </span>
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="min-h-11 rounded-2xl border border-white/12 bg-white/[0.07] px-4 py-2.5 text-[13px] font-medium text-white/92 outline-none transition duration-200 hover:border-cyan-400/22 focus:border-cyan-400/45 focus:ring-2 focus:ring-cyan-400/15 active:scale-[0.99]"
+            className="min-h-11 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-2.5 text-[13px] font-medium text-white/92 outline-none transition duration-200 hover:border-cyan-400/18 focus:border-cyan-400/38 focus:ring-2 focus:ring-cyan-400/12 active:scale-[0.995]"
           >
             <option value="value">Best value (QI composite)</option>
             <option value="deals">Smart deals (verified discounts)</option>
@@ -54,7 +53,7 @@ export default function ResultsToolbar({
           <button
             type="button"
             onClick={() => setFilterPanelOpen(!filterPanelOpen)}
-            className="inline-flex min-h-11 touch-manipulation items-center gap-2 rounded-2xl border border-white/12 bg-white/[0.05] px-4 py-2.5 text-[13px] font-medium text-slate-200 transition duration-200 hover:border-cyan-400/25 hover:bg-white/[0.08] active:scale-[0.99]"
+            className="inline-flex min-h-11 touch-manipulation items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-[13px] font-medium text-slate-200/95 transition duration-200 hover:border-cyan-400/18 hover:bg-white/[0.07] active:scale-[0.995]"
             aria-expanded={filterPanelOpen}
           >
             <Filter className="size-4 text-cyan-300/80" aria-hidden />
@@ -90,7 +89,7 @@ export default function ResultsToolbar({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden"
           >
             <div className="mt-4 grid gap-3 border-t border-white/[0.06] pt-4 sm:grid-cols-2 lg:grid-cols-5">

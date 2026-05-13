@@ -104,11 +104,14 @@ export function fakeDiscountRisk(
   const thinReviews = depth < 0.22 && (p.reviewsCount ?? 0) < 18;
   const tooSteepVsPeers = peerMed > 0 && p.price < peerMed * 0.58 && discount > 38;
   const noisyTitleSteepDisc = discount > 36 && lq < 0.34 && trust < 62;
+  const ebayLowProof =
+    /\bebay\b/i.test(p.store) && (p.reviewsCount ?? 0) < 14 && lq < 0.44 && discount != null && discount > 22;
 
   if (inflated && extreme) return "high";
   if (tooSteepVsPeers && (thinReviews || weakTrust)) return "high";
   if (noisyTitleSteepDisc && (inflated || thinReviews)) return "high";
   if (discount > 50 && trust < 60 && depth < 0.3) return "medium";
+  if (ebayLowProof && (inflated || thinReviews)) return "medium";
   if (inflated || extreme || (discount > 42 && weakTrust && thinReviews)) return "medium";
   if (noisyTitleSteepDisc) return "medium";
   if (discount > 48 && outlier > 1.1 && thinReviews) return "medium";

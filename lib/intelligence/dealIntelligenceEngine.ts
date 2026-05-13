@@ -4,6 +4,7 @@ import type { DealVerdict, FakeDiscountRisk } from "@/lib/deals/types";
 import { scoreDeliverySpeed } from "@/lib/intelligence/deliveryScore";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getFinalComposite, getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
+import { getMarketplaceSellerRiskTier } from "@/lib/retailTrust";
 import { buildLiveCommerceSignals, type LiveCommerceSignals } from "@/lib/intelligence/liveCommerceSignals";
 
 /** QuantAI primary verdict language — scan-optimized, tray-relative. */
@@ -476,7 +477,12 @@ function worthBuyingNowSignal(
   verdict: QuantAIDealVerdict,
   goodTime: boolean,
   waitPricing: boolean,
-  ctx?: { trust: number; suspiciousDiscountRisk: number; fake: FakeDiscountRisk }
+  ctx?: {
+    trust: number;
+    suspiciousDiscountRisk: number;
+    fake: FakeDiscountRisk;
+    marketplaceRisk?: "low" | "medium" | "high";
+  }
 ): WorthBuyingSignal {
   if (
     verdict === "Avoid Fake Sale" ||
@@ -487,6 +493,12 @@ function worthBuyingNowSignal(
   }
   if (waitPricing && !goodTime) return "wait";
   if (ctx) {
+    if (ctx.marketplaceRisk === "high" && (ctx.fake !== "low" || ctx.trust < 68)) {
+      return "wait";
+    }
+    if (ctx.marketplaceRisk === "medium" && ctx.fake === "medium" && ctx.suspiciousDiscountRisk >= 48) {
+      return "maybe";
+    }
     if (ctx.suspiciousDiscountRisk >= 62 && ctx.trust < 64 && ctx.fake !== "low") return "maybe";
     if (ctx.suspiciousDiscountRisk >= 70 && ctx.trust < 70) return "maybe";
     if (
@@ -503,6 +515,7 @@ function worthBuyingNowSignal(
       verdict === "Trusted Discount" ||
       verdict === "Safe Buy")
   ) {
+    if (ctx?.marketplaceRisk === "high" && verdict === "Best Deal Today") return "maybe";
     return "yes";
   }
   return "maybe";
@@ -809,6 +822,7 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
     trust,
     suspiciousDiscountRisk,
     fake,
+    marketplaceRisk: getMarketplaceSellerRiskTier(product.store, product.title),
   });
   const priceMemory: TrayPriceMemory = {
     trayFloorPrice: Math.round(minTrayPrice),
@@ -932,6 +946,7 @@ export function buildDealIntelByLink(list: QuantProduct[]): Map<string, ProductD
       trust: getStoreTrustScore(p.store),
       suspiciousDiscountRisk: row.suspiciousDiscountRisk,
       fake: row.fakeDiscountRisk,
+      marketplaceRisk: getMarketplaceSellerRiskTier(p.store, p.title),
     });
     m.set(p.link, { ...row, isBestTrustedDealInSet: isBestTrusted, aiDealVerdict: ai2, worthBuyingNow: worthNow });
   }
@@ -965,6 +980,7 @@ export function buildDealIntelByLink(list: QuantProduct[]): Map<string, ProductD
       trust: winner ? getStoreTrustScore(winner.store) : 50,
       suspiciousDiscountRisk: row.suspiciousDiscountRisk,
       fake: row.fakeDiscountRisk,
+      marketplaceRisk: winner ? getMarketplaceSellerRiskTier(winner.store, winner.title) : "low",
     });
     m.set(bestDiscLink, {
       ...row,

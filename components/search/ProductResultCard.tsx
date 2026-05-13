@@ -431,7 +431,7 @@ function ProductResultCard({
 
   const transition = lite
     ? { duration: 0 }
-    : { type: "spring" as const, stiffness: 400, damping: 34 };
+    : { type: "spring" as const, stiffness: 320, damping: 36 };
 
   return (
     <MagneticSurface className="h-full min-w-0" strength={0.08} disabled={lite}>
@@ -444,19 +444,19 @@ function ProductResultCard({
           lite
             ? undefined
             : {
-                y: -1.5,
-                transition: { type: "spring", stiffness: 420, damping: 32 },
+                y: -1,
+                transition: { type: "spring", stiffness: 360, damping: 36 },
               }
         }
         className={`qi-product-card-shell group relative flex h-full min-w-0 flex-col overflow-hidden rounded-[1.55rem] p-px transition-[background,box-shadow] duration-700 ease-out ${
           lite ? "" : "will-change-transform [transform:translateZ(0)]"
         } ${
           scoreNorm >= 78
-            ? "bg-gradient-to-br from-cyan-400/14 via-white/[0.08] to-violet-500/12"
-            : "bg-gradient-to-br from-white/[0.1] via-cyan-400/6 to-violet-500/10"
+            ? "bg-gradient-to-br from-cyan-400/11 via-white/[0.07] to-violet-500/9"
+            : "bg-gradient-to-br from-white/[0.08] via-cyan-400/5 to-violet-500/8"
         }`}
       >
-        <div className="qi-product-card-inner relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.48rem] border border-white/[0.07] bg-gradient-to-b from-white/[0.08] via-white/[0.03] to-[#040912]/98 backdrop-blur-2xl transition-[border-color,box-shadow,transform] duration-700 ease-out group-hover:border-cyan-400/26 group-hover:shadow-[0_0_0_1px_rgba(34,211,238,0.08),0_24px_52px_-28px_rgba(34,211,238,0.18)]">
+        <div className="qi-product-card-inner relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.48rem] border border-white/[0.06] bg-gradient-to-b from-white/[0.06] via-white/[0.025] to-[#040912]/98 backdrop-blur-2xl transition-[border-color,box-shadow,transform] duration-500 ease-out group-hover:border-cyan-400/20 group-hover:shadow-[0_0_0_1px_rgba(34,211,238,0.06),0_20px_48px_-26px_rgba(34,211,238,0.14)]">
           <div className="pointer-events-none absolute -right-20 -top-20 size-48 rounded-full bg-cyan-400/8 blur-3xl opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-100" />
           <div className="pointer-events-none absolute -bottom-24 -left-16 size-44 rounded-full bg-violet-500/8 blur-3xl opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-45" />
 
@@ -466,10 +466,10 @@ function ProductResultCard({
               onClick={() => toggleCompare(p.link)}
               disabled={!inCompare && compareLinks.length >= 3}
               aria-pressed={inCompare}
-              className={`shrink-0 rounded-full border px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] transition active:scale-[0.98] ${
+              className={`shrink-0 rounded-full border px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] transition duration-200 active:scale-[0.98] ${
                 inCompare
-                  ? "border-cyan-400/28 bg-cyan-400/12 text-cyan-100/90 shadow-[0_0_22px_-12px_rgba(34,211,238,0.35)]"
-                  : "border-white/10 bg-black/35 text-slate-500 hover:border-cyan-400/22 hover:bg-cyan-500/[0.07] hover:text-cyan-50/90 hover:shadow-[0_0_24px_-14px_rgba(34,211,238,0.14)] disabled:opacity-40"
+                  ? "border-cyan-400/22 bg-cyan-400/10 text-cyan-100/88 shadow-[0_0_20px_-12px_rgba(34,211,238,0.28)]"
+                  : "border-white/[0.08] bg-black/30 text-slate-500/95 hover:border-cyan-400/18 hover:bg-cyan-500/[0.06] hover:text-cyan-50/88 hover:shadow-[0_0_20px_-14px_rgba(34,211,238,0.1)] disabled:opacity-40"
               }`}
             >
               Compare
@@ -633,14 +633,14 @@ function ProductResultCard({
             <button
               type="button"
               onClick={toggleIntelOpen}
-              className="mt-4 flex w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-white/[0.07] bg-black/28 px-3 py-2.5 text-left transition hover:border-white/[0.12] hover:bg-white/[0.04]"
+              className="mt-4 flex w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-white/[0.06] bg-black/22 px-3 py-2.5 text-left transition duration-200 hover:border-cyan-400/15 hover:bg-white/[0.035]"
               aria-expanded={intelOpen}
             >
-              <span className="cockpit-label text-[10px] tracking-[0.12em] text-slate-500/90 group-hover:text-slate-400">
+              <span className="cockpit-label text-[10px] tracking-[0.12em] text-slate-500/85 group-hover:text-slate-400/95">
                 Full signals
               </span>
               <ChevronDown
-                className={`size-4 shrink-0 text-slate-500 transition duration-300 ${intelOpen ? "rotate-180" : ""}`}
+                className={`size-4 shrink-0 text-slate-500/90 transition duration-200 ${intelOpen ? "rotate-180" : ""}`}
                 strokeWidth={2}
                 aria-hidden
               />
@@ -651,7 +651,7 @@ function ProductResultCard({
                   initial={lite ? false : { height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: lite ? 0 : 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: lite ? 0 : 0.24, ease: [0.22, 1, 0.36, 1] }}
                   className="overflow-hidden"
                 >
                   {!intelBodyReady ? (
@@ -661,7 +661,7 @@ function ProductResultCard({
                       <div className="h-16 rounded-xl bg-white/[0.04] animate-pulse" />
                     </div>
                   ) : (
-                  <div className="mt-2 space-y-4 rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.04] via-black/25 to-transparent px-3.5 py-4 sm:px-4 sm:py-5">
+                  <div className="mt-2 space-y-4 rounded-2xl border border-white/[0.06] bg-gradient-to-b from-white/[0.035] via-black/22 to-transparent px-3.5 py-4 sm:px-4 sm:py-5">
                     <div className="space-y-3 border-b border-white/[0.06] pb-4">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">Tray scan</p>
                       <div>
