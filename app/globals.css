@@ -249,12 +249,12 @@ body {
     linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  opacity: 0.32;
+  opacity: 0.38;
   pointer-events: none;
 }
 .cockpit-search-aurora[data-loading="true"]::before {
   animation: cockpit-border-flow 3.2s linear infinite;
-  opacity: 0.52;
+  opacity: 0.55;
 }
 
 @keyframes cockpit-border-flow {

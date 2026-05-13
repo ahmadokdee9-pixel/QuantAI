@@ -54,7 +54,7 @@ import { readApiJson } from "@/lib/api/readJson";
 import { logDevError } from "@/lib/log/devLog";
 import { toCopilotProductBrief } from "@/lib/copilot/mapProduct";
 import type { CopilotSessionPayload } from "@/lib/copilot/sessionTypes";
-import { appendLocalRecentSearch, recordInterestTag } from "@/lib/personalization/localSignals";
+import { appendLocalRecentSearch, readLocalSignals, recordInterestTag } from "@/lib/personalization/localSignals";
 import { HERO_INPUT_PLACEHOLDERS, HERO_SEARCH_PROMPTS } from "@/lib/search/heroPrompts";
 import { useMobilePerf } from "@/lib/hooks/useMobilePerf";
 import {
@@ -67,6 +67,23 @@ import {
   Sparkles,
   TrendingUp,
 } from "lucide-react";
+
+/** Deterministic SSR + first client paint — no localStorage; must match hydration. */
+const SSR_HERO_DATALIST_HINTS: readonly string[] = HERO_SEARCH_PROMPTS;
+
+function mergeHeroTrayHints(): string[] {
+  const recent = readLocalSignals().recentSearches.slice(0, 8);
+  const merged = [...recent, ...HERO_SEARCH_PROMPTS];
+  const seen = new Set<string>();
+  return merged.filter((x) => {
+    const t = x.trim();
+    if (!t) return false;
+    const k = t.toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  }).slice(0, 18);
+}
 
 type SearchHistoryRow = {
   id?: string;
@@ -95,6 +112,7 @@ export default function Home() {
   const [subscriptionTier, setSubscriptionTier] = useState<QuantPlanTier | null>(null);
   const [searchEntitlements, setSearchEntitlements] = useState<SearchEntitlementsDTO | null>(null);
   const [compareTrayLinks, setCompareTrayLinks] = useState<string[]>([]);
+  const [heroHintOptions, setHeroHintOptions] = useState<string[]>(() => [...SSR_HERO_DATALIST_HINTS]);
   const bootedSearchFromUrl = useRef(false);
   const searchAbortRef = useRef<AbortController | null>(null);
   const [heroPlaceholderIdx, setHeroPlaceholderIdx] = useState(0);
@@ -426,6 +444,7 @@ export default function Home() {
         }
         void refreshSearchHistory();
         appendLocalRecentSearch(q);
+        setHeroHintOptions(mergeHeroTrayHints());
         trackEvent(QuantAnalyticsEvents.SEARCH_SUCCESS, {
           resultCount: searchData.products.length,
         });
@@ -462,6 +481,9 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    // Client-only: merge recent tray memory into datalist after hydration (initial state matches SSR).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHeroHintOptions(mergeHeroTrayHints());
     const id = window.setInterval(() => {
       setHeroPlaceholderIdx((i) => (i + 1) % HERO_INPUT_PLACEHOLDERS.length);
     }, 4800);
@@ -644,7 +666,12 @@ export default function Home() {
                   />
                 )}
                 <div className="relative flex flex-col gap-3.5 sm:flex-row sm:items-stretch sm:gap-3">
-                  <div className="relative flex min-h-[52px] sm:min-h-[56px] flex-1 items-center gap-3 rounded-2xl border border-white/[0.07] bg-black/40 px-3.5 sm:px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-[border-color,box-shadow,transform] duration-300 ease-out motion-safe:focus-within:scale-[1.002] focus-within:border-cyan-400/40 focus-within:shadow-[0_0_0_1px_rgba(34,211,238,0.18),0_0_56px_-22px_rgba(34,211,238,0.16)]">
+                  <datalist id="quantai-hero-hints">
+                    {heroHintOptions.map((h) => (
+                      <option key={h} value={h} />
+                    ))}
+                  </datalist>
+                  <div className="relative flex min-h-[52px] sm:min-h-[56px] flex-1 items-center gap-3 rounded-2xl border border-white/[0.07] bg-black/40 px-3.5 sm:px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-[border-color,box-shadow,transform] duration-300 ease-out motion-safe:focus-within:scale-[1.002] focus-within:border-cyan-400/45 focus-within:shadow-[0_0_0_1px_rgba(34,211,238,0.2),0_0_64px_-24px_rgba(34,211,238,0.2)]">
                     <Search
                       className={`size-[1.15rem] shrink-0 sm:size-5 ${loading ? "text-cyan-300/85 motion-reduce:animate-none animate-pulse" : "text-cyan-400/35"}`}
                       strokeWidth={1.5}
@@ -656,7 +683,7 @@ export default function Home() {
                       onChange={(e) => setQuery(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && void search()}
                       placeholder={HERO_INPUT_PLACEHOLDERS[heroPlaceholderIdx] ?? HERO_INPUT_PLACEHOLDERS[0]}
-                      autoComplete="off"
+                      list="quantai-hero-hints"
                       enterKeyHint="search"
                       className="min-w-0 flex-1 bg-transparent py-3 text-[15px] font-medium leading-snug tracking-tight text-white placeholder:text-slate-500/70 placeholder:font-normal outline-none"
                     />

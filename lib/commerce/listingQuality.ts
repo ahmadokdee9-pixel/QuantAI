@@ -22,6 +22,17 @@ export function isSpammyListingTitle(title: string): boolean {
   return false;
 }
 
+const FAKE_OR_NOISE_TITLE =
+  /\b(replica|not\s+authentic|oem\s+only|read\s+description\s+only|stock\s+photo|random\s+color|assorted\s+lot|for\s+parts|as.is)\b/i;
+
+/** Marketplace / drop-ship style noise — drop from tray when store is also thin. */
+export function isLowConfidenceListing(title: string, store: string): boolean {
+  const t = title.trim();
+  if (FAKE_OR_NOISE_TITLE.test(t)) return true;
+  if (/\b(wholesale|dropship|bulk\s+lot)\b/i.test(t) && store.trim().length < 2) return true;
+  return false;
+}
+
 /** 0–1 listing text quality for ranking boosts/penalties (deterministic). */
 export function listingTextQuality01(title: string): number {
   const t = title.trim();

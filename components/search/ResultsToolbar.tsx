@@ -31,7 +31,7 @@ export default function ResultsToolbar({
   return (
     <motion.div
       layout
-      className="sticky top-[3.25rem] z-30 -mx-4 px-4 py-3.5 sm:-mx-6 sm:px-6 mb-8 touch-manipulation border-b border-white/[0.07] bg-[#030712]/78 backdrop-blur-[28px] backdrop-saturate-150 supports-[backdrop-filter]:bg-[#030712]/55 shadow-[0_24px_60px_-32px_rgba(0,0,0,0.9),0_0_48px_-36px_rgba(34,211,238,0.08)]"
+      className="sticky top-[3.25rem] z-30 -mx-4 px-4 py-3.5 sm:-mx-6 sm:px-6 mb-8 touch-manipulation border-b border-white/[0.08] bg-[#030712]/82 backdrop-blur-[32px] backdrop-saturate-150 supports-[backdrop-filter]:bg-[#030712]/52 shadow-[0_28px_70px_-34px_rgba(0,0,0,0.92),0_0_56px_-40px_rgba(34,211,238,0.1)]"
     >
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-center gap-2">

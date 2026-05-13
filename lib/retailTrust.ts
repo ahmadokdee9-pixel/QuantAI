@@ -122,13 +122,34 @@ const TIER2 = new Set(
   ].map((x) => x.toLowerCase())
 );
 
+/** High-signal omnichannel / first-party names — discovery weight (not legal endorsement). */
+const PREFERRED_RETAIL_SUBSTRINGS = [
+  "amazon",
+  "bol.com",
+  "bol ",
+  "coolblue",
+  "mediamarkt",
+  "media markt",
+  "ikea",
+  "best buy",
+  "bestbuy",
+  "newegg",
+  "alternate",
+  "alternate.de",
+  "otto",
+  "target",
+  "walmart",
+  "decathlon",
+] as const;
+
 /** Domains / names treated as high-variance marketplaces — down-ranked vs first-party retail. */
-const LOW_TRUST_MARKETPLACE = /temu|aliexpress|wish\.com|dhgate|banggood|geekbuying|lightinthebox|tomtop/i;
+const LOW_TRUST_MARKETPLACE =
+  /temu|aliexpress|wish\.com|dhgate|banggood|geekbuying|lightinthebox|tomtop|joom|shein|cjdropshipping|groupon\s+goods/i;
 
 export function getStoreTrustScore(store: string): number {
   const s = store.toLowerCase().trim();
   if (!s) return TIER4_SCORE;
-  if (LOW_TRUST_MARKETPLACE.test(s)) return 36;
+  if (LOW_TRUST_MARKETPLACE.test(s)) return 32;
   for (const t of TIER1) {
     if (s.includes(t)) return TIER1_SCORE;
   }
@@ -138,6 +159,16 @@ export function getStoreTrustScore(store: string): number {
   if (TRUSTED_SUBSTRINGS.some((t) => s.includes(t))) return TIER2_SCORE;
   if (s.length > 2 && s.length < 52) return TIER3_SCORE;
   return TIER4_SCORE;
+}
+
+/** Small composite lift for preferred retailers (tray ranking / discovery). */
+export function getRetailerDiscoveryBoost(store: string): number {
+  const s = store.toLowerCase().trim();
+  if (!s || LOW_TRUST_MARKETPLACE.test(s)) return 0;
+  for (const p of PREFERRED_RETAIL_SUBSTRINGS) {
+    if (s.includes(p)) return 6;
+  }
+  return 0;
 }
 
 /** 0–100 percentile-style rank for leaderboard UX (deterministic). */
@@ -170,7 +201,8 @@ export function getMarketplaceSellerRiskTier(store: string, listingTitle?: strin
   ) {
     return "high";
   }
-  if (/temu|aliexpress|wish\.com|dhgate|banggood|geekbuying|lightinthebox|tomtop/i.test(s)) return "high";
+  if (/temu|aliexpress|wish\.com|dhgate|banggood|geekbuying|lightinthebox|tomtop|joom|shein|cjdropshipping/i.test(s))
+    return "high";
   if (/ebay|etsy|facebook marketplace|rakuten marketplace|amazon marketplace/i.test(s)) return "medium";
   return "low";
 }

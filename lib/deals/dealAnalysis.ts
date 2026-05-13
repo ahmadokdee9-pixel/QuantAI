@@ -108,6 +108,7 @@ export function fakeDiscountRisk(
   if (inflated && extreme) return "high";
   if (tooSteepVsPeers && (thinReviews || weakTrust)) return "high";
   if (noisyTitleSteepDisc && (inflated || thinReviews)) return "high";
+  if (discount > 50 && trust < 60 && depth < 0.3) return "medium";
   if (inflated || extreme || (discount > 42 && weakTrust && thinReviews)) return "medium";
   if (noisyTitleSteepDisc) return "medium";
   if (discount > 48 && outlier > 1.1 && thinReviews) return "medium";
@@ -144,6 +145,18 @@ export function dealVerdictFor(
   }
   if (p.price === cheapest && trust >= 64 && r >= 3.92) return "Strong value";
   if (comp >= 78 && !priceyVsFair && fake === "low") return "Strong value";
+  if (
+    discount != null &&
+    discount >= 22 &&
+    fake === "low" &&
+    trust >= 76 &&
+    peerMed > 0 &&
+    p.price <= peerMed * 0.93 &&
+    depth >= 0.26 &&
+    r >= 4.08
+  ) {
+    return "Real deal";
+  }
   if (priceyVsFair) return "Overpriced";
   if (comp < 58 || (comp < 64 && trust < 60)) return "Wait for lower pricing";
   return "Compare carefully";

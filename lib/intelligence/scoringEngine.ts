@@ -1,5 +1,5 @@
 import { listingTextQuality01 } from "@/lib/commerce/listingQuality";
-import { getStoreTrustScore, getTrustRankPercentile } from "@/lib/retailTrust";
+import { getRetailerDiscoveryBoost, getStoreTrustScore, getTrustRankPercentile } from "@/lib/retailTrust";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { ratingValue } from "@/lib/shoppingScore";
 import { getCategoryWeights, inferProductCategory } from "./categoryContext";
@@ -141,12 +141,21 @@ export function scoreProductEngine(
     stats.medianPrice > 0 && p.price > 0
       ? (stats.medianPrice - p.price) / stats.medianPrice
       : undefined;
-  const intentLift = intentCompositeLift(intentsResolved, category, trustNorm, medianHint);
+  const headlineDisc =
+    p.oldPrice != null && p.oldPrice > p.price && p.price > 0
+      ? (p.oldPrice - p.price) / p.oldPrice
+      : undefined;
+  const intentLift = intentCompositeLift(intentsResolved, category, trustNorm, medianHint, {
+    headlineDiscount01: headlineDisc,
+  });
   const listingFit = clamp01(0.52 + (listingQ - 0.5) * 0.22);
 
   const composite01 = clamp01(weighted * 0.86 + categoryFitBlend * 0.085 + listingFit * 0.035 + intentLift);
 
-  const composite = Math.min(100, Math.round(composite01 * 100));
+  const composite = Math.min(
+    100,
+    Math.round(composite01 * 100) + Math.min(4, Math.round(getRetailerDiscoveryBoost(p.store) * 0.55))
+  );
 
   // “Model layer” — emphasizes absolute quality + trust vs pure deal-chasing
   const modelLayer = Math.round(

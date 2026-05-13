@@ -3,9 +3,12 @@ import {
   type QuantProduct,
 } from "@/lib/shoppingScore";
 import {
+  isLowConfidenceListing,
   isSpammyListingTitle,
   normalizeMarketplaceTitle,
 } from "@/lib/commerce/listingQuality";
+import { combinedTitleSimilarity } from "@/lib/deals/normalizeTitle";
+import { buildUpstreamShoppingQuery } from "@/lib/search/shoppingQueryV3";
 import { resolveShoppingListingLink } from "./resolveOfferUrl";
 
 function extractNumberFromPrice(val: unknown): number | null {
@@ -53,6 +56,32 @@ function parseAvailability(row: Record<string, unknown>, extensions: string[]): 
 
 export type ShoppingProduct = QuantProduct;
 
+function dedupeShoppingFeedOverlap(rows: QuantProduct[]): QuantProduct[] {
+  if (rows.length < 2) return rows;
+  const out: QuantProduct[] = [];
+  for (const p of rows) {
+    let isDup = false;
+    for (const o of out) {
+      const sim = combinedTitleSimilarity(p.title, o.title);
+      if (sim < 0.88) continue;
+      if (p.price <= 0 || o.price <= 0) {
+        if (p.store.toLowerCase() === o.store.toLowerCase() && sim >= 0.92) {
+          isDup = true;
+          break;
+        }
+        continue;
+      }
+      const rel = Math.abs(p.price - o.price) / Math.max(p.price, o.price);
+      if (rel < 0.035) {
+        isDup = true;
+        break;
+      }
+    }
+    if (!isDup) out.push(p);
+  }
+  return out;
+}
+
 export async function fetchShoppingProducts(
   q: string
 ): Promise<{ ok: true; products: ShoppingProduct[] } | { ok: false; error: string; status: number }> {
@@ -66,9 +95,11 @@ export async function fetchShoppingProducts(
       return { ok: false, error: "Search is temporarily unavailable", status: 503 };
     }
 
+    const upstreamQ = buildUpstreamShoppingQuery(trimmed);
+
     const gl = (process.env.SERPAPI_SHOPPING_GL ?? "nl").trim().slice(0, 4) || "nl";
     const url = `https://serpapi.com/search.json?engine=google_shopping&q=${encodeURIComponent(
-      trimmed
+      upstreamQ
     )}&gl=${encodeURIComponent(gl)}&hl=en&api_key=${process.env.SERPAPI_KEY}`;
 
     const controller = new AbortController();
@@ -103,7 +134,7 @@ export async function fetchShoppingProducts(
     }
 
     const raw = (data.shopping_results as unknown[]) || [];
-    const mapped = raw.slice(0, 28).map((item: unknown, index: number) => {
+    const mapped = raw.slice(0, 48).map((item: unknown, index: number) => {
       const row = item as Record<string, unknown>;
       const price = Number(row.extracted_price) || 0;
       const oldRaw =
@@ -133,17 +164,20 @@ export async function fetchShoppingProducts(
       };
     });
 
-    const products: ShoppingProduct[] = mapped
-      .filter((p) => {
-        const title = p.title.toLowerCase();
-        if (title === "unknown product" || title.length < 3) return false;
-        if (isSpammyListingTitle(p.title)) return false;
-        if (p.store.toLowerCase() === "unknown store") return false;
-        if (p.price <= 0 && !String(p.displayPrice || "").trim()) return false;
-        if (p.link === "#" || p.link.length < 8) return false;
-        return true;
-      })
-      .map((p, i) => ({ ...p, id: i + 1 }));
+    const filtered = mapped.filter((p) => {
+      const title = p.title.toLowerCase();
+      if (title === "unknown product" || title.length < 3) return false;
+      if (isSpammyListingTitle(p.title)) return false;
+      if (isLowConfidenceListing(p.title, p.store)) return false;
+      if (p.store.toLowerCase() === "unknown store") return false;
+      if (p.price <= 0 && !String(p.displayPrice || "").trim()) return false;
+      if (p.link === "#" || p.link.length < 8) return false;
+      return true;
+    });
+
+    const deduped = dedupeShoppingFeedOverlap(filtered).slice(0, 40);
+
+    const products: ShoppingProduct[] = deduped.map((p, i) => ({ ...p, id: i + 1 }));
 
     return { ok: true, products };
   } catch {

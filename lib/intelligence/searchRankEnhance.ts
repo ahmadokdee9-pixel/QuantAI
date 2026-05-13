@@ -138,6 +138,7 @@ export function purchaseIntentFromQuery(q: string): PurchaseIntent {
   }
   if (
     intents.budget ||
+    intents.dealHunter ||
     /\b(cheap|budget|affordable|lowest|under\s+(\$|€|£)|save\s+money|discount|clearance|bargain)\b/.test(s)
   ) {
     return "budget";
@@ -152,7 +153,8 @@ export function purchaseIntentFromQuery(q: string): PurchaseIntent {
   if (
     /\b(best\s+value|bang\s+for|worth\s+it|value\s+pick|price.to.quality)\b/.test(s) ||
     intents.productivity ||
-    intents.gaming
+    intents.gaming ||
+    intents.explicitBestValue
   ) {
     return "value";
   }
@@ -163,7 +165,8 @@ function intentCompositeDelta(
   p: QuantProduct,
   list: QuantProduct[],
   intent: PurchaseIntent,
-  medianPrice: number
+  medianPrice: number,
+  query: string
 ): number {
   if (intent === "neutral") return 0;
   const trust = getStoreTrustScore(p.store);
@@ -176,8 +179,14 @@ function intentCompositeDelta(
     case "budget": {
       if (medianPrice <= 0 || p.price <= 0) return 0;
       const under = (medianPrice - p.price) / medianPrice;
-      const beat = under > 0.08 ? 5.5 : under > 0.03 ? 3.2 : 1.2;
-      return trust >= 52 ? beat : beat * 0.55;
+      let beat = under > 0.08 ? 5.5 : under > 0.03 ? 3.2 : 1.2;
+      beat = trust >= 52 ? beat : beat * 0.55;
+      const dh = parseCommerceSearchIntents(query).dealHunter;
+      if (dh && p.oldPrice != null && p.oldPrice > p.price) {
+        const pct = (p.oldPrice - p.price) / p.oldPrice;
+        beat += pct > 0.18 ? 3.1 : pct > 0.1 ? 1.8 : 0.6;
+      }
+      return beat;
     }
     case "premium": {
       const tier = trust * 0.045 + (r >= 4.35 ? 3.2 : r > 0 ? 0.8 : 0);
@@ -188,7 +197,17 @@ function intentCompositeDelta(
     }
     case "value": {
       const consist = r >= 4.25 && rev >= 24 ? 2.8 : r > 0 && r < 3.9 && rev >= 12 ? -2.4 : 0;
-      return trust * 0.028 + pop * 0.45 + consist;
+      let v = trust * 0.028 + pop * 0.45 + consist;
+      if (
+        parseCommerceSearchIntents(query).cheapestTrusted &&
+        trust >= 78 &&
+        medianPrice > 0 &&
+        p.price > 0 &&
+        p.price <= medianPrice * 1.04
+      ) {
+        v += 2.3;
+      }
+      return v;
     }
     default:
       return 0;
@@ -220,11 +239,15 @@ export function sortByCompositeRankEnhanced(list: QuantProduct[], query: string)
     c += reviewConsist;
     c += trust >= 78 ? 1.8 : trust < 46 ? -2.6 : 0;
     c += del >= 72 ? 1.2 : del < 44 ? -1.1 : 0;
-    c += intentCompositeDelta(p, list, intent, medianPrice);
+    c += intentCompositeDelta(p, list, intent, medianPrice, query);
     const priceVsMedian =
       medianPrice > 0 && p.price > 0 ? (medianPrice - p.price) / medianPrice : undefined;
     const cat = (p.qiCategory ?? "general") as ProductCategorySlug;
-    c += intentCompositeLift(intents, cat, trust / 100, priceVsMedian) * 92;
+    const disc01 =
+      p.oldPrice != null && p.oldPrice > p.price && p.price > 0
+        ? (p.oldPrice - p.price) / p.oldPrice
+        : undefined;
+    c += intentCompositeLift(intents, cat, trust / 100, priceVsMedian, { headlineDiscount01: disc01 }) * 92;
     c += (listingTextQuality01(p.title) - 0.55) * 5.8;
     c += (queryListingRelevance01(query, p) - 0.5) * 10;
     return c;

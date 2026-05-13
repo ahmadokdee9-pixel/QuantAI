@@ -56,7 +56,7 @@ async function runSearchPipeline(query: string): Promise<{
 const getCachedSearchPipeline = unstable_cache(
   async (query: string) => runSearchPipeline(query),
   ["quantai-search-pipeline-v2"],
-  { revalidate: 50 }
+  { revalidate: 90 }
 );
 
 type SearchDataPayload = {
