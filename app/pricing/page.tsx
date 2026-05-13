@@ -73,8 +73,8 @@ export default function PricingPage() {
             Clarity that scales <span className="cockpit-gradient-text">with your cart.</span>
           </h1>
           <p className="cockpit-body mx-auto mt-5 max-w-2xl text-center text-base text-slate-400/95">
-            Upgrade when you want more daily runway and richer intelligence. Checkout uses Stripe when configured;
-            otherwise you can still preview billing safely.
+            Pay for leverage: calmer checkouts, fewer blind spots, and intelligence that keeps pace with how you shop.
+            Stripe handles billing when configured—you can still review plans safely before charging.
           </p>
           <div className="mt-14">
             <PricingCards currentTier={tier} />

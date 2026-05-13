@@ -381,15 +381,19 @@ export default function ProductResultsSurface({
           <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-rose-400/30 bg-rose-500/15">
             <AlertCircle className="size-6 text-rose-200" strokeWidth={1.5} aria-hidden />
           </div>
-          <h2 className="cockpit-display text-lg text-white/95">Search could not complete</h2>
-          <p className="cockpit-body mt-2 text-sm text-rose-100/80">{searchError}</p>
+          <h2 className="cockpit-display text-lg text-white/95">Field paused</h2>
+          <p className="cockpit-body mt-2 text-sm text-slate-300/95">
+            The listing feed didn’t return a clean tray. Try a shorter query, a different retailer hint, or run again—nothing
+            on-device was lost.
+          </p>
+          <p className="cockpit-body mt-3 text-xs leading-relaxed text-slate-500">{searchError}</p>
           {onRetrySearch && (
             <button
               type="button"
               onClick={onRetrySearch}
               className="cockpit-cta mt-6 w-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 py-2.5 text-sm text-slate-950 transition hover:brightness-105"
             >
-              Retry intelligence run
+              Run again
             </button>
           )}
         </motion.div>
@@ -428,19 +432,18 @@ export default function ProductResultsSurface({
           <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-2xl border border-cyan-400/25 bg-cyan-400/10">
             <Sparkles className="size-7 text-cyan-200" strokeWidth={1.25} aria-hidden />
           </div>
-          <h2 className="text-lg font-semibold text-white/95">No listings match your filters</h2>
-          <p className="mt-2 text-sm leading-relaxed text-slate-500">
-            Adjust price range, brand keyword, rating, or store trust—or clear filters—to see
-            all{" "}
-            <span className="tabular-nums text-slate-400">{products.length}</span> results from
-            this search.
+          <h2 className="text-lg font-semibold text-white/95">Filters cleared the visible field</h2>
+          <p className="cockpit-body mt-2 text-sm text-slate-400">
+            This scan still holds{" "}
+            <span className="tabular-nums font-medium text-slate-300">{products.length}</span> listings—widen a
+            constraint or reset filters to bring them back into view.
           </p>
           <button
             type="button"
             onClick={onClearFilters}
             className="mt-6 rounded-full border border-white/15 bg-white/[0.08] px-6 py-2.5 text-sm font-semibold text-white/90 transition hover:bg-white/[0.14]"
           >
-            Reset filters
+            Show all results
           </button>
         </motion.div>
       </section>
@@ -464,7 +467,7 @@ export default function ProductResultsSurface({
       className={`relative mx-auto max-w-7xl scroll-mt-[max(5.5rem,env(safe-area-inset-top,0px)+3rem)] px-4 sm:px-6 ${advisorPad}`}
       ref={anchorRef}
     >
-      <div className="pointer-events-none absolute inset-x-0 -top-8 h-56 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(34,211,238,0.12),transparent_65%)]" />
+      <div className="pointer-events-none absolute inset-x-0 -top-8 h-48 bg-[radial-gradient(ellipse_80%_55%_at_50%_0%,rgba(34,211,238,0.08),transparent_68%)]" />
 
       <ResultsToolbar
         sort={sort}
@@ -485,7 +488,7 @@ export default function ProductResultsSurface({
           aria-live="polite"
         >
           <Loader2 className="size-3.5 shrink-0 animate-spin" aria-hidden />
-          Updating tray — QI rank below stays pinned so the viewport does not jump.
+          Refreshing tray — ranks stay pinned.
         </div>
       ) : null}
 
@@ -504,27 +507,26 @@ export default function ProductResultsSurface({
         defaultCollapsed={mobilePerf}
       />
       {sortedProducts.length >= 2 && compareLinks.length === 0 && (
-        <p className="cockpit-body -mt-1 mb-4 text-center text-[11px] leading-relaxed text-slate-500">
-          Pin <span className="font-medium text-slate-400">Compare</span> on two or three finalists to open Compare
-          Intelligence at the bottom of the tray.
+        <p className="cockpit-body -mt-1 mb-4 text-center text-[12px] leading-snug text-slate-500">
+          Pin <span className="font-medium text-slate-400">Compare</span> on two or three rows to open the lab below.
         </p>
       )}
       {sortedProducts.length === 1 && compareLinks.length === 0 && (
-        <p className="cockpit-body -mt-1 mb-4 text-center text-[11px] leading-relaxed text-slate-500">
-          Single listing in field—run an adjacent scan below or pin Compare when a second row lands.
+        <p className="cockpit-body -mt-1 mb-4 text-center text-[12px] leading-snug text-slate-500">
+          One row in field—add a second listing or run an adjacent scan to enable Compare.
         </p>
       )}
 
       {sparseTray && onRunRelatedQuery && relatedQueries.length > 0 ? (
-        <div className="mb-6 rounded-[1.35rem] border border-cyan-400/15 bg-gradient-to-br from-cyan-500/[0.07] via-black/35 to-violet-500/[0.06] px-4 py-4 sm:px-5">
+        <div className="mb-6 rounded-[1.25rem] border border-white/[0.1] bg-white/[0.03] px-4 py-4 sm:px-5">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-200/80">
-              Similar intelligence cluster
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+              Adjacent scans
             </p>
-            <span className="text-[10px] text-slate-500">Extend the analyst field</span>
+            <span className="text-[11px] text-slate-500">Same session · new field</span>
           </div>
-          <p className="mt-1.5 text-[11px] leading-snug text-slate-400">
-            Thin tray—launch a sibling query to populate density without breaking your scan lane.
+          <p className="cockpit-body mt-1.5 text-[13px] text-slate-400">
+            Few rows in this tray—open a sibling query to keep the analyst surface populated.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {relatedQueries.map((rq) => (
@@ -533,7 +535,7 @@ export default function ProductResultsSurface({
                 type="button"
                 disabled={loading}
                 onClick={() => onRunRelatedQuery(rq)}
-                className="max-w-[min(100%,20rem)] rounded-full border border-white/[0.1] bg-black/35 px-3 py-1.5 text-left text-[10px] font-medium leading-snug text-slate-200 transition hover:border-cyan-400/28 hover:bg-white/[0.06] disabled:opacity-40"
+                className="max-w-[min(100%,20rem)] rounded-full border border-white/[0.1] bg-black/30 px-3 py-1.5 text-left text-[11px] font-medium leading-snug text-slate-200 transition hover:border-cyan-400/22 hover:bg-white/[0.05] disabled:opacity-40"
               >
                 {rq}
               </button>
@@ -548,8 +550,8 @@ export default function ProductResultsSurface({
         <div className="mb-8 min-w-0">
           <div className="mb-2 flex items-center justify-center gap-2">
             <BarChart3 className="size-3.5 text-emerald-300/80" aria-hidden />
-            <p className="cockpit-label text-center text-[10px] tracking-[0.14em] text-slate-500">
-              Cross-retailer deal intelligence · this tray
+            <p className="cockpit-label text-center text-[11px] tracking-[0.1em] text-slate-500">
+              Deal signals · this tray
             </p>
           </div>
           <div className="flex min-w-0 gap-2 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch]">
@@ -600,19 +602,22 @@ export default function ProductResultsSurface({
           transition={transition}
           className="mb-12"
         >
-          <div className="mb-5 flex items-start gap-2.5">
-            <Sparkles className="mt-0.5 size-4 shrink-0 text-slate-500" strokeWidth={1.5} aria-hidden />
-            <div className="min-w-0">
-              <h2 className="text-sm font-semibold tracking-tight text-white/[0.96]">QI top lane</h2>
-              <p className="cockpit-body mt-1 text-[11px] leading-relaxed text-slate-500">
-                Strongest composite in this tray—fastest path from scan to conviction.
-              </p>
-            </div>
-          </div>
-          <div className="flex min-w-0 gap-4 overflow-x-auto pb-2 pt-0.5 snap-x snap-mandatory [-webkit-overflow-scrolling:touch]">
+          <div className="rounded-[1.35rem] border border-cyan-400/20 bg-gradient-to-b from-cyan-500/[0.06] via-[#050a14]/90 to-black/50 p-1 shadow-[0_0_0_1px_rgba(34,211,238,0.06),0_28px_80px_-40px_rgba(34,211,238,0.12)]">
+            <div className="rounded-[1.25rem] border border-white/[0.06] bg-[#030712]/80 px-4 py-4 sm:px-5 sm:py-5">
+              <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="cockpit-overline text-[10px] text-cyan-200/75">Lead lane</p>
+                  <h2 className="mt-1 text-base font-semibold tracking-tight text-white">Top picks in this field</h2>
+                  <p className="cockpit-body mt-1 max-w-xl text-[13px] text-slate-400">
+                    Highest QI composite here—start your eye path here, then scan the full tray for contrast.
+                  </p>
+                </div>
+              </div>
+              <div className="flex min-w-0 gap-3 overflow-x-auto pb-1 pt-0.5 snap-x snap-mandatory [-webkit-overflow-scrolling:touch] sm:gap-4">
             {aiTopPicks.map((p, idx) => {
               const comp = getFinalComposite(p, sortedProducts);
               const sym = currencySymbolFromListing(p);
+              const lead = idx === 0;
               return (
                 <motion.div
                   key={p.link}
@@ -622,40 +627,66 @@ export default function ProductResultsSurface({
                   whileHover={
                     reduceMotion ? undefined : { y: -2, transition: { type: "spring", stiffness: 340, damping: 34 } }
                   }
-                  className="min-w-[min(100%,280px)] max-w-[280px] shrink-0 snap-start rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.06] via-white/[0.03] to-black/35 p-4 shadow-[0_20px_50px_-30px_rgba(0,0,0,0.55)] backdrop-blur-xl"
+                  className={`min-w-[min(100%,300px)] max-w-[300px] shrink-0 snap-start rounded-2xl p-[1px] ${
+                    lead
+                      ? "bg-gradient-to-br from-cyan-400/35 via-white/10 to-violet-400/25 shadow-[0_0_40px_-18px_rgba(34,211,238,0.25)]"
+                      : "bg-gradient-to-br from-white/[0.08] to-white/[0.02]"
+                  }`}
                 >
+                  <div
+                    className={`h-full rounded-[0.95rem] p-4 backdrop-blur-xl ${
+                      lead
+                        ? "border border-cyan-400/20 bg-gradient-to-br from-[#06121f]/95 via-black/60 to-black/40"
+                        : "border border-white/[0.07] bg-gradient-to-br from-white/[0.07] via-white/[0.03] to-black/40"
+                    }`}
+                  >
                   <div className="flex gap-3">
                     {p.image && (
-                      <div className="relative size-[4.25rem] shrink-0 overflow-hidden rounded-xl border border-white/[0.08] bg-gradient-to-b from-white to-slate-100 p-1.5">
+                      <div className="relative size-[4.5rem] shrink-0 overflow-hidden rounded-xl border border-white/[0.1] bg-gradient-to-b from-white to-slate-100 p-1.5">
                         <Image
                           src={p.image}
                           alt=""
                           fill
-                          sizes="68px"
+                          sizes="72px"
                           className="object-contain object-center p-0.5"
                           unoptimized
                         />
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="cockpit-label text-[10px] text-slate-500/90">Pick #{idx + 1}</p>
-                      <p className="cockpit-body mt-1 line-clamp-2 text-[13px] font-semibold leading-snug text-white/[0.96]">
+                      {lead ? (
+                        <span className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-500/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-cyan-100/95">
+                          Lead pick
+                        </span>
+                      ) : (
+                        <p className="cockpit-label text-[10px] text-slate-500/90">#{idx + 1}</p>
+                      )}
+                      <p className="cockpit-body mt-1 line-clamp-2 text-[14px] font-semibold leading-snug text-white/[0.97]">
                         {p.title}
                       </p>
-                      <p className="cockpit-body mt-1 text-[11px] text-slate-500">{p.store}</p>
+                      <p className="cockpit-body mt-1 text-[12px] text-slate-500">{p.store}</p>
                     </div>
                   </div>
-                  <div className="mt-3.5 flex min-w-0 items-center justify-between gap-2 border-t border-white/[0.06] pt-3">
-                    <span className="text-lg font-semibold tabular-nums tracking-tight text-white">
+                  <div className="mt-3.5 flex min-w-0 items-center justify-between gap-2 border-t border-white/[0.08] pt-3">
+                    <span className={`tabular-nums tracking-tight text-white ${lead ? "text-xl font-semibold" : "text-lg font-semibold"}`}>
                       {formatListingPrice(p.price, sym)}
                     </span>
-                    <span className="shrink-0 rounded-full border border-white/[0.1] bg-black/30 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-slate-300">
+                    <span
+                      className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold tabular-nums ${
+                        lead
+                          ? "border-cyan-400/35 bg-cyan-500/15 text-cyan-50/95"
+                          : "border-white/[0.1] bg-black/35 text-slate-300"
+                      }`}
+                    >
                       QI {comp}
                     </span>
+                  </div>
                   </div>
                 </motion.div>
               );
             })}
+              </div>
+            </div>
           </div>
         </motion.div>
       )}

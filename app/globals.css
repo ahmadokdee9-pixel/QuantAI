@@ -68,16 +68,16 @@ body {
 }
 
 .cockpit-body {
-  line-height: 1.66;
-  letter-spacing: -0.008em;
+  line-height: 1.55;
+  letter-spacing: -0.006em;
 }
 
 .cockpit-label {
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(100, 116, 139, 0.82);
+  color: rgba(148, 163, 184, 0.78);
 }
 
 .cockpit-cta {

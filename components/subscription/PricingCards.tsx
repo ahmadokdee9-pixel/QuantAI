@@ -77,11 +77,10 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
               </span>
             )}
             <h3 className="cockpit-display text-lg tracking-tight text-white/95">{plan.name}</h3>
-            <p className="cockpit-body mt-2 text-sm leading-relaxed text-slate-500">{plan.tagline}</p>
+            <p className="cockpit-body mt-2 text-sm leading-snug text-slate-500">{plan.tagline}</p>
             {isPro && (
-              <p className="cockpit-body mt-3 rounded-xl border border-cyan-400/14 bg-cyan-500/[0.06] px-3 py-2 text-[11px] leading-relaxed text-cyan-50/88">
-                <span className="font-semibold text-cyan-100/95">Pro: </span>
-                advanced intelligence, higher daily limits, and unlimited saves—ideal when you shop often.
+              <p className="cockpit-body mt-3 text-[12px] leading-snug text-slate-400">
+                The calm upgrade when checkout decisions stack up during the week.
               </p>
             )}
             <p className="mt-9 text-4xl font-semibold tracking-tight text-white/95 tabular-nums">
@@ -90,75 +89,38 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
                 <span className="text-base font-medium text-slate-500">/mo</span>
               )}
             </p>
-            <ul className="mt-9 flex-1 space-y-3 text-sm text-slate-300">
+            <ul className="mt-8 flex-1 space-y-2.5 text-[13px] leading-snug text-slate-300">
               {plan.highlights.map((h) => (
-                <li key={h} className="flex gap-2">
-                  <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-400/20 text-emerald-300">
+                <li key={h} className="flex gap-2.5">
+                  <span className="mt-1.5 flex size-3.5 shrink-0 items-center justify-center rounded-full bg-emerald-400/18 text-emerald-300/95">
                     <Check className="size-2.5" strokeWidth={2.5} aria-hidden />
                   </span>
-                  {h}
+                  <span>{h}</span>
                 </li>
               ))}
-              <li className="flex gap-2 text-slate-400">
-                <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-white/10 text-slate-500">
-                  <Check className="size-2.5" strokeWidth={2} aria-hidden />
-                </span>
-                <span>
-                  Searches · <span className="tabular-nums text-slate-200">{plan.searchesPerDay}</span>
-                  /day
-                </span>
-              </li>
-              <li className="flex gap-2 text-slate-400">
-                <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-white/10 text-slate-500">
-                  <Check className="size-2.5" strokeWidth={2} aria-hidden />
-                </span>
-                <span>
-                  AI intelligence ·{" "}
-                  <span className="tabular-nums text-slate-200">{plan.aiIntelligencePerDay}</span>/day
-                </span>
-              </li>
-              <li className="flex gap-2 text-slate-400">
-                <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-white/10 text-slate-500">
-                  <Check className="size-2.5" strokeWidth={2} aria-hidden />
-                </span>
-                Watchlist ·{" "}
-                {plan.watchlistMax == null ? (
-                  <span className="text-slate-200">Unlimited</span>
-                ) : (
-                  <span className="tabular-nums text-slate-200">Up to {plan.watchlistMax}</span>
-                )}
-              </li>
-              <li className="flex gap-2 text-slate-400">
-                <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-white/10 text-slate-500">
-                  <Check className="size-2.5" strokeWidth={2} aria-hidden />
-                </span>
-                Saved ·{" "}
-                {plan.savedProductsMax == null ? (
-                  <span className="text-slate-200">Unlimited</span>
-                ) : (
-                  <span className="tabular-nums text-slate-200">Up to {plan.savedProductsMax}</span>
-                )}
-              </li>
-              <li className="flex gap-2 text-slate-400">
-                <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-white/10 text-slate-500">
-                  <Check className="size-2.5" strokeWidth={2} aria-hidden />
-                </span>
-                Compare · <span className="tabular-nums text-slate-200">{plan.compareMax}</span> listings
-              </li>
-              <li className="flex gap-2 text-slate-400">
-                <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-white/10 text-slate-500">
-                  <Check className="size-2.5" strokeWidth={2} aria-hidden />
-                </span>
-                Global intelligence ·{" "}
-                <span className="capitalize text-slate-200">{plan.globalDealIntelligence}</span>
-              </li>
-              <li className="flex gap-2 text-slate-400">
-                <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-white/10 text-slate-500">
-                  <Check className="size-2.5" strokeWidth={2} aria-hidden />
-                </span>
-                Premium alerts · {plan.premiumAlerts ? "Yes" : "Roadmap"}
-              </li>
             </ul>
+            <p className="mt-6 border-t border-white/[0.06] pt-4 text-[11px] leading-snug text-slate-500">
+              <span className="font-medium text-slate-400">Throughput · </span>
+              <span className="tabular-nums text-slate-300">
+                {plan.searchesPerDay} searches
+              </span>
+              <span className="text-slate-600"> · </span>
+              <span className="tabular-nums text-slate-300">{plan.aiIntelligencePerDay} AI</span>
+              <span className="text-slate-600"> · </span>
+              <span className="tabular-nums text-slate-300">
+                Watch {plan.watchlistMax == null ? "∞" : plan.watchlistMax}
+              </span>
+              <span className="text-slate-600"> · </span>
+              <span className="tabular-nums text-slate-300">
+                Saves {plan.savedProductsMax == null ? "∞" : plan.savedProductsMax}
+              </span>
+              <span className="text-slate-600"> · </span>
+              <span className="tabular-nums text-slate-300">Compare {plan.compareMax}</span>
+              <span className="text-slate-600"> · </span>
+              <span className="capitalize text-slate-300">{plan.globalDealIntelligence} layer</span>
+              <span className="text-slate-600"> · </span>
+              <span className="text-slate-300">Alerts {plan.premiumAlerts ? "on" : "roadmap"}</span>
+            </p>
 
             <div className="mt-10">
               {id === "free" && (

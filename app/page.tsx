@@ -1192,10 +1192,10 @@ export default function Home() {
               QuantAI plans
             </p>
             <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white/95">
-              Scale from curious to power buyer
+              Intelligence that keeps pace with you
             </h2>
-            <p className="mt-4 text-base text-slate-500 font-normal leading-relaxed">
-              Start free, upgrade when you want deeper alerts, higher limits, and full global intelligence.
+            <p className="cockpit-body mt-4 text-base text-slate-500">
+              Start where you are—move up when you want more runway and a deeper read on every scan.
             </p>
             <Link
               href="/pricing"

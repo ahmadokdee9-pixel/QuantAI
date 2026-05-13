@@ -97,10 +97,9 @@ export default function SavedProductsPage() {
       <div className="cockpit-glass-panel p-6 sm:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="cockpit-display text-2xl text-white sm:text-3xl">Saved products</h1>
-            <p className="mt-2 max-w-xl text-sm text-slate-400">
-              Pulled from your account when Supabase is configured. Open any listing in a new tab or remove it
-              from this list.
+            <h1 className="cockpit-display text-2xl text-white sm:text-3xl">Memory shelf</h1>
+            <p className="cockpit-body mt-2 max-w-xl text-sm text-slate-400">
+              Anchors QuantAI carries across sessions—Compare, Copilot, and your next scan all read this shelf.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -121,7 +120,7 @@ export default function SavedProductsPage() {
       </div>
 
       {err && (
-        <p className="rounded-xl border border-amber-400/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+        <p className="rounded-xl border border-amber-400/20 bg-amber-500/[0.06] px-4 py-3 text-sm text-amber-50/95">
           {err}
         </p>
       )}
@@ -133,11 +132,11 @@ export default function SavedProductsPage() {
         </div>
       ) : items.length === 0 ? (
         <CockpitEmptyState
-          title="Your saved shelf is ready for anchors"
-          description="Tap Save on any QuantAI card after a search. Shortlists power Compare lab, copilot context, and your command center—keep what you might actually buy."
-          primaryLabel="Run intelligence"
+          title="Shelf is ready—add anchors from search"
+          description="Save listings you might buy; QuantAI keeps them in memory for Compare, Copilot, and your next scan."
+          primaryLabel="Open search"
           primaryHref="/"
-          secondaryLabel="Open dashboard"
+          secondaryLabel="Dashboard"
           secondaryHref="/dashboard"
           icon={<Sparkles className="size-6 text-cyan-200/90" strokeWidth={1.5} aria-hidden />}
         />
@@ -160,22 +159,22 @@ export default function SavedProductsPage() {
                   {item.price != null ? `€${item.price}` : "—"}
                 </p>
                 {item.ai_score != null && (
-                  <p className="mt-1 text-xs text-slate-500">AI score · {item.ai_score}</p>
+                  <p className="mt-1 text-[12px] text-slate-500">QI at save · {item.ai_score}</p>
                 )}
-                <ul className="mt-3 space-y-2 text-left">
+                <ul className="mt-3 space-y-1.5 text-left">
                   {buildSavedItemInsights(item, items).map((ins) => (
                     <li
                       key={`${item.link}-${ins.headline}`}
-                      className={`rounded-lg border px-3 py-2 text-[11px] leading-relaxed ${
+                      className={`rounded-lg border border-white/[0.07] px-3 py-2 text-[12px] leading-snug ${
                         ins.tone === "positive"
-                          ? "border-emerald-400/20 bg-emerald-500/[0.06] text-emerald-50/90"
+                          ? "text-emerald-100/90"
                           : ins.tone === "watch"
-                            ? "border-amber-400/20 bg-amber-500/[0.06] text-amber-50/90"
-                            : "border-white/[0.06] bg-white/[0.03] text-slate-400"
+                            ? "text-amber-100/90"
+                            : "text-slate-400"
                       }`}
                     >
-                      <span className="font-semibold text-white/85">{ins.headline}</span>
-                      <span className="mt-0.5 block text-slate-400">{ins.detail}</span>
+                      <span className="font-medium text-white/90">{ins.headline}</span>
+                      <span className="mt-0.5 block text-slate-500">{ins.detail}</span>
                     </li>
                   ))}
                 </ul>
