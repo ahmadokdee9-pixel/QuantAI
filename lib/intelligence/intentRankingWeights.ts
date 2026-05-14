@@ -99,7 +99,7 @@ export function applyIntentAwareCategoryWeights(
     d.delivery += 0.01;
   }
 
-  if (intents.alternativeSeeking) {
+  if (intents.alternativeSeeking || intents.substituteSemanticActive) {
     d.pricePerformance += 0.024;
     d.price += 0.018;
     d.retailerTrust += 0.012;

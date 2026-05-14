@@ -11,6 +11,8 @@ export type NarrativeIntentCtx = {
   query?: string;
   intents?: CommerceSearchIntents;
   category?: ProductCategorySlug;
+  /** Relationship / substitute “why” line from alternative intelligence (optional). */
+  alternativeWhyNarrative?: string;
 };
 
 export type AdaptiveVerdict =
@@ -264,7 +266,12 @@ export function getPsychologyInsight(
       "Power without the toy-box look—this pick favors mature gaming hardware language in the title.",
     ]);
   }
-  if (intents?.alternativeSeeking && ctx.cheaperCount >= 1 && ctx.avgPrice > 0 && p.price < ctx.avgPrice * 0.94) {
+  if (
+    (intents?.alternativeSeeking || intents?.substituteSemanticActive) &&
+    ctx.cheaperCount >= 1 &&
+    ctx.avgPrice > 0 &&
+    p.price < ctx.avgPrice * 0.94
+  ) {
     return variant(seed + 11, [
       "Substitute hunt: under-tray pricing plus lexical overlap suggests a smarter alternative to premium anchors.",
       "Better-alternative posture—value and overlap beat brand echo when you asked for “like X but cheaper.”",
@@ -345,10 +352,14 @@ export function getPsychologyInsight(
       "Deal-shaped ask: the feed shows real separation from reference pricing.",
     ]);
   }
-  return variant(seed, [
+  const defaultPsych = variant(seed, [
     "Balanced shopper profile: no single dimension dominates—read the breakdown, then decide.",
     "Middle-weight signal set: neither a slam dunk nor a walk-away until context tightens.",
   ]);
+  if (nCtx?.alternativeWhyNarrative?.trim() && intents?.substituteSemanticActive) {
+    return `${defaultPsych} Relationship graph: ${nCtx.alternativeWhyNarrative.trim()}`.slice(0, 520);
+  }
+  return defaultPsych;
 }
 
 export function buildProductReasoningNarrative(

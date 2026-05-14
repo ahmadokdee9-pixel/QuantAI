@@ -1,6 +1,7 @@
 import { calculateAIScore } from "@/app/api/search/lib/aiScoring";
 import type { ProductCommerceAI } from "@/lib/intelligence/commerceAnalysisTypes";
 import type { IntelligenceSignals, ProductCategorySlug } from "@/lib/intelligence/types";
+import type { ProductRelationshipBundle } from "@/lib/intelligence/relationshipTypes";
 import {
   getStoreTrustScore,
   TRUSTED_SUBSTRINGS,
@@ -34,6 +35,12 @@ export type QuantProduct = {
   qiVerdict?: string;
   /** One-line purchase-psychology read. */
   qiPsychology?: string;
+  /** Tray-local relationship graph edges (substitutes, upgrades, aesthetic peers). */
+  qiRelationshipBundle?: ProductRelationshipBundle;
+  /** Discovery tags: hidden_gem, underrated, premium_look_budget, low_risk_substitute, trusted_substitute. */
+  qiDiscoveryTags?: string[];
+  /** Why this row matches substitute / alternative intent (relationship intelligence). */
+  qiAlternativeWhy?: string;
   /** AI commerce layer: verdicts, pros/cons, risks, VfM, confidence, delivery/returns notes (OpenAI or heuristic). */
   qiCommerce?: ProductCommerceAI;
 };

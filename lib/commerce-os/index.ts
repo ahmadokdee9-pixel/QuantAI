@@ -13,3 +13,5 @@ export type { UniversalCommerceContextDTO } from "./universalContext";
 export { buildUniversalCommerceContext } from "./universalContext";
 export type { TasteGraphSignals, TasteEmotionalBand, TasteTagId } from "./tasteGraph";
 export { TASTE_TAXONOMY, extractTasteGraphSignals, tasteProductAlignment01, tasteCompositeLift, tasteTagListForApi } from "./tasteGraph";
+export type { AlternativeQueryContext } from "./alternativeSemantics";
+export { parseAlternativeQueryContext, substituteSemanticActiveFromParts } from "./alternativeSemantics";

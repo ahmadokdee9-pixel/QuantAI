@@ -10,6 +10,8 @@ import {
 } from "./scoringEngine";
 import { applyEliteFirstWindowCuration } from "./trayCuration";
 import { parseCommerceSearchIntents } from "./searchIntentV2";
+import { buildProductRelationshipBundle } from "./productRelationshipGraph";
+import { buildAlternativeWhyLine, classifyDiscoveryProfile } from "./alternativeIntelligence";
 
 export function enrichProductsWithIntelligence(
   products: QuantProduct[],
@@ -24,7 +26,25 @@ export function enrichProductsWithIntelligence(
 
   const scored = productsIn.map((p) => {
     const engine = scoreProductEngine(p, searchQuery, stats, listMaxValueRaw, intents);
-    const reason = buildScoreReasoning(p, productsIn, stats, engine.signals, engine.category);
+    const bundle = buildProductRelationshipBundle(p, productsIn, searchQuery, intents.alternativeQuery, intents, intents.taste);
+    const profile = classifyDiscoveryProfile(p, productsIn, intents, bundle);
+    const altWhy = buildAlternativeWhyLine(p, productsIn, intents, intents.alternativeQuery, bundle, profile);
+
+    let relDelta = 0;
+    if (intents.substituteSemanticActive || intents.alternativeSeeking) {
+      relDelta += Math.min(3, Math.round(bundle.universalSimilarity01 * 2.8));
+      relDelta -= Math.min(5, Math.round(bundle.substituteRisk01 * 5.5));
+      if (profile.tags.includes("hidden_gem")) relDelta += 1;
+      if (profile.tags.includes("trusted_substitute")) relDelta += 1;
+      if (profile.tags.includes("low_risk_substitute")) relDelta += 1;
+      if (profile.tags.includes("premium_look_budget")) relDelta += 1;
+      if (profile.tags.includes("underrated")) relDelta += 1;
+    }
+    const qiComposite = Math.min(100, Math.max(0, engine.composite + relDelta));
+
+    let reason = buildScoreReasoning(p, productsIn, stats, engine.signals, engine.category);
+    if (altWhy) reason = `${reason} ${altWhy}`.slice(0, 1400);
+
     const trend = simulatePriceTrend(p, stats);
     const qiVerdict = getAdaptiveVerdict(p, productsIn, stats, engine.signals, {
       query: searchQuery,
@@ -34,10 +54,11 @@ export function enrichProductsWithIntelligence(
     const qiPsychology = getPsychologyInsight(p, productsIn, stats, engine.signals, engine.category, {
       query: searchQuery,
       intents,
+      alternativeWhyNarrative: altWhy,
     });
     return {
       ...p,
-      qiComposite: engine.composite,
+      qiComposite,
       qiModelLayer: engine.modelLayer,
       qiReason: reason,
       qiSignals: engine.signals,
@@ -46,6 +67,9 @@ export function enrichProductsWithIntelligence(
       qiTrendNote: trend.note,
       qiVerdict,
       qiPsychology,
+      qiRelationshipBundle: bundle,
+      qiDiscoveryTags: profile.tags,
+      qiAlternativeWhy: altWhy,
     };
   });
 

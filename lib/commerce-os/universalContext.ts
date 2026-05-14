@@ -1,6 +1,7 @@
 import { expandCommerceSemantics } from "./semanticExpand";
 import { detectUniversalIntentFlags } from "./intentFlags";
 import { extractTasteGraphSignals, tasteTagListForApi } from "./tasteGraph";
+import { parseAlternativeQueryContext } from "./alternativeSemantics";
 
 export type UniversalCommerceContextDTO = {
   version: 2;
@@ -33,6 +34,7 @@ export function buildUniversalCommerceContext(
   const flags = detectUniversalIntentFlags(rawQuery, s);
   const expanded = expandCommerceSemantics(s);
   const taste = extractTasteGraphSignals(intentMatchString, rawQuery);
+  const altCtx = parseAlternativeQueryContext(rawQuery, intentMatchString);
 
   const verticals: string[] = [];
   if (flags.wellnessFitness) verticals.push("fitness_wellness");
@@ -63,6 +65,10 @@ export function buildUniversalCommerceContext(
   if (expanded.length > s.length + 4) signals.push("semantic_expansion_applied");
   if (flags.fragranceBeauty && flags.feminineStyle) signals.push("aligned_beauty_feminine");
   if (taste.hasTasteLayer) signals.push("taste_graph_active");
+  if (altCtx.anchorPhrase.length >= 2) signals.push("alternative_reference_extracted");
+  if (altCtx.wantsCheaper) signals.push("alternative_cheaper_lane");
+  if (altCtx.wantsPremium) signals.push("alternative_premium_lane");
+  if (altCtx.wantsSubstitute) signals.push("alternative_substitute_language");
 
   return {
     version: 2,

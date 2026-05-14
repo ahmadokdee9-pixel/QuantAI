@@ -1,6 +1,8 @@
 import { getStoreTrustScore } from "@/lib/shoppingScore";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import type { CommerceSearchIntents } from "./searchIntentV2";
+import { buildProductRelationshipBundle } from "@/lib/intelligence/productRelationshipGraph";
+import { classifyDiscoveryProfile } from "@/lib/intelligence/alternativeIntelligence";
 
 function tokenizeCommerce(s: string): Set<string> {
   const raw = s.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF]+/gi, " ");
@@ -39,4 +41,29 @@ export function alternativeSeekingRankAdjustment(
     adj += 0.35;
   }
   return Math.min(6.8, adj);
+}
+
+/**
+ * Relationship graph + discovery-aware rank delta (substitute / “similar to” intelligence).
+ */
+export function relationshipGraphRankAdjustment(
+  query: string,
+  product: QuantProduct,
+  list: QuantProduct[],
+  intents: CommerceSearchIntents
+): number {
+  if (!intents.substituteSemanticActive && !intents.alternativeSeeking) return 0;
+  if (!query.trim() || list.length < 2) return 0;
+  const bundle = buildProductRelationshipBundle(product, list, query, intents.alternativeQuery, intents, intents.taste);
+  const profile = classifyDiscoveryProfile(product, list, intents, bundle);
+  let adj = bundle.universalSimilarity01 * 4.6;
+  adj -= bundle.substituteRisk01 * 6.8;
+  for (const tag of profile.tags) {
+    if (tag === "hidden_gem") adj += 1.65;
+    else if (tag === "trusted_substitute") adj += 1.45;
+    else if (tag === "low_risk_substitute") adj += 1.15;
+    else if (tag === "premium_look_budget") adj += 0.95;
+    else if (tag === "underrated") adj += 0.75;
+  }
+  return Math.min(7.8, Math.max(-6.5, adj));
 }

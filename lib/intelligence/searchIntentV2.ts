@@ -8,6 +8,9 @@ import {
   extractTasteGraphSignals,
   type TasteGraphSignals,
   type UniversalIntentFlags,
+  parseAlternativeQueryContext,
+  substituteSemanticActiveFromParts,
+  type AlternativeQueryContext,
 } from "@/lib/commerce-os";
 import { fixCommonCommerceTypos } from "@/lib/search/conversationalQueryLayer";
 import { arabicIntentGlossTokens, latinSkeletonForMatching, normalizeEasternDigitsInString } from "@/lib/search/queryScriptNormalize";
@@ -53,6 +56,10 @@ export type CommerceSearchIntents = {
   lifestyleCreator: boolean;
   /** Taste Graph + emotional commerce (query-side). */
   taste: TasteGraphSignals;
+  /** Parsed anchor / cheaper / premium substitute language. */
+  alternativeQuery: AlternativeQueryContext;
+  /** Broader than alternativeSeeking — includes taste-led substitute cues. */
+  substituteSemanticActive: boolean;
 } & UniversalIntentFlags;
 
 /** Normalized string for regex intent detection (legacy + universal OS). */
@@ -67,6 +74,23 @@ export function intentMatchEnvelope(q: string): string {
 export function parseCommerceSearchIntents(q: string): CommerceSearchIntents {
   const s = intentMatchEnvelope(q);
   const taste = extractTasteGraphSignals(s, q);
+  const alternativeSeekingBool =
+    /\b(something\s+like|instead\s+of|cheaper\s+(than|alternative)|alternative\s+to|comparable\s+to|like\s+a\s+|in\s+the\s+same\s+vein)\b/.test(
+      s
+    ) ||
+    /\blike\s+.{3,55}\s+but\s+cheaper\b/i.test(s) ||
+    /\balternative\s+to\s+\S/i.test(s) ||
+    /\b(airpods?|dyson|rolex|galaxy|iphone|ipad|macbook|bose|sony)\s+alternative\b/i.test(s) ||
+    /\bsimilar\s+to\s+.{3,}/i.test(s);
+  const alternativeQuery = parseAlternativeQueryContext(q, s);
+  const substituteSemanticActive = substituteSemanticActiveFromParts(
+    alternativeSeekingBool,
+    alternativeQuery,
+    taste.hasTasteLayer,
+    taste.olfactoryRichIntent01,
+    taste.visualPremiumExpect01,
+    q
+  );
   return {
     budget:
       /\b(cheap|budget|affordable|lowest|under\s+(\$|€|£|eur|gbp|usd)|less\s+than|up\s+to|at\s+most|around\s+(\$|€|£)|save|discount|clearance|bargain|steal|markdown)\b/.test(
@@ -110,10 +134,7 @@ export function parseCommerceSearchIntents(q: string): CommerceSearchIntents {
       /\b(buy\s+now|purchase\s+today|need\s+it\s+(today|this\s+week)|asap|urgent|order\s+today|ship\s+today|before\s+(the\s+)?weekend|this\s+week\s+only)\b/.test(
         s
       ),
-    alternativeSeeking:
-      /\b(something\s+like|similar\s+to|instead\s+of|cheaper\s+(than|alternative)|alternative\s+to|comparable\s+to|like\s+a\s+|in\s+the\s+same\s+vein)\b/.test(
-        s
-      ),
+    alternativeSeeking: alternativeSeekingBool,
     storeDealHunter:
       /\b(which|what)\s+store\b|\bbest\s+deal\s+now\b|\bcheapest\s+store\b|\blowest\s+price\s+where\b|\bwhere\s+to\s+buy\b|\bwho\s+sells\b/.test(
         s
@@ -147,6 +168,8 @@ export function parseCommerceSearchIntents(q: string): CommerceSearchIntents {
       /\b(creator|stream(er|ing)?|youtube|tiktok|content\s+creation|podcast\s+setup)\b/.test(s),
     ...detectUniversalIntentFlags(q, s),
     taste,
+    alternativeQuery,
+    substituteSemanticActive,
   };
 }
 
@@ -194,7 +217,7 @@ export function intentCompositeLift(
   if (intents.giftUse && (category === "general" || category === "fashion" || category === "electronics")) {
     lift += 0.01;
   }
-  if (intents.alternativeSeeking && priceVsMedian != null && priceVsMedian > 0.03 && trustNorm >= 0.58) {
+  if ((intents.alternativeSeeking || intents.substituteSemanticActive) && priceVsMedian != null && priceVsMedian > 0.03 && trustNorm >= 0.58) {
     lift += 0.012;
   }
   if (intents.storeDealHunter && trustNorm >= 0.76) lift += 0.011;
@@ -252,6 +275,9 @@ export function intentCompositeLift(
     lift += 0.005;
   }
   if (intents.longTermValue && trustNorm >= 0.7) lift += 0.007;
+  if (intents.substituteSemanticActive && trustNorm >= 0.64) {
+    lift += 0.005;
+  }
 
   return lift;
 }
