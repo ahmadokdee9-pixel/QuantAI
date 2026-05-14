@@ -3,6 +3,7 @@
  */
 
 import type { ProductCategorySlug } from "./types";
+import { detectUniversalIntentFlags, type UniversalIntentFlags } from "@/lib/commerce-os";
 import { fixCommonCommerceTypos } from "@/lib/search/conversationalQueryLayer";
 import { arabicIntentGlossTokens, latinSkeletonForMatching, normalizeEasternDigitsInString } from "@/lib/search/queryScriptNormalize";
 
@@ -45,14 +46,19 @@ export type CommerceSearchIntents = {
   portableLight: boolean;
   /** Creator / streamer adjacent workloads. */
   lifestyleCreator: boolean;
-};
+} & UniversalIntentFlags;
 
-export function parseCommerceSearchIntents(q: string): CommerceSearchIntents {
+/** Normalized string for regex intent detection (legacy + universal OS). */
+export function intentMatchEnvelope(q: string): string {
   const fixed = fixCommonCommerceTypos(q);
-  const s = `${fixed} ${latinSkeletonForMatching(fixed)} ${arabicIntentGlossTokens(normalizeEasternDigitsInString(fixed))}`
+  return `${fixed} ${latinSkeletonForMatching(fixed)} ${arabicIntentGlossTokens(normalizeEasternDigitsInString(fixed))}`
     .toLowerCase()
     .replace(/\s+/g, " ")
     .trim();
+}
+
+export function parseCommerceSearchIntents(q: string): CommerceSearchIntents {
+  const s = intentMatchEnvelope(q);
   return {
     budget:
       /\b(cheap|budget|affordable|lowest|under\s+(\$|€|£|eur|gbp|usd)|less\s+than|up\s+to|at\s+most|around\s+(\$|€|£)|save|discount|clearance|bargain|steal|markdown)\b/.test(
@@ -131,6 +137,7 @@ export function parseCommerceSearchIntents(q: string): CommerceSearchIntents {
       ),
     lifestyleCreator:
       /\b(creator|stream(er|ing)?|youtube|tiktok|content\s+creation|podcast\s+setup)\b/.test(s),
+    ...detectUniversalIntentFlags(q, s),
   };
 }
 
@@ -194,5 +201,48 @@ export function intentCompositeLift(
     lift += 0.009;
   }
   if (intents.lifestyleCreator && (category === "electronics" || category === "general")) lift += 0.009;
+
+  /* Universal commerce OS — bounded semantic lanes (taste, verticals, psychology). */
+  if (intents.wellnessFitness && (category === "sports" || category === "electronics" || category === "general")) {
+    lift += 0.009;
+  }
+  if (intents.homeLifestyle && (category === "home" || category === "general")) lift += 0.01;
+  if (intents.fragranceBeauty && (category === "beauty" || category === "fashion" || category === "general")) {
+    lift += 0.01;
+  }
+  if (intents.autoAccessory && category === "general") lift += 0.006;
+  if (
+    intents.comfortSeeking &&
+    (category === "fashion" || category === "beauty" || category === "home" || category === "electronics")
+  ) {
+    lift += 0.008;
+  }
+  if (intents.feminineStyle && (category === "fashion" || category === "beauty" || category === "general")) {
+    lift += 0.006;
+  }
+  if (intents.masculineStyle && (category === "fashion" || category === "beauty" || category === "general")) {
+    lift += 0.006;
+  }
+  if (
+    intents.minimalistStyle &&
+    (category === "home" || category === "electronics" || category === "fashion" || category === "general")
+  ) {
+    lift += 0.007;
+  }
+  if (
+    intents.quietLuxury &&
+    (category === "fashion" || category === "beauty" || category === "electronics" || category === "general")
+  ) {
+    lift += 0.008;
+  }
+  if (
+    intents.giftingEmotional &&
+    !intents.giftUse &&
+    (category === "general" || category === "fashion" || category === "beauty")
+  ) {
+    lift += 0.005;
+  }
+  if (intents.longTermValue && trustNorm >= 0.7) lift += 0.007;
+
   return lift;
 }

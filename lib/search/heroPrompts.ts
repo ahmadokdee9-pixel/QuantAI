@@ -5,6 +5,8 @@ export const HERO_COMMAND_HISTORY_CAP = 3 as const;
 
 /** One-tap examples — natural sentences QuantAI already understands. */
 export const HERO_SEARCH_PROMPTS: readonly string[] = [
+  "Feminine luxury perfume that lasts—trusted EU seller",
+  "Minimalist desk setup—monitor + keyboard, premium feel",
   "Best phone for my wife under €700",
   "Trusted gaming laptop not too heavy",
   "Something like a MacBook but cheaper",
@@ -21,6 +23,9 @@ export const HERO_SEARCH_PROMPTS: readonly string[] = [
 
 /** Rotating placeholders — same “ask anything” voice as the examples. */
 export const HERO_INPUT_PLACEHOLDERS: readonly string[] = [
+  "Try: “quiet luxury watch—under €400, not flashy”…",
+  "Try: “comfortable premium underwear—breathable, not cheap-looking”…",
+  "Try: “عطر فاخر لزوجتي — بائع موثوق في أوروبا” (Arabic + English works)…",
   "Describe what you want in plain language—who it’s for, budget, trust…",
   "Try: “safest seller for AirPods Pro, EU stores”…",
   "Try: “gaming laptop, not too heavy, under €1200”…",

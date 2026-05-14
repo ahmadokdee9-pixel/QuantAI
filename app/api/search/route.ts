@@ -17,6 +17,8 @@ import { enforceLimit, searchRatelimit } from "@/lib/rate-limit";
 import { entitlementsForTier } from "@/lib/subscription/entitlements";
 import { planDefinition } from "@/lib/subscription/plans";
 import { subscriptionTierFromClerkUser } from "@/lib/subscription/resolveTier";
+import { buildUniversalCommerceContext } from "@/lib/commerce-os";
+import { intentMatchEnvelope } from "@/lib/intelligence/searchIntentV2";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import type { DealClusterDTO } from "@/lib/deals/types";
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
@@ -184,9 +186,10 @@ async function handleSearch(q: string | null | undefined): Promise<NextResponse>
       entitlements: entitlementsForTier(tier),
       meta: {
         category: topCategory,
-        intelligenceVersion: 7,
+        intelligenceVersion: 8,
         commerceAI: commerceMeta,
         commerceAiEngine: resolveCommerceAiEngine(),
+        universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),
       },
     };
 

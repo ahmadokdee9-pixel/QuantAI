@@ -58,6 +58,10 @@ const AR_GLOSSES: { rx: RegExp; en: string }[] = [
   { rx: /(?:مقارنة|فرق\s*بين)/i, en: " compare " },
   { rx: /(?:ألعاب|قيمنق|جيمنق)/i, en: " gaming " },
   { rx: /(?:شاشة\s*كمبيوتر|مونيتور)/i, en: " monitor display " },
+  { rx: /(?:عطر|بارفان|كولونيا)/i, en: " perfume fragrance cologne " },
+  { rx: /(?:أثاث|كنبة|طاولة\s*طعام|سرير)/i, en: " furniture sofa dining table bed " },
+  { rx: /(?:للسيارة|سيارة|سيارتي)/i, en: " car automotive accessory " },
+  { rx: /(?:رياضة|للرياضة|جيم|للجيم)/i, en: " fitness gym workout " },
 ];
 
 /** English tokens implied by Arabic shopping vocabulary (for intent + Shopping recall). */

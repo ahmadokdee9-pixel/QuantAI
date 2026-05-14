@@ -156,6 +156,7 @@ export function purchaseIntentFromQuery(q: string): PurchaseIntent {
     intents.premium ||
     intents.luxury ||
     intents.aestheticPremium ||
+    intents.quietLuxury ||
     /\b(premium|luxury|flagship|best\s+quality|pro\s+model|top\s+tier|high.end)\b/.test(s)
   ) {
     return "premium";
@@ -165,6 +166,8 @@ export function purchaseIntentFromQuery(q: string): PurchaseIntent {
     intents.productivity ||
     intents.gaming ||
     intents.explicitBestValue ||
+    intents.longTermValue ||
+    intents.comfortSeeking ||
     intents.schoolUse ||
     intents.giftUse ||
     intents.alternativeSeeking ||
