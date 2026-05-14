@@ -186,7 +186,7 @@ async function handleSearch(q: string | null | undefined): Promise<NextResponse>
       entitlements: entitlementsForTier(tier),
       meta: {
         category: topCategory,
-        intelligenceVersion: 8,
+        intelligenceVersion: 9,
         commerceAI: commerceMeta,
         commerceAiEngine: resolveCommerceAiEngine(),
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),

@@ -14,6 +14,7 @@ import {
 import type { ProductCategorySlug } from "@/lib/intelligence/types";
 import { getMarketplaceSellerRiskTier } from "@/lib/retailTrust";
 import { alternativeSeekingRankAdjustment } from "@/lib/intelligence/alternativeRanking";
+import { tasteCompositeLift, tasteProductAlignment01 } from "@/lib/commerce-os";
 
 export type PurchaseIntent =
   | "neutral"
@@ -290,6 +291,9 @@ export function sortByCompositeRankEnhanced(list: QuantProduct[], query: string)
         ? (p.oldPrice - p.price) / p.oldPrice
         : undefined;
     c += intentCompositeLift(intents, cat, trust / 100, priceVsMedian, { headlineDiscount01: disc01 }) * 92;
+    c +=
+      tasteCompositeLift(intents.taste, cat, trust / 100, tasteProductAlignment01(p, intents.taste), priceVsMedian) *
+      92;
     c += alternativeSeekingRankAdjustment(query, p, medianPrice, intents);
     c += (listingTextQuality01(p.title) - 0.55) * 5.8;
     c += (queryListingRelevance01(query, p) - 0.5) * 10;

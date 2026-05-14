@@ -3,7 +3,12 @@
  */
 
 import type { ProductCategorySlug } from "./types";
-import { detectUniversalIntentFlags, type UniversalIntentFlags } from "@/lib/commerce-os";
+import {
+  detectUniversalIntentFlags,
+  extractTasteGraphSignals,
+  type TasteGraphSignals,
+  type UniversalIntentFlags,
+} from "@/lib/commerce-os";
 import { fixCommonCommerceTypos } from "@/lib/search/conversationalQueryLayer";
 import { arabicIntentGlossTokens, latinSkeletonForMatching, normalizeEasternDigitsInString } from "@/lib/search/queryScriptNormalize";
 
@@ -46,6 +51,8 @@ export type CommerceSearchIntents = {
   portableLight: boolean;
   /** Creator / streamer adjacent workloads. */
   lifestyleCreator: boolean;
+  /** Taste Graph + emotional commerce (query-side). */
+  taste: TasteGraphSignals;
 } & UniversalIntentFlags;
 
 /** Normalized string for regex intent detection (legacy + universal OS). */
@@ -59,6 +66,7 @@ export function intentMatchEnvelope(q: string): string {
 
 export function parseCommerceSearchIntents(q: string): CommerceSearchIntents {
   const s = intentMatchEnvelope(q);
+  const taste = extractTasteGraphSignals(s, q);
   return {
     budget:
       /\b(cheap|budget|affordable|lowest|under\s+(\$|€|£|eur|gbp|usd)|less\s+than|up\s+to|at\s+most|around\s+(\$|€|£)|save|discount|clearance|bargain|steal|markdown)\b/.test(
@@ -138,6 +146,7 @@ export function parseCommerceSearchIntents(q: string): CommerceSearchIntents {
     lifestyleCreator:
       /\b(creator|stream(er|ing)?|youtube|tiktok|content\s+creation|podcast\s+setup)\b/.test(s),
     ...detectUniversalIntentFlags(q, s),
+    taste,
   };
 }
 

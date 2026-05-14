@@ -14,6 +14,14 @@ const SYNONYM_CLUSTERS: readonly { keys: RegExp; add: string }[] = [
   { keys: /\b(gift)\b/i, add: " present occasion thoughtful " },
   { keys: /\b(cheap\s+but\s+not\s+garbage|not\s+junk)\b/i, add: " quality value durable " },
   { keys: /\b(safe\s+choice|safe\s+bet)\b/i, add: " trusted reliable low risk " },
+  {
+    keys: /\b(clean\s+girl|that\s+girl|old\s+money|quiet\s+luxury|smells?\s+rich|expensive\s+looking)\b/i,
+    add: " aesthetic taste identity emotional commerce premium perception ",
+  },
+  {
+    keys: /\b(luxury\s+setup|desk\s+aesthetic|room\s+aesthetic|vibe|aesthetic)\b/i,
+    add: " visual identity lifestyle setup ",
+  },
 ];
 
 export function expandCommerceSemantics(s: string): string {

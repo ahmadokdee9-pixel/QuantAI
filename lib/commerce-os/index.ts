@@ -11,3 +11,5 @@ export { detectUniversalIntentFlags } from "./intentFlags";
 export { expandCommerceSemantics } from "./semanticExpand";
 export type { UniversalCommerceContextDTO } from "./universalContext";
 export { buildUniversalCommerceContext } from "./universalContext";
+export type { TasteGraphSignals, TasteEmotionalBand, TasteTagId } from "./tasteGraph";
+export { TASTE_TAXONOMY, extractTasteGraphSignals, tasteProductAlignment01, tasteCompositeLift, tasteTagListForApi } from "./tasteGraph";

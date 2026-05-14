@@ -14,6 +14,7 @@ import { queryListingRelevance01 } from "./queryRelevance";
 import type { CommerceSearchIntents } from "./searchIntentV2";
 import { intentCompositeLift, parseCommerceSearchIntents } from "./searchIntentV2";
 import type { IntelligenceSignals, ListStats, ProductCategorySlug } from "./types";
+import { tasteCompositeLift, tasteProductAlignment01 } from "@/lib/commerce-os";
 
 function clamp01(n: number): number {
   return Math.min(1, Math.max(0, n));
@@ -166,13 +167,21 @@ export function scoreProductEngine(
   const intentLift = intentCompositeLift(intentsResolved, category, trustNorm, medianHint, {
     headlineDiscount01: headlineDisc,
   });
+  const tasteAlign = tasteProductAlignment01(p, intentsResolved.taste);
+  const tasteLift = tasteCompositeLift(
+    intentsResolved.taste,
+    category,
+    trustNorm,
+    tasteAlign,
+    medianHint
+  );
   const listingFit = clamp01(0.52 + (listingQ - 0.5) * 0.22);
 
   const mp = getMarketplaceSellerRiskTier(p.store, p.title);
   const mpAdj = mp === "high" ? -0.042 : mp === "medium" ? -0.015 : 0;
 
   const composite01 = clamp01(
-    weighted * 0.86 + categoryFitBlend * 0.085 + listingFit * 0.035 + intentLift + mpAdj
+    weighted * 0.86 + categoryFitBlend * 0.085 + listingFit * 0.035 + intentLift + tasteLift + mpAdj
   );
 
   const composite = Math.min(

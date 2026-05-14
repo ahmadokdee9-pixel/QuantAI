@@ -5,6 +5,7 @@ import { getFinalComposite, ratingValue } from "@/lib/shoppingScore";
 import type { CommerceSearchIntents } from "./searchIntentV2";
 import { fakeDiscountRisk, peerPriceMedianExcluding } from "@/lib/deals/dealAnalysis";
 import { getCategoryPricingEconomics, isStrongValueTerritory } from "./adaptiveDealPricing";
+import { tasteProductAlignment01 } from "@/lib/commerce-os";
 
 export type NarrativeIntentCtx = {
   query?: string;
@@ -26,7 +27,12 @@ export type AdaptiveVerdict =
   | "Soft Hold: Price Room"
   | "Compare Alternatives"
   | "High Trust Option"
-  | "Risky but High Value";
+  | "Risky but High Value"
+  | "Quiet Luxury Pick"
+  | "Looks More Expensive Than It Is"
+  | "Luxury Feel Without Luxury Pricing"
+  | "Strong Aesthetic-Value Balance"
+  | "Premium Vibe at Mid-Range Pricing";
 
 function strHash(s: string): number {
   let h = 0;
@@ -160,6 +166,30 @@ export function getAdaptiveVerdict(
     return variant(seed, ["Fair Price", "Budget Winner", "Good Low-Risk Buy", "Compare Alternatives"]) as AdaptiveVerdict;
   }
 
+  const taste = intents?.taste;
+  const tasteAlign = taste?.hasTasteLayer ? tasteProductAlignment01(p, taste) : 0;
+  if (taste?.hasTasteLayer && tasteAlign >= 0.33 && c >= 62 && t >= 64) {
+    const ts = taste.tagStrength;
+    if ((ts.quiet_luxury ?? 0) >= 0.42 || (ts.old_money ?? 0) >= 0.4) {
+      return variant(seed + 60, ["Quiet Luxury Pick", "Strong Aesthetic-Value Balance"]) as AdaptiveVerdict;
+    }
+    if (
+      ((ts.rich_smelling ?? 0) >= 0.42 || (ts.niche_fragrance ?? 0) >= 0.42) &&
+      (category === "beauty" || category === "fashion")
+    ) {
+      return variant(seed + 61, ["Luxury Feel Without Luxury Pricing", "Premium Vibe at Mid-Range Pricing"]) as AdaptiveVerdict;
+    }
+    if ((ts.expensive_looking ?? 0) >= 0.42 && fair > 0 && p.price <= fair * 1.08) {
+      return variant(seed + 62, ["Looks More Expensive Than It Is", "Strong Aesthetic-Value Balance"]) as AdaptiveVerdict;
+    }
+    if ((ts.gamer_setup ?? 0) >= 0.45 && category === "electronics" && c >= 66) {
+      return variant(seed + 63, ["Strong Aesthetic-Value Balance", "Premium Vibe at Mid-Range Pricing"]) as AdaptiveVerdict;
+    }
+    if ((ts.clean_aesthetic ?? 0) >= 0.45 && tasteAlign >= 0.38 && (category === "electronics" || category === "beauty")) {
+      return variant(seed + 64, ["Strong Aesthetic-Value Balance", "Good Low-Risk Buy"]) as AdaptiveVerdict;
+    }
+  }
+
   if (weakTrustHighValue && !strongValue) return "Risky but High Value";
   if (waitNeed) {
     return variant(seed + 9, [
@@ -192,6 +222,29 @@ export function getPsychologyInsight(
   const r = ratingValue(p.rating);
   const seed = strHash(p.link + p.title);
   const intents = nCtx?.intents;
+
+  if (intents?.taste?.hasTasteLayer && intents.taste.olfactoryRichIntent01 >= 0.42 && (category === "beauty" || category === "fashion")) {
+    const ta = tasteProductAlignment01(p, intents.taste);
+    if (ta >= 0.28) {
+      return variant(seed + 44, [
+        "Taste graph: your language skews rich-scent and identity—QuantAI lifts rows that read niche, blended, and trust-backed over loud discount theater.",
+        "Emotional commerce read: olfactory luxury cues in the query—favoring listings whose vocabulary matches longevity and seller hygiene.",
+      ]);
+    }
+  }
+  if (
+    intents?.taste?.hasTasteLayer &&
+    (intents.taste.tagStrength.expensive_looking ?? 0) >= 0.42 &&
+    (category === "fashion" || category === "beauty" || category === "electronics")
+  ) {
+    const ta = tasteProductAlignment01(p, intents.taste);
+    if (ta >= 0.3 && signals.pricePerformance >= 68) {
+      return variant(seed + 46, [
+        "Visual identity match: the tray title signals align with an expensive-looking brief—value is as much perception and trust as spec depth.",
+        "Aesthetic-value posture: QuantAI is rewarding listings that look premium-adjacent without forcing you into ultra-luxury pricing.",
+      ]);
+    }
+  }
 
   if (intents?.fragranceBeauty && (category === "beauty" || category === "fashion")) {
     return variant(seed + 3, [

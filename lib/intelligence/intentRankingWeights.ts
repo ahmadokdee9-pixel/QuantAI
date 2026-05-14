@@ -127,5 +127,49 @@ export function applyIntentAwareCategoryWeights(
     d.popularity += 0.01;
   }
 
+  const taste = intents.taste;
+  if (taste.hasTasteLayer) {
+    const ts = taste.tagStrength;
+    if (
+      (ts.rich_smelling ?? 0) >= 0.4 ||
+      (ts.niche_fragrance ?? 0) >= 0.4 ||
+      (ts.sensual ?? 0) >= 0.45
+    ) {
+      if (slug === "beauty" || slug === "fashion") {
+        d.rating += 0.02;
+        d.reviewDepth += 0.018;
+        d.retailerTrust += 0.014;
+        d.pricePerformance += 0.01;
+      }
+    }
+    if ((ts.expensive_looking ?? 0) >= 0.45 || (ts.premium_perception ?? 0) >= 0.45) {
+      if (slug === "fashion" || slug === "beauty" || slug === "electronics") {
+        d.rating += 0.012;
+        d.retailerTrust += 0.012;
+        d.popularity += 0.008;
+      }
+    }
+    if ((ts.gamer_setup ?? 0) >= 0.45 && slug === "electronics") {
+      d.pricePerformance += 0.016;
+      d.reviewDepth += 0.01;
+    }
+    if (
+      ((ts.quiet_luxury ?? 0) >= 0.45 || (ts.old_money ?? 0) >= 0.45) &&
+      (slug === "fashion" || slug === "beauty" || slug === "home")
+    ) {
+      d.retailerTrust += 0.016;
+      d.rating += 0.012;
+      d.discountQuality -= 0.01;
+    }
+    if ((ts.clean_aesthetic ?? 0) >= 0.45 && (slug === "electronics" || slug === "home" || slug === "beauty")) {
+      d.rating += 0.01;
+      d.retailerTrust += 0.01;
+    }
+    if ((ts.cozy ?? 0) >= 0.45 && slug === "home") {
+      d.rating += 0.01;
+      d.popularity += 0.008;
+    }
+  }
+
   return normalizeWeights(d);
 }
