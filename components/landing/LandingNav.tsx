@@ -4,7 +4,6 @@ import { SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { Menu, Sparkles, X } from "lucide-react";
 import { useState } from "react";
-import FeedbackLauncher from "@/components/feedback/FeedbackLauncher";
 
 const links = [
   { href: "/#features", label: "AI picks" },
@@ -49,7 +48,6 @@ export default function LandingNav() {
               {l.label}
             </a>
           ))}
-          <FeedbackLauncher variant="nav" className="ml-1" />
         </div>
 
         <div className="hidden md:flex items-center gap-2 shrink-0">
@@ -99,9 +97,6 @@ export default function LandingNav() {
                 {l.label}
               </a>
             ))}
-          </div>
-          <div className="mt-4 border-t border-white/[0.06] pt-4">
-            <FeedbackLauncher variant="nav" className="w-full justify-center" />
           </div>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
             {isSignedIn ? (

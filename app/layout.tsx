@@ -1,18 +1,18 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Noto_Sans_Arabic } from "next/font/google";
+import { IBM_Plex_Sans_Arabic, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import QuantShell from "@/components/shell/QuantShell";
 import { appUrl } from "@/lib/stripe/config";
 
-const fontLatin = Inter({
+const fontLatin = Plus_Jakarta_Sans({
   subsets: ["latin", "latin-ext"],
   variable: "--font-quantai",
   display: "swap",
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
-const fontArabic = Noto_Sans_Arabic({
+const fontArabic = IBM_Plex_Sans_Arabic({
   subsets: ["arabic"],
   variable: "--font-quantai-ar",
   display: "swap",

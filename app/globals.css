@@ -21,7 +21,8 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans:
-    var(--font-quantai), var(--font-quantai-ar), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    var(--font-quantai), var(--font-quantai-ar), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    "Helvetica Neue", sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -46,44 +47,44 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   font-weight: 400;
-  font-feature-settings: "cv02" 1, "cv03" 1, "cv04" 1, "ss03" 1;
-  line-height: 1.58;
-  letter-spacing: -0.013em;
+  font-feature-settings: "kern" 1, "liga" 1;
+  line-height: 1.6;
+  letter-spacing: -0.011em;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
 
 /* —— Typography rhythm (commerce intelligence) —— */
 .cockpit-display {
-  letter-spacing: -0.038em;
-  line-height: 1.06;
-  font-weight: 600;
+  letter-spacing: -0.042em;
+  line-height: 1.05;
+  font-weight: 700;
 }
 
 .cockpit-overline {
   font-size: 0.625rem;
   font-weight: 600;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: rgba(148, 163, 184, 0.66);
 }
 
 .cockpit-body {
-  line-height: 1.58;
-  letter-spacing: -0.008em;
+  line-height: 1.62;
+  letter-spacing: -0.006em;
 }
 
 .cockpit-label {
   font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: rgba(148, 163, 184, 0.72);
 }
 
 .cockpit-cta {
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.018em;
 }
 
 .cockpit-gradient-text {
@@ -275,12 +276,28 @@ body {
   pointer-events: none;
 }
 .cockpit-search-aurora[data-loading="false"]::before {
-  animation: cockpit-aurora-idle 5.5s ease-in-out infinite;
+  animation: cockpit-aurora-idle 5.5s ease-in-out infinite, cockpit-aurora-breathe 9s ease-in-out infinite;
+}
+
+.cockpit-search-aurora--premium[data-loading="false"]::before {
+  opacity: 0.38;
 }
 
 .cockpit-search-aurora[data-loading="true"]::before {
   animation: cockpit-border-flow 3.2s linear infinite;
   opacity: 0.55;
+}
+
+@keyframes cockpit-aurora-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.34;
+  }
+  50% {
+    transform: scale(1.012);
+    opacity: 0.48;
+  }
 }
 
 @keyframes cockpit-aurora-idle {
@@ -301,6 +318,68 @@ body {
   100% {
     filter: hue-rotate(360deg);
   }
+}
+
+/* Hero command field — premium focus + optimistic submit pulse */
+.hero-search-field {
+  transform: translateZ(0);
+}
+.hero-search-field:focus-within {
+  border-color: rgba(34, 211, 238, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(34, 211, 238, 0.12),
+    0 20px 56px -36px rgba(34, 211, 238, 0.18),
+    0 0 48px -40px rgba(167, 139, 250, 0.08);
+  background-color: rgba(0, 0, 0, 0.58);
+}
+.hero-search-field--pulse {
+  animation: hero-submit-pulse 0.58s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes hero-submit-pulse {
+  0% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 0 0 0 rgba(34, 211, 238, 0);
+  }
+  40% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 0 0 1px rgba(34, 211, 238, 0.2),
+      0 12px 40px -20px rgba(34, 211, 238, 0.25);
+  }
+  100% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 0 0 0 rgba(34, 211, 238, 0);
+  }
+}
+
+/* Hero search: one overflow value on each box — mixed hidden+visible forces visible→auto (inner scrollbar). */
+.hero-search-instrument,
+.hero-search-shell {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.cockpit-search-aurora.hero-search-instrument {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.hero-ai-command-root,
+.hero-ai-command-card,
+.hero-ai-suggest-panel {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.hero-ai-command-card,
+.hero-ai-suggest-panel {
+  isolation: isolate;
 }
 
 @keyframes aiGridMove {
@@ -377,43 +456,14 @@ body {
   animation: shimmer 1.4s ease-in-out infinite;
 }
 
-@keyframes cockpit-scan {
-  0% {
-    transform: translateY(-100%);
-    opacity: 0;
-  }
-  15% {
-    opacity: 0.05;
-  }
-  85% {
-    opacity: 0.05;
-  }
-  100% {
-    transform: translateY(500%);
-    opacity: 0;
-  }
-}
-
-.cockpit-hero-scanlines::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(
-    180deg,
-    transparent 0%,
-    rgba(148, 163, 184, 0.035) 48%,
-    transparent 52%
-  );
-  animation: cockpit-scan 5.5s ease-in-out infinite;
-  pointer-events: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .cockpit-hero-scanlines::after,
   .cockpit-search-aurora[data-loading="true"]::before,
   .cockpit-search-aurora[data-loading="false"]::before,
   .ai-grid-motion {
+    animation: none !important;
+  }
+
+  .hero-search-field--pulse {
     animation: none !important;
   }
 

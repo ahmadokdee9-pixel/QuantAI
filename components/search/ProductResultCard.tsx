@@ -174,27 +174,27 @@ function worthBuyingCopy(
   if (w === "yes") {
     return {
       headline: hasDiscount
-        ? "Yes — discount hygiene + tray read align for cautious buyers"
-        : "Yes — trust + composite justify action without leaning on a headline markdown",
+        ? "Yes — the discount looks credible and the seller signal backs it"
+        : "Yes — trust and overall value line up even without a headline discount",
       cls: "text-emerald-200/95",
     };
   }
   if (w === "wait") {
     return {
       headline: hasDiscount
-        ? "Wait — discount or price position looks weak"
-        : "Wait — value vs tray looks soft (no meaningful discount buffer)",
+        ? "Wait — we would want clearer proof before trusting this price story"
+        : "Wait — value versus peers still looks soft",
       cls: "text-rose-200/90",
     };
   }
-  return { headline: "Maybe — verify peers + seller pages", cls: "text-amber-100/90" };
+  return { headline: "Maybe — worth a quick check on specs and seller terms", cls: "text-amber-100/90" };
 }
 
 /** Surface scan — short phrases only. */
 function worthBuyingShort(w: ProductDealIntelligence["worthBuyingNow"], hasDiscount: boolean): string {
-  if (w === "yes") return hasDiscount ? "Buy now · Discount + trust aligned" : "Buy now · Value + trust aligned";
-  if (w === "wait") return hasDiscount ? "Wait · Discount or price soft" : "Wait · Value timing soft";
-  return "Maybe · Verify seller";
+  if (w === "yes") return hasDiscount ? "Favorable · Discount + trust" : "Favorable · Value + trust";
+  if (w === "wait") return hasDiscount ? "Hold · Verify the price story" : "Hold · Value timing";
+  return "Review · Check seller";
 }
 
 function analystScanLine(deal: ProductDealIntelligence, trust: number, qiRounded: number): string {
@@ -487,7 +487,7 @@ function ProductResultCard({
               onClick={() => toggleCompare(p.link)}
               disabled={!inCompare && compareLinks.length >= 3}
               aria-pressed={inCompare}
-              className={`shrink-0 touch-manipulation rounded-full border px-3 py-2 text-[11px] font-medium tracking-tight transition duration-300 active:scale-[0.98] ${
+              className={`shrink-0 touch-manipulation rounded-full border px-3.5 py-2.5 text-[11px] font-medium tracking-tight transition duration-300 active:scale-[0.98] min-h-11 sm:min-h-10 ${
                 inCompare
                   ? "border-cyan-400/20 bg-cyan-400/10 text-cyan-50/90"
                   : "border-white/[0.07] bg-black/25 text-slate-500/95 hover:border-cyan-400/15 hover:bg-cyan-500/[0.05] hover:text-slate-200/95 disabled:opacity-40"
@@ -549,7 +549,7 @@ function ProductResultCard({
                   <p className="text-[12px] font-medium text-slate-600/85">Listed price</p>
                 )}
                 <div className="mt-1 flex flex-wrap items-baseline gap-2">
-                  <p className="text-[1.5rem] font-semibold tabular-nums tracking-tight text-white sm:text-[1.6rem]">
+                  <p className="text-[1.55rem] font-semibold tabular-nums tracking-[-0.02em] text-white sm:text-[1.65rem]">
                     {formatListingPrice(p.price, sym)}
                   </p>
                   {p.oldPrice != null && p.oldPrice > p.price && (
@@ -568,9 +568,9 @@ function ProductResultCard({
                 </div>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-0.5">
-                <div className="relative size-[3rem] shrink-0 opacity-95 sm:size-[3.5rem]">
+                <div className="relative size-[3.15rem] shrink-0 opacity-[0.97] sm:size-[3.65rem]">
                   <svg
-                    className="size-[3rem] -rotate-90 sm:size-[3.5rem]"
+                    className="size-[3.15rem] -rotate-90 sm:size-[3.65rem]"
                     viewBox="0 0 54 54"
                     role="img"
                     aria-label={`QI score ${Math.round(scoreNorm)} of 100`}

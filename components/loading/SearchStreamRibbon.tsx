@@ -76,7 +76,7 @@ export default function SearchStreamRibbon({ active, className = "" }: Props) {
                 {done ? "✓" : i + 1}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <div className="flex min-h-[1.5rem] flex-wrap items-center justify-between gap-2">
                   <p
                     className={`text-[13px] font-semibold tracking-tight ${
                       current ? "text-cyan-50/95" : done ? "text-slate-300" : "text-slate-500"
@@ -86,7 +86,7 @@ export default function SearchStreamRibbon({ active, className = "" }: Props) {
                   </p>
                   {current && (
                     <motion.span
-                      className="text-[10px] font-medium text-cyan-200/75"
+                      className="shrink-0 whitespace-nowrap text-[10px] font-medium text-cyan-200/75"
                       animate={reduce ? undefined : { opacity: [0.5, 1, 0.5] }}
                       transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
                     >

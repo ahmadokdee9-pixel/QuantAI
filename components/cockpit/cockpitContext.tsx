@@ -55,8 +55,14 @@ export function CockpitProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const focusPrimarySearch = useCallback(() => {
-    searchRef.current?.focus();
-    searchRef.current?.select?.();
+    const el = searchRef.current;
+    if (!el) return;
+    try {
+      el.focus({ preventScroll: true });
+    } catch {
+      el.focus();
+    }
+    el.select?.();
   }, []);
 
   const registerQuickHandlers = useCallback((handlers: CockpitQuickHandlers | null) => {

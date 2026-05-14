@@ -11,8 +11,6 @@ import { trackEvent } from "@/lib/analytics/track";
 import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
 import { readApiJson } from "@/lib/api/readJson";
 import GlobalIntelligencePanel from "@/components/intelligence/GlobalIntelligencePanel";
-import AILoadingPhase from "@/components/loading/AILoadingPhase";
-import SearchStreamRibbon from "@/components/loading/SearchStreamRibbon";
 import { useCockpit, type CockpitQuickHandlers } from "@/components/cockpit/cockpitContext";
 import ShareSnapshotBar from "@/components/share/ShareSnapshotBar";
 import { buildCompareIntelligenceSnapshot } from "@/lib/intelligence/compareIntelligence";
@@ -87,7 +85,8 @@ function ResultSkeleton() {
       {Array.from({ length: 8 }).map((_, i) => (
         <div
           key={i}
-          className="cockpit-glass-panel skeleton-cinematic overflow-hidden border-white/[0.07] p-5"
+          style={i < 6 ? { animationDelay: `${i * 55}ms` } : undefined}
+          className="cockpit-glass-panel skeleton-cinematic overflow-hidden border-white/[0.07] p-5 motion-safe:animate-[fadeIn_0.45s_ease-out_both]"
         >
           <div className="h-40 rounded-2xl animate-shimmer" />
           <div className="mt-4 h-4 w-[82%] rounded-lg bg-white/[0.08]" />
@@ -361,9 +360,10 @@ export default function ProductResultsSurface({
         <div className="sticky top-[3.25rem] z-30 -mx-4 px-4 py-3 sm:-mx-6 sm:px-6 mb-6 border-b border-white/[0.07] bg-[#030712]/75 backdrop-blur-[28px] shadow-[0_20px_50px_-32px_rgba(0,0,0,0.85)]">
           <div className="h-12 max-w-2xl rounded-2xl border border-white/[0.06] bg-gradient-to-r from-white/[0.07] via-white/[0.04] to-white/[0.07] animate-pulse" />
         </div>
-        <div className="mb-6 space-y-4 max-w-2xl">
-          <SearchStreamRibbon active />
-          <AILoadingPhase />
+        <div className="mb-8 max-w-2xl">
+          <p className="text-[12px] font-medium text-slate-500/90" aria-live="polite">
+            Assembling your tray…
+          </p>
         </div>
         <ResultSkeleton />
       </section>
@@ -484,12 +484,12 @@ export default function ProductResultsSurface({
 
       {loading && products.length > 0 ? (
         <div
-          className="mb-4 flex items-center justify-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-500/10 px-3 py-2.5 text-center text-[11px] font-medium text-cyan-50/95"
+          className="mb-4 flex items-center justify-center gap-2.5 rounded-xl border border-cyan-400/14 bg-cyan-500/[0.07] px-4 py-3 text-center text-[12px] font-medium text-cyan-50/92 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-opacity duration-300"
           role="status"
           aria-live="polite"
         >
-          <Loader2 className="size-3.5 shrink-0 animate-spin" aria-hidden />
-          Refreshing tray — ranks stay pinned.
+          <Loader2 className="size-3.5 shrink-0 animate-spin text-cyan-200/90" aria-hidden />
+          Updating your tray—previous results stay visible until the new scan lands.
         </div>
       ) : null}
 
@@ -768,7 +768,7 @@ export default function ProductResultsSurface({
             initial={reduceMotion ? { opacity: 1 } : { opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: reduceMotion ? 0 : 0.22 }}
+            transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }}
             className={`grid min-w-0 ${gridCols} ${compactTray ? "gap-5 sm:gap-6" : "gap-7"} ${gridMax}`}
           >
             {sortedProducts.map((p, index) => {

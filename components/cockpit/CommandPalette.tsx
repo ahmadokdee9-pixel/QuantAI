@@ -151,7 +151,15 @@ export default function CommandPalette() {
   useEffect(() => {
     if (!commandOpen) return;
     const el = listRef.current?.querySelector<HTMLElement>("button");
-    window.requestAnimationFrame(() => el?.focus());
+    window.requestAnimationFrame(() => {
+      const b = el;
+      if (b)
+        try {
+          b.focus({ preventScroll: true });
+        } catch {
+          b.focus();
+        }
+    });
   }, [commandOpen]);
 
   if (!mounted || typeof document === "undefined") return null;

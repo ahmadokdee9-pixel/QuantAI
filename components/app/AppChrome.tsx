@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { LayoutDashboard, Bookmark, CreditCard, Home, Sparkles } from "lucide-react";
 import AmbientBackdrop from "@/components/cockpit/AmbientBackdrop";
-import FeedbackLauncher from "@/components/feedback/FeedbackLauncher";
 
 const nav = [
   { href: "/", label: "Home", icon: Home },
@@ -58,14 +57,10 @@ export default function AppChrome({ children }: { children: React.ReactNode }) {
                   </Link>
                 );
               })}
-              <FeedbackLauncher variant="nav" className="hidden sm:inline-flex" />
             </nav>
           </div>
         </header>
         <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">{children}</main>
-        <div className="fixed bottom-5 left-5 z-50 sm:hidden">
-          <FeedbackLauncher variant="floating" />
-        </div>
       </div>
     </div>
   );

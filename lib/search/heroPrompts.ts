@@ -1,3 +1,8 @@
+/** Max smart-suggestion cards when the user opens the suggestions panel (no in-panel scroll). */
+export const HERO_COMMAND_SUGGESTION_CAP = 6 as const;
+/** Max recent-query chips in the main command card (no scroll). */
+export const HERO_COMMAND_HISTORY_CAP = 3 as const;
+
 /** One-tap examples — natural sentences QuantAI already understands. */
 export const HERO_SEARCH_PROMPTS: readonly string[] = [
   "Best phone for my wife under €700",
@@ -22,4 +27,6 @@ export const HERO_INPUT_PLACEHOLDERS: readonly string[] = [
   "Try: “something like a MacBook Air but cheaper, good reviews”…",
   "Try: “compare OLED TVs—real discounts only”…",
   "Try: “best gift for a student, durable, not junk”…",
+  "Ask in one line: product, budget, who it’s for, how much trust you want…",
+  "Try: “quiet mechanical keyboard, premium feel, under €200”…",
 ];

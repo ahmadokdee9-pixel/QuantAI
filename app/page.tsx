@@ -8,17 +8,15 @@ import AmbientBackdrop from "../components/cockpit/AmbientBackdrop";
 import LandingNav from "../components/landing/LandingNav";
 import MarketingSections from "../components/landing/MarketingSections";
 import PricingCards from "../components/subscription/PricingCards";
-import FeedbackLauncher from "../components/feedback/FeedbackLauncher";
 import TrustRibbon from "../components/trust/TrustRibbon";
 import QuantAITransparencySection from "../components/trust/QuantAITransparencySection";
 import DeferredBelowFold from "../components/home/DeferredBelowFold";
-import AILoadingPhase from "../components/loading/AILoadingPhase";
 import SearchStreamRibbon from "../components/loading/SearchStreamRibbon";
-import MagneticSurface from "../components/motion/MagneticSurface";
 import { useCockpit } from "../components/cockpit/cockpitContext";
 import { useCopilotSession } from "../components/copilot/CopilotContext";
 import { calculateAIScore } from "./api/search/lib/aiScoring";
 import ProductResultsSurface from "../components/search/ProductResultsSurface";
+import HeroSearchCommand from "../components/search/HeroSearchCommand";
 import {
   applyResultsFilters,
   countActiveFilters,
@@ -55,10 +53,10 @@ import { appendLocalRecentSearch, readLocalSignals, recordInterestTag } from "@/
 import { HERO_INPUT_PLACEHOLDERS, HERO_SEARCH_PROMPTS } from "@/lib/search/heroPrompts";
 import { useMobilePerf } from "@/lib/hooks/useMobilePerf";
 import { useReducedMotion, motion } from "framer-motion";
-import { ArrowRight, Loader2, Search } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 /** Deterministic SSR + first client paint — no localStorage; must match hydration. */
-const SSR_HERO_DATALIST_HINTS: readonly string[] = HERO_SEARCH_PROMPTS;
+const SSR_HERO_HINT_SEED: readonly string[] = HERO_SEARCH_PROMPTS;
 
 function mergeHeroTrayHints(): string[] {
   const recent = readLocalSignals().recentSearches.slice(0, 8);
@@ -73,13 +71,6 @@ function mergeHeroTrayHints(): string[] {
     return true;
   }).slice(0, 18);
 }
-
-type SearchHistoryRow = {
-  id?: string;
-  query: string;
-  result_count?: number;
-  created_at?: string;
-};
 
 export default function Home() {
   const { isSignedIn } = useUser();
@@ -96,16 +87,17 @@ export default function Home() {
   const [saved, setSaved] = useState<QuantProduct[]>([]);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [resultsKey, setResultsKey] = useState(0);
-  const [searchHistory, setSearchHistory] = useState<SearchHistoryRow[]>([]);
   const [subscriptionTier, setSubscriptionTier] = useState<QuantPlanTier | null>(null);
   const [searchEntitlements, setSearchEntitlements] = useState<SearchEntitlementsDTO | null>(null);
   const [compareTrayLinks, setCompareTrayLinks] = useState<string[]>([]);
-  const [heroHintOptions, setHeroHintOptions] = useState<string[]>(() => [...SSR_HERO_DATALIST_HINTS]);
+  const [heroHintOptions, setHeroHintOptions] = useState<string[]>(() => [...SSR_HERO_HINT_SEED]);
   const bootedSearchFromUrl = useRef(false);
   const searchAbortRef = useRef<AbortController | null>(null);
   /** Skip duplicate in-flight requests for the same trimmed query (double-submit / double-tap). */
   const searchInflightQueryRef = useRef<string | null>(null);
   const [heroPlaceholderIdx, setHeroPlaceholderIdx] = useState(0);
+  const [submitPulse, setSubmitPulse] = useState(false);
+  const submitPulseTimerRef = useRef<number | null>(null);
   const { setSession: setCopilotSession } = useCopilotSession();
 
   const savedLinks = useMemo(
@@ -124,45 +116,6 @@ export default function Home() {
       /* ignore */
     }
   }, []);
-
-  const refreshSearchHistory = useCallback(async () => {
-    if (!isSignedIn) return;
-    try {
-      const res = await fetch("/api/intelligence/search-history", { credentials: "same-origin" });
-      const parsed = await readApiJson<{ items?: SearchHistoryRow[] }>(res);
-      if (!isApiFailure(parsed) && parsed.data && Array.isArray(parsed.data.items)) {
-        setSearchHistory(parsed.data.items);
-      }
-    } catch {
-      /* ignore */
-    }
-  }, [isSignedIn]);
-
-  useEffect(() => {
-    if (!isSignedIn) return;
-    let cancelled = false;
-    void (async () => {
-      try {
-        const res = await fetch("/api/intelligence/search-history", {
-          credentials: "same-origin",
-        });
-        const parsed = await readApiJson<{ items?: SearchHistoryRow[] }>(res);
-        if (
-          !cancelled &&
-          !isApiFailure(parsed) &&
-          parsed.data &&
-          Array.isArray(parsed.data.items)
-        ) {
-          setSearchHistory(parsed.data.items);
-        }
-      } catch {
-        /* ignore */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [isSignedIn]);
 
   useEffect(() => {
     if (!isSignedIn) return;
@@ -310,6 +263,16 @@ export default function Home() {
     setLoading(true);
     setSearchError(null);
 
+    if (submitPulseTimerRef.current != null) {
+      window.clearTimeout(submitPulseTimerRef.current);
+      submitPulseTimerRef.current = null;
+    }
+    setSubmitPulse(true);
+    submitPulseTimerRef.current = window.setTimeout(() => {
+      setSubmitPulse(false);
+      submitPulseTimerRef.current = null;
+    }, 580);
+
     await new Promise<void>((resolve) => {
       requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
     });
@@ -357,9 +320,6 @@ export default function Home() {
         setSearchError(apiErrorText(parsed, "Too many searches.") + wait);
         const ent429 = root?.entitlements;
         if (ent429) setSearchEntitlements(ent429);
-        if (root?.code === "PLAN_SEARCH_LIMIT") {
-          void refreshSearchHistory();
-        }
         trackEvent(QuantAnalyticsEvents.SEARCH_ERROR, { code: "rate_limit" });
         return;
       }
@@ -384,8 +344,8 @@ export default function Home() {
           setSearchEntitlements(searchData.entitlements);
           if (searchData.entitlements.tier) setSubscriptionTier(searchData.entitlements.tier);
         }
-        void refreshSearchHistory();
         appendLocalRecentSearch(q);
+        void refreshSavedFromServer();
         setHeroHintOptions(mergeHeroTrayHints());
         trackEvent(QuantAnalyticsEvents.SEARCH_SUCCESS, {
           resultCount: searchData.products.length,
@@ -423,12 +383,12 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    // Client-only: merge recent tray memory into datalist after hydration (initial state matches SSR).
+    // Client-only: merge recent tray memory into hero hints after hydration (initial state matches SSR).
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setHeroHintOptions(mergeHeroTrayHints());
     const id = window.setInterval(() => {
       setHeroPlaceholderIdx((i) => (i + 1) % HERO_INPUT_PLACEHOLDERS.length);
-    }, 4800);
+    }, 4200);
     return () => window.clearInterval(id);
   }, []);
 
@@ -586,149 +546,72 @@ export default function Home() {
               Live shopping intelligence
             </div>
 
-            <h1 className="cockpit-display mt-12 text-[2.65rem] sm:text-5xl lg:text-[3.75rem] text-white motion-safe:animate-[fadeIn_0.65s_ease-out]">
+            <h1 className="cockpit-display mt-12 text-[2.55rem] font-bold leading-[1.06] sm:text-5xl lg:text-[3.55rem] text-white motion-safe:animate-[fadeIn_0.65s_ease-out]">
               <span className="block text-white">Search in plain language. Buy with confidence.</span>
-              <span className="mt-4 block cockpit-gradient-text font-semibold">
+              <span className="mt-4 block cockpit-gradient-text font-bold tracking-[-0.04em]">
                 QuantAI turns messy shopping searches into ranked buying decisions.
               </span>
             </h1>
 
-            <p className="cockpit-body mx-auto mt-8 max-w-2xl text-base sm:text-lg text-slate-400/95 motion-safe:animate-[fadeIn_0.7s_ease-out]">
-              Ask for any product, budget, store, risk, or discount. Search naturally—QuantAI understands product,
-              budget, trust, and deal intent.
+            <p className="mx-auto mt-6 max-w-2xl text-[15px] font-semibold leading-snug tracking-[-0.02em] text-slate-200/95 sm:text-[16px] motion-safe:animate-[fadeIn_0.66s_ease-out]">
+              Built to surface sharper buying decisions than ordinary search—live listings, ranked for trust and
+              value.
+            </p>
+
+            <p className="cockpit-body mx-auto mt-5 max-w-2xl text-[15px] sm:text-[16px] text-slate-400/95 motion-safe:animate-[fadeIn_0.7s_ease-out]">
+              Ask for any product, budget, store, risk, or discount. QuantAI reads product, budget, trust, and deal
+              intent in one calm scan.
             </p>
 
             {/* Search — hero instrument */}
             <motion.div
-              className="cockpit-search-aurora mx-auto mt-10 max-w-3xl sm:mt-14 sm:max-w-[52rem] motion-safe:animate-[fadeIn_0.75s_ease-out] rounded-[1.5rem] p-px shadow-[0_32px_90px_-44px_rgba(15,23,42,0.88),0_0_64px_-40px_rgba(34,211,238,0.1)]"
+              className="cockpit-search-aurora cockpit-search-aurora--premium hero-search-instrument mx-auto mt-10 max-w-3xl sm:mt-14 sm:max-w-[52rem] motion-safe:animate-[fadeIn_0.75s_ease-out] rounded-[1.5rem] p-px shadow-[0_36px_100px_-48px_rgba(15,23,42,0.92),0_0_80px_-48px_rgba(34,211,238,0.12)]"
               data-loading={loading ? "true" : "false"}
               animate={
                 reduceHeroMotion || mobilePerf
                   ? undefined
-                  : { opacity: loading ? 1 : [0.92, 1, 0.94, 1] }
+                  : { opacity: loading ? 1 : [0.94, 1, 0.97, 1] }
               }
               transition={
                 reduceHeroMotion || mobilePerf || loading
                   ? undefined
-                  : { duration: 5.5, repeat: Infinity, ease: "easeInOut" }
+                  : { duration: 6.2, repeat: Infinity, ease: "easeInOut" }
               }
             >
-              <div className="cockpit-hero-scanlines relative overflow-hidden rounded-[1.45rem] border border-white/[0.07] bg-[#050a14]/92 px-3.5 py-4 sm:p-5 backdrop-blur-[36px]">
+              <div className="hero-search-shell relative rounded-[1.45rem] border border-white/[0.08] bg-[#040b16]/94 px-3.5 py-5 sm:p-6 backdrop-blur-[40px]">
                 {loading && !mobilePerf && (
                   <div
-                    className="pointer-events-none absolute inset-0 bg-[conic-gradient(from_180deg_at_50%_50%,transparent_0deg,rgba(34,211,238,0.06)_120deg,transparent_240deg)] motion-reduce:animate-none animate-spin opacity-40"
-                    style={{ animationDuration: "5s" }}
+                    className="pointer-events-none absolute inset-0 bg-[conic-gradient(from_200deg_at_50%_50%,transparent_0deg,rgba(34,211,238,0.05)_130deg,transparent_260deg)] motion-reduce:animate-none animate-spin opacity-35"
+                    style={{ animationDuration: "6.5s" }}
                     aria-hidden
                   />
                 )}
-                <div className="relative flex flex-col gap-3.5 sm:flex-row sm:items-stretch sm:gap-3.5">
-                  <datalist id="quantai-hero-hints">
-                    {heroHintOptions.map((h) => (
-                      <option key={h} value={h} />
-                    ))}
-                  </datalist>
-                  <div className="qa-search-field relative flex min-h-[52px] sm:min-h-[58px] flex-1 items-center gap-3 rounded-2xl border border-white/[0.06] bg-black/45 px-3.5 sm:px-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] motion-safe:focus-within:scale-[1.002]">
-                    <Search
-                      className={`size-[1.15rem] shrink-0 sm:size-5 ${loading ? "text-cyan-300/85 motion-reduce:animate-none animate-pulse" : "text-cyan-400/35"}`}
-                      strokeWidth={1.5}
-                      aria-hidden
-                    />
-                    <input
-                      ref={registerPrimarySearch}
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && void search()}
-                      placeholder={HERO_INPUT_PLACEHOLDERS[heroPlaceholderIdx] ?? HERO_INPUT_PLACEHOLDERS[0]}
-                      list="quantai-hero-hints"
-                      enterKeyHint="search"
-                      className="min-w-0 flex-1 bg-transparent py-3.5 text-[15px] font-medium leading-snug tracking-[-0.02em] text-white placeholder:text-slate-500/55 placeholder:font-normal outline-none sm:text-[16px]"
-                    />
-                  </div>
-                  <MagneticSurface
-                    className="inline-flex min-h-[52px] w-full shrink-0 sm:min-h-[58px] sm:w-auto"
-                    strength={0.1}
-                    disabled={mobilePerf}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => void search()}
-                      disabled={loading}
-                      className="group relative inline-flex min-h-[52px] w-full items-center justify-center gap-2 overflow-hidden rounded-2xl px-7 text-[14px] font-semibold tracking-[-0.02em] text-slate-950 shadow-[0_14px_40px_-18px_rgba(34,211,238,0.26)] transition duration-300 enabled:hover:shadow-[0_20px_48px_-18px_rgba(34,211,238,0.32)] disabled:opacity-55 sm:min-h-[58px] sm:px-9 sm:text-[15px]"
-                    >
-                      <span className="absolute inset-0 bg-gradient-to-r from-cyan-300/95 via-sky-400/95 to-violet-500/90 transition duration-500 group-hover:scale-[1.01]" />
-                      <span className="absolute inset-0 opacity-0 transition group-hover:opacity-100 bg-gradient-to-r from-white/25 via-transparent to-white/10" />
-                      <span className="relative flex items-center gap-2">
-                        {loading ? (
-                          <>
-                            <Loader2 className="size-[1.05rem] animate-spin" aria-hidden />
-                            Scanning live offers…
-                          </>
-                        ) : (
-                          <>
-                            Search
-                            <ArrowRight className="size-4 transition group-hover:translate-x-0.5" aria-hidden />
-                          </>
-                        )}
-                      </span>
-                    </button>
-                  </MagneticSurface>
-                </div>
+                <HeroSearchCommand
+                  query={query}
+                  onQueryChange={setQuery}
+                  onSubmit={() => void search()}
+                  onSubmitPreset={(preset) => void search(preset)}
+                  loading={loading}
+                  submitPulse={submitPulse}
+                  placeholder={HERO_INPUT_PLACEHOLDERS[heroPlaceholderIdx] ?? HERO_INPUT_PLACEHOLDERS[0]}
+                  hintOptions={heroHintOptions}
+                  registerInput={registerPrimarySearch}
+                  mobilePerf={mobilePerf}
+                />
 
-                <div className="relative mt-3.5 text-left">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500/90">
-                    Examples
-                  </p>
-                  <div className="mt-2 flex gap-2 overflow-x-auto pb-1 pt-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]">
-                    {HERO_SEARCH_PROMPTS.map((p) => (
-                      <button
-                        key={p}
-                        type="button"
-                        disabled={loading}
-                        onClick={() => void search(p)}
-                        className="max-w-[min(88vw,20rem)] shrink-0 snap-start touch-manipulation rounded-full border border-white/[0.07] bg-white/[0.035] px-3.5 py-2.5 text-left text-[12px] font-medium leading-snug tracking-[-0.01em] text-slate-300/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 hover:border-cyan-400/28 hover:bg-white/[0.07] hover:text-slate-100 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-45"
-                      >
-                        {p}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="relative mt-3 min-h-[72px] sm:min-h-[68px]">
+                <div className="relative z-[1] mt-6 min-h-[4rem] sm:mt-7 sm:min-h-[3.75rem]">
                   {loading ? (
-                    <div className="space-y-2.5">
+                    <div className="max-w-2xl">
                       <SearchStreamRibbon active={loading} />
-                      <AILoadingPhase intervalMs={2600} />
                     </div>
                   ) : (
-                    <p className="px-0.5 text-left text-[11px] font-normal leading-relaxed text-slate-500/90">
-                      Results and the reasoning console appear below. Compare pins stay on your tray while you refine
-                      the search.
+                    <p className="px-0.5 text-left text-[12px] font-normal leading-relaxed tracking-[-0.01em] text-slate-500/88">
+                      Your ranked tray and reasoning appear below. Compare pins stay put while you refine the search.
                     </p>
                   )}
                 </div>
               </div>
             </motion.div>
-
-            {isSignedIn && searchHistory.length > 0 && (
-              <div className="mx-auto mt-8 max-w-3xl text-left">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 mb-2">
-                  Recent searches
-                </p>
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {searchHistory.slice(0, 10).map((h) => (
-                    <button
-                      key={h.id ?? `${h.query}-${h.created_at}`}
-                      type="button"
-                      onClick={() => void search(h.query)}
-                      className="max-w-[220px] truncate rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-slate-300 transition hover:border-cyan-400/30 hover:text-white"
-                      title={h.query}
-                    >
-                      {h.query}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {searchError && !loading && (
               <p
@@ -908,10 +791,6 @@ export default function Home() {
             you pay.
           </p>
         </footer>
-
-        <div className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom,0px))] right-[max(1.25rem,env(safe-area-inset-right,0px))] z-50 lg:hidden">
-          <FeedbackLauncher variant="floating" />
-        </div>
       </div>
     </main>
   );
