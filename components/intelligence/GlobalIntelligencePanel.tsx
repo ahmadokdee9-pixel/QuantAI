@@ -5,14 +5,11 @@ import { motion, useReducedMotion } from "framer-motion";
 import {
   AlertTriangle,
   ArrowRight,
-  BarChart3,
   CheckCircle2,
   ChevronDown,
-  Globe2,
   MapPin,
   Shield,
   Sparkles,
-  Users,
 } from "lucide-react";
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
 import type { SearchIntelligenceLevel } from "@/lib/subscription/plans";
@@ -97,41 +94,35 @@ export default function GlobalIntelligencePanel({
       initial={reduceMotion ? false : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 36 }}
-      className="mb-12 space-y-8"
+      className="mb-16 space-y-10 md:mb-20 md:space-y-12"
       aria-label="Global shopping intelligence"
     >
       <div
-        className={`relative overflow-hidden rounded-[1.75rem] border bg-gradient-to-br p-6 sm:p-8 backdrop-blur-[28px] ${finalTone(intel.finalRecommendation)}`}
+        className={`relative overflow-hidden rounded-[1.75rem] border bg-gradient-to-br p-7 sm:p-10 backdrop-blur-[28px] ${finalTone(intel.finalRecommendation)}`}
       >
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_20%_0%,rgba(34,211,238,0.06),transparent_58%)]" />
-        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between lg:gap-10">
+        <div className="relative flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-300/95">
-                <Globe2 className="size-3.5 text-slate-500" aria-hidden />
-                Tray read
-              </span>
-              <span className="rounded-full border border-white/[0.08] bg-black/22 px-2 py-0.5 text-[10px] font-medium text-slate-500/90">
-                {intel.basketRegionBias === "unknown" || intel.basketRegionBias === "mixed"
-                  ? "Region mix"
-                  : `Bias · ${intel.basketRegionBias.toUpperCase()}`}
-              </span>
-            </div>
-            <h3 className="cockpit-display mt-5 text-xl text-white sm:text-[1.65rem]">
+            <p className="text-[12px] font-medium tracking-tight text-slate-500/90">
+              {intel.basketRegionBias === "unknown" || intel.basketRegionBias === "mixed"
+                ? "Mixed seller regions"
+                : `Seller mix leans ${intel.basketRegionBias.toUpperCase()}`}
+            </p>
+            <h3 className="cockpit-display mt-4 text-[1.35rem] leading-[1.12] text-white sm:text-[1.65rem]">
               {intel.finalHeadline}
             </h3>
-            <p className="cockpit-body mt-3 max-w-3xl text-sm leading-relaxed text-slate-400/95">{intel.finalBody}</p>
-            <p className="cockpit-body mt-4 max-w-3xl text-[11px] leading-relaxed text-slate-500/85">
-              Confidence is how well this tray agrees with itself—not a market guarantee. Light data or uneven stores
-              raise uncertainty; still verify price and seller.
+            <p className="cockpit-body mt-4 max-w-3xl text-[15px] leading-relaxed text-slate-400/95">{intel.finalBody}</p>
+            <p className="cockpit-body mt-4 max-w-3xl text-[13px] leading-relaxed text-slate-500/88">
+              Confidence reflects how much this tray agrees with itself—not a guarantee. Sparse reviews or uneven
+              stores mean you should still verify price and seller before paying.
             </p>
-            <div className="mt-5 flex flex-wrap gap-2.5">
+            <div className="mt-6 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:gap-x-3">
               {intel.globalDeal && (
                 <a
                   href={intel.globalDeal.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/22 bg-emerald-500/[0.07] px-3 py-1.5 text-xs font-semibold text-emerald-100/90 transition hover:bg-emerald-500/12"
+                  className="inline-flex items-center gap-2 rounded-full border border-emerald-400/18 bg-emerald-500/[0.06] px-3.5 py-2 text-[13px] font-medium text-emerald-50/95 transition hover:bg-emerald-500/10"
                 >
                   Best pick · {intel.globalDeal.store}
                   <ArrowRight className="size-3.5" aria-hidden />
@@ -142,10 +133,10 @@ export default function GlobalIntelligencePanel({
                   href={intel.localDeal.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/18 bg-cyan-500/[0.06] px-3 py-1.5 text-xs font-semibold text-cyan-50/90 transition hover:bg-cyan-500/12"
+                  className="inline-flex items-center gap-2 rounded-full border border-cyan-400/16 bg-cyan-500/[0.05] px-3.5 py-2 text-[13px] font-medium text-cyan-50/95 transition hover:bg-cyan-500/10"
                 >
                   <MapPin className="size-3.5" aria-hidden />
-                  Regional lean · {intel.localDeal.store}
+                  Regional pick · {intel.localDeal.store}
                 </a>
               )}
               {intel.cheapestReliable && (
@@ -153,9 +144,9 @@ export default function GlobalIntelligencePanel({
                   href={intel.cheapestReliable.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-slate-300/95 transition hover:border-white/[0.14]"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.035] px-3.5 py-2 text-[13px] font-medium text-slate-300/95 transition hover:border-white/[0.12]"
                 >
-                  Cheapest reliable · {intel.cheapestReliable.store}
+                  Value pick · {intel.cheapestReliable.store}
                 </a>
               )}
               {intel.mostTrustedListing && (
@@ -163,7 +154,7 @@ export default function GlobalIntelligencePanel({
                   href={intel.mostTrustedListing.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-violet-400/18 bg-violet-500/[0.06] px-3 py-1.5 text-xs font-semibold text-violet-100/90 transition hover:bg-violet-500/12"
+                  className="inline-flex items-center gap-2 rounded-full border border-violet-400/16 bg-violet-500/[0.05] px-3.5 py-2 text-[13px] font-medium text-violet-100/95 transition hover:bg-violet-500/10"
                 >
                   <Shield className="size-3.5" aria-hidden />
                   Most trusted · {intel.mostTrustedListing.store}
@@ -171,8 +162,8 @@ export default function GlobalIntelligencePanel({
               )}
             </div>
           </div>
-          <div className="w-full shrink-0 lg:w-64">
-            <p className="cockpit-overline text-slate-500/85">Confidence radar</p>
+          <div className="w-full shrink-0 lg:w-72">
+            <p className="cockpit-overline text-slate-500/80">Read quality</p>
             <div className="mt-4 flex justify-center lg:justify-start">
               <ConfidenceTriRadar
                 values={radarVals}
@@ -180,10 +171,7 @@ export default function GlobalIntelligencePanel({
                 disableInfinitePulse={!!reduceMotion || performanceMode}
               />
             </div>
-            <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500/80">
-              {tierLabel(intel.confidenceTier)}
-            </p>
-            <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-black/45">
+            <div className="mt-6 h-2 overflow-hidden rounded-full bg-black/40">
               <motion.div
                 className="h-full rounded-full bg-gradient-to-r from-cyan-500/80 via-slate-400/70 to-emerald-500/75"
                 initial={reduceMotion ? false : { width: 0 }}
@@ -191,9 +179,9 @@ export default function GlobalIntelligencePanel({
                 transition={{ duration: reduceMotion ? 0 : 0.85, ease: [0.22, 1, 0.36, 1] }}
               />
             </div>
-            <p className="mt-1.5 text-[11px] text-slate-500">
-              Verification depth · {intel.buyerUncertaintyScore}/100
-              <span className="text-slate-600"> — higher means more diligence suggested.</span>
+            <p className="mt-3 text-[12px] leading-relaxed text-slate-500/90">
+              {tierLabel(intel.confidenceTier)} · uncertainty {intel.buyerUncertaintyScore}/100 — higher suggests a
+              second look before checkout.
             </p>
             {intel.insufficientDataWarnings.length > 0 && (
               <ul className="mt-3 space-y-1.5 text-[11px] text-amber-200/90">
@@ -210,7 +198,7 @@ export default function GlobalIntelligencePanel({
       </div>
 
       {!showDeepLayers && (
-        <div className="cockpit-glass-panel relative overflow-hidden p-5 sm:p-6">
+        <div className="cockpit-glass-panel relative overflow-hidden p-6 sm:p-8">
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/[0.04] via-transparent to-white/[0.03]" />
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -251,149 +239,143 @@ export default function GlobalIntelligencePanel({
 
       {showDeepLayers && (!performanceMode || deepOpen) && (
         <>
-      <div className="grid gap-5 lg:grid-cols-3">
-        <div className="cockpit-glass-panel p-5">
-          <div className="flex items-center gap-2 text-xs font-semibold text-white/90">
-            <BarChart3 className="size-4 text-slate-500" aria-hidden />
-            Price intelligence lane
-          </div>
-          <p className="mt-3 text-2xl font-semibold tabular-nums text-white">
-            €{intel.priceSpread.min.toFixed(0)}
-            <span className="mx-1 text-slate-600">→</span>
-            €{intel.priceSpread.max.toFixed(0)}
-          </p>
-          <p className="mt-1 text-[11px] text-slate-500">Median €{intel.priceSpread.median.toFixed(0)}</p>
-          <div className="mt-4 flex h-3 overflow-hidden rounded-full bg-black/35">
-            <div
-              className="bg-gradient-to-r from-emerald-400/80 to-amber-400/90"
-              style={{
-                width: `${
-                  intel.priceSpread.max > intel.priceSpread.min
-                    ? Math.min(
-                        100,
-                        ((intel.priceSpread.median - intel.priceSpread.min) /
-                          (intel.priceSpread.max - intel.priceSpread.min)) *
-                          100
-                      )
-                    : 50
-                }%`,
-              }}
-            />
-            <div className="flex-1 bg-violet-500/20" />
-          </div>
-        </div>
-
-        <div className="cockpit-glass-panel p-5">
-          <div className="flex items-center gap-2 text-xs font-semibold text-white/90">
-            <Shield className="size-4 text-slate-500" aria-hidden />
-            Market pulse
-          </div>
-          <ul className="mt-4 space-y-2 text-[11px] leading-relaxed text-slate-400/95">
-            <li className={intel.marketIntel.aggressiveFakeDiscount ? "text-amber-200" : ""}>
-              {intel.marketIntel.aggressiveFakeDiscount ? "●" : "○"} Fake-discount stress in tray
-            </li>
-            <li className={intel.marketIntel.ratingInflationRisk ? "text-amber-200" : ""}>
-              {intel.marketIntel.ratingInflationRisk ? "●" : "○"} Thin-review / high-star pattern
-            </li>
-            <li className={intel.marketIntel.marketplaceVarianceRisk ? "text-amber-200" : ""}>
-              {intel.marketIntel.marketplaceVarianceRisk ? "●" : "○"} Marketplace / third-party variance
-            </li>
-            <li className={intel.marketIntel.cheapestNotSafest ? "text-rose-200/90" : ""}>
-              {intel.marketIntel.cheapestNotSafest ? "●" : "○"} Cheapest ≠ safest gap detected
-            </li>
-          </ul>
-        </div>
-
-        <div className="cockpit-glass-panel p-5">
-          <div className="flex items-center gap-2 text-xs font-semibold text-white/90">
-            <Users className="size-4 text-slate-500" aria-hidden />
-            Human fit window
-          </div>
-          <p className="mt-3 text-[11px] leading-relaxed text-slate-400/95">{intel.whoShouldBuy}</p>
-          <p className="mt-3 text-[11px] leading-relaxed text-rose-100/60">{intel.whoShouldAvoid}</p>
-          <p className="mt-3 text-[11px] leading-relaxed text-slate-500/90">{intel.timingNote}</p>
-        </div>
-      </div>
-
-      <div className="cockpit-glass-panel bg-black/20 p-5">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-xs font-semibold text-white/90">Retailer trust graph</p>
-          <span className="text-[10px] text-slate-500/85">Price fit · Trust · Marketplace safety</span>
-        </div>
-        <div className="mt-4 overflow-x-auto">
-          <div className="min-w-[520px] space-y-2">
-            <div className="grid grid-cols-[1.4fr_repeat(3,minmax(0,1fr))] gap-2 text-[9px] font-semibold uppercase tracking-[0.1em] text-slate-500/85">
-              <span>Store</span>
-              <span>Price fit</span>
-              <span>Trust</span>
-              <span>Mkt safety</span>
+          <div className="cockpit-glass-panel p-6 sm:p-8">
+            <div className="grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-12">
+              <div>
+                <p className="text-[13px] font-semibold tracking-tight text-white/92">Price spread</p>
+                <p className="mt-3 text-3xl font-semibold tabular-nums tracking-[-0.03em] text-white/95">
+                  €{intel.priceSpread.min.toFixed(0)}
+                  <span className="mx-2 text-slate-600">→</span>
+                  €{intel.priceSpread.max.toFixed(0)}
+                </p>
+                <p className="mt-2 text-[13px] text-slate-500/95">Median €{intel.priceSpread.median.toFixed(0)}</p>
+                <div className="mt-5 flex h-2.5 overflow-hidden rounded-full bg-black/35">
+                  <div
+                    className="bg-gradient-to-r from-emerald-400/75 to-amber-400/85"
+                    style={{
+                      width: `${
+                        intel.priceSpread.max > intel.priceSpread.min
+                          ? Math.min(
+                              100,
+                              ((intel.priceSpread.median - intel.priceSpread.min) /
+                                (intel.priceSpread.max - intel.priceSpread.min)) *
+                                100
+                            )
+                          : 50
+                      }%`,
+                    }}
+                  />
+                  <div className="flex-1 bg-violet-500/15" />
+                </div>
+              </div>
+              <div className="border-t border-white/[0.05] pt-8 lg:border-l lg:border-t-0 lg:pl-12 lg:pt-0">
+                <p className="text-[13px] font-semibold tracking-tight text-white/92">Market read</p>
+                <p className="mt-3 text-[14px] leading-relaxed text-slate-400/95">
+                  {[
+                    intel.marketIntel.aggressiveFakeDiscount &&
+                      "Some headline discounts look inflated compared with peer pricing.",
+                    intel.marketIntel.ratingInflationRisk &&
+                      "A few rows show very high stars with little review depth.",
+                    intel.marketIntel.marketplaceVarianceRisk &&
+                      "Third-party fulfillment adds variance—worth confirming the seller you get.",
+                    intel.marketIntel.cheapestNotSafest &&
+                      "The cheapest row is not always the safest checkout path.",
+                  ]
+                    .filter(Boolean)
+                    .join(" ") || "This tray looks steady on deal stress and seller variance."}
+                </p>
+              </div>
             </div>
-            {heatRows.map((row) => (
-              <div
-                key={row.store}
-                className="grid grid-cols-[1.4fr_repeat(3,minmax(0,1fr))] gap-2 rounded-lg border border-white/[0.06] bg-white/[0.025] px-2.5 py-2 text-[11px] leading-relaxed"
-              >
-                <span className="truncate font-medium text-slate-200">{row.store}</span>
-                <HeatCell v={row.priceFit} />
-                <HeatCell v={row.trustNorm} />
-                <HeatCell v={row.mkt} />
-              </div>
-            ))}
+
+            <div className="mt-10 border-t border-white/[0.05] pt-10">
+              <p className="text-[13px] font-semibold tracking-tight text-white/92">Who it suits</p>
+              <p className="mt-3 max-w-3xl text-[14px] leading-relaxed text-slate-400/95">{intel.whoShouldBuy}</p>
+              <p className="mt-4 max-w-3xl text-[14px] leading-relaxed text-rose-100/55">{intel.whoShouldAvoid}</p>
+              <p className="mt-4 max-w-3xl text-[13px] leading-relaxed text-slate-500/90">{intel.timingNote}</p>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div className="cockpit-glass-panel p-5">
-        <div className="mb-4 flex items-center gap-2">
-          <Sparkles className="size-4 text-violet-300/80" aria-hidden />
-          <p className="text-xs font-semibold text-white/90">Persona reasoning stream</p>
-        </div>
-        <div className="flex gap-4 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch]">
-          {intel.personaCards.map((card, i) => (
-            <motion.div
-              key={card.id}
-              initial={reduceMotion ? false : { opacity: 0, x: 12 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: reduceMotion ? 0 : i * 0.04 }}
-              className="min-w-[240px] max-w-[260px] shrink-0 rounded-xl border border-white/[0.07] bg-gradient-to-b from-white/[0.04] to-black/35 p-4"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-white/92">{card.title}</p>
-                <span className="rounded-full border border-white/[0.1] bg-black/30 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-slate-300">
-                  {card.fitScore}
-                </span>
+          <div className="cockpit-glass-panel bg-black/15 p-6 sm:p-8">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <p className="text-[13px] font-semibold tracking-tight text-white/92">Seller landscape</p>
+              <span className="text-[12px] text-slate-500/90">Price fit, trust, marketplace safety</span>
+            </div>
+            <div className="mt-6 overflow-x-auto">
+              <div className="min-w-[520px] space-y-0 divide-y divide-white/[0.05]">
+                <div className="grid grid-cols-[1.4fr_repeat(3,minmax(0,1fr))] gap-3 pb-3 text-[10px] font-medium uppercase tracking-[0.08em] text-slate-500/80">
+                  <span>Store</span>
+                  <span>Price fit</span>
+                  <span>Trust</span>
+                  <span>Marketplace</span>
+                </div>
+                {heatRows.map((row) => (
+                  <div
+                    key={row.store}
+                    className="grid grid-cols-[1.4fr_repeat(3,minmax(0,1fr))] gap-3 py-3.5 text-[13px] leading-relaxed"
+                  >
+                    <span className="truncate font-medium text-slate-200/95">{row.store}</span>
+                    <HeatCell v={row.priceFit} />
+                    <HeatCell v={row.trustNorm} />
+                    <HeatCell v={row.mkt} />
+                  </div>
+                ))}
               </div>
-              <p className="mt-2 text-[11px] font-medium text-slate-300/90">{card.verdict}</p>
-              <p className="mt-2.5 text-[11px] leading-relaxed text-slate-500/90">{card.body}</p>
-              {card.suggestedLink && card.suggestedStore && (
-                <a
-                  href={card.suggestedLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold text-cyan-300 hover:underline"
-                >
-                  Lean · {card.suggestedStore}
-                  <ArrowRight className="size-3" />
-                </a>
-              )}
-            </motion.div>
-          ))}
-        </div>
-      </div>
+            </div>
+          </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        <div className="cockpit-glass-panel p-5">
-          <p className="text-xs font-semibold text-white/90">Opportunity spectrum</p>
-          <p className="mt-3 text-[12px] leading-relaxed text-slate-400/95">{intel.opportunityCostNote}</p>
-        </div>
-        <div className="cockpit-glass-panel p-5">
-          <p className="text-xs font-semibold text-white/90">Upgrade projection</p>
-          <p className="mt-3 text-[12px] leading-relaxed text-slate-400/95">
-            {intel.upgradeWorthItNote ??
-              "No forced upgrade signal on this query—the field looks flat on spec deltas."}
-          </p>
-        </div>
-      </div>
+          <div className="cockpit-glass-panel p-6 sm:p-8">
+            <div className="mb-5 flex items-center gap-2">
+              <Sparkles className="size-4 text-violet-300/70" aria-hidden />
+              <p className="text-[13px] font-semibold tracking-tight text-white/92">How different shoppers read this tray</p>
+            </div>
+            <div className="flex gap-5 overflow-x-auto pb-2 [-webkit-overflow-scrolling:touch]">
+              {intel.personaCards.map((card, i) => (
+                <motion.div
+                  key={card.id}
+                  initial={reduceMotion ? false : { opacity: 0, x: 12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: reduceMotion ? 0 : i * 0.04 }}
+                  className="min-w-[260px] max-w-[280px] shrink-0 rounded-2xl border border-white/[0.055] bg-gradient-to-b from-white/[0.035] to-black/30 p-5"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-[15px] font-semibold tracking-tight text-white/93">{card.title}</p>
+                    <span className="shrink-0 rounded-full bg-white/[0.06] px-2.5 py-1 text-[11px] font-medium tabular-nums text-slate-400/95">
+                      {card.fitScore}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-[13px] font-medium leading-snug text-slate-300/92">{card.verdict}</p>
+                  <p className="mt-3 text-[13px] leading-relaxed text-slate-500/92">{card.body}</p>
+                  {card.suggestedLink && card.suggestedStore && (
+                    <a
+                      href={card.suggestedLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-4 inline-flex items-center gap-1.5 text-[12px] font-medium text-cyan-300/95 hover:underline"
+                    >
+                      Open · {card.suggestedStore}
+                      <ArrowRight className="size-3.5" />
+                    </a>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          <div className="cockpit-glass-panel p-6 sm:p-8">
+            <div className="grid gap-10 md:grid-cols-2 md:gap-12">
+              <div>
+                <p className="text-[13px] font-semibold tracking-tight text-white/92">Trade-offs</p>
+                <p className="mt-3 text-[14px] leading-relaxed text-slate-400/95">{intel.opportunityCostNote}</p>
+              </div>
+              <div className="border-t border-white/[0.05] pt-8 md:border-l md:border-t-0 md:pl-12 md:pt-0">
+                <p className="text-[13px] font-semibold tracking-tight text-white/92">Stepping up a tier</p>
+                <p className="mt-3 text-[14px] leading-relaxed text-slate-400/95">
+                  {intel.upgradeWorthItNote ??
+                    "No strong upgrade signal on this query—the field looks flat on spec deltas."}
+                </p>
+              </div>
+            </div>
+          </div>
         </>
       )}
     </motion.section>

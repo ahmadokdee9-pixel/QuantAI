@@ -216,35 +216,35 @@ body {
 /* —— Glass surfaces —— */
 .cockpit-glass-panel {
   border-radius: 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.055);
   background: linear-gradient(
     165deg,
-    rgba(255, 255, 255, 0.09) 0%,
-    rgba(255, 255, 255, 0.03) 45%,
-    rgba(2, 6, 23, 0.5) 100%
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.022) 45%,
+    rgba(2, 6, 23, 0.42) 100%
   );
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.02) inset,
-    0 32px 80px -36px rgba(0, 0, 0, 0.9),
-    0 0 64px -44px rgba(34, 211, 238, 0.06);
-  backdrop-filter: blur(28px) saturate(160%);
-  -webkit-backdrop-filter: blur(28px) saturate(160%);
+    0 28px 72px -40px rgba(0, 0, 0, 0.85),
+    0 0 48px -48px rgba(34, 211, 238, 0.045);
+  backdrop-filter: blur(30px) saturate(150%);
+  -webkit-backdrop-filter: blur(30px) saturate(150%);
 }
 
 .cockpit-glass-card {
   border-radius: 1.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.065);
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(255, 255, 255, 0.025) 100%
+    rgba(255, 255, 255, 0.065) 0%,
+    rgba(255, 255, 255, 0.02) 100%
   );
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
-    0 28px 90px -34px rgba(0, 0, 0, 0.88),
-    0 0 56px -36px rgba(34, 211, 238, 0.05);
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
+    0 0 0 1px rgba(255, 255, 255, 0.025) inset,
+    0 32px 100px -40px rgba(0, 0, 0, 0.82),
+    0 0 48px -40px rgba(34, 211, 238, 0.04);
+  backdrop-filter: blur(28px) saturate(145%);
+  -webkit-backdrop-filter: blur(28px) saturate(145%);
 }
 
 .cockpit-search-aurora {
@@ -271,7 +271,7 @@ body {
     linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  opacity: 0.38;
+  opacity: 0.32;
   pointer-events: none;
 }
 .cockpit-search-aurora[data-loading="false"]::before {
@@ -563,18 +563,18 @@ body {
   position: relative;
   z-index: 1;
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
-    0 1px 0 rgba(255, 255, 255, 0.1) inset,
-    0 28px 64px -32px rgba(0, 0, 0, 0.92),
-    0 0 40px -32px rgba(34, 211, 238, 0.05);
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 24px 56px -36px rgba(0, 0, 0, 0.88),
+    0 0 36px -36px rgba(34, 211, 238, 0.04);
 }
 
 .qi-product-card-shell:hover .qi-product-card-inner {
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
-    0 1px 0 rgba(255, 255, 255, 0.1) inset,
-    0 36px 80px -28px rgba(0, 0, 0, 0.88),
-    0 0 48px -28px rgba(34, 211, 238, 0.07);
+    0 0 0 1px rgba(255, 255, 255, 0.07) inset,
+    0 1px 0 rgba(255, 255, 255, 0.09) inset,
+    0 32px 72px -32px rgba(0, 0, 0, 0.84),
+    0 0 44px -32px rgba(34, 211, 238, 0.055);
 }
 
 .qi-image-shimmer {

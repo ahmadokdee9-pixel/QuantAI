@@ -473,24 +473,24 @@ function ProductResultCard({
           lite ? "" : "will-change-transform [transform:translateZ(0)]"
         } ${
           scoreNorm >= 78
-            ? "bg-gradient-to-br from-cyan-400/11 via-white/[0.07] to-violet-500/9"
-            : "bg-gradient-to-br from-white/[0.08] via-cyan-400/5 to-violet-500/8"
+            ? "bg-gradient-to-br from-cyan-400/9 via-white/[0.055] to-violet-500/8"
+            : "bg-gradient-to-br from-white/[0.065] via-cyan-400/4 to-violet-500/7"
         }`}
       >
-        <div className="qi-product-card-inner relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.48rem] border border-white/[0.06] bg-gradient-to-b from-white/[0.06] via-white/[0.025] to-[#040912]/98 backdrop-blur-2xl transition-[border-color,box-shadow,transform] duration-500 ease-out group-hover:border-cyan-400/20 group-hover:shadow-[0_0_0_1px_rgba(34,211,238,0.06),0_20px_48px_-26px_rgba(34,211,238,0.14)]">
+        <div className="qi-product-card-inner relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.48rem] border border-white/[0.05] bg-gradient-to-b from-white/[0.05] via-white/[0.02] to-[#040912]/98 backdrop-blur-2xl transition-[border-color,box-shadow,transform] duration-500 ease-out group-hover:border-cyan-400/16 group-hover:shadow-[0_0_0_1px_rgba(34,211,238,0.05),0_18px_44px_-28px_rgba(34,211,238,0.1)]">
           <div className="pointer-events-none absolute -right-20 -top-20 size-48 rounded-full bg-cyan-400/8 blur-3xl opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-100" />
           <div className="pointer-events-none absolute -bottom-24 -left-16 size-44 rounded-full bg-violet-500/8 blur-3xl opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-45" />
 
-          <div className="relative z-[2] flex justify-end px-4 pt-3 sm:px-5 sm:pt-4">
+          <div className="relative z-[2] flex justify-end px-4 pt-4 sm:px-5 sm:pt-5">
             <button
               type="button"
               onClick={() => toggleCompare(p.link)}
               disabled={!inCompare && compareLinks.length >= 3}
               aria-pressed={inCompare}
-              className={`shrink-0 touch-manipulation rounded-full border px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] transition duration-200 active:scale-[0.98] ${
+              className={`shrink-0 touch-manipulation rounded-full border px-3 py-2 text-[11px] font-medium tracking-tight transition duration-300 active:scale-[0.98] ${
                 inCompare
-                  ? "border-cyan-400/22 bg-cyan-400/10 text-cyan-100/88 shadow-[0_0_20px_-12px_rgba(34,211,238,0.28)]"
-                  : "border-white/[0.08] bg-black/30 text-slate-500/95 hover:border-cyan-400/18 hover:bg-cyan-500/[0.06] hover:text-cyan-50/88 hover:shadow-[0_0_20px_-14px_rgba(34,211,238,0.1)] disabled:opacity-40"
+                  ? "border-cyan-400/20 bg-cyan-400/10 text-cyan-50/90"
+                  : "border-white/[0.07] bg-black/25 text-slate-500/95 hover:border-cyan-400/15 hover:bg-cyan-500/[0.05] hover:text-slate-200/95 disabled:opacity-40"
               }`}
             >
               Compare
@@ -518,35 +518,35 @@ function ProductResultCard({
             )}
           </div>
 
-          <div className="relative z-[2] flex min-h-0 min-w-0 flex-1 flex-col px-4 pb-4 pt-4 sm:px-5 sm:pb-5 sm:pt-5">
+          <div className="relative z-[2] flex min-h-0 min-w-0 flex-1 flex-col px-4 pb-5 pt-4 sm:px-5 sm:pb-6 sm:pt-5">
             <h3 className="text-[15px] font-semibold leading-[1.45] tracking-tight text-white/[0.97] line-clamp-2 sm:text-[16px]">
               {p.title}
             </h3>
 
-            <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[11px] leading-snug text-slate-500/90">
+            <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] leading-snug text-slate-500/90">
               <span className="inline-flex min-w-0 max-w-full items-center gap-1.5 font-medium text-slate-400/95">
                 <span
-                  className="flex size-6 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.04] text-[9px] font-bold tracking-tight text-slate-300/90"
+                  className="flex size-6 shrink-0 items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.035] text-[9px] font-semibold tracking-tight text-slate-300/90"
                   aria-hidden
                 >
                   {retailerMonogram(p.store)}
                 </span>
-                <Store className="size-3 shrink-0 opacity-55" strokeWidth={1.5} aria-hidden />
+                <Store className="size-3 shrink-0 opacity-50" strokeWidth={1.5} aria-hidden />
                 <span className="min-w-0 truncate">{p.store}</span>
               </span>
-              <span className="inline-flex shrink-0 items-center gap-1 tabular-nums text-slate-500/85">
-                <Shield className="size-3 text-slate-500/70" strokeWidth={1.5} aria-hidden />
-                <span className="text-slate-500/80">Trust</span>{" "}
+              <span className="inline-flex shrink-0 items-center gap-1.5 tabular-nums text-slate-500/85">
+                <Shield className="size-3 text-slate-500/60" strokeWidth={1.5} aria-hidden />
+                <span className="text-slate-500/75">Trust</span>
                 <span className="text-slate-300/95">{trust}</span>
               </span>
             </div>
 
-            <div className="mt-4 flex min-w-0 flex-wrap items-end justify-between gap-3 border-b border-white/[0.06] pb-4">
+            <div className="mt-5 flex min-w-0 flex-wrap items-end justify-between gap-3 border-b border-white/[0.05] pb-5">
               <div className="min-w-0 flex-1">
                 {p.displayPrice ? (
-                  <p className="cockpit-label text-[10px] tracking-[0.1em] text-slate-500/75">{p.displayPrice}</p>
+                  <p className="text-[12px] font-medium text-slate-500/80">{p.displayPrice}</p>
                 ) : (
-                  <p className="cockpit-label text-[10px] tracking-[0.1em] text-slate-600/90">Listed price</p>
+                  <p className="text-[12px] font-medium text-slate-600/85">Listed price</p>
                 )}
                 <div className="mt-1 flex flex-wrap items-baseline gap-2">
                   <p className="text-[1.5rem] font-semibold tabular-nums tracking-tight text-white sm:text-[1.6rem]">

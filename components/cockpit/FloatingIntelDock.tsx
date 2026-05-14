@@ -34,18 +34,18 @@ export default function FloatingIntelDock() {
 
   const spring = reduce
     ? { duration: 0 }
-    : { type: "spring" as const, stiffness: 380, damping: 28 };
+    : { type: "spring" as const, stiffness: 320, damping: 32 };
 
   return (
     <motion.div
-      initial={reduce ? false : { opacity: 0, y: 16 }}
+      initial={reduce ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={spring}
-      className="pointer-events-none fixed bottom-[max(1rem,env(safe-area-inset-bottom,0px))] right-[max(0.75rem,env(safe-area-inset-right,0px))] z-[90] flex max-w-[calc(100vw-1.5rem)] flex-col items-end gap-2 lg:bottom-28"
+      className="pointer-events-none fixed bottom-[max(1.25rem,env(safe-area-inset-bottom,0px))] right-[max(0.85rem,env(safe-area-inset-right,0px))] z-[90] flex max-w-[calc(100vw-1.75rem)] flex-col items-end gap-2.5 lg:bottom-28"
       style={{ maxHeight: "min(70vh, 28rem)" }}
     >
-      <div className="pointer-events-auto flex max-h-[inherit] flex-col gap-2 overflow-y-auto overflow-x-hidden rounded-2xl border border-white/[0.1] bg-[#060b14]/92 p-2 shadow-[0_28px_80px_-24px_rgba(0,0,0,0.85),0_0_48px_-20px_rgba(34,211,238,0.12)] backdrop-blur-2xl">
-        <p className="cockpit-label px-2 pt-1 text-center text-[9px] text-slate-500">Quick</p>
+      <div className="pointer-events-auto flex max-h-[inherit] flex-col gap-2.5 overflow-y-auto overflow-x-hidden rounded-2xl border border-white/[0.055] bg-[#050a12]/78 p-2.5 shadow-[0_20px_56px_-28px_rgba(0,0,0,0.88),0_0_40px_-36px_rgba(34,211,238,0.06)] backdrop-blur-2xl">
+        <span className="sr-only">Quick shortcuts</span>
         <DockBtn
           label="Command palette ⌘K"
           onClick={() => setCommandOpen(true)}
@@ -73,9 +73,9 @@ export default function FloatingIntelDock() {
         )}
         <Link
           href="/pricing"
-          className="flex items-center justify-center gap-2 rounded-xl border border-cyan-400/25 bg-cyan-500/12 px-3 py-2 text-[11px] font-semibold text-cyan-100 transition hover:bg-cyan-500/18"
+          className="flex items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2.5 text-[11px] font-medium tracking-tight text-slate-300/95 transition duration-300 hover:border-cyan-400/22 hover:bg-white/[0.07] hover:text-slate-100"
         >
-          Upgrade
+          Plans
         </Link>
       </div>
     </motion.div>
@@ -97,9 +97,9 @@ function DockBtn({
       title={label}
       aria-label={label}
       onClick={onClick}
-      className="flex size-12 min-h-12 min-w-12 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.05] text-slate-200 transition hover:border-cyan-400/28 hover:bg-cyan-500/10 hover:text-white active:scale-[0.98]"
+      className="flex size-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.035] text-slate-400/95 transition duration-300 hover:border-white/[0.1] hover:bg-white/[0.06] hover:text-slate-100 active:scale-[0.97]"
     >
-      <Icon className="size-[1.15rem]" strokeWidth={1.75} aria-hidden />
+      <Icon className="size-[1.05rem] opacity-90" strokeWidth={1.5} aria-hidden />
     </button>
   );
 }

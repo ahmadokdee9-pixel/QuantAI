@@ -571,7 +571,7 @@ export default function Home() {
         {/* Hero */}
         <section
           className={`relative px-4 sm:px-6 ${
-            products.length > 0 ? "pt-12 pb-12 sm:pt-16 sm:pb-14" : "pt-14 pb-24 sm:pt-20 sm:pb-32"
+            products.length > 0 ? "pt-14 pb-16 sm:pt-16 sm:pb-20" : "pt-16 pb-28 sm:pt-20 sm:pb-36"
           }`}
         >
           <div className="mx-auto max-w-7xl text-center">

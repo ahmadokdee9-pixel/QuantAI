@@ -50,7 +50,7 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
   const order: QuantPlanTier[] = ["free", "pro", "premium"];
 
   return (
-    <div className={`grid gap-7 lg:grid-cols-3 lg:gap-6 lg:items-stretch ${className}`}>
+    <div className={`grid gap-8 lg:grid-cols-3 lg:gap-7 lg:items-stretch ${className}`}>
       {order.map((id) => {
         const plan = QUANT_PLANS[id];
         const isCurrent = resolvedTier !== null && resolvedTier === id;
@@ -60,7 +60,7 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
         return (
           <div
             key={id}
-            className={`relative flex flex-col ${glassCard} overflow-hidden p-8 sm:p-9 transition duration-500 ease-out hover:border-white/14 ${
+            className={`relative flex flex-col ${glassCard} overflow-hidden p-8 sm:p-9 transition duration-500 ease-out hover:border-white/12 ${
               isPro
                 ? "border-cyan-400/28 shadow-[0_48px_120px_-52px_rgba(34,211,238,0.22)] ring-1 ring-cyan-400/16 lg:scale-[1.02] lg:z-[1]"
                 : ""
@@ -101,7 +101,7 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
                 </li>
               ))}
             </ul>
-            <div className="mt-8 rounded-2xl border border-white/[0.06] bg-black/25 px-4 py-4">
+            <div className="mt-9 rounded-2xl border border-white/[0.05] bg-black/20 px-5 py-5">
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500/90">Included capacity</p>
               <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2.5 text-[12px] text-slate-400/95">
                 <div>
