@@ -2,6 +2,12 @@ import type { IntelligenceSignals, ListStats, ProductCategorySlug } from "./type
 import { getStoreTrustScore } from "@/lib/retailTrust";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getFinalComposite, ratingValue } from "@/lib/shoppingScore";
+import type { CommerceSearchIntents } from "./searchIntentV2";
+
+export type NarrativeIntentCtx = {
+  query?: string;
+  intents?: CommerceSearchIntents;
+};
 
 export type AdaptiveVerdict =
   | "Strong Buy"
@@ -72,17 +78,20 @@ export function getAdaptiveVerdict(
   p: QuantProduct,
   peers: QuantProduct[],
   _stats: ListStats,
-  signals: IntelligenceSignals
+  signals: IntelligenceSignals,
+  ctx?: NarrativeIntentCtx
 ): AdaptiveVerdict {
   const c = getFinalComposite(p, peers);
   const t = getStoreTrustScore(p.store);
   const r = ratingValue(p.rating);
-  const ctx = buildPeerCtx(p, peers);
-  const cheapShare = ctx.n > 1 ? ctx.cheaperCount / (ctx.n - 1) : 0;
-  const pricey = ctx.avgPrice > 0 && p.price > ctx.avgPrice * 1.1;
-  const budget = ctx.avgPrice > 0 && p.price < ctx.avgPrice * 0.88 && c >= 68;
-  const premium = ctx.avgPrice > 0 && p.price > ctx.avgPrice * 1.05 && r >= 4.45 && t >= 74;
+  const ctxPeers = buildPeerCtx(p, peers);
+  const cheapShare = ctxPeers.n > 1 ? ctxPeers.cheaperCount / (ctxPeers.n - 1) : 0;
+  const pricey = ctxPeers.avgPrice > 0 && p.price > ctxPeers.avgPrice * 1.1;
+  const budget = ctxPeers.avgPrice > 0 && p.price < ctxPeers.avgPrice * 0.88 && c >= 68;
+  const premium = ctxPeers.avgPrice > 0 && p.price > ctxPeers.avgPrice * 1.05 && r >= 4.45 && t >= 74;
   const weakTrustHighValue = t < 62 && signals.pricePerformance >= 72 && c >= 62;
+  const intents = ctx?.intents;
+  const strongBuyFloor = intents?.longTermValue || intents?.trustedOnly ? 81 : 84;
   const waitSignal =
     c < 58 || (pricey && p.priceTrend === "up" && signals.priceFit < 48) || (r > 0 && r < 3.85 && c < 70);
 
@@ -91,9 +100,9 @@ export function getAdaptiveVerdict(
   if (t >= 88 && c >= 66 && r >= 3.85 && !(c >= 84 && t >= 76 && r >= 4.15)) return "High Trust Option";
   if (budget && cheapShare >= 0.32) return "Best Budget Pick";
   if (premium) return "Premium Choice";
-  if (c >= 84 && t >= 74 && r >= 4.1) return "Strong Buy";
-  if (c >= 78 && ctx.higherCompositeCount <= 1 && t >= 70) return "Strong Buy";
-  if (ctx.higherCompositeCount >= Math.max(3, Math.ceil(ctx.n * 0.42))) return "Compare Alternatives";
+  if (c >= strongBuyFloor && t >= 74 && r >= 4.1) return "Strong Buy";
+  if (c >= 78 && ctxPeers.higherCompositeCount <= 1 && t >= 70) return "Strong Buy";
+  if (ctxPeers.higherCompositeCount >= Math.max(3, Math.ceil(ctxPeers.n * 0.42))) return "Compare Alternatives";
   return "Compare Alternatives";
 }
 
@@ -102,13 +111,52 @@ export function getPsychologyInsight(
   peers: QuantProduct[],
   _stats: ListStats,
   signals: IntelligenceSignals,
-  category: ProductCategorySlug
+  category: ProductCategorySlug,
+  nCtx?: NarrativeIntentCtx
 ): string {
   const ctx = buildPeerCtx(p, peers);
   const c = getFinalComposite(p, peers);
   const t = getStoreTrustScore(p.store);
   const r = ratingValue(p.rating);
   const seed = strHash(p.link + p.title);
+  const intents = nCtx?.intents;
+
+  if (intents?.fragranceBeauty && (category === "beauty" || category === "fashion")) {
+    return variant(seed + 3, [
+      "Luxury scent lane: QuantAI is weighting longevity signals and seller hygiene over raw markdown theater.",
+      "Fragrance buy: presentation and trust matter as much as stars—this read favors credible luxury cues.",
+    ]);
+  }
+  if (intents?.minimalistStyle && (category === "home" || category === "electronics")) {
+    return variant(seed + 5, [
+      "Minimalist desk logic: fewer visual compromises score higher—clean modern listings win the calm aesthetic you asked for.",
+      "Quiet setup bias: the tray rewards listings that read visually restrained, not busy gamer marketing.",
+    ]);
+  }
+  if (intents?.gaming && intents.portableLight && category === "electronics") {
+    return variant(seed + 7, [
+      "Portable gaming tension: QuantAI is balancing frame thermals language with weight cues you implied.",
+      "Power without the toy-box look—this pick favors mature gaming hardware language in the title.",
+    ]);
+  }
+  if (intents?.alternativeSeeking && ctx.cheaperCount >= 1 && ctx.avgPrice > 0 && p.price < ctx.avgPrice * 0.94) {
+    return variant(seed + 11, [
+      "Substitute hunt: under-tray pricing plus lexical overlap suggests a smarter alternative to premium anchors.",
+      "Better-alternative posture—value and overlap beat brand echo when you asked for “like X but cheaper.”",
+    ]);
+  }
+  if (intents?.qualitySeeking && intents.budget && signals.retailerTrust >= 68) {
+    return variant(seed + 13, [
+      "Excellent value without major compromise—trust and ratings back a disciplined cheap-not-junk ask.",
+      "Tight budget, high bar: QuantAI favored listings where discount depth does not torch seller credibility.",
+    ]);
+  }
+  if (intents?.quietLuxury && signals.rating >= 72) {
+    return variant(seed + 17, [
+      "Quiet luxury read: understated prestige beats loud discounts—this row fits a stealth-wealth shopping stance.",
+      "Old-money calm: premium feel without shouty marketing wins when your language skewed understated.",
+    ]);
+  }
 
   if (ctx.avgPrice > 0 && p.price < ctx.avgPrice * 0.82 && r >= 4.0 && category === "electronics") {
     return variant(seed, [

@@ -63,7 +63,8 @@ function discountQualityScore(
   price: number,
   oldPrice: number | null,
   trust: number,
-  listingQuality01: number
+  listingQuality01: number,
+  intents?: CommerceSearchIntents
 ): number {
   if (oldPrice == null || oldPrice <= price || price <= 0) return 0.35;
   const pct = (oldPrice - price) / oldPrice;
@@ -72,6 +73,17 @@ function discountQualityScore(
   if (pct >= 0.52 && trust < 72) base *= 0.68;
   if (pct >= 0.58 && trust < 82) base *= 0.82;
   base *= 0.78 + listingQuality01 * 0.35;
+
+  if (intents?.realDiscountOnly) {
+    if (pct >= 0.38 && trust < 70) base *= 0.72;
+    if (pct >= 0.45 && trust < 78) base *= 0.82;
+  }
+  if (intents?.dealHunter && pct >= 0.4 && trust < 74) base *= 0.78;
+  if (intents?.trustedOnly && trust >= 76 && pct >= 0.08 && pct <= 0.42) {
+    base = Math.min(1, base * 1.05 + 0.04);
+  }
+  if (intents?.qualitySeeking && pct >= 0.35 && trust < 68) base *= 0.75;
+
   return clamp01(base);
 }
 
@@ -110,7 +122,7 @@ export function scoreProductEngine(
 ): EngineResult {
   const intentsResolved = intents ?? parseCommerceSearchIntents(searchQuery);
   const category = inferProductCategory(searchQuery, p.title);
-  const w = getCategoryWeightsForQuery(searchQuery, p.title);
+  const w = getCategoryWeightsForQuery(searchQuery, p.title, intentsResolved);
   const rating = ratingValue(p.rating);
   const ratingNorm = clamp01(rating / 5);
   const trust = getStoreTrustScore(p.store);
@@ -125,7 +137,7 @@ export function scoreProductEngine(
   const priceFit = priceFitScore(p.price, stats);
   const reviewDepth = reviewDepthScore(p.reviewsCount, stats.maxReviews);
   const delivery = scoreDeliverySpeed(p.shipping);
-  const discount = discountQualityScore(p.price, p.oldPrice, trust, listingQ);
+  const discount = discountQualityScore(p.price, p.oldPrice, trust, listingQ, intentsResolved);
   const { norm: valueNorm } = pricePerformanceScore(
     p.price,
     rating,

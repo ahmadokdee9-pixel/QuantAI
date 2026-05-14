@@ -6,6 +6,7 @@ import type { QuantProduct } from "@/lib/shoppingScore";
 import { getFinalComposite, getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
 import { getMarketplaceSellerRiskTier } from "@/lib/retailTrust";
 import { buildLiveCommerceSignals, type LiveCommerceSignals } from "@/lib/intelligence/liveCommerceSignals";
+import type { CommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
 
 /** QuantAI primary verdict language — scan-optimized, tray-relative. */
 export type QuantAIDealVerdict =
@@ -681,7 +682,11 @@ function timingFromSignals(
  * Per-product deal intelligence for the current peer set (search tray or cluster listings).
  * Pure function — safe to memoize on `[product, list]` identity.
  */
-export function buildProductDealIntelligence(product: QuantProduct, list: QuantProduct[]): ProductDealIntelligence {
+export function buildProductDealIntelligence(
+  product: QuantProduct,
+  list: QuantProduct[],
+  intents?: CommerceSearchIntents
+): ProductDealIntelligence {
   const prices = list.map((x) => x.price).filter((x) => x > 0);
   const fair = prices.length ? median(prices) : product.price > 0 ? product.price : 0;
   const baseline = prices.length
@@ -701,7 +706,13 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
   const underpricedAnomaly =
     peerMed > 0 && product.price < peerMed * 0.58 && (disc ?? 0) > 32 && (product.qiCommerce?.priceAnomaly === "suspicious_low" || fake !== "low");
 
-  const suspiciousDiscountRisk = computeSuspiciousDiscountRisk(fake, inflated, underpricedAnomaly);
+  const suspiciousDiscountRiskRaw = computeSuspiciousDiscountRisk(fake, inflated, underpricedAnomaly);
+  const suspiciousDiscountRisk = Math.min(
+    100,
+    suspiciousDiscountRiskRaw +
+      (intents?.realDiscountOnly && fake !== "low" ? 8 : 0) +
+      (intents?.dealHunter && inflated ? 6 : 0)
+  );
 
   const provisionalQuality =
     comp * 0.38 +
@@ -710,7 +721,16 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
     del * 0.12 +
     (disc != null && disc >= 10 && fake === "low" ? 14 : 0);
 
-  const discountAuthenticity = authenticityScore(fake, product, provisionalQuality, inflated);
+  const discountAuthenticityRaw = authenticityScore(fake, product, provisionalQuality, inflated);
+  let discountAuthenticity = discountAuthenticityRaw;
+  if (intents?.realDiscountOnly) {
+    if (fake !== "low") discountAuthenticity = Math.round(discountAuthenticity * 0.86);
+    else if (inflated) discountAuthenticity = Math.round(discountAuthenticity * 0.92);
+  }
+  if (intents?.dealHunter && inflated) discountAuthenticity = Math.round(discountAuthenticity * 0.9);
+  if (intents?.trustedOnly && trust >= 78 && fake === "low" && (disc ?? 0) >= 8) {
+    discountAuthenticity = Math.min(100, Math.round(discountAuthenticity + 5));
+  }
   const valueOpportunity = valueOpportunityScore(fair, product.price, product, list, fake, inflated);
   const dealConfidence = dealConfidenceBlend(discountAuthenticity, valueOpportunity, trust, comp, fake);
   const retailerAdjustedDealScore = retailerAdjustedDeal(dealConfidence, trust, discountAuthenticity);
@@ -757,7 +777,19 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
   );
 
   const urgency = stockUrgencyLevel(product);
-  const authenticityLines = buildAuthenticityLines(product, fake, inflated, urgency, trust, del);
+  let authenticityLines = buildAuthenticityLines(product, fake, inflated, urgency, trust, del);
+  if (intents?.realDiscountOnly) {
+    authenticityLines = [
+      ...authenticityLines,
+      "You asked for real discounts—QuantAI tightened markdown hygiene vs. headline anchors.",
+    ];
+  }
+  if (intents?.trustedOnly && trust >= 72) {
+    authenticityLines = [
+      ...authenticityLines,
+      "Trust-first query: seller reputation and marketplace risk weighed heavier than deal theater.",
+    ];
+  }
   const whyDealGoodOrRisky = whyLine(product, base, fake, fair, trust, comp);
 
   const goodTimeToBuy =
@@ -902,10 +934,13 @@ export function buildProductDealIntelligence(product: QuantProduct, list: QuantP
 }
 
 /** Memo-friendly batch for a tray or cluster listing set. */
-export function buildDealIntelByLink(list: QuantProduct[]): Map<string, ProductDealIntelligence> {
+export function buildDealIntelByLink(
+  list: QuantProduct[],
+  intents?: CommerceSearchIntents
+): Map<string, ProductDealIntelligence> {
   const m = new Map<string, ProductDealIntelligence>();
   for (const p of list) {
-    m.set(p.link, buildProductDealIntelligence(p, list));
+    m.set(p.link, buildProductDealIntelligence(p, list, intents));
   }
   if (list.length < 2) return m;
 

@@ -1,4 +1,6 @@
 import type { ProductCategorySlug, CategoryWeightProfile } from "./types";
+import { applyIntentAwareCategoryWeights } from "./intentRankingWeights";
+import type { CommerceSearchIntents } from "./searchIntentV2";
 
 const DEFAULT_WEIGHTS: CategoryWeightProfile = {
   price: 0.18,
@@ -190,13 +192,16 @@ function queryCommercePersonaPatch(searchQuery: string): Partial<CategoryWeightP
   return null;
 }
 
-export function getCategoryWeightsForQuery(searchQuery: string, productTitle: string): CategoryWeightProfile {
+export function getCategoryWeightsForQuery(
+  searchQuery: string,
+  productTitle: string,
+  intents?: CommerceSearchIntents
+): CategoryWeightProfile {
   const slug = inferProductCategory(searchQuery, productTitle);
   const base = getCategoryWeights(slug);
   const patch = queryCommercePersonaPatch(searchQuery);
-  if (!patch) return base;
-  const merged: CategoryWeightProfile = { ...base, ...patch };
-  const sum =
+  const merged: CategoryWeightProfile = patch ? { ...base, ...patch } : { ...base };
+  const sum0 =
     merged.price +
     merged.rating +
     merged.reviewDepth +
@@ -205,16 +210,18 @@ export function getCategoryWeightsForQuery(searchQuery: string, productTitle: st
     merged.popularity +
     merged.pricePerformance +
     merged.discountQuality;
-  if (sum <= 0) return base;
-  const f = 1 / sum;
-  return {
-    price: merged.price * f,
-    rating: merged.rating * f,
-    reviewDepth: merged.reviewDepth * f,
-    retailerTrust: merged.retailerTrust * f,
-    delivery: merged.delivery * f,
-    popularity: merged.popularity * f,
-    pricePerformance: merged.pricePerformance * f,
-    discountQuality: merged.discountQuality * f,
+  if (sum0 <= 0) return base;
+  const f0 = 1 / sum0;
+  const normalizedBase: CategoryWeightProfile = {
+    price: merged.price * f0,
+    rating: merged.rating * f0,
+    reviewDepth: merged.reviewDepth * f0,
+    retailerTrust: merged.retailerTrust * f0,
+    delivery: merged.delivery * f0,
+    popularity: merged.popularity * f0,
+    pricePerformance: merged.pricePerformance * f0,
+    discountQuality: merged.discountQuality * f0,
   };
+  if (!intents) return normalizedBase;
+  return applyIntentAwareCategoryWeights(normalizedBase, intents, slug);
 }

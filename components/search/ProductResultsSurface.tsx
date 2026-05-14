@@ -28,6 +28,7 @@ import type { ResultsFiltersState } from "@/lib/resultsFilters";
 import { buildCompareExport, buildTraySummary, copyText } from "@/lib/share/intelligenceExport";
 import { currencySymbolFromListing, formatListingPrice } from "@/lib/commerce/cues";
 import { sortByCompositeRankEnhanced } from "@/lib/intelligence/searchRankEnhance";
+import { parseCommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
 import { getFinalComposite } from "@/lib/shoppingScore";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import CompareIntelligencePanel from "./CompareIntelligencePanel";
@@ -154,8 +155,9 @@ export default function ProductResultsSurface({
 
   const dealIntelResolved = useMemo(() => {
     if (dealIntelByLinkProp) return dealIntelByLinkProp;
-    return buildDealIntelByLink(sortedProducts);
-  }, [dealIntelByLinkProp, sortedProducts]);
+    const intents = searchQuery.trim() ? parseCommerceSearchIntents(searchQuery) : undefined;
+    return buildDealIntelByLink(sortedProducts, intents);
+  }, [dealIntelByLinkProp, sortedProducts, searchQuery]);
   const trayDealHighlights = useMemo(() => buildTrayDealHighlights(sortedProducts), [sortedProducts]);
 
   const aiTopPicks = useMemo(() => compositeRanked.slice(0, 3), [compositeRanked]);

@@ -27,6 +27,7 @@ import type { SearchEntitlementsDTO } from "@/lib/subscription/entitlements";
 import type { QuantPlanTier } from "@/lib/subscription/plans";
 import type { DealClusterDTO } from "@/lib/deals/types";
 import { buildDealIntelByLink } from "@/lib/intelligence/dealIntelligenceEngine";
+import { parseCommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
 import { sortByVerifiedDealRank } from "@/lib/intelligence/discountRank";
 import {
   dedupeSearchTray,
@@ -195,7 +196,10 @@ export default function Home() {
     }
   }, [products, filters, sort, query]);
 
-  const dealIntelByLink = useMemo(() => buildDealIntelByLink(sortedProductsMemo), [sortedProductsMemo]);
+  const dealIntelByLink = useMemo(() => {
+    const intents = parseCommerceSearchIntents(query);
+    return buildDealIntelByLink(sortedProductsMemo, intents);
+  }, [sortedProductsMemo, query]);
 
   const searchIntelHeadline = searchIntelligence?.finalHeadline;
   const searchIntelBody = searchIntelligence?.finalBody;

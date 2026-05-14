@@ -13,6 +13,7 @@ import {
 } from "@/lib/intelligence/searchIntentV2";
 import type { ProductCategorySlug } from "@/lib/intelligence/types";
 import { getMarketplaceSellerRiskTier } from "@/lib/retailTrust";
+import { alternativeSeekingRankAdjustment } from "@/lib/intelligence/alternativeRanking";
 
 export type PurchaseIntent =
   | "neutral"
@@ -275,6 +276,9 @@ export function sortByCompositeRankEnhanced(list: QuantProduct[], query: string)
     if (intents.portableLight && /\b(air|thin|light|ultra|gram|lg\s*gram|carbon|feather|compact)\b/i.test(p.title)) {
       c += 1.15;
     }
+    if (intents.gaming && intents.portableLight && p.qiCategory === "electronics" && /\b(ultra|air|thin|light|gram|4050|4060|4070)\b/i.test(p.title)) {
+      c += 0.95;
+    }
     if (intents.lifestyleCreator && /\b(pro|studio|ultra|creator|oled|4k|microphone|webcam|camera)\b/i.test(p.title)) {
       c += 0.65;
     }
@@ -286,6 +290,7 @@ export function sortByCompositeRankEnhanced(list: QuantProduct[], query: string)
         ? (p.oldPrice - p.price) / p.oldPrice
         : undefined;
     c += intentCompositeLift(intents, cat, trust / 100, priceVsMedian, { headlineDiscount01: disc01 }) * 92;
+    c += alternativeSeekingRankAdjustment(query, p, medianPrice, intents);
     c += (listingTextQuality01(p.title) - 0.55) * 5.8;
     c += (queryListingRelevance01(query, p) - 0.5) * 10;
     const mp = getMarketplaceSellerRiskTier(p.store, p.title);

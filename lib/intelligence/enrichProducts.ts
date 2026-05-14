@@ -26,8 +26,14 @@ export function enrichProductsWithIntelligence(
     const engine = scoreProductEngine(p, searchQuery, stats, listMaxValueRaw, intents);
     const reason = buildScoreReasoning(p, productsIn, stats, engine.signals, engine.category);
     const trend = simulatePriceTrend(p, stats);
-    const qiVerdict = getAdaptiveVerdict(p, productsIn, stats, engine.signals);
-    const qiPsychology = getPsychologyInsight(p, productsIn, stats, engine.signals, engine.category);
+    const qiVerdict = getAdaptiveVerdict(p, productsIn, stats, engine.signals, {
+      query: searchQuery,
+      intents,
+    });
+    const qiPsychology = getPsychologyInsight(p, productsIn, stats, engine.signals, engine.category, {
+      query: searchQuery,
+      intents,
+    });
     return {
       ...p,
       qiComposite: engine.composite,
