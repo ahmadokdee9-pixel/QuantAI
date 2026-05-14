@@ -7,6 +7,12 @@ import { getFinalComposite, getStoreTrustScore, ratingValue } from "@/lib/shoppi
 import { getMarketplaceSellerRiskTier } from "@/lib/retailTrust";
 import { buildLiveCommerceSignals, type LiveCommerceSignals } from "@/lib/intelligence/liveCommerceSignals";
 import type { CommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
+import {
+  dealConfidenceCategoryNudge,
+  getCategoryPricingEconomics,
+  isStrongValueTerritory,
+} from "@/lib/intelligence/adaptiveDealPricing";
+import type { ProductCategorySlug } from "@/lib/intelligence/types";
 
 /** QuantAI primary verdict language — scan-optimized, tray-relative. */
 export type QuantAIDealVerdict =
@@ -165,6 +171,7 @@ function mapToAiVerdict(args: {
   isBestTrustedInSet: boolean;
   highConfDisc: boolean;
   suspiciousDiscountRisk?: number;
+  strongValueTerritory: boolean;
 }): QuantAIDealVerdict {
   const {
     base,
@@ -177,11 +184,19 @@ function mapToAiVerdict(args: {
     isBestTrustedInSet,
     highConfDisc,
     suspiciousDiscountRisk,
+    strongValueTerritory,
   } = args;
   const sr = suspiciousDiscountRisk ?? 0;
   if (fake === "high" || (underpriced && fake !== "low")) return "Avoid Fake Sale";
   if (base === "Suspicious discount") return "Suspicious Discount";
   if (sr >= 68 && trust < 58 && fake !== "low") return "Suspicious Discount";
+  if (strongValueTerritory && !underpriced) {
+    if (comp >= 78 && trust >= 72) return "Best Deal Today";
+    if (comp >= 74 && trust >= 68) return "Strong Buy";
+    if (comp >= 68 && stars >= 4.05) return "Best Price-to-Quality";
+    if (trust >= 70 && comp >= 62) return "Safe Buy";
+    return "Best Price-to-Quality";
+  }
   if (overpriced && trust >= 76 && comp >= 58) return "Premium Pick";
   if (overpriced || base === "Wait for lower pricing") return "Wait For Better Price";
   if (isBestTrustedInSet && trust >= 70 && fake === "low" && comp >= 64) return "Safe Buy";
@@ -353,6 +368,8 @@ function deriveLiveShelfLabels(args: {
   waitForBetterPricing: boolean;
   fair: number;
   price: number;
+  /** When true, skip “Wait for Better Price” shelf chips for already-cheap, clean rows. */
+  suppressWaitShelf: boolean;
 }): LiveShelfLabel[] {
   const {
     p,
@@ -370,13 +387,15 @@ function deriveLiveShelfLabels(args: {
     waitForBetterPricing,
     fair,
     price,
+    suppressWaitShelf,
   } = args;
   const d = disc ?? 0;
   const rt = ratingValue(p.rating);
 
   if (!hasDiscount) {
     const out: LiveShelfLabel[] = [];
-    if (waitBuy || overpriced || waitForBetterPricing) {
+    const showWait = !suppressWaitShelf && (waitBuy || overpriced || waitForBetterPricing);
+    if (showWait) {
       out.push("Wait for Better Price");
     } else if (comp >= 78 && trust >= 70 && !overpriced) {
       out.push("Strong Buy");
@@ -405,7 +424,7 @@ function deriveLiveShelfLabels(args: {
   const pool: LiveShelfLabel[] = [];
 
   if (suspicious && d >= 6) pool.push("Suspicious Discount");
-  if (waitBuy && !pool.includes("Suspicious Discount")) pool.push("Wait Before Buying");
+  if (waitBuy && !suppressWaitShelf && !pool.includes("Suspicious Discount")) pool.push("Wait Before Buying");
 
   if (!suspicious) {
     if (
@@ -647,7 +666,8 @@ function timingFromSignals(
   base: DealVerdict,
   fake: FakeDiscountRisk,
   goodBuy: boolean,
-  wait: boolean
+  wait: boolean,
+  strongValueTerritory: boolean
 ): { category: DealTimingCategory; summary: string } {
   const cv = trayPriceVolatility(list);
   if (cv >= 0.22) {
@@ -655,6 +675,13 @@ function timingFromSignals(
       category: "unstable_tray",
       summary:
         "Wide price ladder across this tray—suggests bundles, mismatched SKUs, or promo volatility. Comparison beats impulse.",
+    };
+  }
+  if (strongValueTerritory && fake === "low" && (wait || base === "Wait for lower pricing" || base === "Overpriced")) {
+    return {
+      category: "neutral",
+      summary:
+        "Ask already sits in a strong value band versus this tray—timing is less about waiting for a dip than confirming SKU fit and policy comfort.",
     };
   }
   if (wait || base === "Wait for lower pricing" || base === "Overpriced") {
@@ -695,16 +722,33 @@ export function buildProductDealIntelligence(
   const maxReviews = Math.max(...list.map((x) => x.reviewsCount ?? 0), 1);
   const disc = discountPct(product);
   const fake = fakeDiscountRisk(product, list, disc, maxReviews);
-  const base = dealVerdictFor(product, list, fair, fake, disc, maxReviews);
+  const category = (product.qiCategory ?? "general") as ProductCategorySlug;
+  const econ = getCategoryPricingEconomics(category);
+  const base = dealVerdictFor(product, list, fair, fake, disc, maxReviews, {
+    category,
+    pricePerformance: product.qiSignals?.pricePerformance,
+  });
   const peerMed = peerMedianExcluding(list, product.link);
   const inflated = product.oldPrice != null && peerMed > 0 && product.oldPrice > peerMed * 1.38;
   const trust = getStoreTrustScore(product.store);
   const comp = getFinalComposite(product, list);
   const del = product.qiSignals?.delivery ?? scoreDeliverySpeed(product.shipping) * 100;
 
-  const overpricedVsTray = fair > 0 && product.price > fair * 1.12;
+  const overpricedVsTray = fair > 0 && product.price > fair * (1.12 + econ.priceyFairHeadroom);
   const underpricedAnomaly =
     peerMed > 0 && product.price < peerMed * 0.58 && (disc ?? 0) > 32 && (product.qiCommerce?.priceAnomaly === "suspicious_low" || fake !== "low");
+
+  const strongValueTerritory = isStrongValueTerritory(
+    product,
+    fair,
+    peerMed,
+    trust,
+    comp,
+    fake,
+    overpricedVsTray,
+    underpricedAnomaly,
+    category
+  );
 
   const suspiciousDiscountRiskRaw = computeSuspiciousDiscountRisk(fake, inflated, underpricedAnomaly);
   const suspiciousDiscountRisk = Math.min(
@@ -732,7 +776,11 @@ export function buildProductDealIntelligence(
     discountAuthenticity = Math.min(100, Math.round(discountAuthenticity + 5));
   }
   const valueOpportunity = valueOpportunityScore(fair, product.price, product, list, fake, inflated);
-  const dealConfidence = dealConfidenceBlend(discountAuthenticity, valueOpportunity, trust, comp, fake);
+  let dealConfidence = dealConfidenceBlend(discountAuthenticity, valueOpportunity, trust, comp, fake);
+  dealConfidence = Math.min(
+    100,
+    dealConfidence + dealConfidenceCategoryNudge(category, ratingValue(product.rating), trust)
+  );
   const retailerAdjustedDealScore = retailerAdjustedDeal(dealConfidence, trust, discountAuthenticity);
 
   const absoluteSavings =
@@ -793,13 +841,21 @@ export function buildProductDealIntelligence(
   const whyDealGoodOrRisky = whyLine(product, base, fake, fair, trust, comp);
 
   const goodTimeToBuy =
-    (base === "Real deal" || base === "Strong value") &&
-    fake === "low" &&
-    trust >= ((disc ?? 0) > 28 ? 64 : 60) &&
-    !underpricedAnomaly &&
-    comp >= 62;
+    (strongValueTerritory &&
+      fake === "low" &&
+      trust >= 62 &&
+      !underpricedAnomaly &&
+      comp >= 58) ||
+    ((base === "Real deal" || base === "Strong value") &&
+      fake === "low" &&
+      trust >= ((disc ?? 0) > 28 ? 64 : 60) &&
+      !underpricedAnomaly &&
+      comp >= 62);
   const waitForBetterPricing =
-    base === "Wait for lower pricing" || base === "Overpriced" || (comp < 56 && trust < 58);
+    !strongValueTerritory &&
+    (base === "Wait for lower pricing" ||
+      base === "Overpriced" ||
+      (comp < 52 && trust < 54));
 
   const shelfLabels = deriveLiveShelfLabels({
     p: product,
@@ -817,6 +873,7 @@ export function buildProductDealIntelligence(
     waitForBetterPricing,
     fair,
     price: product.price,
+    suppressWaitShelf: strongValueTerritory,
   });
 
   const liveRankExplanation = buildLiveRankExplanation(
@@ -846,9 +903,10 @@ export function buildProductDealIntelligence(
     isBestTrustedInSet: false,
     highConfDisc,
     suspiciousDiscountRisk,
+    strongValueTerritory,
   });
 
-  const timing = timingFromSignals(list, base, fake, goodTimeToBuy, waitForBetterPricing);
+  const timing = timingFromSignals(list, base, fake, goodTimeToBuy, waitForBetterPricing, strongValueTerritory);
 
   const worthBuyingNow = worthBuyingNowSignal(aiDealVerdict, goodTimeToBuy, waitForBetterPricing, {
     trust,
@@ -960,22 +1018,38 @@ export function buildDealIntelByLink(
     const row = m.get(p.link);
     if (!row) continue;
     const isBestTrusted = bestLink != null && p.link === bestLink && row.discountAuthenticity >= 55;
+    const compP = getFinalComposite(p, list);
+    const trustP = getStoreTrustScore(p.store);
+    const peerMedP = peerMedianExcluding(list, p.link);
+    const catP = (p.qiCategory ?? "general") as ProductCategorySlug;
+    const strongValueTerritory = isStrongValueTerritory(
+      p,
+      row.fairMarketEstimate,
+      peerMedP,
+      trustP,
+      compP,
+      row.fakeDiscountRisk,
+      row.overpricedVsTray,
+      row.underpricedAnomaly,
+      catP
+    );
     const ai2 = mapToAiVerdict({
       base: row.baseDealVerdict,
       fake: row.fakeDiscountRisk,
-      trust: getStoreTrustScore(p.store),
-      comp: getFinalComposite(p, list),
+      trust: trustP,
+      comp: compP,
       stars: ratingValue(p.rating),
       overpriced: row.overpricedVsTray,
       underpriced: row.underpricedAnomaly,
       isBestTrustedInSet: isBestTrusted,
       highConfDisc:
         row.fakeDiscountRisk === "low" &&
-        getStoreTrustScore(p.store) >= 72 &&
+        trustP >= 72 &&
         (row.discountPct ?? 0) >= 14 &&
         (p.qiCommerce?.confidence ?? 0) >= 68 &&
-        getFinalComposite(p, list) >= 70,
+        compP >= 70,
       suspiciousDiscountRisk: row.suspiciousDiscountRisk,
+      strongValueTerritory,
     });
     const worthNow = worthBuyingNowSignal(ai2, row.goodTimeToBuy, row.waitForBetterPricing, {
       trust: getStoreTrustScore(p.store),

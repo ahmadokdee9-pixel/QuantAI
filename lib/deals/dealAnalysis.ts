@@ -14,6 +14,8 @@ import {
   imageSimilarityPlaceholder,
 } from "./clusterNarrative";
 import { canonicalClusterTitle } from "./clusterEngine";
+import { getCategoryPricingEconomics } from "@/lib/intelligence/adaptiveDealPricing";
+import type { ProductCategorySlug } from "@/lib/intelligence/types";
 import { getDealQualityBlend, inferDealMarketSegment } from "./dealCategoryWeights";
 import { buildListingDealReasoning } from "./dealNarrative";
 import { extractProductIdentity } from "./productIdentity";
@@ -62,7 +64,7 @@ function returnPolicyHint(p: QuantProduct): string {
   return "Return policy not explicit in feed—verify on retailer checkout.";
 }
 
-function peerPriceMedianExcluding(listings: QuantProduct[], excludeLink: string): number {
+export function peerPriceMedianExcluding(listings: QuantProduct[], excludeLink: string): number {
   const prices = listings
     .filter((x) => x.link !== excludeLink && x.price > 0)
     .map((x) => x.price);
@@ -118,21 +120,30 @@ export function fakeDiscountRisk(
   return "low";
 }
 
+export type DealVerdictContext = {
+  category?: ProductCategorySlug;
+  /** 0–100 from scoring engine when available (tray-relative price performance). */
+  pricePerformance?: number;
+};
+
 export function dealVerdictFor(
   p: QuantProduct,
   listings: QuantProduct[],
   fair: number,
   fake: FakeDiscountRisk,
   discount: number | null,
-  maxReviews: number
+  maxReviews: number,
+  ctx?: DealVerdictContext
 ): DealVerdict {
   const trust = getStoreTrustScore(p.store);
   const r = ratingValue(p.rating);
   const comp = getFinalComposite(p, listings);
   const prices = listings.map((x) => x.price).filter((x) => x > 0);
   const cheapest = prices.length ? Math.min(...prices) : p.price;
-  const priceyVsFair = fair > 0 && p.price > fair * 1.12;
-  const cheapVsFair = fair > 0 && p.price < fair * 0.88;
+  const econ = getCategoryPricingEconomics(ctx?.category ?? "general");
+  const priceyMul = 1.12 + econ.priceyFairHeadroom;
+  const priceyVsFair = fair > 0 && p.price > fair * priceyMul;
+  const cheapVsFair = fair > 0 && p.price < fair * econ.cheapVsFairRatio;
   const depth = reviewDepth01(p, maxReviews);
   const peerMed = peerPriceMedianExcluding(listings, p.link);
   const suspiciousCheap = peerMed > 0 && p.price < peerMed * 0.55 && (discount ?? 0) > 40;
@@ -161,7 +172,27 @@ export function dealVerdictFor(
     return "Real deal";
   }
   if (priceyVsFair) return "Overpriced";
-  if (comp < 58 || (comp < 64 && trust < 60)) return "Wait for lower pricing";
+
+  const pp = ctx?.pricePerformance ?? comp;
+  const valueDenseLane =
+    cheapVsFair &&
+    !priceyVsFair &&
+    trust >= 60 &&
+    fake === "low" &&
+    !suspiciousCheap &&
+    (comp >= 52 || (peerMed > 0 && p.price <= peerMed * 0.93) || pp >= 72);
+
+  if (valueDenseLane) {
+    if (comp >= 64 && r >= 3.95 && trust >= 66) return "Strong value";
+    if (discount != null && discount >= 10 && trust >= 62) return "Strong value";
+    return "Compare carefully";
+  }
+
+  const compositeHardWait = comp < 44 && !(cheapVsFair && trust >= 62 && fake === "low");
+  const compositeSoftWait =
+    (econ.lane === "budget" ? comp < 50 : comp < 56) && trust < 56 && !cheapVsFair;
+  if (compositeHardWait || compositeSoftWait) return "Wait for lower pricing";
+  if (comp < 62 && trust < 60 && !cheapVsFair) return "Wait for lower pricing";
   return "Compare carefully";
 }
 
@@ -507,7 +538,7 @@ function advisorSummaryText(
 }
 
 export function analyzeDealCluster(id: string, listings: QuantProduct[]): DealClusterDTO {
-  const { segment, label: inferredCategoryLabel } = inferDealMarketSegment(listings);
+  const { segment, label: inferredCategoryLabel, slug: clusterCategorySlug } = inferDealMarketSegment(listings);
   const blend = getDealQualityBlend(segment);
   const identities = listings.map(extractProductIdentity);
 
@@ -529,7 +560,10 @@ export function analyzeDealCluster(id: string, listings: QuantProduct[]): DealCl
   const provisionalInsights: ListingDealInsight[] = listings.map((p) => {
     const disc = discountPct(p);
     const fake = fakeDiscountRisk(p, listings, disc, maxReviews);
-    const verdict = dealVerdictFor(p, listings, fair, fake, disc, maxReviews);
+    const verdict = dealVerdictFor(p, listings, fair, fake, disc, maxReviews, {
+      category: clusterCategorySlug,
+      pricePerformance: p.qiSignals?.pricePerformance,
+    });
     const returnHint = returnPolicyHint(p);
     const dataGaps = listingDataGaps(p);
     const tg = tooGoodToBeTrue(p, listings, disc, maxReviews);

@@ -29,6 +29,7 @@ export function enrichProductsWithIntelligence(
     const qiVerdict = getAdaptiveVerdict(p, productsIn, stats, engine.signals, {
       query: searchQuery,
       intents,
+      category: engine.category,
     });
     const qiPsychology = getPsychologyInsight(p, productsIn, stats, engine.signals, engine.category, {
       query: searchQuery,

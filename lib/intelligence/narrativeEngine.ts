@@ -3,17 +3,27 @@ import { getStoreTrustScore } from "@/lib/retailTrust";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getFinalComposite, ratingValue } from "@/lib/shoppingScore";
 import type { CommerceSearchIntents } from "./searchIntentV2";
+import { fakeDiscountRisk, peerPriceMedianExcluding } from "@/lib/deals/dealAnalysis";
+import { getCategoryPricingEconomics, isStrongValueTerritory } from "./adaptiveDealPricing";
 
 export type NarrativeIntentCtx = {
   query?: string;
   intents?: CommerceSearchIntents;
+  category?: ProductCategorySlug;
 };
 
 export type AdaptiveVerdict =
   | "Strong Buy"
+  | "Strong Value"
   | "Best Budget Pick"
+  | "Budget Winner"
+  | "Good Low-Risk Buy"
+  | "Fair Price"
   | "Premium Choice"
   | "Wait for Better Pricing"
+  | "Watch for a Better Entry"
+  | "Peers Lean Cheaper"
+  | "Soft Hold: Price Room"
   | "Compare Alternatives"
   | "High Trust Option"
   | "Risky but High Value";
@@ -77,7 +87,7 @@ function buildPeerCtx(p: QuantProduct, peers: QuantProduct[]): PeerCtx {
 export function getAdaptiveVerdict(
   p: QuantProduct,
   peers: QuantProduct[],
-  _stats: ListStats,
+  stats: ListStats,
   signals: IntelligenceSignals,
   ctx?: NarrativeIntentCtx
 ): AdaptiveVerdict {
@@ -86,17 +96,79 @@ export function getAdaptiveVerdict(
   const r = ratingValue(p.rating);
   const ctxPeers = buildPeerCtx(p, peers);
   const cheapShare = ctxPeers.n > 1 ? ctxPeers.cheaperCount / (ctxPeers.n - 1) : 0;
-  const pricey = ctxPeers.avgPrice > 0 && p.price > ctxPeers.avgPrice * 1.1;
-  const budget = ctxPeers.avgPrice > 0 && p.price < ctxPeers.avgPrice * 0.88 && c >= 68;
-  const premium = ctxPeers.avgPrice > 0 && p.price > ctxPeers.avgPrice * 1.05 && r >= 4.45 && t >= 74;
+  const category = (ctx?.category ?? "general") as ProductCategorySlug;
+  const econ = getCategoryPricingEconomics(category);
+  const fair = stats.medianPrice;
+  const pricey =
+    fair > 0 && p.price > fair * (1.1 + econ.priceyFairHeadroom * 0.55);
+  const budget =
+    ctxPeers.avgPrice > 0 &&
+    p.price < ctxPeers.avgPrice * (0.88 + (econ.lane === "budget" ? 0.035 : 0)) &&
+    c >= (econ.lane === "budget" ? 64 : 68);
+  const premium =
+    ctxPeers.avgPrice > 0 &&
+    p.price > ctxPeers.avgPrice * (econ.lane === "emotional" ? 1.02 : 1.05) &&
+    r >= (econ.lane === "emotional" ? 4.35 : 4.45) &&
+    t >= 74;
   const weakTrustHighValue = t < 62 && signals.pricePerformance >= 72 && c >= 62;
   const intents = ctx?.intents;
   const strongBuyFloor = intents?.longTermValue || intents?.trustedOnly ? 81 : 84;
-  const waitSignal =
-    c < 58 || (pricey && p.priceTrend === "up" && signals.priceFit < 48) || (r > 0 && r < 3.85 && c < 70);
 
-  if (waitSignal) return "Wait for Better Pricing";
-  if (weakTrustHighValue) return "Risky but High Value";
+  const maxReviews = Math.max(...peers.map((x) => x.reviewsCount ?? 0), 1);
+  const discN =
+    p.oldPrice != null && p.oldPrice > p.price && p.price > 0
+      ? Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100)
+      : null;
+  const fake = fakeDiscountRisk(p, peers, discN, maxReviews);
+  const peerMed = peerPriceMedianExcluding(peers, p.link);
+  const overpricedVsTray = fair > 0 && p.price > fair * (1.12 + econ.priceyFairHeadroom);
+  const underpricedAnomaly =
+    peerMed > 0 &&
+    p.price < peerMed * 0.58 &&
+    (discN ?? 0) > 32 &&
+    (p.qiCommerce?.priceAnomaly === "suspicious_low" || fake !== "low");
+  const strongValue = isStrongValueTerritory(p, fair, peerMed, t, c, fake, overpricedVsTray, underpricedAnomaly, category);
+
+  const cheapPath =
+    fair > 0 &&
+    p.price > 0 &&
+    p.price <= fair * Math.min(0.97, econ.cheapVsFairRatio + 0.03) &&
+    (signals.pricePerformance >= 66 || c >= 56);
+
+  const waitNeed =
+    !strongValue &&
+    !cheapPath &&
+    ((c < 54 && !(t >= 68 && fake === "low" && fair > 0 && p.price <= fair * 0.95)) ||
+      (pricey && p.priceTrend === "up" && signals.priceFit < 46) ||
+      (r > 0 && r < 3.72 && c < 68));
+
+  const seed = strHash(p.link + (ctx?.query ?? ""));
+
+  if (strongValue || (cheapPath && t >= 62 && c >= 54 && fake !== "high")) {
+    if (c >= strongBuyFloor && t >= 74 && r >= 4.08) {
+      return variant(seed, ["Strong Buy", "Strong Value"]) as AdaptiveVerdict;
+    }
+    if (budget && cheapShare >= (econ.lane === "budget" ? 0.24 : 0.32)) {
+      return variant(seed, ["Best Budget Pick", "Budget Winner"]) as AdaptiveVerdict;
+    }
+    if (c >= 76 && t >= 72) {
+      return variant(seed, ["Good Low-Risk Buy", "Strong Value", "Fair Price"]) as AdaptiveVerdict;
+    }
+    if (c >= 66 && t >= 66 && fake === "low") {
+      return variant(seed, ["Fair Price", "Good Low-Risk Buy"]) as AdaptiveVerdict;
+    }
+    return variant(seed, ["Fair Price", "Budget Winner", "Good Low-Risk Buy", "Compare Alternatives"]) as AdaptiveVerdict;
+  }
+
+  if (weakTrustHighValue && !strongValue) return "Risky but High Value";
+  if (waitNeed) {
+    return variant(seed + 9, [
+      "Watch for a Better Entry",
+      "Peers Lean Cheaper",
+      "Soft Hold: Price Room",
+      "Wait for Better Pricing",
+    ]) as AdaptiveVerdict;
+  }
   if (t >= 88 && c >= 66 && r >= 3.85 && !(c >= 84 && t >= 76 && r >= 4.15)) return "High Trust Option";
   if (budget && cheapShare >= 0.32) return "Best Budget Pick";
   if (premium) return "Premium Choice";
@@ -155,6 +227,20 @@ export function getPsychologyInsight(
     return variant(seed + 17, [
       "Quiet luxury read: understated prestige beats loud discounts—this row fits a stealth-wealth shopping stance.",
       "Old-money calm: premium feel without shouty marketing wins when your language skewed understated.",
+    ]);
+  }
+
+  if (
+    _stats.medianPrice > 0 &&
+    p.price > 0 &&
+    p.price <= _stats.medianPrice * 0.95 &&
+    signals.pricePerformance >= 74 &&
+    t >= 64 &&
+    (category === "fashion" || category === "beauty")
+  ) {
+    return variant(seed + 19, [
+      "Emotional-value lane: peers and price-performance agree this ask is already fair—optimize for fit, finish, and seller hygiene over bargain FOMO.",
+      "Category psychology favors joy-per-euro over list-price theater when the tray says you are not overpaying.",
     ]);
   }
 
