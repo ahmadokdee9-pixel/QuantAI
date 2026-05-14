@@ -310,6 +310,10 @@ export default function Home() {
     setLoading(true);
     setSearchError(null);
 
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+    });
+
     try {
       const res = await fetch(
         `/api/search?q=${encodeURIComponent(q)}`,

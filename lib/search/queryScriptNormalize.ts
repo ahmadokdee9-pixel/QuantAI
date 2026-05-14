@@ -48,7 +48,7 @@ const AR_GLOSSES: { rx: RegExp; en: string }[] = [
   { rx: /(?:لابتوب|كمبيوتر\s*محمول|حاسوب\s*محمول)/i, en: " laptop " },
   { rx: /(?:هاتف|جوال|موبايل|تليفون)/i, en: " phone " },
   { rx: /(?:سماعة|سماعات)/i, en: " headphones " },
-  { rx: /(?:تلفزيون|شاشة)/i, en: " TV monitor " },
+  { rx: /(?:تلفزيون|شاشة|أوليد|اوليد)/i, en: " TV OLED monitor " },
   { rx: /(?:ساعة\s*ذكية|ساعة)/i, en: " smartwatch " },
   { rx: /(?:رخيص|ارخص|أرخص|تخفيض|خصم)/i, en: " cheap discount " },
   { rx: /(?:موثوق|آمن|ثقة)/i, en: " trusted " },
@@ -56,6 +56,8 @@ const AR_GLOSSES: { rx: RegExp; en: string }[] = [
   { rx: /(?:هدية|لزوجتي|لزوجي)/i, en: " gift " },
   { rx: /(?:للمدرسة|للجامعة)/i, en: " student school " },
   { rx: /(?:مقارنة|فرق\s*بين)/i, en: " compare " },
+  { rx: /(?:ألعاب|قيمنق|جيمنق)/i, en: " gaming " },
+  { rx: /(?:شاشة\s*كمبيوتر|مونيتور)/i, en: " monitor display " },
 ];
 
 /** English tokens implied by Arabic shopping vocabulary (for intent + Shopping recall). */

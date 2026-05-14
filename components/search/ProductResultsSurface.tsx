@@ -29,7 +29,8 @@ import type { SearchIntelligenceLevel } from "@/lib/subscription/plans";
 import type { ResultsFiltersState } from "@/lib/resultsFilters";
 import { buildCompareExport, buildTraySummary, copyText } from "@/lib/share/intelligenceExport";
 import { currencySymbolFromListing, formatListingPrice } from "@/lib/commerce/cues";
-import { getFinalComposite, sortByCompositeRank } from "@/lib/shoppingScore";
+import { sortByCompositeRankEnhanced } from "@/lib/intelligence/searchRankEnhance";
+import { getFinalComposite } from "@/lib/shoppingScore";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import CompareIntelligencePanel from "./CompareIntelligencePanel";
 import ProductIntelligenceDrawer from "./ProductIntelligenceDrawer";
@@ -143,8 +144,8 @@ export default function ProductResultsSurface({
   }, [compareLinks, onCompareTrayChange]);
 
   const compositeRanked = useMemo(
-    () => sortByCompositeRank(sortedProducts),
-    [sortedProducts]
+    () => sortByCompositeRankEnhanced(sortedProducts, searchQuery),
+    [sortedProducts, searchQuery]
   );
   const rankByLink = useMemo(() => {
     const m = new Map<string, number>();

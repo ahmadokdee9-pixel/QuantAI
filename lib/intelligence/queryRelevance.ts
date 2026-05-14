@@ -2,6 +2,7 @@ import type { QuantProduct } from "@/lib/shoppingScore";
 import { ratingValue } from "@/lib/shoppingScore";
 import { extractQueryCommerceHints } from "@/lib/deals/productIdentity";
 import { hardCategoryMismatch } from "@/lib/commerce/trayListingFilter";
+import { relevanceLexicalExpansion } from "@/lib/search/conversationalQueryLayer";
 import { latinSkeletonForMatching } from "@/lib/search/queryScriptNormalize";
 
 const STOP = new Set([
@@ -105,7 +106,7 @@ function consecutiveTokenPhraseBonus(tokens: string[], hay: string): number {
  * 0–1 overlap between query tokens and listing title + store (broad + specific queries).
  */
 export function queryListingRelevance01(query: string, p: QuantProduct): number {
-  const merged = `${query} ${latinSkeletonForMatching(query)}`;
+  const merged = `${query} ${latinSkeletonForMatching(query)}${relevanceLexicalExpansion(query)}`;
   const tokens = tokenizeQuery(merged);
   const hay = `${p.title} ${p.store}`.toLowerCase();
   let base: number;
@@ -116,6 +117,7 @@ export function queryListingRelevance01(query: string, p: QuantProduct): number 
     for (const t of tokens) {
       if (hay.includes(t)) hits += 1;
       else if (t.length >= 4 && hay.includes(t.slice(0, -1))) hits += 0.65;
+      else if (t.length >= 5 && t.endsWith("s") && hay.includes(t.slice(0, -1))) hits += 0.55;
     }
     const ratio = hits / tokens.length;
     base = Math.min(1, Math.max(0.12, 0.22 + ratio * 0.78));

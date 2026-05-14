@@ -185,7 +185,7 @@ function upgradeNote(query: string, products: QuantProduct[]): string | null {
   const med = median(products.map((p) => p.price).filter((x) => x > 0));
   const hi = products.filter((p) => p.price > med * 1.25);
   if (hi.length && med > 0) {
-    return `This ${slug} tray centers near €${Math.round(med)}. Paying ~25% more usually buys headroom in build quality or performance—worth it only if you will actually use that headroom.`;
+    return `This ${slug} tray centers near €${Math.round(med)}. Paying a bit more often buys build quality you will feel—worth it only if you will use that headroom.`;
   }
   return null;
 }
@@ -335,8 +335,8 @@ function computeFinal(
   if (!products.length) {
     return {
       kind: "compare_alternatives",
-      headline: "No live listings yet",
-      body: "Widen the product name or budget and run again—this scan needs a tray to read.",
+      headline: "Nothing to rank yet",
+      body: "Try a clearer product name or budget band and search again—we need listings to read.",
     };
   }
 
@@ -351,89 +351,89 @@ function computeFinal(
   if (uncertainty >= 66) {
     return {
       kind: "compare_alternatives",
-      headline: "Split verdict — pick two finalists",
-      body: "Price and reviews are not telling one story. Shortlist two trusted rows, match the SKU, then choose.",
+      headline: "Two finalists worth lining up",
+      body: "Signals disagree a little—pick two trusted rows, match the model, then choose between them.",
     };
   }
 
   if (susp && comp < 74) {
     return {
       kind: "risky_deal",
-      headline: "Deal math looks inflated",
-      body: "List prices drift from what serious sellers show. Confirm a second reference before you trust the markdown.",
+      headline: "That markdown needs a second look",
+      body: "List prices look uneven versus serious sellers—confirm a reference price before you trust the drop.",
     };
   }
 
   if (riskyMkt >= Math.ceil(products.length * 0.35) && cheapTrust < 70) {
     return {
       kind: "cheapest_but_risky",
-      headline: "Lowest row, uneven sellers",
-      body: "The floor price often sits on open marketplaces. If you take it, favor top-rated sellers and keep delivery proof.",
+      headline: "Lowest price sits on uneven ground",
+      body: "The floor often comes from open marketplaces—if you take it, favor strong seller ratings and clear delivery proof.",
     };
   }
 
   if (intel.overpricedPremiumSignal && trust >= 82) {
     return {
       kind: "premium_but_overpriced",
-      headline: "Premium shelf, light proof",
-      body: "Some asks look high for the review depth you get. You may be paying for placement more than performance.",
+      headline: "Premium ask, modest proof",
+      body: "Some high-trust rows still look expensive for the reviews you get—make sure you are paying for specs you will use.",
     };
   }
 
   if (comp >= 72 && comp < 82 && trust >= 76 && !susp && intel.lowReviewDepthRisk) {
     return {
       kind: "hidden_gem",
-      headline: "Quiet strength on the lead row",
-      body: "Scores outrun the star count here. If the specs line up, it can be a sharp buy—still confirm warranty region.",
+      headline: "Quietly strong at the top",
+      body: "The lead row scores well even with lighter stars—if the specs fit, it can still be a smart buy; confirm warranty region.",
     };
   }
 
   if (comp >= 78 && trust >= 80 && !susp) {
     return {
       kind: "best_trusted_option",
-      headline: "Best deal today on this tray",
-      body: "The lead listing pairs a strong score with a store you can lean on. Confirm the exact bundle, then move.",
+      headline: "A confident pick on this tray",
+      body: "The lead listing pairs a strong read with a store you can lean on—double-check the bundle, then you are in good shape.",
     };
   }
 
   if (comp >= 80 && trust >= 72 && !susp) {
     return {
       kind: "buy_now",
-      headline: "Strong buy — checkout discipline",
-      body: "Price, trust, and fit align on the lead row. Lock shipping and return terms, then complete the purchase.",
+      headline: "Aligned on value and trust",
+      body: "Price, seller, and fit line up on the lead row—confirm shipping and returns, then you can move with less second-guessing.",
     };
   }
 
   if (comp >= 74 && trust >= 70) {
     return {
       kind: "smart_long_term_buy",
-      headline: "Balanced value, not a stunt price",
-      body: "This is a measured long-term lane—confirm warranty length, then you can proceed with confidence.",
+      headline: "Balanced—not a stunt price",
+      body: "This is a steady long-term lane—verify warranty length, then you can proceed calmly.",
     };
   }
 
   if (comp < 60 || trust < 62) {
     return {
       kind: "wait",
-      headline: "Wait — the tray needs a sharper row",
-      body: "Trust or value is soft against peers. Unless stock is scarce, a short pause usually surfaces a cleaner pick.",
+      headline: "Hold—this tray is still noisy",
+      body: "Trust or value is soft against peers. Unless stock is scarce, a short pause usually surfaces a cleaner option.",
     };
   }
 
   return {
     kind: "compare_alternatives",
-    headline: "Line up two options",
-    body: "No single listing wins every axis. Compare price, seller trust, and delivery on a shortlist, then decide.",
+    headline: "Line up two finalists",
+    body: "No single row wins every axis—compare price, seller, and delivery on a shortlist, then decide.",
   };
 }
 
 function warnings(products: QuantProduct[], clusters: DealClusterDTO[]): string[] {
   const w: string[] = [];
-  if (products.length < 4) w.push("Narrow tray—comparison depth is limited.");
-  if (products.every((p) => p.oldPrice == null)) w.push("Few list prices in the feed; markdowns are read against peers.");
-  if (!clusters.length) w.push("Loose SKU clustering—matching stays conservative.");
+  if (products.length < 4) w.push("Few listings in this scan—treat comparisons as directional.");
+  if (products.every((p) => p.oldPrice == null)) w.push("Limited list-price anchors; we still read price vs peers.");
+  if (!clusters.length) w.push("Loose grouping—names vary by store; double-check the exact model.");
   const low = products.filter((p) => (p.reviewsCount ?? 0) < 8).length;
-  if (low >= Math.ceil(products.length * 0.6)) w.push("Light review volume—ratings can still move.");
+  if (low >= Math.ceil(products.length * 0.6)) w.push("Thin review counts—lean on store trust and specs you verify.");
   return w;
 }
 
@@ -441,26 +441,26 @@ function opportunityCost(query: string, products: QuantProduct[]): string {
   const med = median(products.map((p) => p.price).filter((x) => x > 0));
   const slug = inferProductCategory(query, products.map((p) => p.title).join(" "));
   const band = Math.max(15, Math.round(med * 0.08));
-  return `On “${query.slice(0, 64)}${query.length > 64 ? "…" : ""}” (${slug}), saving about €${band} often trades return speed or seller certainty—the score reflects that trade.`;
+  return `On this ${slug} search, saving about €${band} often trades speed or seller certainty—worth it only if that trade fits you.`;
 }
 
 function whoBuyAvoid(query: string, products: QuantProduct[], hero: QuantProduct | null): { buy: string; avoid: string } {
   const slug = inferProductCategory(query, products.map((p) => p.title).join(" "));
   const buy = hero
-    ? `People buying ${slug} who want fewer surprises—${hero.store} lines up with that posture if returns work for you.`
-    : `Shoppers who already matched the SKU and want a quick price-and-trust read for ${slug}.`;
-  const avoid = `Anyone who needs a guaranteed local warranty, same-day pickup, or contract-grade paperwork without checking the listing—use this as guidance, not a promise.`;
+    ? `Shoppers who want a calmer checkout on ${slug}—${hero.store} lines up if returns work where you live.`
+    : `Anyone comparing ${slug} offers and wants a quick read on price vs trust.`;
+  const avoid = `Not a substitute for warranty terms, local pickup, or contract paperwork—always confirm on the retailer’s page.`;
   return { buy, avoid };
 }
 
 function timingNoteFn(products: QuantProduct[], susp: boolean): string {
-  if (susp) return "Timing: skip impulse while discounts feel theatrical—confirm the real list price first.";
+  if (susp) return "When discounts feel exaggerated, pause and check a second price source before buying.";
   const spread =
     products.map((p) => p.price).filter((x) => x > 0).sort((a, b) => a - b);
   if (spread.length && spread[spread.length - 1]! / Math.max(spread[0]!, 1) > 1.35) {
-    return "Timing: wide price spread—sales windows move fast; a short revisit can collapse outliers.";
+    return "Prices are spread wide—if you’re not in a rush, a quick revisit can surface a cleaner pick.";
   }
-  return "Timing: tray looks steady—if you are not in a rush, a watch on your favorite store still costs little.";
+  return "Pricing looks steady—still worth a fast spec check before you commit.";
 }
 
 export function buildSearchIntelligence(

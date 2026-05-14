@@ -4,10 +4,9 @@ import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
 const STAGES = [
-  { id: "query", label: "Query & constraints", sub: "Intent, budget band, must-have tokens" },
-  { id: "retail", label: "Retailer graph", sub: "Fusing visible offers into one tray" },
-  { id: "trust", label: "Trust & discount hygiene", sub: "Store priors, anchor risk, fake-sale cues" },
-  { id: "final", label: "QI field & tray rank", sub: "Composite, delivery text, peer median" },
+  { id: "intent", label: "Reading what you meant", sub: "Budget, trust, and the product you have in mind" },
+  { id: "offers", label: "Pulling live offers", sub: "Stores and prices for this exact moment" },
+  { id: "rank", label: "Ranking what matters to you", sub: "Trust, value, and fit—without the noise" },
 ] as const;
 
 type Props = {
@@ -32,7 +31,7 @@ export default function SearchStreamRibbon({ active, className = "" }: Props) {
         return;
       }
       setStage(0);
-      const steps = [520, 680, 740, 900];
+      const steps = [380, 520, 620];
       let acc = 0;
       for (let i = 0; i < steps.length; i++) {
         acc += steps[i]!;
@@ -56,53 +55,53 @@ export default function SearchStreamRibbon({ active, className = "" }: Props) {
 
   return (
     <div
-      className={`stream-ribbon rounded-2xl border border-cyan-400/12 bg-gradient-to-br from-cyan-500/[0.06] via-[#0a1628]/94 to-violet-500/[0.045] p-4 backdrop-blur-lg ${className}`}
+      className={`stream-ribbon rounded-2xl border border-cyan-400/10 bg-gradient-to-br from-cyan-500/[0.05] via-[#0a1628]/94 to-violet-500/[0.04] p-4 backdrop-blur-lg ${className}`}
       role="status"
       aria-live="polite"
     >
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <p className="cockpit-label text-[10px] text-cyan-200/75">Searching live offers</p>
-        <span className="rounded-full border border-white/10 bg-white/[0.05] px-2 py-0.5 text-[10px] font-semibold tabular-nums text-slate-400">
-          Stage {Math.min(stage + 1, STAGES.length)}/{STAGES.length}
+        <p className="text-[11px] font-medium tracking-wide text-cyan-100/80">Working on your search</p>
+        <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium tabular-nums text-slate-400">
+          {Math.min(stage + 1, STAGES.length)}/{STAGES.length}
         </span>
       </div>
       <div className="space-y-2.5">
         {STAGES.map((s, i) => {
           const done = i < stage;
           const current = i === stage;
-          const pct = done ? 100 : current ? 72 + ((i * 5) % 20) : 12 + i * 6;
+          const pct = done ? 100 : current ? 78 + ((i * 4) % 14) : 14 + i * 10;
           return (
             <div key={s.id} className="flex gap-3">
-              <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-black/30 text-[10px] font-bold text-slate-400">
+              <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-black/25 text-[10px] font-semibold text-slate-500">
                 {done ? "✓" : i + 1}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <p
                     className={`text-[13px] font-semibold tracking-tight ${
-                      current ? "text-cyan-50" : done ? "text-slate-300" : "text-slate-500"
+                      current ? "text-cyan-50/95" : done ? "text-slate-300" : "text-slate-500"
                     }`}
                   >
                     {s.label}
                   </p>
                   {current && (
                     <motion.span
-                      className="text-[10px] font-medium uppercase tracking-wider text-cyan-300/80"
-                      animate={reduce ? undefined : { opacity: [0.55, 1, 0.55] }}
-                      transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+                      className="text-[10px] font-medium text-cyan-200/75"
+                      animate={reduce ? undefined : { opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
                     >
-                      Live
+                      Active
                     </motion.span>
                   )}
                 </div>
-                <p className="text-[11px] text-slate-500">{s.sub}</p>
-                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                <p className="text-[11px] leading-relaxed text-slate-500">{s.sub}</p>
+                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/[0.05]">
                   <motion.div
-                    className="h-full rounded-full bg-gradient-to-r from-cyan-400/90 to-violet-500/85"
+                    className="h-full rounded-full bg-gradient-to-r from-cyan-400/85 to-violet-500/80"
                     initial={false}
                     animate={{ width: `${Math.min(100, pct)}%` }}
                     transition={
-                      reduce ? { duration: 0 } : { type: "spring", stiffness: 320, damping: 28 }
+                      reduce ? { duration: 0 } : { type: "spring", stiffness: 340, damping: 30 }
                     }
                   />
                 </div>

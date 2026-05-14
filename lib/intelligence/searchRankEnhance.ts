@@ -155,6 +155,7 @@ export function purchaseIntentFromQuery(q: string): PurchaseIntent {
   if (
     intents.premium ||
     intents.luxury ||
+    intents.aestheticPremium ||
     /\b(premium|luxury|flagship|best\s+quality|pro\s+model|top\s+tier|high.end)\b/.test(s)
   ) {
     return "premium";
@@ -167,7 +168,8 @@ export function purchaseIntentFromQuery(q: string): PurchaseIntent {
     intents.schoolUse ||
     intents.giftUse ||
     intents.alternativeSeeking ||
-    intents.comparisonIntent
+    intents.comparisonIntent ||
+    intents.qualitySeeking
   ) {
     return "value";
   }
@@ -261,6 +263,18 @@ export function sortByCompositeRankEnhanced(list: QuantProduct[], query: string)
       c += del >= 65 ? 0.38 : -0.15;
     }
     if (intents.storeDealHunter && trust >= 74) c += 0.42;
+    if (intents.riskAvoidance) {
+      c += trust >= 80 ? 1.85 : trust < 52 ? -3.4 : trust < 64 ? -1.1 : 0.35;
+    }
+    if (intents.qualitySeeking) {
+      c += r >= 4.2 && rev >= 20 ? 2.0 : r > 0 && r < 3.95 && rev >= 10 ? -2.8 : 0;
+    }
+    if (intents.portableLight && /\b(air|thin|light|ultra|gram|lg\s*gram|carbon|feather|compact)\b/i.test(p.title)) {
+      c += 1.15;
+    }
+    if (intents.lifestyleCreator && /\b(pro|studio|ultra|creator|oled|4k|microphone|webcam|camera)\b/i.test(p.title)) {
+      c += 0.65;
+    }
     const priceVsMedian =
       medianPrice > 0 && p.price > 0 ? (medianPrice - p.price) / medianPrice : undefined;
     const cat = (p.qiCategory ?? "general") as ProductCategorySlug;

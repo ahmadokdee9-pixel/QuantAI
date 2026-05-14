@@ -5,9 +5,10 @@
  */
 
 import { appendArabicCommerceGlosses } from "@/lib/search/queryScriptNormalize";
+import { fixCommonCommerceTypos } from "@/lib/search/conversationalQueryLayer";
 
 const LEADING_NOISE =
-  /^\s*(find|show|get|give|need|want|looking\s+for|search\s+for|please|can\s+you|help\s+me(\s+to)?|tell\s+me|bring\s+me|fetch|list|surface)\s+/i;
+  /^\s*(find|show|get|give|need|want|looking\s+for|search\s+for|please|can\s+you|help\s+me(\s+to)?|tell\s+me|bring\s+me|fetch|list|surface|i\s+need|i\s+want|i'?m\s+looking\s+for)\s+/i;
 
 const LEADING_COMPARE = /^\s*compare\s+/i;
 
@@ -40,6 +41,11 @@ const CONTEXT_REWRITES: { rx: RegExp; rep: string }[] = [
   { rx: /\beur\b/gi, rep: " EUR " },
   { rx: /\bdollars?\b/gi, rep: " USD " },
   { rx: /\bpounds?\b/gi, rep: " GBP " },
+  { rx: /\bnot\s+too\s+heavy\b/gi, rep: " lightweight portable " },
+  { rx: /\bluxury\s+looking\b/gi, rep: " premium design " },
+  { rx: /\breal\s+discount\s+not\s+fake\b/gi, rep: " " },
+  { rx: /\bcheap\s+but\s+not\s+garbage\b/gi, rep: " budget quality " },
+  { rx: /\bbest\s+value\b/gi, rep: " value " },
 ];
 
 /** Light synonym expansion (append, not replace) for family / category recall. */
@@ -69,7 +75,7 @@ function collapseSpaces(s: string): string {
  * Original `userQuery` remains the tray intent string everywhere else.
  */
 export function buildUpstreamShoppingQuery(userQuery: string): string {
-  let q = userQuery.trim();
+  let q = fixCommonCommerceTypos(userQuery).trim();
   if (!q) return q;
 
   q = appendArabicCommerceGlosses(q);

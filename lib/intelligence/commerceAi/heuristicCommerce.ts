@@ -197,10 +197,10 @@ export function heuristicCommerceForProduct(
   const title = p.title.toLowerCase();
   const semanticVsQuery =
     q.length > 2 && title.includes(q.slice(0, Math.min(24, q.length)))
-      ? "Title aligns closely with the query string."
+      ? "Listing title lines up closely with what you typed."
       : (p.qiSignals?.categoryFit ?? 50) >= 62
-        ? "Category/intent fit looks reasonable versus the query."
-        : "Semantic match is uncertain — compare specs to your intent.";
+        ? "Category fit looks reasonable for your search."
+        : "Match is uncertain—glance at specs against what you really need.";
 
   return {
     buyingVerdict,
@@ -221,7 +221,7 @@ export function heuristicCommerceForProduct(
     inferredPersonas: personas.slice(),
     deliveryIntel,
     returnsIntel,
-    trustWeightedNote: `Trust-weighted read: store prior ${getStoreTrustScore(p.store)}/100; retailer-risk heuristic ${risk.riskScore}/100; composite ${Math.round(p.qiComposite ?? 0)}.`.slice(
+    trustWeightedNote: `Store trust ${getStoreTrustScore(p.store)}/100 · retailer risk ${risk.riskScore}/100 · overall score ${Math.round(p.qiComposite ?? 0)}.`.slice(
       0,
       200
     ),
@@ -241,5 +241,5 @@ export function heuristicFieldComparisonSummary(list: QuantProduct[], query: str
   const n = list.length;
   const med = [...prices].sort((a, b) => a - b);
   const mid = med.length ? med[Math.floor(med.length / 2)]! : 0;
-  return `Tray (${n}) · “${query.slice(0, 72)}${query.length > 72 ? "…" : ""}” · €${minP}–€${maxP} spread · median ≈ €${mid}. Strongest storefront prior: ${bestTrust?.store ?? "n/a"}. QuantAI ranks on composite + trust + review depth—verify specs before checkout.`;
+  return `Tray (${n}) · “${query.slice(0, 72)}${query.length > 72 ? "…" : ""}” · about €${minP}–€${maxP} · median ≈ €${mid}. Strongest storefront signal: ${bestTrust?.store ?? "n/a"}. We rank on trust, reviews, and fit—always confirm specs before checkout.`;
 }
