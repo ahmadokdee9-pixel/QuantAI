@@ -5,6 +5,10 @@ import { enrichProductsWithIntelligence } from "@/lib/intelligence/enrichProduct
 import type { SearchCommerceAIMeta } from "@/lib/intelligence/commerceAnalysisTypes";
 import { attachCommerceAiLayer } from "@/lib/intelligence/commerceAi/attachCommerceAiLayer";
 import { resolveCommerceAiEngine } from "@/lib/intelligence/commerceAi/commerceAiEngine";
+import { mergeCommerceSessionMemory, safeParseCommerceSessionMemory } from "@/lib/intelligence/commerceSessionMemory";
+import { buildBundleSuggestions } from "@/lib/intelligence/bundleIntelligence";
+import { applyPersonaRanking } from "@/lib/intelligence/personaRanking";
+import { detectShopperPersonas } from "@/lib/intelligence/shopperPersona";
 import {
   countSearchesTodayUtc,
   mergeRecommendationMemory,
@@ -13,12 +17,12 @@ import {
 } from "@/lib/intelligence/persistence";
 import { buildDealClusters } from "@/lib/deals";
 import { buildSearchIntelligence } from "@/lib/intelligence/searchDecisionEngine";
+import { intentMatchEnvelope, parseCommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
 import { enforceLimit, searchRatelimit } from "@/lib/rate-limit";
 import { entitlementsForTier } from "@/lib/subscription/entitlements";
 import { planDefinition } from "@/lib/subscription/plans";
 import { subscriptionTierFromClerkUser } from "@/lib/subscription/resolveTier";
-import { buildUniversalCommerceContext } from "@/lib/commerce-os";
-import { intentMatchEnvelope } from "@/lib/intelligence/searchIntentV2";
+import { buildUniversalCommerceContext, tasteTagListForApi } from "@/lib/commerce-os";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import type { DealClusterDTO } from "@/lib/deals/types";
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
@@ -81,7 +85,14 @@ function jsonSearch(
   return NextResponse.json(body, { status: 200, ...init });
 }
 
-async function handleSearch(q: string | null | undefined): Promise<NextResponse> {
+type SearchHandleOptions = {
+  commerceMemory?: unknown;
+};
+
+async function handleSearch(
+  q: string | null | undefined,
+  opts?: SearchHandleOptions
+): Promise<NextResponse> {
   const fail = (
     status: number,
     error: string,
@@ -172,11 +183,27 @@ async function handleSearch(q: string | null | undefined): Promise<NextResponse>
       );
     }
 
+    const intents = parseCommerceSearchIntents(query);
+    const shopperPersona = detectShopperPersonas(query, intents);
+    const prevCommerceMemory = safeParseCommerceSessionMemory(opts?.commerceMemory);
+    const tasteTagIds = tasteTagListForApi(intents.taste);
+    const commerceSessionMemory = mergeCommerceSessionMemory(
+      prevCommerceMemory,
+      query,
+      products.slice(0, 20),
+      shopperPersona,
+      tasteTagIds
+    );
+    products = applyPersonaRanking(products, shopperPersona, commerceSessionMemory);
+    dealClusters = buildDealClusters(products);
+    searchIntelligence = buildSearchIntelligence(query, products, dealClusters);
+    const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
+
     const { topCategory } = memoryPatchFromSearch(query);
 
     if (userId) {
       void recordSearchHistory(userId, query, products.length);
-      void mergeRecommendationMemory(userId, query, topCategory);
+      void mergeRecommendationMemory(userId, query, topCategory, shopperPersona.labels);
     }
 
     const data: SearchDataPayload = {
@@ -186,10 +213,18 @@ async function handleSearch(q: string | null | undefined): Promise<NextResponse>
       entitlements: entitlementsForTier(tier),
       meta: {
         category: topCategory,
-        intelligenceVersion: 10,
+        intelligenceVersion: 11,
         commerceAI: commerceMeta,
         commerceAiEngine: resolveCommerceAiEngine(),
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),
+        commerceSessionMemory,
+        shopperPersona: {
+          dominant: shopperPersona.dominant,
+          labels: shopperPersona.labels,
+          scores: shopperPersona.scores,
+        },
+        shopperPersonaSummary: `${shopperPersona.labels.join(" · ")} · session memory v${commerceSessionMemory.version} · interactions ${commerceSessionMemory.interactionCount}`,
+        bundleSuggestions,
       },
     };
 
@@ -231,9 +266,11 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   let q: string | null = null;
+  let commerceMemory: unknown;
   try {
-    const body = (await req.json()) as { query?: string; q?: string };
+    const body = (await req.json()) as { query?: string; q?: string; commerceMemory?: unknown };
     q = body.query ?? body.q ?? null;
+    commerceMemory = body.commerceMemory;
   } catch {
     return NextResponse.json(
       {
@@ -246,7 +283,7 @@ export async function POST(req: Request) {
     );
   }
   try {
-    return await handleSearch(q);
+    return await handleSearch(q, { commerceMemory });
   } catch (e) {
     return NextResponse.json(
       {

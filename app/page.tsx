@@ -47,6 +47,10 @@ import { QuantAnalyticsEvents } from "@/lib/analytics/events";
 import { trackEvent } from "@/lib/analytics/track";
 import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
 import { readApiJson } from "@/lib/api/readJson";
+import {
+  readCommerceSessionMemoryFromBrowser,
+  writeCommerceSessionMemoryToBrowser,
+} from "@/lib/intelligence/commerceSessionStorage";
 import { logDevError } from "@/lib/log/devLog";
 import { toCopilotProductBrief } from "@/lib/copilot/mapProduct";
 import type { CopilotSessionPayload } from "@/lib/copilot/sessionTypes";
@@ -282,10 +286,14 @@ export default function Home() {
     });
 
     try {
-      const res = await fetch(
-        `/api/search?q=${encodeURIComponent(q)}`,
-        { credentials: "same-origin", signal: ac.signal }
-      );
+      const commerceMemory = readCommerceSessionMemoryFromBrowser();
+      const res = await fetch("/api/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        signal: ac.signal,
+        body: JSON.stringify({ query: q, commerceMemory }),
+      });
       type SearchRoot = {
         success?: boolean;
         data?: {
@@ -336,6 +344,10 @@ export default function Home() {
 
       if (searchData?.products && searchData.products.length > 0) {
         setProducts(searchData.products);
+        const mem = searchData.meta?.commerceSessionMemory;
+        if (mem != null && typeof mem === "object") {
+          writeCommerceSessionMemoryToBrowser(mem);
+        }
         setDealClusters(
           Array.isArray(searchData.dealClusters) ? searchData.dealClusters : []
         );

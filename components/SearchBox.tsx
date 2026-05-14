@@ -4,6 +4,10 @@ import { useState } from "react";
 import { Loader2, Search } from "lucide-react";
 import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
 import { readApiJson } from "@/lib/api/readJson";
+import {
+  readCommerceSessionMemoryFromBrowser,
+  writeCommerceSessionMemoryToBrowser,
+} from "@/lib/intelligence/commerceSessionStorage";
 
 type ShoppingHit = {
   title: string;
@@ -34,21 +38,24 @@ export default function SearchBox() {
           "Content-Type": "application/json",
         },
         credentials: "same-origin",
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({
+          query,
+          commerceMemory: readCommerceSessionMemoryFromBrowser(),
+        }),
       });
 
-      type SearchRoot = {
+      type SearchEnvelope = {
         success?: boolean;
-        data?: { products?: ShoppingHit[] };
+        data?: { products?: ShoppingHit[]; meta?: Record<string, unknown> };
         message?: string;
         error?: string;
         retryAfter?: number;
       };
-      const parsed = await readApiJson<SearchRoot>(res);
-      const root = parsed.data;
+      const parsed = await readApiJson<SearchEnvelope>(res);
+      const envelope = parsed.data;
       const searchData =
-        root && typeof root === "object" && root.data && typeof root.data === "object"
-          ? root.data
+        envelope && typeof envelope === "object" && envelope.data && typeof envelope.data === "object"
+          ? envelope.data
           : null;
 
       if (res.status === 401) {
@@ -58,8 +65,8 @@ export default function SearchBox() {
 
       if (res.status === 429) {
         const wait =
-          root && typeof root.retryAfter === "number"
-            ? ` Retry in ~${root.retryAfter}s.`
+          envelope && typeof envelope.retryAfter === "number"
+            ? ` Retry in ~${envelope.retryAfter}s.`
             : "";
         setError(apiErrorText(parsed, "Too many searches.") + wait);
         return;
@@ -71,6 +78,10 @@ export default function SearchBox() {
       }
 
       setResults(searchData?.products || []);
+      const mem = searchData?.meta?.commerceSessionMemory;
+      if (mem != null && typeof mem === "object") {
+        writeCommerceSessionMemoryToBrowser(mem);
+      }
       if (!searchData?.products?.length) {
         setError("No products found for this query.");
       }

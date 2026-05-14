@@ -33,7 +33,8 @@ export async function recordSearchHistory(
 export async function mergeRecommendationMemory(
   userId: string,
   query: string,
-  topCategory: string
+  topCategory: string,
+  personaLabels?: string[]
 ): Promise<void> {
   const db = getAdmin();
   if (!db) return;
@@ -59,13 +60,20 @@ export async function mergeRecommendationMemory(
       : {};
     categories[topCategory] = (categories[topCategory] ?? 0) + 1;
 
-    const next = {
+    const next: Record<string, unknown> = {
       ...prev,
       lastQuery: query.trim().slice(0, 500),
       lastCategory: topCategory,
       categories,
       updatedAt: new Date().toISOString(),
     };
+    if (personaLabels && personaLabels.length) {
+      const prevLabels =
+        Array.isArray(prev.shopperPersonaLabels) && prev.shopperPersonaLabels.every((x) => typeof x === "string")
+          ? (prev.shopperPersonaLabels as string[])
+          : [];
+      next.shopperPersonaLabels = [...new Set([...prevLabels, ...personaLabels])].slice(0, 8);
+    }
 
     const { error } = await db.from("user_shopping_memory").upsert(
       {
