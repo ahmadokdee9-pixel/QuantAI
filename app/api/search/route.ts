@@ -7,6 +7,7 @@ import { attachCommerceAiLayer } from "@/lib/intelligence/commerceAi/attachComme
 import { resolveCommerceAiEngine } from "@/lib/intelligence/commerceAi/commerceAiEngine";
 import { mergeCommerceSessionMemory, safeParseCommerceSessionMemory } from "@/lib/intelligence/commerceSessionMemory";
 import { buildBundleSuggestions } from "@/lib/intelligence/bundleIntelligence";
+import { applyMarketAwarenessRanking, computeMarketAwarenessForTray } from "@/lib/intelligence/marketAwareness";
 import { applyPersonaRanking } from "@/lib/intelligence/personaRanking";
 import { applyPredictiveCommerceToTray } from "@/lib/intelligence/predictiveCommerceIntelligence";
 import { detectShopperPersonas } from "@/lib/intelligence/shopperPersona";
@@ -197,6 +198,7 @@ async function handleSearch(
       tasteTagIds
     );
     products = applyPersonaRanking(products, shopperPersona, commerceSessionMemory);
+    products = applyMarketAwarenessRanking(products, query);
     dealClusters = buildDealClusters(products);
     searchIntelligence = buildSearchIntelligence(query, products, dealClusters);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
@@ -208,6 +210,8 @@ async function handleSearch(
       void mergeRecommendationMemory(userId, query, topCategory, shopperPersona.labels);
     }
 
+    const marketAwareness = computeMarketAwarenessForTray(query, products);
+
     const data: SearchDataPayload = {
       products,
       dealClusters,
@@ -215,8 +219,9 @@ async function handleSearch(
       entitlements: entitlementsForTier(tier),
       meta: {
         category: topCategory,
-        intelligenceVersion: 12,
+        intelligenceVersion: 13,
         predictiveCommerceVersion: 2,
+        marketAwareness,
         commerceAI: commerceMeta,
         commerceAiEngine: resolveCommerceAiEngine(),
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),

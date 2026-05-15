@@ -38,17 +38,18 @@ import { isValidHttpOfferUrl } from "@/lib/commerce/offerClick";
 import type { PredictiveTimingSignalTone } from "@/lib/intelligence/commerceAnalysisTypes";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import {
-  getProfessionalBadge,
   getStoreTrustScore,
 } from "@/lib/shoppingScore";
+import type { MarketAwarenessTray } from "@/lib/intelligence/marketAwareness";
+import { resolveFinalCommerceDecision } from "@/lib/intelligence/finalCommerceDecision";
 import {
   buildProductBuyDecision,
   buildVerdictExpansion,
   type BuyStance,
+  type ProductBuyDecision,
 } from "@/lib/intelligence/productBuyDecision";
 import {
   buildProductDealIntelligence,
-  type LiveShelfLabel,
   type ProductDealIntelligence,
 } from "@/lib/intelligence/dealIntelligenceEngine";
 
@@ -57,23 +58,6 @@ function clip(s: string, max: number): string {
   if (!t) return "";
   if (t.length <= max) return t;
   return `${t.slice(0, max - 1).trimEnd()}…`;
-}
-
-function badgeChipClass(key: string): string {
-  switch (key) {
-    case "ai_pick":
-      return "border-cyan-400/22 bg-cyan-500/[0.08] text-cyan-100/85";
-    case "best_value":
-      return "border-emerald-400/22 bg-emerald-400/[0.07] text-emerald-100/80";
-    case "top_rated":
-      return "border-amber-400/22 bg-amber-400/[0.07] text-amber-100/80";
-    case "budget_pick":
-      return "border-sky-400/22 bg-sky-400/[0.07] text-sky-100/80";
-    case "premium_choice":
-      return "border-violet-400/22 bg-violet-400/[0.07] text-violet-100/80";
-    default:
-      return "border-white/12 bg-white/[0.04] text-slate-300/85";
-  }
 }
 
 function qiConfidenceTier(score: number): "high" | "good" | "mid" | "low" {
@@ -146,42 +130,7 @@ function dealVerdictChipClass(v: ProductDealIntelligence["aiDealVerdict"]): stri
   }
 }
 
-function liveShelfLabelClass(label: LiveShelfLabel): string {
-  switch (label) {
-    case "Best Discount Today":
-    case "Verified Discount":
-    case "Strong Discount Opportunity":
-    case "Smart Deal Today":
-    case "Historically Low":
-    case "Rare Deal":
-    case "Hidden Discount Gem":
-    case "Price Drop Signal":
-    case "Best Value":
-    case "Strong Buy":
-      return "border-emerald-400/35 bg-emerald-500/[0.12] text-emerald-50/95";
-    case "Trusted Discount":
-    case "Best Trusted Option":
-    case "Safest Buy":
-      return "border-cyan-400/30 bg-cyan-500/[0.1] text-cyan-50/95";
-    case "Best Price-to-Quality":
-      return "border-violet-400/28 bg-violet-500/[0.1] text-violet-50/95";
-    case "Flash Sale":
-    case "Weak Discount":
-    case "Discount Not Enough":
-    case "Compare Alternatives":
-      return "border-amber-400/35 bg-amber-500/[0.12] text-amber-50/95";
-    case "Suspicious Discount":
-    case "Wait Before Buying":
-    case "Wait for Better Price":
-      return "border-rose-400/32 bg-rose-500/[0.1] text-rose-50/95";
-    case "Premium But Fair":
-      return "border-violet-400/26 bg-violet-500/[0.09] text-violet-50/95";
-    default:
-      return "border-white/[0.1] bg-white/[0.06] text-slate-200/90";
-  }
-}
-
-function worthBuyingCopy(
+function worthBuyingHeadline(
   w: ProductDealIntelligence["worthBuyingNow"],
   hasDiscount: boolean
 ): { headline: string; cls: string } {
@@ -217,26 +166,6 @@ function analystScanLine(deal: ProductDealIntelligence, trust: number, qiRounded
   const trustWord = trust >= 78 ? "Strong trust" : trust >= 60 ? "Moderate trust" : "Low trust";
   const del = deal.hasDiscount && deal.discountPct != null ? `${deal.discountPct}% off · ` : "";
   return `${del}${dealWord} · ${trustWord} · QI ${qiRounded}`.slice(0, 96);
-}
-
-function pickScanBadges(
-  deal: ProductDealIntelligence,
-  prof: { key: string; label: string }
-): { label: string; cls: string }[] {
-  const out: { label: string; cls: string }[] = [];
-  const seen = new Set<string>();
-  const add = (raw: string, cls: string) => {
-    const k = raw.toUpperCase();
-    if (seen.has(k) || out.length >= 2) return;
-    seen.add(k);
-    out.push({ label: k, cls });
-  };
-  for (const sl of deal.shelfLabels) {
-    add(sl, liveShelfLabelClass(sl));
-    if (out.length >= 2) return out;
-  }
-  if (out.length < 2 && prof.label) add(prof.label, badgeChipClass(prof.key));
-  return out;
 }
 
 function stancePresentation(stance: BuyStance): {
@@ -315,6 +244,8 @@ type Props = {
   onOpenIntelligence: (p: QuantProduct) => void;
   /** Tray deal intelligence (preferred when parent batch-computes). */
   dealIntel?: ProductDealIntelligence;
+  /** Shared tray market snapshot for chip arbiter. */
+  marketTray: MarketAwarenessTray;
   /** Mobile / touch: skip magnetic tilt and heavy hover motion. */
   lowPower?: boolean;
   /** Above-the-fold images request high fetch priority. */
@@ -383,6 +314,7 @@ function ProductResultCard({
   addToWatchlist,
   onOpenIntelligence,
   dealIntel: dealIntelProp,
+  marketTray,
   lowPower = false,
   imagePriority = "low",
 }: Props) {
@@ -412,10 +344,9 @@ function ProductResultCard({
   const ai = calculateAIScore(p, list);
   const score = p.qiComposite != null && Number.isFinite(p.qiComposite) ? p.qiComposite : ai.score;
   const scoreNorm = Math.min(100, Math.max(0, Number(score) || 0));
+  const trust = getStoreTrustScore(p.store);
   const qiTier = qiConfidenceTier(scoreNorm);
   const [g0, g1, g2] = qiRingGradientStops(qiTier);
-  const badge = getProfessionalBadge(p, list, rank);
-  const trust = getStoreTrustScore(p.store);
   const inCompare = compareLinks.includes(p.link);
   const sym = currencySymbolFromListing(p);
   const delPct = deliveryConfidencePct(p);
@@ -429,29 +360,53 @@ function ProductResultCard({
   const ringDash = ringC * (1 - scoreNorm / 100);
 
   const buyDecision = useMemo(() => buildProductBuyDecision(p, list, rank), [p, list, rank]);
-  const analystFrame = useMemo(() => buildVerdictExpansion(p, list, buyDecision), [p, list, buyDecision]);
   const deal = useMemo(
     () => dealIntelProp ?? buildProductDealIntelligence(p, list),
     [dealIntelProp, p, list]
   );
+  const resolved = useMemo(
+    () =>
+      resolveFinalCommerceDecision({
+        product: p,
+        list,
+        dealIntel: deal,
+        buyDecision,
+        rank,
+        qiRounded: Math.round(scoreNorm),
+        market: marketTray,
+      }),
+    [p, list, deal, buyDecision, rank, scoreNorm, marketTray]
+  );
+  const mergedBuyDecision = useMemo(
+    (): ProductBuyDecision => ({
+      ...buyDecision,
+      stance: resolved.buySurface.stance,
+      stanceLabel: resolved.buySurface.stanceLabel,
+      stanceDetail: resolved.buySurface.stanceDetail,
+    }),
+    [buyDecision, resolved.buySurface]
+  );
+  const analystFrame = useMemo(
+    () => buildVerdictExpansion(p, list, mergedBuyDecision),
+    [p, list, mergedBuyDecision]
+  );
   const worthLine = useMemo(
-    () => worthBuyingCopy(deal.worthBuyingNow, deal.hasDiscount),
+    () => worthBuyingHeadline(deal.worthBuyingNow, deal.hasDiscount),
     [deal.worthBuyingNow, deal.hasDiscount]
   );
-  const scanBadges = useMemo(() => pickScanBadges(deal, badge), [deal, badge]);
-  const predictiveTimingBadge = useMemo(() => {
-    const raw = p.qiPredictive?.timingSignalBadge?.trim();
-    if (!raw) return null;
-    const pr = p.qiPredictive!;
-    const title = [pr.predictiveTimingLabel, pr.predictiveNarrative].filter(Boolean).join(" — ").slice(0, 240);
-    return { text: raw, tone: pr.timingSignalTone, title };
-  }, [p.qiPredictive]);
+  const predictiveBadgeTitle = useMemo(() => {
+    if (!resolved.predictiveBadge || !p.qiPredictive) return "";
+    return [p.qiPredictive.predictiveTimingLabel, p.qiPredictive.predictiveNarrative]
+      .filter(Boolean)
+      .join(" — ")
+      .slice(0, 240);
+  }, [resolved.predictiveBadge, p.qiPredictive]);
   const scanLine = useMemo(() => analystScanLine(deal, trust, Math.round(scoreNorm)), [deal, trust, scoreNorm]);
   const worthShort = useMemo(
     () => worthBuyingShort(deal.worthBuyingNow, deal.hasDiscount),
     [deal.worthBuyingNow, deal.hasDiscount]
   );
-  const stanceUi = stancePresentation(buyDecision.stance);
+  const stanceUi = stancePresentation(mergedBuyDecision.stance);
   const StanceIcon = stanceUi.Icon;
 
   const signalsTerminalWhy = useMemo(() => {
@@ -467,8 +422,8 @@ function ProductResultCard({
     return "Clean risk surface for this field.";
   }, [riskHint, analystFrame.risks]);
   const signalsTerminalAction = useMemo(
-    () => clip(`${buyDecision.stanceLabel} · ${buyDecision.stanceDetail}`, 128),
-    [buyDecision.stanceLabel, buyDecision.stanceDetail]
+    () => clip(`${mergedBuyDecision.stanceLabel} · ${mergedBuyDecision.stanceDetail}`, 128),
+    [mergedBuyDecision.stanceLabel, mergedBuyDecision.stanceDetail]
   );
 
   const transition = lite
@@ -644,25 +599,25 @@ function ProductResultCard({
 
             <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2">
               <span
-                className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide transition-shadow duration-500 ease-out ${dealVerdictChipClass(deal.aiDealVerdict)}`}
+                className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide transition-shadow duration-500 ease-out ${dealVerdictChipClass(resolved.primaryVerdict)}`}
                 title={deal.whyDealGoodOrRisky}
               >
                 <Percent className="size-2.5 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
-                <span className="truncate">{deal.aiDealVerdict}</span>
+                <span className="truncate">{resolved.primaryVerdict}</span>
               </span>
-              {predictiveTimingBadge ? (
+              {resolved.predictiveBadge ? (
                 <span
-                  title={predictiveTimingBadge.title}
-                  className={`inline-flex max-w-[min(100%,14rem)] items-center gap-1 truncate rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] ${predictiveSignalChipClass(predictiveTimingBadge.tone)}`}
+                  title={predictiveBadgeTitle}
+                  className={`inline-flex max-w-[min(100%,14rem)] items-center gap-1 truncate rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] ${predictiveSignalChipClass(resolved.predictiveBadge.tone)}`}
                 >
                   <Sparkles className="size-2.5 shrink-0 opacity-85" strokeWidth={2} aria-hidden />
-                  <span className="truncate">{predictiveTimingBadge.text}</span>
+                  <span className="truncate">{resolved.predictiveBadge.text}</span>
                 </span>
               ) : null}
             </div>
 
             <div className="mt-3 flex min-w-0 flex-wrap gap-1.5">
-              {scanBadges.map((b) => (
+              {resolved.secondaryChips.map((b) => (
                 <span
                   key={b.label}
                   className={`max-w-[min(100%,11rem)] truncate rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide ${b.cls}`}
@@ -670,6 +625,14 @@ function ProductResultCard({
                   {b.label}
                 </span>
               ))}
+              {resolved.marketChip ? (
+                <span
+                  title={resolved.decisionReason}
+                  className={`max-w-[min(100%,12rem)] truncate rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide ${resolved.marketChip.cls}`}
+                >
+                  {resolved.marketChip.label}
+                </span>
+              ) : null}
             </div>
 
             <p
@@ -719,7 +682,7 @@ function ProductResultCard({
                         className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] ${stanceUi.border} ${stanceUi.bg} ${stanceUi.text}`}
                       >
                         <StanceIcon className="size-3 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
-                        {buyDecision.stanceLabel}
+                        {mergedBuyDecision.stanceLabel}
                       </span>
                     </div>
                     <p className="mt-1 text-[11px] font-semibold leading-snug text-white/95 [overflow-wrap:anywhere]">
@@ -727,18 +690,18 @@ function ProductResultCard({
                     </p>
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
                       <span
-                        className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${dealVerdictChipClass(deal.aiDealVerdict)}`}
+                        className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${dealVerdictChipClass(resolved.primaryVerdict)}`}
                       >
                         <Percent className="size-2.5 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
-                        <span className="truncate">{deal.aiDealVerdict}</span>
+                        <span className="truncate">{resolved.primaryVerdict}</span>
                       </span>
-                      {predictiveTimingBadge ? (
+                      {resolved.predictiveBadge ? (
                         <span
-                          title={predictiveTimingBadge.title}
-                          className={`inline-flex max-w-[min(100%,13rem)] items-center gap-1 truncate rounded-full border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.05em] ${predictiveSignalChipClass(predictiveTimingBadge.tone)}`}
+                          title={predictiveBadgeTitle}
+                          className={`inline-flex max-w-[min(100%,13rem)] items-center gap-1 truncate rounded-full border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.05em] ${predictiveSignalChipClass(resolved.predictiveBadge.tone)}`}
                         >
                           <Sparkles className="size-2 shrink-0 opacity-85" strokeWidth={2} aria-hidden />
-                          <span className="truncate">{predictiveTimingBadge.text}</span>
+                          <span className="truncate">{resolved.predictiveBadge.text}</span>
                         </span>
                       ) : null}
                     </div>
@@ -985,10 +948,23 @@ function ProductResultCard({
   );
 }
 
+function marketTrayEqual(a: Props["marketTray"], b: Props["marketTray"]): boolean {
+  return (
+    a.categoryDemandTrend === b.categoryDemandTrend &&
+    a.marketHeat === b.marketHeat &&
+    a.seasonalOpportunity === b.seasonalOpportunity &&
+    a.categoryVolatility === b.categoryVolatility &&
+    a.buyerMomentum === b.buyerMomentum &&
+    a.discountWindow === b.discountWindow &&
+    a.dominantCategory === b.dominantCategory
+  );
+}
+
 function productResultCardPropsEqual(a: Props, b: Props): boolean {
   if (a.product.link !== b.product.link) return false;
   if (a.rank !== b.rank || a.index !== b.index) return false;
   if (a.lowPower !== b.lowPower || a.imagePriority !== b.imagePriority) return false;
+  if (!marketTrayEqual(a.marketTray, b.marketTray)) return false;
   const pk = (x: QuantProduct) =>
     `${x.price}|${x.title}|${x.store}|${x.rating}|${x.image}|${x.displayPrice}|${x.oldPrice ?? ""}|${x.priceTrend}|${x.qiComposite ?? ""}|${x.availability ?? ""}|${x.shipping ?? ""}`;
   if (pk(a.product) !== pk(b.product)) return false;

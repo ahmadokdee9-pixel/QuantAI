@@ -29,6 +29,7 @@ import { buildCompareExport, buildTraySummary, copyText } from "@/lib/share/inte
 import { currencySymbolFromListing, formatListingPrice } from "@/lib/commerce/cues";
 import { sortByCompositeRankEnhanced } from "@/lib/intelligence/searchRankEnhance";
 import { parseCommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
+import { computeMarketAwarenessForTray } from "@/lib/intelligence/marketAwareness";
 import { getFinalComposite } from "@/lib/shoppingScore";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import CompareIntelligencePanel from "./CompareIntelligencePanel";
@@ -158,6 +159,10 @@ export default function ProductResultsSurface({
     const intents = searchQuery.trim() ? parseCommerceSearchIntents(searchQuery) : undefined;
     return buildDealIntelByLink(sortedProducts, intents);
   }, [dealIntelByLinkProp, sortedProducts, searchQuery]);
+  const marketTray = useMemo(
+    () => computeMarketAwarenessForTray(searchQuery?.trim() ?? "", sortedProducts),
+    [sortedProducts, searchQuery]
+  );
   const trayDealHighlights = useMemo(() => buildTrayDealHighlights(sortedProducts), [sortedProducts]);
 
   const aiTopPicks = useMemo(() => compositeRanked.slice(0, 3), [compositeRanked]);
@@ -750,6 +755,7 @@ export default function ProductResultsSurface({
                   index={index}
                   rank={rank}
                   dealIntel={dealIntelResolved.get(p.link)}
+                  marketTray={marketTray}
                   compareLinks={compareLinks}
                   toggleCompare={toggleCompare}
                   saveProduct={saveProduct}
@@ -786,6 +792,7 @@ export default function ProductResultsSurface({
                     index={index}
                     rank={rank}
                     dealIntel={dealIntelResolved.get(p.link)}
+                    marketTray={marketTray}
                     compareLinks={compareLinks}
                     toggleCompare={toggleCompare}
                     saveProduct={saveProduct}

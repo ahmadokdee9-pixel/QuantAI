@@ -537,6 +537,25 @@ function advisorSummaryText(
   return `Fair-market read ≈ €${Math.round(fair)} across ${listings.length} stores (${categoryLabel}). Best overall QI leans ${top.store}; leanest checkout is ${cheap.store} (~${spreadPct}% vs overall pick). Cluster confidence ${confidence}/100 is heuristic—confirm SKU parity before you buy.`;
 }
 
+function reconcileBuyVsWaitWithPredictive(
+  p: QuantProduct,
+  listings: QuantProduct[],
+  current: BuyVsWait
+): BuyVsWait {
+  const pred = p.qiPredictive;
+  if (!pred) return current;
+  const trust = getStoreTrustScore(p.store);
+  const qi = Math.round(getFinalComposite(p, listings));
+  const prices = listings.map((x) => x.price).filter((x) => x > 0);
+  const med = median(prices);
+  const priceVsMed = med > 0 && p.price > 0 ? p.price / med : 1;
+  if (pred.likelyPriceMove === "drop" && current === "buy_now") {
+    if (!(trust >= 80 && qi >= 82 && priceVsMed <= 0.92 && pred.timingConfidence >= 55)) return "wait";
+  }
+  if (current === "buy_now" && qi < 70 && trust < 72) return "compare";
+  return current;
+}
+
 export function analyzeDealCluster(id: string, listings: QuantProduct[]): DealClusterDTO {
   const { segment, label: inferredCategoryLabel, slug: clusterCategorySlug } = inferDealMarketSegment(listings);
   const blend = getDealQualityBlend(segment);
@@ -569,13 +588,10 @@ export function analyzeDealCluster(id: string, listings: QuantProduct[]): DealCl
     const tg = tooGoodToBeTrue(p, listings, disc, maxReviews);
     const dq = dealQualityScore(p, listings, fake, verdict, fair, spreadPct, blend, returnHint);
     const mkt = getMarketplaceSellerRiskTier(p.store, p.title);
-    const buyVsWait = buyVsWaitFor(
+    const buyVsWait = reconcileBuyVsWaitWithPredictive(
       p,
       listings,
-      verdict,
-      getFinalComposite(p, listings),
-      fake,
-      tg
+      buyVsWaitFor(p, listings, verdict, getFinalComposite(p, listings), fake, tg)
     );
     return {
       link: p.link,
