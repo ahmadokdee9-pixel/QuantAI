@@ -1,6 +1,7 @@
 import { calculateAIScore } from "@/app/api/search/lib/aiScoring";
 import type { ProductCommerceAI, QiPredictiveCommerce } from "@/lib/intelligence/commerceAnalysisTypes";
 import type { IntelligenceSignals, ProductCategorySlug } from "@/lib/intelligence/types";
+import type { QuantAIRealityTrustLayer } from "@/lib/intelligence/realityTrustTypes";
 import type { ProductRelationshipBundle } from "@/lib/intelligence/relationshipTypes";
 import {
   getStoreTrustScore,
@@ -43,6 +44,8 @@ export type QuantProduct = {
   qiAlternativeWhy?: string;
   /** Predictive timing / outlook / probabilities (tray-local heuristics). */
   qiPredictive?: QiPredictiveCommerce;
+  /** Reality & trust v1 — listing realism, manipulation risk, retailer integrity (0–100 realityScore). */
+  qiRealityTrust?: QuantAIRealityTrustLayer;
   /** AI commerce layer: verdicts, pros/cons, risks, VfM, confidence, delivery/returns notes (OpenAI or heuristic). */
   qiCommerce?: ProductCommerceAI;
 };

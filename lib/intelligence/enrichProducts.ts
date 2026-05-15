@@ -12,6 +12,7 @@ import { applyEliteFirstWindowCuration } from "./trayCuration";
 import { parseCommerceSearchIntents } from "./searchIntentV2";
 import { buildProductRelationshipBundle } from "./productRelationshipGraph";
 import { buildAlternativeWhyLine, classifyDiscoveryProfile } from "./alternativeIntelligence";
+import { buildQuantAIRealityTrustLayer } from "./realityEngine";
 
 export function enrichProductsWithIntelligence(
   products: QuantProduct[],
@@ -56,7 +57,7 @@ export function enrichProductsWithIntelligence(
       intents,
       alternativeWhyNarrative: altWhy,
     });
-    return {
+    const enriched: QuantProduct = {
       ...p,
       qiComposite,
       qiModelLayer: engine.modelLayer,
@@ -70,7 +71,27 @@ export function enrichProductsWithIntelligence(
       qiRelationshipBundle: bundle,
       qiDiscoveryTags: profile.tags,
       qiAlternativeWhy: altWhy,
+      qiRealityTrust: buildQuantAIRealityTrustLayer(
+        {
+          ...p,
+          qiComposite,
+          qiModelLayer: engine.modelLayer,
+          qiReason: reason,
+          qiSignals: engine.signals,
+          qiCategory: engine.category,
+          qiTrendProjection: trend.projection,
+          qiTrendNote: trend.note,
+          qiVerdict,
+          qiPsychology,
+          qiRelationshipBundle: bundle,
+          qiDiscoveryTags: profile.tags,
+          qiAlternativeWhy: altWhy,
+        },
+        productsIn,
+        { medianPrice: stats.medianPrice, searchQuery }
+      ),
     };
+    return enriched;
   });
 
   scored.sort((a, b) => (b.qiComposite ?? 0) - (a.qiComposite ?? 0));

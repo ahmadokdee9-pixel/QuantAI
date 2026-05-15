@@ -160,14 +160,6 @@ function worthBuyingShort(w: ProductDealIntelligence["worthBuyingNow"], hasDisco
   return "Review · Check seller";
 }
 
-function analystScanLine(deal: ProductDealIntelligence, trust: number, qiRounded: number): string {
-  const dealWord =
-    deal.dealStrength >= 74 ? "Strong deal" : deal.dealStrength >= 58 ? "Fair deal" : "Soft deal";
-  const trustWord = trust >= 78 ? "Strong trust" : trust >= 60 ? "Moderate trust" : "Low trust";
-  const del = deal.hasDiscount && deal.discountPct != null ? `${deal.discountPct}% off · ` : "";
-  return `${del}${dealWord} · ${trustWord} · QI ${qiRounded}`.slice(0, 96);
-}
-
 function stancePresentation(stance: BuyStance): {
   border: string;
   bg: string;
@@ -401,7 +393,6 @@ function ProductResultCard({
       .join(" — ")
       .slice(0, 240);
   }, [resolved.predictiveBadge, p.qiPredictive]);
-  const scanLine = useMemo(() => analystScanLine(deal, trust, Math.round(scoreNorm)), [deal, trust, scoreNorm]);
   const worthShort = useMemo(
     () => worthBuyingShort(deal.worthBuyingNow, deal.hasDiscount),
     [deal.worthBuyingNow, deal.hasDiscount]
@@ -625,21 +616,21 @@ function ProductResultCard({
                   {b.label}
                 </span>
               ))}
-              {resolved.marketChip ? (
+              {resolved.contextChip ? (
                 <span
                   title={resolved.decisionReason}
-                  className={`max-w-[min(100%,12rem)] truncate rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide ${resolved.marketChip.cls}`}
+                  className={`max-w-[min(100%,12rem)] truncate rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide ${resolved.contextChip.cls}`}
                 >
-                  {resolved.marketChip.label}
+                  {resolved.contextChip.label}
                 </span>
               ) : null}
             </div>
 
             <p
               className="mt-2.5 text-[11px] leading-snug text-slate-400/95 line-clamp-2"
-              title={`${scanLine} — ${deal.whyDealGoodOrRisky}`}
+              title={`${resolved.analystLine} — ${deal.whyDealGoodOrRisky}`}
             >
-              {scanLine}
+              {resolved.analystLine}
             </p>
 
             <p className={`mt-1.5 text-[11px] font-semibold leading-snug ${worthLine.cls}`}>{worthShort}</p>
@@ -966,7 +957,7 @@ function productResultCardPropsEqual(a: Props, b: Props): boolean {
   if (a.lowPower !== b.lowPower || a.imagePriority !== b.imagePriority) return false;
   if (!marketTrayEqual(a.marketTray, b.marketTray)) return false;
   const pk = (x: QuantProduct) =>
-    `${x.price}|${x.title}|${x.store}|${x.rating}|${x.image}|${x.displayPrice}|${x.oldPrice ?? ""}|${x.priceTrend}|${x.qiComposite ?? ""}|${x.availability ?? ""}|${x.shipping ?? ""}`;
+    `${x.price}|${x.title}|${x.store}|${x.rating}|${x.image}|${x.displayPrice}|${x.oldPrice ?? ""}|${x.priceTrend}|${x.qiComposite ?? ""}|${x.availability ?? ""}|${x.shipping ?? ""}|${x.qiRealityTrust?.realityScore ?? ""}|${x.qiRealityTrust == null ? "" : x.qiRealityTrust.weakRetailer ? "1" : "0"}`;
   if (pk(a.product) !== pk(b.product)) return false;
   if (a.list.length !== b.list.length) return false;
   if (a.list.length > 0) {
