@@ -12,6 +12,8 @@ import type { ProductCategorySlug } from "./types";
 import { getCategoryBehaviorProfile } from "./categoryBehaviorProfiles";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
+import { DEFAULT_HUMAN_INTENT_PROFILE } from "./humanIntentEngine";
+import { buildHumanAwareAnalystLine, deriveConsensusPersonality } from "./consensusPersonality";
 
 export type ConsensusFinalAction =
   | "buy_now"
@@ -45,6 +47,8 @@ export type ConsensusDecision = {
   timingBadge: { text: string; tone: PredictiveTimingSignalTone } | null;
   /** Natural-language line for the card analyst row. */
   analystLine: string;
+  /** One-line personality label aligned with trust, pricing, intent, and regret (internal + chip). */
+  consensusPersonality: string;
 };
 
 function median(nums: number[]): number {
@@ -186,8 +190,10 @@ function buildBadgeSet(args: {
   market: MarketAwarenessTray;
   fakeP: number;
   manip: number;
+  /** Short human shopping strategist label (optional chip). */
+  personality?: string;
 }): string[] {
-  const { primary, action, deal, trust, qi, weak, rt, market, fakeP, manip } = args;
+  const { primary, action, deal, trust, qi, weak, rt, market, fakeP, manip, personality } = args;
   const badges: string[] = [verdictLabel(primary)];
   const add = (s: string) => {
     const u = s.toUpperCase();
@@ -262,51 +268,22 @@ function buildBadgeSet(args: {
     add("SEASONAL DEAL SOON");
   }
 
-  return badges.slice(0, 4);
-}
+  if (
+    badges.length < 4 &&
+    personality &&
+    personality.trim() &&
+    personality !== "Balanced tray read"
+  ) {
+    const chip = personality
+      .trim()
+      .split(/\s+/)
+      .slice(0, 5)
+      .join(" ")
+      .toUpperCase();
+    if (chip.length >= 6 && chip.length <= 42) add(chip);
+  }
 
-function buildAnalystLine(c: ConsensusDecision, deal: ProductDealIntelligence, priceVsMed: number): string {
-  const { finalAction, trustLevel, timing, emotionalRisk, pricingState, confidence } = c;
-  if (finalAction === "avoid") {
-    return "We would pause — the discount story and seller footing do not meet a confident checkout bar.";
-  }
-  if (pricingState === "overpriced" && timing === "poor") {
-    return "Retail pricing appears inflated versus this tray, and timing favors patience.";
-  }
-  if (timing === "excellent" && trustLevel === "high" && (finalAction === "buy_now" || finalAction === "strong_buy")) {
-    return "Excellent timing with stable seller reliability on this snapshot.";
-  }
-  if (timing === "poor" && trustLevel !== "low") {
-    return "Fair value, but market volatility suggests patience before you lock a price.";
-  }
-  if (emotionalRisk === "high") {
-    return "Pricing pressure and promotional framing look emotionally loaded — widen your compare set.";
-  }
-  if (finalAction === "strong_buy" || (finalAction === "buy_now" && confidence >= 78)) {
-    return "Strong value opportunity from a retailer signal that looks reliable in this field.";
-  }
-  if (finalAction === "watch") {
-    return "Worth tracking — signals are interesting, but we would not rush checkout on this row yet.";
-  }
-  if (finalAction === "review") {
-    return "Specs and seller terms deserve a careful read before this listing earns a clean green light.";
-  }
-  if (finalAction === "wait") {
-    return "Fair value with timing that argues for patience — let the next price move clarify the edge.";
-  }
-  if (finalAction === "compare") {
-    return "Mixed signals across price, trust, and realism — compare alternatives before committing.";
-  }
-  if (trustLevel === "low") {
-    return "Attractive pricing with thinner seller proof — verify fulfillment and authenticity paths.";
-  }
-  if (pricingState === "undervalued" && priceVsMed <= 0.9) {
-    return "You are sitting under the tray median with a credible read on value — still verify terms.";
-  }
-  if (deal.fakeDiscountRisk === "medium") {
-    return "Discount hygiene is mixed — anchor pricing should be checked against trustworthy peers.";
-  }
-  return "Balanced read across value, trust, and timing — proceed only if checkout protections look solid.";
+  return badges.slice(0, 4);
 }
 
 function buildIntelligenceSummary(c: ConsensusDecision, qi: number, reality: number): string {
@@ -477,17 +454,18 @@ export function buildConsensusDecision(args: {
     fakeP,
   });
 
-  const badgeSet = buildBadgeSet({
-    primary,
-    action: finalAction,
-    deal,
-    trust,
+  const human = p.qiHumanIntentProfile ?? DEFAULT_HUMAN_INTENT_PROFILE;
+  const regretLevel = p.qiRegretRiskLevel ?? "MODERATE";
+  const categorySlug = (p.qiCategory ?? "general") as ProductCategorySlug;
+  const consensusPersonality = deriveConsensusPersonality({
+    finalAction,
+    trustLevel,
+    pricingState,
+    emotionalRisk,
+    human,
+    regretLevel,
+    category: categorySlug,
     qi,
-    weak,
-    rt,
-    market,
-    fakeP,
-    manip,
   });
 
   let confidence = clamp(
@@ -506,8 +484,25 @@ export function buildConsensusDecision(args: {
   );
   if (finalAction === "avoid") confidence = clamp(confidence - 20, 12, 40);
   if (finalAction === "strong_buy") confidence = clamp(confidence + 4, 22, 96);
+  if (regretLevel === "HIGH" && (finalAction === "buy_now" || finalAction === "strong_buy")) {
+    confidence = clamp(confidence - 9, 22, 92);
+  }
 
   const timingBadge = buildTimingBadge(finalAction, pred);
+
+  const badgeSet = buildBadgeSet({
+    primary,
+    action: finalAction,
+    deal,
+    trust,
+    qi,
+    weak,
+    rt,
+    market,
+    fakeP,
+    manip,
+    personality: consensusPersonality,
+  });
 
   const base: ConsensusDecision = {
     finalAction,
@@ -521,8 +516,24 @@ export function buildConsensusDecision(args: {
     badgeSet,
     timingBadge,
     analystLine: "",
+    consensusPersonality,
   };
   base.intelligenceSummary = buildIntelligenceSummary(base, qi, reality);
-  base.analystLine = buildAnalystLine(base, deal, priceVsMed);
+  base.analystLine = buildHumanAwareAnalystLine({
+    finalAction,
+    trustLevel,
+    timing,
+    emotionalRisk,
+    pricingState,
+    confidence,
+    deal,
+    priceVsMed,
+    human,
+    regretLevel,
+    category: categorySlug,
+    trustScore: trust,
+    qi,
+    weakRetailer: weak,
+  });
   return base;
 }

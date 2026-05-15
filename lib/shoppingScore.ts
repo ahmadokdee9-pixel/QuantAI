@@ -3,6 +3,8 @@ import type { ProductCommerceAI, QiPredictiveCommerce } from "@/lib/intelligence
 import type { IntelligenceSignals, ProductCategorySlug } from "@/lib/intelligence/types";
 import type { QuantAIRealityTrustLayer } from "@/lib/intelligence/realityTrustTypes";
 import type { ProductRelationshipBundle } from "@/lib/intelligence/relationshipTypes";
+import type { HumanIntentProfile } from "@/lib/intelligence/humanIntentEngine";
+import type { RegretRiskLevel } from "@/lib/intelligence/regretRisk";
 import {
   getStoreTrustScore,
   TRUSTED_SUBSTRINGS,
@@ -52,6 +54,10 @@ export type QuantProduct = {
   offerOutboundUrl?: string;
   /** How `offerOutboundUrl` was resolved (signals / ranking only). */
   outboundRouteKind?: "direct_merchant" | "merchant_search" | "google_interstitial" | "google_fallback";
+  /** Query-level human shopping psychology snapshot (tray-wide, duplicated per row for typing). */
+  qiHumanIntentProfile?: HumanIntentProfile;
+  /** Post-enrichment regret risk tier (ranking + consensus voice). */
+  qiRegretRiskLevel?: RegretRiskLevel;
 };
 
 export { getStoreTrustScore };

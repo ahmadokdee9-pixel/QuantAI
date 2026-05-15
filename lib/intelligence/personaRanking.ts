@@ -41,6 +41,15 @@ function personaCompositeDelta(
 
   if (dom.has("aesthetic_focused")) d += Math.round(aesthetic01 * 1.1);
 
+  const arch = p.qiHumanIntentProfile?.likelyBuyerArchetypes ?? [];
+  const hi = p.qiHumanIntentProfile;
+  if (hi) {
+    if (arch.includes("gamer") && dom.has("gamer") && p.qiCategory === "electronics") d += 1;
+    if (arch.includes("student") && dom.has("value_sniper") && p.qiSignals && p.qiSignals.priceFit >= 68) d += 1;
+    if (arch.includes("luxury shopper") && dom.has("luxury_seeker")) d += 1;
+    if (hi.giftingLikelihood > 0.52 && dom.has("family_oriented") && /\b(gift|set|bundle)\b/i.test(blob)) d += 1;
+  }
+
   if (dom.has("value_sniper") && trust < 52) d -= 2;
   if (dom.has("premium_buyer") && trust < 66) d -= 1;
 

@@ -189,6 +189,15 @@ function queryCommercePersonaPatch(searchQuery: string): Partial<CategoryWeightP
   if (/\b(business|office|workstation|productivity|invoice|warranty)\b/.test(q)) {
     return { retailerTrust: 0.19, delivery: 0.1, rating: 0.17, discountQuality: 0.05 };
   }
+  if (/\b(perfume|cologne|fragrance|parfum|eau de|niche scent)\b/.test(q)) {
+    return { retailerTrust: 0.2, rating: 0.18, reviewDepth: 0.14, discountQuality: 0.06, popularity: 0.12 };
+  }
+  if (/\b(couch|sofa|sectional|small apartment|loft|sleeper sofa)\b/.test(q)) {
+    return { delivery: 0.12, retailerTrust: 0.17, price: 0.19, pricePerformance: 0.1, rating: 0.14 };
+  }
+  if (/\b(sneaker|trainer|running shoe|boots?|winter boots)\b/.test(q)) {
+    return { rating: 0.18, retailerTrust: 0.15, pricePerformance: 0.15, reviewDepth: 0.12, delivery: 0.08 };
+  }
   return null;
 }
 

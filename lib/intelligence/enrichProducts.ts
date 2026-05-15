@@ -14,6 +14,9 @@ import { buildProductRelationshipBundle } from "./productRelationshipGraph";
 import { buildAlternativeWhyLine, classifyDiscoveryProfile } from "./alternativeIntelligence";
 import { outboundCompositeNudge } from "@/lib/search/outboundRankNudge";
 import { buildQuantAIRealityTrustLayer } from "./realityEngine";
+import { buildHumanIntentProfile } from "./humanIntentEngine";
+import { inferQueryStyleProfile, productStyleCompositeNudge } from "./styleTasteProfiles";
+import { assessRegretRisk } from "./regretRisk";
 
 export function enrichProductsWithIntelligence(
   products: QuantProduct[],
@@ -25,6 +28,8 @@ export function enrichProductsWithIntelligence(
   const stats = computeListStats(productsIn);
   const listMaxValueRaw = computeListMaxValueRaw(productsIn);
   const intents = parseCommerceSearchIntents(searchQuery);
+  const humanIntent = buildHumanIntentProfile(searchQuery, intents);
+  const styleQuery = inferQueryStyleProfile(searchQuery, intents);
 
   const scored = productsIn.map((p) => {
     const engine = scoreProductEngine(p, searchQuery, stats, listMaxValueRaw, intents);
@@ -42,7 +47,11 @@ export function enrichProductsWithIntelligence(
       if (profile.tags.includes("premium_look_budget")) relDelta += 1;
       if (profile.tags.includes("underrated")) relDelta += 1;
     }
-    const qiComposite = Math.min(100, Math.max(0, engine.composite + relDelta + outboundCompositeNudge(p)));
+    const qiCompositeBase = Math.min(
+      100,
+      Math.max(0, engine.composite + relDelta + outboundCompositeNudge(p))
+    );
+    const styleNudge = productStyleCompositeNudge(p, styleQuery, engine.category, humanIntent);
 
     let reason = buildScoreReasoning(p, productsIn, stats, engine.signals, engine.category);
     if (altWhy) reason = `${reason} ${altWhy}`.slice(0, 1400);
@@ -58,6 +67,35 @@ export function enrichProductsWithIntelligence(
       intents,
       alternativeWhyNarrative: altWhy,
     });
+    const preHuman: QuantProduct = {
+      ...p,
+      qiComposite: qiCompositeBase,
+      qiModelLayer: engine.modelLayer,
+      qiReason: reason,
+      qiSignals: engine.signals,
+      qiCategory: engine.category,
+      qiTrendProjection: trend.projection,
+      qiTrendNote: trend.note,
+      qiVerdict,
+      qiPsychology,
+      qiRelationshipBundle: bundle,
+      qiDiscoveryTags: profile.tags,
+      qiAlternativeWhy: altWhy,
+    };
+    const qiRealityTrust = buildQuantAIRealityTrustLayer(preHuman, productsIn, {
+      medianPrice: stats.medianPrice,
+      searchQuery,
+    });
+    const regret = assessRegretRisk({
+      product: { ...preHuman, qiRealityTrust },
+      list: productsIn,
+      stats,
+      category: engine.category,
+      searchQuery,
+      reality: qiRealityTrust,
+    });
+    const qiComposite = Math.min(100, Math.max(0, qiCompositeBase + styleNudge + regret.compositeNudge));
+
     const enriched: QuantProduct = {
       ...p,
       qiComposite,
@@ -72,25 +110,9 @@ export function enrichProductsWithIntelligence(
       qiRelationshipBundle: bundle,
       qiDiscoveryTags: profile.tags,
       qiAlternativeWhy: altWhy,
-      qiRealityTrust: buildQuantAIRealityTrustLayer(
-        {
-          ...p,
-          qiComposite,
-          qiModelLayer: engine.modelLayer,
-          qiReason: reason,
-          qiSignals: engine.signals,
-          qiCategory: engine.category,
-          qiTrendProjection: trend.projection,
-          qiTrendNote: trend.note,
-          qiVerdict,
-          qiPsychology,
-          qiRelationshipBundle: bundle,
-          qiDiscoveryTags: profile.tags,
-          qiAlternativeWhy: altWhy,
-        },
-        productsIn,
-        { medianPrice: stats.medianPrice, searchQuery }
-      ),
+      qiRealityTrust,
+      qiHumanIntentProfile: humanIntent,
+      qiRegretRiskLevel: regret.level,
     };
     return enriched;
   });
