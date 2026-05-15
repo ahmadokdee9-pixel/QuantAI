@@ -69,6 +69,10 @@ export type PredictiveTimingVerdict =
   | "price_fair"
   | "stock_risk_buy";
 
+export type LikelyPriceMove = "rise" | "drop" | "stable" | "uncertain";
+
+export type PredictiveTimingSignalTone = "buy_now" | "wait" | "risk" | "timing";
+
 export type QiPredictiveCommerce = {
   version: 1;
   priceOutlook: PredictivePriceOutlook;
@@ -82,4 +86,20 @@ export type QiPredictiveCommerce = {
     betterTrustedSeller01: number;
   };
   categoryLens: string;
+  likelyPriceMove: LikelyPriceMove;
+  /** 0–100 tray-local confidence in timing read. */
+  timingConfidence: number;
+  inventoryRisk: "low" | "elevated" | "high";
+  /** Seasonal / promo cadence cue (heuristic from query + category). */
+  seasonalPattern: boolean;
+  volatilityRisk: "low" | "medium" | "high";
+  /** Short line for tooltips / secondary copy. */
+  predictiveNarrative: string;
+  /** Normalized action bucket for clients. */
+  predictiveAction: "buy_now" | "wait" | "watch" | "avoid" | "fair" | "none";
+  /** Human timing headline (not always uppercase). */
+  predictiveTimingLabel: string;
+  /** Uppercase micro-badge for listing cards; empty when suppressed. */
+  timingSignalBadge: string;
+  timingSignalTone: PredictiveTimingSignalTone;
 };

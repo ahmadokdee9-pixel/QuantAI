@@ -35,6 +35,7 @@ import {
 import { buildProductSnapshot, copyText } from "@/lib/share/intelligenceExport";
 import { recordViewedProductLink } from "@/lib/personalization/localSignals";
 import { isValidHttpOfferUrl } from "@/lib/commerce/offerClick";
+import type { PredictiveTimingSignalTone } from "@/lib/intelligence/commerceAnalysisTypes";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import {
   getProfessionalBadge,
@@ -105,6 +106,19 @@ function qiCenterLabelClass(tier: ReturnType<typeof qiConfidenceTier>): string {
       return "text-amber-100";
     default:
       return "text-slate-200";
+  }
+}
+
+function predictiveSignalChipClass(tone: PredictiveTimingSignalTone): string {
+  switch (tone) {
+    case "buy_now":
+      return "border-emerald-400/28 bg-emerald-500/[0.1] text-emerald-50/90 shadow-[0_0_16px_-10px_rgba(52,211,153,0.35)]";
+    case "wait":
+      return "border-amber-400/28 bg-amber-500/[0.09] text-amber-50/90";
+    case "risk":
+      return "border-rose-400/28 bg-rose-500/[0.1] text-rose-50/90";
+    default:
+      return "border-violet-400/26 bg-violet-500/[0.09] text-violet-50/88";
   }
 }
 
@@ -425,6 +439,13 @@ function ProductResultCard({
     [deal.worthBuyingNow, deal.hasDiscount]
   );
   const scanBadges = useMemo(() => pickScanBadges(deal, badge), [deal, badge]);
+  const predictiveTimingBadge = useMemo(() => {
+    const raw = p.qiPredictive?.timingSignalBadge?.trim();
+    if (!raw) return null;
+    const pr = p.qiPredictive!;
+    const title = [pr.predictiveTimingLabel, pr.predictiveNarrative].filter(Boolean).join(" — ").slice(0, 240);
+    return { text: raw, tone: pr.timingSignalTone, title };
+  }, [p.qiPredictive]);
   const scanLine = useMemo(() => analystScanLine(deal, trust, Math.round(scoreNorm)), [deal, trust, scoreNorm]);
   const worthShort = useMemo(
     () => worthBuyingShort(deal.worthBuyingNow, deal.hasDiscount),
@@ -629,6 +650,15 @@ function ProductResultCard({
                 <Percent className="size-2.5 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
                 <span className="truncate">{deal.aiDealVerdict}</span>
               </span>
+              {predictiveTimingBadge ? (
+                <span
+                  title={predictiveTimingBadge.title}
+                  className={`inline-flex max-w-[min(100%,14rem)] items-center gap-1 truncate rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] ${predictiveSignalChipClass(predictiveTimingBadge.tone)}`}
+                >
+                  <Sparkles className="size-2.5 shrink-0 opacity-85" strokeWidth={2} aria-hidden />
+                  <span className="truncate">{predictiveTimingBadge.text}</span>
+                </span>
+              ) : null}
             </div>
 
             <div className="mt-3 flex min-w-0 flex-wrap gap-1.5">
@@ -695,13 +725,22 @@ function ProductResultCard({
                     <p className="mt-1 text-[11px] font-semibold leading-snug text-white/95 [overflow-wrap:anywhere]">
                       {clip(buyDecision.headlineVerdict, 120)}
                     </p>
-                    <div className="mt-2 flex flex-wrap gap-1.5">
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
                       <span
                         className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${dealVerdictChipClass(deal.aiDealVerdict)}`}
                       >
                         <Percent className="size-2.5 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
                         <span className="truncate">{deal.aiDealVerdict}</span>
                       </span>
+                      {predictiveTimingBadge ? (
+                        <span
+                          title={predictiveTimingBadge.title}
+                          className={`inline-flex max-w-[min(100%,13rem)] items-center gap-1 truncate rounded-full border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.05em] ${predictiveSignalChipClass(predictiveTimingBadge.tone)}`}
+                        >
+                          <Sparkles className="size-2 shrink-0 opacity-85" strokeWidth={2} aria-hidden />
+                          <span className="truncate">{predictiveTimingBadge.text}</span>
+                        </span>
+                      ) : null}
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-3">
                       <div>

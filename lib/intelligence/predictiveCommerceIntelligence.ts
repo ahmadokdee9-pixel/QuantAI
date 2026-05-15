@@ -11,7 +11,9 @@ import { getMarketplaceSellerRiskTier } from "@/lib/retailTrust";
 import type { CommerceSearchIntents } from "./searchIntentV2";
 import type { ProductCategorySlug } from "./types";
 import type {
+  LikelyPriceMove,
   PredictivePriceOutlook,
+  PredictiveTimingSignalTone,
   PredictiveTimingVerdict,
   QiPredictiveCommerce,
 } from "./commerceAnalysisTypes";
@@ -256,6 +258,185 @@ function shouldOverrideQiVerdict(verdict: PredictiveTimingVerdict, manipulation0
   return false;
 }
 
+function likelyPriceMoveFromOutlook(
+  outlook: PredictivePriceOutlook,
+  priceTrend: QuantProduct["priceTrend"],
+  priceVsPeer: number
+): LikelyPriceMove {
+  if (outlook === "likely_rise") return "rise";
+  if (outlook === "likely_drop") return "drop";
+  if (outlook === "fake_discount_heavy" || outlook === "uncertain") return "uncertain";
+  if (priceTrend === "up" && priceVsPeer > 1.04) return "rise";
+  if (priceTrend === "down" && priceVsPeer < 0.96) return "drop";
+  return "stable";
+}
+
+function inventoryRiskFrom01(stockDisappear01: number): "low" | "elevated" | "high" {
+  if (stockDisappear01 >= 0.55) return "high";
+  if (stockDisappear01 >= 0.34) return "elevated";
+  return "low";
+}
+
+function volatilityRiskFrom01(vol01: number): "low" | "medium" | "high" {
+  if (vol01 >= 0.58) return "high";
+  if (vol01 >= 0.36) return "medium";
+  return "low";
+}
+
+function detectSeasonalPattern(
+  query: string,
+  category: ProductCategorySlug,
+  outlook: PredictivePriceOutlook,
+  vol01: number
+): boolean {
+  const q = query.toLowerCase();
+  if (
+    /\b(spring|summer|fall|autumn|winter|season|clearance|black\s*friday|cyber\s*monday|holiday\s*sale|boxing|january\s*sale)\b/i.test(
+      q
+    )
+  ) {
+    return true;
+  }
+  if (category === "fashion" && outlook === "likely_drop") return true;
+  if (category === "home" && outlook === "likely_drop" && vol01 >= 0.42) return true;
+  return false;
+}
+
+/**
+ * Derives compact listing-card timing badge + API fields from tray-local signals.
+ */
+export function buildPredictiveTimingSignal(args: {
+  priceOutlook: PredictivePriceOutlook;
+  timingVerdict: PredictiveTimingVerdict;
+  probabilities: QiPredictiveCommerce["probabilities"];
+  priceTrend: QuantProduct["priceTrend"];
+  category: ProductCategorySlug;
+  query: string;
+  vol01: number;
+  priceVsPeer: number;
+  stock01: number;
+  trust: number;
+  narrativeFull: string;
+}): Pick<
+  QiPredictiveCommerce,
+  | "likelyPriceMove"
+  | "timingConfidence"
+  | "inventoryRisk"
+  | "seasonalPattern"
+  | "volatilityRisk"
+  | "predictiveNarrative"
+  | "predictiveAction"
+  | "predictiveTimingLabel"
+  | "timingSignalBadge"
+  | "timingSignalTone"
+> {
+  const {
+    priceOutlook,
+    timingVerdict,
+    probabilities,
+    priceTrend,
+    category,
+    query,
+    vol01,
+    priceVsPeer,
+    stock01,
+    trust,
+    narrativeFull,
+  } = args;
+  const { betterDealLater01, priceManipulation01, stockDisappearance01 } = probabilities;
+
+  const likelyMove = likelyPriceMoveFromOutlook(priceOutlook, priceTrend, priceVsPeer);
+  const invRisk = inventoryRiskFrom01(stockDisappearance01);
+  const volRisk = volatilityRiskFrom01(vol01);
+  const seasonal = detectSeasonalPattern(query, category, priceOutlook, vol01);
+
+  const timingConfidence = Math.round(
+    clamp(
+      36 +
+        (1 - priceManipulation01) * 28 +
+        (trust / 100) * 22 +
+        (vol01 < 0.62 ? 8 : -4) +
+        (stockDisappearance01 < 0.62 ? 6 : -2),
+      22,
+      94
+    )
+  );
+
+  const predictiveAction: QiPredictiveCommerce["predictiveAction"] =
+    timingVerdict === "avoid_fake_discount"
+      ? "avoid"
+      : timingVerdict === "buy_now" || timingVerdict === "stock_risk_buy"
+        ? "buy_now"
+        : timingVerdict === "price_fair"
+          ? "fair"
+          : timingVerdict === "watch_7d"
+            ? "watch"
+            : timingVerdict === "wait_real_discount"
+              ? "wait"
+              : "none";
+
+  const firstLine = narrativeFull.split(/(?<=[.!?])\s/)[0]?.trim() ?? narrativeFull.trim();
+  const predictiveNarrative = firstLine.slice(0, 140);
+
+  const riseSignal =
+    likelyMove === "rise" ||
+    (priceTrend === "up" && priceVsPeer > 1.03 && priceManipulation01 < 0.52);
+  const dropSignal =
+    (likelyMove === "drop" && betterDealLater01 >= 0.33) ||
+    ((timingVerdict === "watch_7d" || timingVerdict === "wait_real_discount") &&
+      betterDealLater01 >= 0.38 &&
+      priceManipulation01 < 0.52);
+  const stockSignal =
+    invRisk === "high" ||
+    (stockDisappearance01 >= 0.45 && stock01 >= 0.28) ||
+    (timingVerdict === "stock_risk_buy" && stockDisappearance01 >= 0.38);
+
+  let timingSignalBadge = "";
+  let timingSignalTone: PredictiveTimingSignalTone = "timing";
+  let predictiveTimingLabel = predictiveNarrative.slice(0, 90);
+
+  if (stockSignal) {
+    timingSignalBadge = "LOW STOCK RISK";
+    timingSignalTone = "risk";
+    predictiveTimingLabel = "Stock instability detected — rotation risk before repricing.";
+  } else if (riseSignal) {
+    timingSignalBadge = "PRICE RISING — BUY NOW";
+    timingSignalTone = "buy_now";
+    predictiveTimingLabel = "Price expected to rise vs peers — execute if SKU is correct.";
+  } else if (dropSignal) {
+    timingSignalBadge = "PRICE DROPPING — WAIT";
+    timingSignalTone = "wait";
+    predictiveTimingLabel = "Historical tray pricing suggests waiting briefly for a cleaner entry.";
+  } else if (seasonal && betterDealLater01 >= 0.28) {
+    timingSignalBadge = "BETTER DEAL SOON";
+    timingSignalTone = "timing";
+    predictiveTimingLabel = "Seasonal discount window likely approaching for this category.";
+  } else if (volRisk === "high" && betterDealLater01 >= 0.3) {
+    timingSignalBadge = "VOLATILE PRICING";
+    timingSignalTone = "timing";
+    predictiveTimingLabel = "Wide store spread — pricing unstable; compare before you commit.";
+  }
+
+  if (!timingSignalBadge && timingVerdict === "avoid_fake_discount") {
+    timingSignalBadge = "PRICE DROPPING — WAIT";
+    timingSignalTone = "wait";
+    predictiveTimingLabel = "Markdown looks promotional — wait for real discount proof.";
+  }
+
+  return {
+    likelyPriceMove: likelyMove,
+    timingConfidence,
+    inventoryRisk: invRisk,
+    seasonalPattern: seasonal,
+    volatilityRisk: volRisk,
+    predictiveNarrative,
+    predictiveAction,
+    predictiveTimingLabel,
+    timingSignalBadge,
+    timingSignalTone,
+  };
+}
+
 export function computeQiPredictiveCommerce(
   p: QuantProduct,
   list: QuantProduct[],
@@ -328,19 +509,36 @@ export function computeQiPredictiveCommerce(
   const narrativeFull =
     `${narrative} ${lens}`.replace(/\s+/g, " ").trim().slice(0, 520);
 
+  const probabilities: QiPredictiveCommerce["probabilities"] = {
+    betterDealLater01: Number(betterDeal01.toFixed(3)),
+    priceManipulation01: Number(manipulation01.toFixed(3)),
+    stockDisappearance01: Number(stockDisappear01.toFixed(3)),
+    betterTrustedSeller01: Number(betterTrustedSeller01.toFixed(3)),
+  };
+
+  const timingSignal = buildPredictiveTimingSignal({
+    priceOutlook: outlook,
+    timingVerdict: verdict,
+    probabilities,
+    priceTrend: p.priceTrend,
+    category: cat,
+    query,
+    vol01,
+    priceVsPeer,
+    stock01,
+    trust,
+    narrativeFull,
+  });
+
   return {
     version: 1,
     priceOutlook: outlook,
     timingVerdict: verdict,
     timingVerdictLabel: label,
     narrative: narrativeFull,
-    probabilities: {
-      betterDealLater01: Number(betterDeal01.toFixed(3)),
-      priceManipulation01: Number(manipulation01.toFixed(3)),
-      stockDisappearance01: Number(stockDisappear01.toFixed(3)),
-      betterTrustedSeller01: Number(betterTrustedSeller01.toFixed(3)),
-    },
+    probabilities,
     categoryLens: lens.slice(0, 240),
+    ...timingSignal,
   };
 }
 

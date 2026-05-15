@@ -216,7 +216,7 @@ async function handleSearch(
       meta: {
         category: topCategory,
         intelligenceVersion: 12,
-        predictiveCommerceVersion: 1,
+        predictiveCommerceVersion: 2,
         commerceAI: commerceMeta,
         commerceAiEngine: resolveCommerceAiEngine(),
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),
