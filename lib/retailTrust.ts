@@ -52,6 +52,18 @@ export const TRUSTED_SUBSTRINGS = [
   "decathlon",
   "alternate",
   "alternate.de",
+  "belsimpel",
+  "wehkamp",
+  "blokker",
+  "douglas",
+  "notino",
+  "parfumdreams",
+  "about you",
+  "aboutyou",
+  "leen bakker",
+  "dyson",
+  "philips",
+  "action",
 ] as const;
 
 /** Tier 1 — flagship omnichannel / first-party stores with strong buyer protections. */
@@ -148,6 +160,14 @@ const PREFERRED_RETAIL_SUBSTRINGS = [
   "target",
   "walmart",
   "decathlon",
+  "douglas",
+  "notino",
+  "wehkamp",
+  "belsimpel",
+  "about you",
+  "philips",
+  "dyson",
+  "action",
 ] as const;
 
 /** Curated first-party / tier-1 graph — extra ranking lift (not a legal endorsement). */
@@ -171,6 +191,13 @@ const ELITE_RETAIL_SUBSTRINGS = [
   "decathlon",
   "otto",
   "zalando",
+  "douglas",
+  "notino",
+  "wehkamp",
+  "belsimpel",
+  "about you",
+  "philips",
+  "dyson",
 ] as const;
 
 /** Domains / names treated as high-variance marketplaces — down-ranked vs first-party retail. */

@@ -48,6 +48,10 @@ export type QuantProduct = {
   qiRealityTrust?: QuantAIRealityTrustLayer;
   /** AI commerce layer: verdicts, pros/cons, risks, VfM, confidence, delivery/returns notes (OpenAI or heuristic). */
   qiCommerce?: ProductCommerceAI;
+  /** Best outbound click target (merchant direct or store search); falls back to `link`. */
+  offerOutboundUrl?: string;
+  /** How `offerOutboundUrl` was resolved (signals / ranking only). */
+  outboundRouteKind?: "direct_merchant" | "merchant_search" | "google_interstitial" | "google_fallback";
 };
 
 export { getStoreTrustScore };

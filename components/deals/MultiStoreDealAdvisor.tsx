@@ -15,6 +15,7 @@ import {
 import type { DealClusterDTO, ListingDealInsight, PrimaryDealAction } from "@/lib/deals/types";
 import { buildClusterDealLanes } from "@/lib/intelligence/dealIntelligenceEngine";
 import type { QuantProduct } from "@/lib/shoppingScore";
+import { resolveOfferClickUrl } from "@/lib/commerce/offerClick";
 import { getFinalComposite, getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
 import { scoreDeliverySpeed } from "@/lib/intelligence/deliveryScore";
 
@@ -362,7 +363,7 @@ export default function MultiStoreDealAdvisor({
                             return (
                               <li key={key}>
                                 <a
-                                  href={p.link}
+                                  href={resolveOfferClickUrl(p)}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="flex items-center justify-between gap-3 py-2.5 text-[13px] text-slate-300/95 transition hover:text-white"
@@ -425,7 +426,7 @@ export default function MultiStoreDealAdvisor({
                                 >
                                   <td className="px-4 py-3.5">
                                     <a
-                                      href={p.link}
+                                      href={resolveOfferClickUrl(p)}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="font-medium text-cyan-200/95 underline-offset-2 hover:underline"

@@ -34,7 +34,7 @@ import {
 } from "@/lib/commerce/cues";
 import { buildProductSnapshot, copyText } from "@/lib/share/intelligenceExport";
 import { recordViewedProductLink } from "@/lib/personalization/localSignals";
-import { isValidHttpOfferUrl } from "@/lib/commerce/offerClick";
+import { isValidHttpOfferUrl, resolveOfferClickUrl } from "@/lib/commerce/offerClick";
 import type { PredictiveTimingSignalTone } from "@/lib/intelligence/commerceAnalysisTypes";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import {
@@ -337,6 +337,7 @@ function ProductResultCard({
   const score = p.qiComposite != null && Number.isFinite(p.qiComposite) ? p.qiComposite : ai.score;
   const scoreNorm = Math.min(100, Math.max(0, Number(score) || 0));
   const trust = getStoreTrustScore(p.store);
+  const offerClickUrl = resolveOfferClickUrl(p);
   const qiTier = qiConfidenceTier(scoreNorm);
   const [g0, g1, g2] = qiRingGradientStops(qiTier);
   const inCompare = compareLinks.includes(p.link);
@@ -744,6 +745,17 @@ function ProductResultCard({
                       </span>
                       <span className="rounded-md border border-white/[0.06] bg-black/25 px-2 py-0.5">{mkt.label}</span>
                     </div>
+                    {p.outboundRouteKind ? (
+                      <p className="mt-2 text-[9px] leading-snug text-slate-500/90">
+                        {p.outboundRouteKind === "direct_merchant"
+                          ? "Outbound: Direct merchant route"
+                          : p.outboundRouteKind === "merchant_search"
+                            ? "Outbound: Merchant search fallback"
+                            : p.outboundRouteKind === "google_interstitial"
+                              ? "Outbound: Google Shopping bridge"
+                              : "Outbound: Google fallback"}
+                      </p>
+                    ) : null}
                     <details className="group mt-3 overflow-hidden rounded-xl border border-white/[0.06] bg-black/25">
                       <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 transition hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
                         <span>Signal depth</span>
@@ -882,12 +894,12 @@ function ProductResultCard({
                 )}
                 {cardCopyFlash ? "Copied" : "Export"}
               </motion.button>
-              {isValidHttpOfferUrl(p.link) ? (
+              {isValidHttpOfferUrl(offerClickUrl) ? (
               <motion.a
-                href={p.link}
+                href={offerClickUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => recordViewedProductLink(p.link)}
+                onClick={() => recordViewedProductLink(offerClickUrl)}
                 whileHover={lite ? undefined : { scale: 1.015 }}
                 whileTap={{ scale: 0.985 }}
                 title="Opens the retailer page in a new tab"
@@ -957,7 +969,7 @@ function productResultCardPropsEqual(a: Props, b: Props): boolean {
   if (a.lowPower !== b.lowPower || a.imagePriority !== b.imagePriority) return false;
   if (!marketTrayEqual(a.marketTray, b.marketTray)) return false;
   const pk = (x: QuantProduct) =>
-    `${x.price}|${x.title}|${x.store}|${x.rating}|${x.image}|${x.displayPrice}|${x.oldPrice ?? ""}|${x.priceTrend}|${x.qiComposite ?? ""}|${x.availability ?? ""}|${x.shipping ?? ""}|${x.qiRealityTrust?.realityScore ?? ""}|${x.qiRealityTrust == null ? "" : x.qiRealityTrust.weakRetailer ? "1" : "0"}`;
+    `${x.price}|${x.title}|${x.store}|${x.rating}|${x.image}|${x.displayPrice}|${x.oldPrice ?? ""}|${x.priceTrend}|${x.qiComposite ?? ""}|${x.availability ?? ""}|${x.shipping ?? ""}|${x.qiRealityTrust?.realityScore ?? ""}|${x.qiRealityTrust == null ? "" : x.qiRealityTrust.weakRetailer ? "1" : "0"}|${x.offerOutboundUrl ?? ""}|${x.outboundRouteKind ?? ""}`;
   if (pk(a.product) !== pk(b.product)) return false;
   if (a.list.length !== b.list.length) return false;
   if (a.list.length > 0) {

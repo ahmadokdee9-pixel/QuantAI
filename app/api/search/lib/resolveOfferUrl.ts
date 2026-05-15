@@ -3,58 +3,10 @@
  * Prefers merchant hosts; keeps Google Shopping only as a last resort.
  */
 
-const GOOGLE_HOST = /^(www\.)?google\./i;
+import { isGoogleShoppingInterstitial, unwrapGoogleToNonGoogle } from "@/lib/search/googleShoppingUrls";
 
 function isGoogleHost(hostname: string): boolean {
-  return GOOGLE_HOST.test(hostname);
-}
-
-/** True when URL is clearly a Google Shopping / interstitial surface (not a merchant checkout). */
-export function isGoogleShoppingInterstitial(href: string): boolean {
-  try {
-    const u = new URL(href);
-    if (!isGoogleHost(u.hostname)) return false;
-    const s = `${u.pathname}${u.search}`.toLowerCase();
-    if (s.includes("/shopping")) return true;
-    if (s.includes("/product")) return true;
-    if (s.includes("udm=28")) return true;
-    if (s.includes("ibp=oshop")) return true;
-    if (s.includes("/aclk")) return true;
-    if (s.includes("/url?")) return true;
-    return false;
-  } catch {
-    return true;
-  }
-}
-
-function tryDecodeNestedUrl(raw: string): string | null {
-  const t = raw.trim();
-  if (!/^https?:\/\//i.test(t)) return null;
-  try {
-    const inner = new URL(t);
-    if (!isGoogleHost(inner.hostname)) return t;
-  } catch {
-    return null;
-  }
-  return null;
-}
-
-/** Extract merchant URL from Google redirect / ad URLs when encoded. */
-function unwrapGoogleRedirectParams(href: string): string | null {
-  try {
-    const u = new URL(href);
-    const keys = ["q", "url", "adurl", "u", "destination", "continue"];
-    for (const k of keys) {
-      const v = u.searchParams.get(k);
-      if (!v) continue;
-      const decoded = decodeURIComponent(v.replace(/\+/g, " "));
-      const out = tryDecodeNestedUrl(decoded);
-      if (out) return out;
-    }
-  } catch {
-    /* ignore */
-  }
-  return null;
+  return /^(www\.)?google\./i.test(hostname);
 }
 
 /** Order matters: first non-Google wins in `resolveShoppingListingLink`. */
@@ -103,17 +55,7 @@ function collectCandidateUrls(row: Record<string, unknown>): string[] {
   });
 }
 
-function unwrapChain(href: string, depth: number): string {
-  if (depth <= 0) return href;
-  const next = unwrapGoogleRedirectParams(href);
-  if (!next || next === href) return href;
-  try {
-    if (!isGoogleHost(new URL(next).hostname)) return next;
-  } catch {
-    return next;
-  }
-  return unwrapChain(next, depth - 1);
-}
+export { isGoogleShoppingInterstitial, isGoogleUrl, unwrapGoogleToNonGoogle } from "@/lib/search/googleShoppingUrls";
 
 export function resolveShoppingListingLink(row: Record<string, unknown>): string {
   const candidates = collectCandidateUrls(row);
@@ -129,7 +71,7 @@ export function resolveShoppingListingLink(row: Record<string, unknown>): string
   }
 
   for (const href of candidates) {
-    const unwrapped = unwrapChain(href, 4);
+    const unwrapped = unwrapGoogleToNonGoogle(href) ?? href;
     try {
       if (!isGoogleHost(new URL(unwrapped).hostname)) return unwrapped;
     } catch {

@@ -13,6 +13,7 @@ import {
 import { combinedTitleSimilarity } from "@/lib/deals/normalizeTitle";
 import { buildUpstreamShoppingQuery } from "@/lib/search/shoppingQueryV3";
 import { getStoreTrustScore } from "@/lib/retailTrust";
+import { resolveBestOutboundUrl } from "@/lib/search/directMerchantRouter";
 import { resolveShoppingListingLink } from "./resolveOfferUrl";
 
 function extractNumberFromPrice(val: unknown): number | null {
@@ -102,9 +103,10 @@ export async function fetchShoppingProducts(
     const upstreamQ = buildUpstreamShoppingQuery(trimmed);
 
     const gl = (process.env.SERPAPI_SHOPPING_GL ?? "nl").trim().slice(0, 4) || "nl";
+    const num = Math.min(100, Math.max(40, Number.parseInt(process.env.SERPAPI_SHOPPING_NUM ?? "80", 10) || 80));
     const url = `https://serpapi.com/search.json?engine=google_shopping&q=${encodeURIComponent(
       upstreamQ
-    )}&gl=${encodeURIComponent(gl)}&hl=en&api_key=${process.env.SERPAPI_KEY}`;
+    )}&gl=${encodeURIComponent(gl)}&hl=en&num=${num}&api_key=${process.env.SERPAPI_KEY}`;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25_000);
@@ -138,14 +140,21 @@ export async function fetchShoppingProducts(
     }
 
     const raw = (data.shopping_results as unknown[]) || [];
-    const mapped = raw.slice(0, 48).map((item: unknown, index: number) => {
+    const mapped = raw.slice(0, 100).map((item: unknown, index: number) => {
       const row = item as Record<string, unknown>;
       const price = Number(row.extracted_price) || 0;
       const oldRaw =
         row.extracted_old_price ?? row.old_price_extracted ?? row.old_price;
       const oldPrice = extractNumberFromPrice(oldRaw);
       const extensions = parseExtensions(row);
-      const link = resolveShoppingListingLink(row);
+      const store = String(row.source || row.store || "Unknown store");
+      const baseLink = resolveShoppingListingLink(row);
+      const routed = resolveBestOutboundUrl({
+        link: baseLink,
+        store,
+        title: String(row.title || ""),
+        geoGl: gl,
+      });
 
       const rawTitle = String(row.title || "Unknown product");
       const title = normalizeMarketplaceTitle(rawTitle);
@@ -153,11 +162,13 @@ export async function fetchShoppingProducts(
       return {
         id: index + 1,
         title,
-        store: String(row.source || row.store || "Unknown store"),
+        store,
         price,
         displayPrice: String(row.price || ""),
         rating: (row.rating as number | string) ?? "N/A",
-        link,
+        link: baseLink,
+        offerOutboundUrl: routed.href.startsWith("http") ? routed.href : baseLink,
+        outboundRouteKind: routed.kind,
         image: String(row.thumbnail || ""),
         reviewsCount: parseReviews(row),
         shipping: parseShipping(row),
@@ -182,10 +193,12 @@ export async function fetchShoppingProducts(
       if (p.store.toLowerCase() === "unknown store") return false;
       if (p.price <= 0 && !String(p.displayPrice || "").trim()) return false;
       if (p.link === "#" || p.link.length < 8) return false;
+      const click = p.offerOutboundUrl ?? p.link;
+      if (click === "#" || click.length < 8) return false;
       return true;
     });
 
-    const deduped = dedupeShoppingFeedOverlap(filtered).slice(0, 40);
+    const deduped = dedupeShoppingFeedOverlap(filtered).slice(0, 60);
 
     const products: ShoppingProduct[] = deduped.map((p, i) => ({ ...p, id: i + 1 }));
 

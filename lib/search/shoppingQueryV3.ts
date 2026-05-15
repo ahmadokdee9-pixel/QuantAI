@@ -58,6 +58,13 @@ const FAMILY_SUFFIX: { test: RegExp; add: string }[] = [
   { test: /\b(oled\s+tv|television)\b/i, add: "4K TV" },
   { test: /\b(gaming\s+)?monitor\b/i, add: "display" },
   { test: /\b(gift|present)\b/i, add: "popular" },
+  { test: /\b(perfume|fragrance|parfum|cologne|eau\s+de)\b/i, add: "beauty fragrance" },
+  { test: /\bair\s*fryer\b/i, add: "kitchen small appliance" },
+  { test: /\b(desk\s+setup|minimalist\s+desk)\b/i, add: "office desk accessories" },
+  { test: /\brunning\s+shoes?\b/i, add: "athletic footwear" },
+  { test: /\bcar\s+accessories?\b/i, add: "automotive interior" },
+  { test: /\b(power\s+tools?|drill|wrench\s+set)\b/i, add: "hardware tools" },
+  { test: /\b(kids?|children|toddler)\b/i, add: "family" },
 ];
 
 /** When query contains anchor term but not hint, append hint once. */

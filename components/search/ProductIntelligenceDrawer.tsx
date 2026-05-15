@@ -35,6 +35,7 @@ import {
   trustAnalysisParagraph,
   valueAnalysisParagraph,
 } from "@/lib/intelligence/drawerInsights";
+import { resolveOfferClickUrl } from "@/lib/commerce/offerClick";
 import { computeListStats } from "@/lib/intelligence/scoringEngine";
 import {
   getFinalComposite,
@@ -257,7 +258,7 @@ export default function ProductIntelligenceDrawer({ product: p, list, open, onCl
 
             <footer className="relative shrink-0 border-t border-white/[0.07] bg-black/40 px-4 py-3 sm:px-5">
               <a
-                href={p.link}
+                href={resolveOfferClickUrl(p)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-500 py-3 text-sm font-semibold text-slate-950 shadow-[0_0_32px_-8px_rgba(34,211,238,0.4)] transition hover:brightness-105"

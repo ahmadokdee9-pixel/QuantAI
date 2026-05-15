@@ -12,6 +12,7 @@ import { applyEliteFirstWindowCuration } from "./trayCuration";
 import { parseCommerceSearchIntents } from "./searchIntentV2";
 import { buildProductRelationshipBundle } from "./productRelationshipGraph";
 import { buildAlternativeWhyLine, classifyDiscoveryProfile } from "./alternativeIntelligence";
+import { outboundCompositeNudge } from "@/lib/search/outboundRankNudge";
 import { buildQuantAIRealityTrustLayer } from "./realityEngine";
 
 export function enrichProductsWithIntelligence(
@@ -41,7 +42,7 @@ export function enrichProductsWithIntelligence(
       if (profile.tags.includes("premium_look_budget")) relDelta += 1;
       if (profile.tags.includes("underrated")) relDelta += 1;
     }
-    const qiComposite = Math.min(100, Math.max(0, engine.composite + relDelta));
+    const qiComposite = Math.min(100, Math.max(0, engine.composite + relDelta + outboundCompositeNudge(p)));
 
     let reason = buildScoreReasoning(p, productsIn, stats, engine.signals, engine.category);
     if (altWhy) reason = `${reason} ${altWhy}`.slice(0, 1400);
