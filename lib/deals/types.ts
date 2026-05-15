@@ -34,6 +34,8 @@ export type ListingDealInsight = {
   dataGaps: string[];
   marketplaceSellerRisk: MarketplaceSellerRisk;
   ratingAuthenticityHint: string;
+  /** Smarter timing headline from predictive commerce (optional). */
+  predictiveTimingLabel?: string;
 };
 
 export type ClusterPicks = {

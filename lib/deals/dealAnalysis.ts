@@ -603,6 +603,7 @@ export function analyzeDealCluster(id: string, listings: QuantProduct[]): DealCl
       dataGaps,
       marketplaceSellerRisk: mkt,
       ratingAuthenticityHint: ratingAuthenticityHint(p, maxReviews),
+      predictiveTimingLabel: p.qiPredictive?.timingVerdictLabel,
     };
   });
 

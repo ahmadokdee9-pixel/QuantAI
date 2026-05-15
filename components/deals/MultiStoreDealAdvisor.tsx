@@ -48,9 +48,10 @@ function verdictTone(v: ListingDealInsight["dealVerdict"]): string {
   }
 }
 
-function buyWaitLabel(b: ListingDealInsight["buyVsWait"]): string {
+function buyWaitLabel(b: ListingDealInsight["buyVsWait"], predictive?: string): string {
+  if (predictive?.trim()) return predictive.trim();
   if (b === "buy_now") return "Buy now";
-  if (b === "wait") return "Wait";
+  if (b === "wait") return "Watch tray";
   return "Compare";
 }
 
@@ -60,9 +61,13 @@ function fakeRiskLabel(r: ListingDealInsight["fakeDiscountRisk"]): string {
   return "Discount trust: solid";
 }
 
-function primaryActionLabel(a: PrimaryDealAction): string {
-  if (a === "buy_now") return "Buy now";
-  if (a === "wait") return "Wait for better pricing";
+function primaryActionLabel(cluster: DealClusterDTO): string {
+  if (cluster.primaryRecommendation === "buy_now") return "Buy now";
+  if (cluster.primaryRecommendation === "wait") {
+    const head = cluster.primaryRecommendationReason.split(":")[0]?.trim() ?? "";
+    if (head.length >= 6 && head.length <= 52) return head;
+    return "Watch — predictive read";
+  }
   return "Compare carefully";
 }
 
@@ -236,7 +241,7 @@ export default function MultiStoreDealAdvisor({
                           className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12px] font-semibold tracking-tight ${primaryActionStyle(cluster.primaryRecommendation)}`}
                         >
                           <Target className="size-3.5 opacity-90" aria-hidden />
-                          {primaryActionLabel(cluster.primaryRecommendation)}
+                          {primaryActionLabel(cluster)}
                         </span>
                         <span className="text-[13px] text-slate-500/95">
                           Data depth: <span className="capitalize text-slate-400/95">{cluster.dataCompleteness}</span>
@@ -500,7 +505,7 @@ export default function MultiStoreDealAdvisor({
                                     {ins && (
                                       <>
                                         <span className="font-medium text-slate-300">
-                                          {buyWaitLabel(ins.buyVsWait)}
+                                          {buyWaitLabel(ins.buyVsWait, ins.predictiveTimingLabel)}
                                         </span>
                                         {savings != null && (
                                           <span className="mt-0.5 block text-emerald-200/80">

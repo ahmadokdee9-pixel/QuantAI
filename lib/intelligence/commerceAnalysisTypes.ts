@@ -52,3 +52,34 @@ export type SearchCommerceAIMeta = {
   cached: boolean;
   modelId?: string;
 };
+
+/** Tray-local predictive commerce (no historical market feeds). */
+export type PredictivePriceOutlook =
+  | "likely_drop"
+  | "likely_rise"
+  | "stable"
+  | "fake_discount_heavy"
+  | "uncertain";
+
+export type PredictiveTimingVerdict =
+  | "buy_now"
+  | "watch_7d"
+  | "wait_real_discount"
+  | "avoid_fake_discount"
+  | "price_fair"
+  | "stock_risk_buy";
+
+export type QiPredictiveCommerce = {
+  version: 1;
+  priceOutlook: PredictivePriceOutlook;
+  timingVerdict: PredictiveTimingVerdict;
+  timingVerdictLabel: string;
+  narrative: string;
+  probabilities: {
+    betterDealLater01: number;
+    priceManipulation01: number;
+    stockDisappearance01: number;
+    betterTrustedSeller01: number;
+  };
+  categoryLens: string;
+};

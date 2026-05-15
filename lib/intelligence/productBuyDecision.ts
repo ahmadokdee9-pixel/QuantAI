@@ -82,6 +82,10 @@ export function buildProductBuyDecision(product: QuantProduct, list: QuantProduc
     stanceLabel = "Wait";
     stanceDetail = "Mixed lane—let a stronger listing or price move come to you.";
     buyerFit = "Disciplined hold until the tray sharpens.";
+    if (product.qiPredictive?.timingVerdictLabel) {
+      stanceLabel = product.qiPredictive.timingVerdictLabel;
+      stanceDetail = product.qiPredictive.narrative.slice(0, 280);
+    }
   } else if (rank <= 1 && qi >= 64 && trust >= 58 && gapToTop <= 6) {
     stance = "buy";
     stanceLabel = "Buy-ready";

@@ -178,6 +178,7 @@ export function buildPrimaryRecommendation(args: {
   const bestP = listings.find((p) => p.link === best.link);
   const comp = bestP ? getFinalComposite(bestP, listings) : 0;
   const waits = insights.filter((i) => i.buyVsWait === "wait").length;
+  const predictiveLead = best.predictiveTimingLabel ?? bestP?.qiPredictive?.timingVerdictLabel;
 
   if (suspiciousCluster || clusterConfidence < 42) {
     return {
@@ -189,14 +190,17 @@ export function buildPrimaryRecommendation(args: {
   if (waits >= Math.ceil(insights.length * 0.55)) {
     return {
       action: "wait",
-      reason:
-        "Most rows skew toward patience: pricing or trust does not yet justify an impulse checkout across this peer set.",
+      reason: predictiveLead
+        ? `${predictiveLead}: most rows skew toward patience—pricing or trust does not yet justify an impulse checkout across this peer set.`
+        : "Most rows skew toward patience: pricing or trust does not yet justify an impulse checkout across this peer set.",
     };
   }
   if (best.buyVsWait === "buy_now" && comp >= 78 && best.dealVerdict !== "Suspicious discount") {
     return {
       action: "buy_now",
-      reason: `Lead listing (${listings.find((p) => p.link === best.link)?.store ?? "store"}) clears composite, trust, and discount checks—still verify SKU parity at checkout.`,
+      reason: predictiveLead
+        ? `${predictiveLead}. Lead listing (${listings.find((p) => p.link === best.link)?.store ?? "store"}) clears composite, trust, and discount checks—still verify SKU parity at checkout.`
+        : `Lead listing (${listings.find((p) => p.link === best.link)?.store ?? "store"}) clears composite, trust, and discount checks—still verify SKU parity at checkout.`,
     };
   }
   return {

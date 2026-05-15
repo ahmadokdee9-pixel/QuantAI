@@ -8,6 +8,7 @@ import { resolveCommerceAiEngine } from "@/lib/intelligence/commerceAi/commerceA
 import { mergeCommerceSessionMemory, safeParseCommerceSessionMemory } from "@/lib/intelligence/commerceSessionMemory";
 import { buildBundleSuggestions } from "@/lib/intelligence/bundleIntelligence";
 import { applyPersonaRanking } from "@/lib/intelligence/personaRanking";
+import { applyPredictiveCommerceToTray } from "@/lib/intelligence/predictiveCommerceIntelligence";
 import { detectShopperPersonas } from "@/lib/intelligence/shopperPersona";
 import {
   countSearchesTodayUtc,
@@ -184,6 +185,7 @@ async function handleSearch(
     }
 
     const intents = parseCommerceSearchIntents(query);
+    products = applyPredictiveCommerceToTray(products, query, intents);
     const shopperPersona = detectShopperPersonas(query, intents);
     const prevCommerceMemory = safeParseCommerceSessionMemory(opts?.commerceMemory);
     const tasteTagIds = tasteTagListForApi(intents.taste);
@@ -213,7 +215,8 @@ async function handleSearch(
       entitlements: entitlementsForTier(tier),
       meta: {
         category: topCategory,
-        intelligenceVersion: 11,
+        intelligenceVersion: 12,
+        predictiveCommerceVersion: 1,
         commerceAI: commerceMeta,
         commerceAiEngine: resolveCommerceAiEngine(),
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),

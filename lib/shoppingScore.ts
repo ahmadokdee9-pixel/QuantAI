@@ -1,5 +1,5 @@
 import { calculateAIScore } from "@/app/api/search/lib/aiScoring";
-import type { ProductCommerceAI } from "@/lib/intelligence/commerceAnalysisTypes";
+import type { ProductCommerceAI, QiPredictiveCommerce } from "@/lib/intelligence/commerceAnalysisTypes";
 import type { IntelligenceSignals, ProductCategorySlug } from "@/lib/intelligence/types";
 import type { ProductRelationshipBundle } from "@/lib/intelligence/relationshipTypes";
 import {
@@ -41,6 +41,8 @@ export type QuantProduct = {
   qiDiscoveryTags?: string[];
   /** Why this row matches substitute / alternative intent (relationship intelligence). */
   qiAlternativeWhy?: string;
+  /** Predictive timing / outlook / probabilities (tray-local heuristics). */
+  qiPredictive?: QiPredictiveCommerce;
   /** AI commerce layer: verdicts, pros/cons, risks, VfM, confidence, delivery/returns notes (OpenAI or heuristic). */
   qiCommerce?: ProductCommerceAI;
 };
