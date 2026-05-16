@@ -12,6 +12,9 @@ import {
 } from "@/lib/intelligence/productIdentity";
 import { buildFamilyPriceMap } from "@/lib/intelligence/marketPriceMap";
 import { buildFamilyMarketConsensus } from "@/lib/intelligence/marketConsensus";
+import { buildCrossMarketConsensusLine } from "@/lib/intelligence/crossMarketConsensus";
+import { computeFamilyEquivalenceHints } from "@/lib/intelligence/equivalentProducts";
+import { estimateFairMarketValueRange } from "@/lib/intelligence/marketSpread";
 
 export type UnifiedMarketGroup = {
   familyId: string;
@@ -19,6 +22,12 @@ export type UnifiedMarketGroup = {
   /** Mean pairwise identity confidence inside cluster */
   groupConfidence: number;
   duplicateSpamPenalty: number;
+};
+
+export type UnifiedCardOfferRef = {
+  link: string;
+  store: string;
+  price: number;
 };
 
 export type UnifiedCardInsight = {
@@ -33,6 +42,13 @@ export type UnifiedCardInsight = {
   isBestTrustedInFamily: boolean;
   isLowestRiskInFamily: boolean;
   familyConsensusHeadline: string;
+  /** v2 — fused analyst read across identity + spread + noise. */
+  crossMarketHeadline: string;
+  sameItemCheaper: UnifiedCardOfferRef | null;
+  betterValueAlternative: UnifiedCardOfferRef | null;
+  premiumUpgrade: UnifiedCardOfferRef | null;
+  overpricedVsFair: boolean;
+  fairMarketRangeLabel: string;
 };
 
 function find(parent: number[], i: number): number {
@@ -145,6 +161,15 @@ export function buildUnifiedMarketGroup(products: QuantProduct[]): {
     const stores = new Set(members.map((p) => p.store.toLowerCase().trim()));
     const priceMap = buildFamilyPriceMap(members);
     const consensus = buildFamilyMarketConsensus(members, priceMap);
+    const fair = estimateFairMarketValueRange(members);
+    const crossMarketHeadline = buildCrossMarketConsensusLine({
+      spreadPct: priceMap.spreadPct,
+      medianPrice: priceMap.medianPrice,
+      groupConfidence01: g.groupConfidence,
+      duplicateSpamPenalty: g.duplicateSpamPenalty,
+      listingCount: members.length,
+      storeCount: stores.size,
+    });
     const ct = priceMap.cheapestTrusted;
     const bestPrice = ct?.price ?? priceMap.minPrice;
     const bestStore = ct?.store ?? "";
@@ -153,6 +178,7 @@ export function buildUnifiedMarketGroup(products: QuantProduct[]): {
     for (const p of members) {
       const isBestTrusted = ct ? p.link === ct.link : false;
       const lowestRisk = consensus.lowestRiskLink === p.link;
+      const hints = computeFamilyEquivalenceHints(p, members, priceMap, consensus, fair);
       byLink.set(p.link, {
         familyId: g.familyId,
         storeCount: stores.size,
@@ -165,6 +191,12 @@ export function buildUnifiedMarketGroup(products: QuantProduct[]): {
         isBestTrustedInFamily: isBestTrusted,
         isLowestRiskInFamily: lowestRisk,
         familyConsensusHeadline: consensus.headline,
+        crossMarketHeadline,
+        sameItemCheaper: hints.sameItemCheaper,
+        betterValueAlternative: hints.betterValueAlternative,
+        premiumUpgrade: hints.premiumUpgrade,
+        overpricedVsFair: hints.overpricedVsFair,
+        fairMarketRangeLabel: hints.fairMarketRangeLabel,
       });
     }
   }

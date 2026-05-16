@@ -41,7 +41,7 @@ import {
   getStoreTrustScore,
 } from "@/lib/shoppingScore";
 import type { MarketAwarenessTray } from "@/lib/intelligence/marketAwareness";
-import type { UnifiedCardInsight } from "@/lib/intelligence/unifiedMarketMatching";
+import type { UnifiedCardInsight, UnifiedCardOfferRef } from "@/lib/intelligence/unifiedMarketMatching";
 import { humanSearchIntentFingerprint, type HumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
 import type { MarketMemoryState } from "@/lib/intelligence/marketMemory";
 import { marketMemoryFingerprint } from "@/lib/intelligence/marketMemory";
@@ -521,6 +521,35 @@ function ProductResultCard({
                     <span className="text-emerald-300/85"> · this listing</span>
                   ) : null}
                 </p>
+                <p className="mt-0.5 text-slate-500/80 [overflow-wrap:anywhere]">
+                  {clip(unifiedMarket.crossMarketHeadline, 140)}
+                </p>
+                <p className="mt-0.5 text-slate-500/75 [overflow-wrap:anywhere]">
+                  {clip(unifiedMarket.fairMarketRangeLabel, 120)}
+                </p>
+                {unifiedMarket.sameItemCheaper && !unifiedMarket.isBestTrustedInFamily ? (
+                  <p className="mt-0.5 text-amber-200/88 [overflow-wrap:anywhere]">
+                    Same item found cheaper · {unifiedMarket.sameItemCheaper.store}{" "}
+                    {formatListingPrice(unifiedMarket.sameItemCheaper.price, sym)}
+                  </p>
+                ) : null}
+                {unifiedMarket.betterValueAlternative &&
+                unifiedMarket.betterValueAlternative.link !== p.link &&
+                unifiedMarket.betterValueAlternative.link !== unifiedMarket.sameItemCheaper?.link ? (
+                  <p className="mt-0.5 text-cyan-200/85 [overflow-wrap:anywhere]">
+                    Better value alternative · {unifiedMarket.betterValueAlternative.store}{" "}
+                    {formatListingPrice(unifiedMarket.betterValueAlternative.price, sym)}
+                  </p>
+                ) : null}
+                {unifiedMarket.premiumUpgrade && unifiedMarket.premiumUpgrade.link !== p.link ? (
+                  <p className="mt-0.5 text-violet-200/85 [overflow-wrap:anywhere]">
+                    Premium upgrade · {unifiedMarket.premiumUpgrade.store}{" "}
+                    {formatListingPrice(unifiedMarket.premiumUpgrade.price, sym)}
+                  </p>
+                ) : null}
+                {unifiedMarket.overpricedVsFair ? (
+                  <p className="mt-0.5 text-rose-200/85">Overpriced vs fair band for this match.</p>
+                ) : null}
               </div>
             ) : null}
 
@@ -984,6 +1013,12 @@ function ProductResultCard({
   );
 }
 
+function offerRefEqual(a: UnifiedCardOfferRef | null | undefined, b: UnifiedCardOfferRef | null | undefined): boolean {
+  if (a == null && b == null) return true;
+  if (a == null || b == null) return false;
+  return a.link === b.link && a.price === b.price && a.store === b.store;
+}
+
 function unifiedMarketEqual(
   a: Props["unifiedMarket"],
   b: Props["unifiedMarket"]
@@ -998,9 +1033,16 @@ function unifiedMarketEqual(
     a.bestTrustedStore === b.bestTrustedStore &&
     a.bestTrustedLink === b.bestTrustedLink &&
     a.marketSpreadPct === b.marketSpreadPct &&
+    a.isSameProductFamily === b.isSameProductFamily &&
     a.isBestTrustedInFamily === b.isBestTrustedInFamily &&
     a.isLowestRiskInFamily === b.isLowestRiskInFamily &&
-    a.familyConsensusHeadline === b.familyConsensusHeadline
+    a.familyConsensusHeadline === b.familyConsensusHeadline &&
+    a.crossMarketHeadline === b.crossMarketHeadline &&
+    offerRefEqual(a.sameItemCheaper, b.sameItemCheaper) &&
+    offerRefEqual(a.betterValueAlternative, b.betterValueAlternative) &&
+    offerRefEqual(a.premiumUpgrade, b.premiumUpgrade) &&
+    a.overpricedVsFair === b.overpricedVsFair &&
+    a.fairMarketRangeLabel === b.fairMarketRangeLabel
   );
 }
 
