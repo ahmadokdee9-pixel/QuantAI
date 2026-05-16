@@ -9,6 +9,7 @@ import type { MarketAwarenessTray } from "./marketAwareness";
 import type { ProductBuyDecision } from "./productBuyDecision";
 import type { BuyStance } from "./productBuyDecision";
 import type { QuantProduct } from "@/lib/shoppingScore";
+import { analystQueryStrategistSuffix, type HumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
 import {
   buildConsensusDecision,
   type ConsensusFinalAction,
@@ -142,8 +143,9 @@ export function resolveFinalCommerceDecision(args: {
   rank: number;
   qiRounded: number;
   market: MarketAwarenessTray;
+  humanSearchIntent?: HumanSearchIntent | null;
 }): FinalCommerceDecision {
-  const { product: p, list, dealIntel: deal, buyDecision: buy, rank, qiRounded: qi, market } = args;
+  const { product: p, list, dealIntel: deal, buyDecision: buy, rank, qiRounded: qi, market, humanSearchIntent } = args;
 
   const consensus = buildConsensusDecision({
     product: p,
@@ -170,6 +172,8 @@ export function resolveFinalCommerceDecision(args: {
     : null;
 
   const buySurface = buildBuySurface(consensus.finalAction, mappedAction, buy, p.qiPredictive);
+  const strategist = analystQueryStrategistSuffix(humanSearchIntent ?? null);
+  const analystLine = `${consensus.analystLine}${strategist}`.slice(0, 260);
 
   return {
     finalAction: mappedAction,
@@ -180,7 +184,7 @@ export function resolveFinalCommerceDecision(args: {
     blockedChips: [],
     decisionReason: consensus.consensusReason,
     buySurface,
-    analystLine: consensus.analystLine,
+    analystLine,
     consensus,
   };
 }

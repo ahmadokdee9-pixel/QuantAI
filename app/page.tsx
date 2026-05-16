@@ -27,6 +27,7 @@ import type { SearchEntitlementsDTO } from "@/lib/subscription/entitlements";
 import type { QuantPlanTier } from "@/lib/subscription/plans";
 import type { DealClusterDTO } from "@/lib/deals/types";
 import { buildDealIntelByLink } from "@/lib/intelligence/dealIntelligenceEngine";
+import { extractHumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
 import { parseCommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
 import { sortByVerifiedDealRank } from "@/lib/intelligence/discountRank";
 import {
@@ -202,7 +203,8 @@ export default function Home() {
 
   const dealIntelByLink = useMemo(() => {
     const intents = parseCommerceSearchIntents(query);
-    return buildDealIntelByLink(sortedProductsMemo, intents);
+    const human = query.trim() ? extractHumanSearchIntent(query) : null;
+    return buildDealIntelByLink(sortedProductsMemo, intents, human ?? undefined);
   }, [sortedProductsMemo, query]);
 
   const searchIntelHeadline = searchIntelligence?.finalHeadline;

@@ -7,6 +7,12 @@ import { getFinalComposite, getStoreTrustScore, ratingValue } from "@/lib/shoppi
 import { getMarketplaceSellerRiskTier } from "@/lib/retailTrust";
 import { buildLiveCommerceSignals, type LiveCommerceSignals } from "@/lib/intelligence/liveCommerceSignals";
 import type { CommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
+import type { HumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
+import {
+  adviseMarketTiming,
+  appendWhyDealHumanTail,
+  mergeTimingSummaryWithAdvisor,
+} from "@/lib/intelligence/marketTimingAdvisor";
 import {
   dealConfidenceCategoryNudge,
   getCategoryPricingEconomics,
@@ -712,7 +718,8 @@ function timingFromSignals(
 export function buildProductDealIntelligence(
   product: QuantProduct,
   list: QuantProduct[],
-  intents?: CommerceSearchIntents
+  intents?: CommerceSearchIntents,
+  humanSearchIntent?: HumanSearchIntent | null
 ): ProductDealIntelligence {
   const prices = list.map((x) => x.price).filter((x) => x > 0);
   const fair = prices.length ? median(prices) : product.price > 0 ? product.price : 0;
@@ -838,8 +845,6 @@ export function buildProductDealIntelligence(
       "Trust-first query: seller reputation and marketplace risk weighed heavier than deal theater.",
     ];
   }
-  const whyDealGoodOrRisky = whyLine(product, base, fake, fair, trust, comp);
-
   const goodTimeToBuy =
     (strongValueTerritory &&
       fake === "low" &&
@@ -907,6 +912,20 @@ export function buildProductDealIntelligence(
   });
 
   const timing = timingFromSignals(list, base, fake, goodTimeToBuy, waitForBetterPricing, strongValueTerritory);
+  let timingSummary = timing.summary;
+  let whyDealGoodOrRisky = whyLine(product, base, fake, fair, trust, comp);
+  if (humanSearchIntent) {
+    const advice = adviseMarketTiming({
+      timingCategory: timing.category,
+      waitForBetterPricing,
+      goodTimeToBuy,
+      suspiciousDiscountRisk,
+      trust,
+      human: humanSearchIntent,
+    });
+    timingSummary = mergeTimingSummaryWithAdvisor(timing.summary, advice);
+    whyDealGoodOrRisky = appendWhyDealHumanTail(whyDealGoodOrRisky, humanSearchIntent);
+  }
 
   const worthBuyingNow = worthBuyingNowSignal(aiDealVerdict, goodTimeToBuy, waitForBetterPricing, {
     trust,
@@ -979,7 +998,7 @@ export function buildProductDealIntelligence(
     goodTimeToBuy,
     waitForBetterPricing,
     timingCategory: timing.category,
-    timingSummary: timing.summary,
+    timingSummary,
     authenticityLines,
     whyDealGoodOrRisky,
     inflatedAnchorSuspected: inflated,
@@ -994,11 +1013,12 @@ export function buildProductDealIntelligence(
 /** Memo-friendly batch for a tray or cluster listing set. */
 export function buildDealIntelByLink(
   list: QuantProduct[],
-  intents?: CommerceSearchIntents
+  intents?: CommerceSearchIntents,
+  humanSearchIntent?: HumanSearchIntent | null
 ): Map<string, ProductDealIntelligence> {
   const m = new Map<string, ProductDealIntelligence>();
   for (const p of list) {
-    m.set(p.link, buildProductDealIntelligence(p, list, intents));
+    m.set(p.link, buildProductDealIntelligence(p, list, intents, humanSearchIntent));
   }
   if (list.length < 2) return m;
 

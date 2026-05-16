@@ -1,13 +1,18 @@
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getFinalComposite, getStoreTrustScore } from "@/lib/shoppingScore";
 import { buildDealIntelByLink } from "@/lib/intelligence/dealIntelligenceEngine";
+import { extractHumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
 import { parseCommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
 import { queryListingRelevance01, reviewQuality01 } from "@/lib/intelligence/queryRelevance";
 
 /** Prioritize trusted real discounts, then value/trust — discount never wins alone (tray-only). */
 export function sortByVerifiedDealRank(list: QuantProduct[], query?: string): QuantProduct[] {
   if (list.length <= 1) return [...list];
-  const intel = buildDealIntelByLink(list, query?.trim() ? parseCommerceSearchIntents(query) : undefined);
+  const intel = buildDealIntelByLink(
+    list,
+    query?.trim() ? parseCommerceSearchIntents(query) : undefined,
+    query?.trim() ? extractHumanSearchIntent(query) : undefined
+  );
   const q = query?.trim() ?? "";
   const maxReviews = Math.max(0, ...list.map((p) => p.reviewsCount ?? 0));
   return [...list].sort((a, b) => {

@@ -6,6 +6,8 @@ import {
   ratingValue,
 } from "@/lib/shoppingScore";
 import { queryListingRelevance01 } from "@/lib/intelligence/queryRelevance";
+import { adaptiveListingScoreDelta } from "@/lib/intelligence/adaptiveRanking";
+import { extractHumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
 import {
   intentCompositeLift,
   parseCommerceSearchIntents,
@@ -242,6 +244,7 @@ function intentCompositeDelta(
 export function sortByCompositeRankEnhanced(list: QuantProduct[], query: string): QuantProduct[] {
   if (list.length === 0) return list;
   const intents = parseCommerceSearchIntents(query);
+  const humanSearch = query.trim() ? extractHumanSearchIntent(query) : null;
   const intent = purchaseIntentFromQuery(query);
   const prices = list.map((x) => x.price).filter((n) => n > 0).sort((a, b) => a - b);
   const medianPrice = prices[Math.floor(prices.length / 2)] ?? 0;
@@ -298,6 +301,9 @@ export function sortByCompositeRankEnhanced(list: QuantProduct[], query: string)
     c += relationshipGraphRankAdjustment(query, p, list, intents);
     c += (listingTextQuality01(p.title) - 0.55) * 5.8;
     c += (queryListingRelevance01(query, p) - 0.5) * 10;
+    if (humanSearch) {
+      c += adaptiveListingScoreDelta(p, list, intents, humanSearch);
+    }
     const mp = getMarketplaceSellerRiskTier(p.store, p.title);
     if (mp === "high") c -= 3.4;
     else if (mp === "medium") c -= 1.05;

@@ -42,6 +42,7 @@ import {
 } from "@/lib/shoppingScore";
 import type { MarketAwarenessTray } from "@/lib/intelligence/marketAwareness";
 import type { UnifiedCardInsight } from "@/lib/intelligence/unifiedMarketMatching";
+import { humanSearchIntentFingerprint, type HumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
 import { resolveFinalCommerceDecision } from "@/lib/intelligence/finalCommerceDecision";
 import {
   buildProductBuyDecision,
@@ -245,6 +246,8 @@ type Props = {
   imagePriority?: "high" | "low";
   /** Unified market matching — same product across stores (optional). */
   unifiedMarket?: UnifiedCardInsight | null;
+  /** Adaptive human shopping intent for this tray (optional). */
+  humanSearchIntent?: HumanSearchIntent | null;
 };
 
 const btnRow =
@@ -313,6 +316,7 @@ function ProductResultCard({
   lowPower = false,
   imagePriority = "low",
   unifiedMarket = null,
+  humanSearchIntent = null,
 }: Props) {
   const reduceMotion = useReducedMotion();
   const lite = reduceMotion || lowPower;
@@ -356,10 +360,13 @@ function ProductResultCard({
   const ringC = 2 * Math.PI * ringR;
   const ringDash = ringC * (1 - scoreNorm / 100);
 
-  const buyDecision = useMemo(() => buildProductBuyDecision(p, list, rank), [p, list, rank]);
+  const buyDecision = useMemo(
+    () => buildProductBuyDecision(p, list, rank, { humanSearchIntent }),
+    [p, list, rank, humanSearchIntent]
+  );
   const deal = useMemo(
-    () => dealIntelProp ?? buildProductDealIntelligence(p, list),
-    [dealIntelProp, p, list]
+    () => dealIntelProp ?? buildProductDealIntelligence(p, list, undefined, humanSearchIntent),
+    [dealIntelProp, p, list, humanSearchIntent]
   );
   const resolved = useMemo(
     () =>
@@ -371,8 +378,9 @@ function ProductResultCard({
         rank,
         qiRounded: Math.round(scoreNorm),
         market: marketTray,
+        humanSearchIntent,
       }),
-    [p, list, deal, buyDecision, rank, scoreNorm, marketTray]
+    [p, list, deal, buyDecision, rank, scoreNorm, marketTray, humanSearchIntent]
   );
   const mergedBuyDecision = useMemo(
     (): ProductBuyDecision => ({
@@ -1008,6 +1016,8 @@ function productResultCardPropsEqual(a: Props, b: Props): boolean {
   if (a.rank !== b.rank || a.index !== b.index) return false;
   if (a.lowPower !== b.lowPower || a.imagePriority !== b.imagePriority) return false;
   if (!unifiedMarketEqual(a.unifiedMarket, b.unifiedMarket)) return false;
+  if (humanSearchIntentFingerprint(a.humanSearchIntent) !== humanSearchIntentFingerprint(b.humanSearchIntent))
+    return false;
   if (!marketTrayEqual(a.marketTray, b.marketTray)) return false;
   const pk = (x: QuantProduct) =>
     `${x.price}|${x.title}|${x.store}|${x.rating}|${x.image}|${x.displayPrice}|${x.oldPrice ?? ""}|${x.priceTrend}|${x.qiComposite ?? ""}|${x.availability ?? ""}|${x.shipping ?? ""}|${x.qiRealityTrust?.realityScore ?? ""}|${x.qiRealityTrust == null ? "" : x.qiRealityTrust.weakRetailer ? "1" : "0"}|${x.offerOutboundUrl ?? ""}|${x.outboundRouteKind ?? ""}|${x.qiRegretRiskLevel ?? ""}|${x.qiProductUnderstanding?.productConfidence ?? ""}|${x.qiProductUnderstanding?.titleQuality ?? ""}|${x.qiProductUnderstanding?.matchQuality ?? ""}`;

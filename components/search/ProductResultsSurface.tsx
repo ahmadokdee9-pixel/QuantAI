@@ -29,6 +29,7 @@ import { buildCompareExport, buildTraySummary, copyText } from "@/lib/share/inte
 import { currencySymbolFromListing, formatListingPrice } from "@/lib/commerce/cues";
 import { sortByCompositeRankEnhanced } from "@/lib/intelligence/searchRankEnhance";
 import { parseCommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
+import { extractHumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
 import { computeMarketAwarenessForTray } from "@/lib/intelligence/marketAwareness";
 import { getFinalComposite } from "@/lib/shoppingScore";
 import type { QuantProduct } from "@/lib/shoppingScore";
@@ -155,11 +156,16 @@ export default function ProductResultsSurface({
     return m;
   }, [compositeRanked]);
 
+  const humanSearchIntent = useMemo(
+    () => (searchQuery.trim() ? extractHumanSearchIntent(searchQuery) : null),
+    [searchQuery]
+  );
+
   const dealIntelResolved = useMemo(() => {
     if (dealIntelByLinkProp) return dealIntelByLinkProp;
     const intents = searchQuery.trim() ? parseCommerceSearchIntents(searchQuery) : undefined;
-    return buildDealIntelByLink(sortedProducts, intents);
-  }, [dealIntelByLinkProp, sortedProducts, searchQuery]);
+    return buildDealIntelByLink(sortedProducts, intents, humanSearchIntent ?? undefined);
+  }, [dealIntelByLinkProp, sortedProducts, searchQuery, humanSearchIntent]);
   const marketTray = useMemo(
     () => computeMarketAwarenessForTray(searchQuery?.trim() ?? "", sortedProducts),
     [sortedProducts, searchQuery]
@@ -771,6 +777,7 @@ export default function ProductResultsSurface({
                   lowPower={mobilePerf}
                   imagePriority={index < 9 ? "high" : "low"}
                   unifiedMarket={unifiedMarketByLink.get(p.link) ?? null}
+                  humanSearchIntent={humanSearchIntent}
                 />
               </div>
             );
@@ -809,6 +816,7 @@ export default function ProductResultsSurface({
                     lowPower={false}
                     imagePriority={index < 9 ? "high" : "low"}
                     unifiedMarket={unifiedMarketByLink.get(p.link) ?? null}
+                    humanSearchIntent={humanSearchIntent}
                   />
                 </div>
               );

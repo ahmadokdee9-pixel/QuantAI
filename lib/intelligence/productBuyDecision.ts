@@ -1,5 +1,6 @@
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { listingSignalsRefurbished } from "@/lib/commerce/listingQuality";
+import type { HumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
 import { getFinalComposite, getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
 
 export type BuyStance = "buy" | "wait" | "compare" | "avoid";
@@ -22,8 +23,18 @@ function median(nums: number[]): number {
   return s.length % 2 ? s[m]! : (s[m - 1]! + s[m]!) / 2;
 }
 
+export type ProductBuyDecisionOptions = {
+  humanSearchIntent?: HumanSearchIntent | null;
+};
+
 /** Heuristic Buy / Wait / Compare / Avoid — uses only tray-visible signals (no new APIs). */
-export function buildProductBuyDecision(product: QuantProduct, list: QuantProduct[], rank: number): ProductBuyDecision {
+export function buildProductBuyDecision(
+  product: QuantProduct,
+  list: QuantProduct[],
+  rank: number,
+  options?: ProductBuyDecisionOptions
+): ProductBuyDecision {
+  const human = options?.humanSearchIntent;
   const qi = getFinalComposite(product, list);
   const trust = getStoreTrustScore(product.store);
   const stars = ratingValue(product.rating);
@@ -116,15 +127,35 @@ export function buildProductBuyDecision(product: QuantProduct, list: QuantProduc
         ? `#${rank + 1} in the lead pack—often separated by delivery or a few points of trust.`
         : `#${rank + 1} of ${list.length}—Compare surfaces the gap to #1.`;
 
+  let headlineOut = headlineVerdict;
+  let stanceDetailOut = stanceDetail;
+  let buyerFitOut = buyerFit;
+  if (human) {
+    if (human.usageContext.includes("gaming") && human.usageContext.includes("student")) {
+      buyerFitOut =
+        `${buyerFit} Student + gaming: sanity-check thermals, RAM, and warranty—not just GPU branding.`.slice(0, 240);
+    } else if (human.luxuryPreference >= 0.55) {
+      headlineOut = `${headlineVerdict} Premium intent in your search—favor proof over theater.`.slice(0, 220);
+    } else if (human.budgetIntent >= 0.65 && human.commerce.riskAvoidance) {
+      stanceDetailOut =
+        `${stanceDetail} Trust-first language detected—seller clarity beats chasing the absolute floor.`.slice(0, 280);
+    } else if (human.hiddenBuyingGoals.includes("timing_vs_discount")) {
+      stanceDetailOut =
+        `${stanceDetail} You signaled timing—this tray is a snapshot, not a price calendar.`.slice(0, 280);
+    } else if (human.aestheticDirection === "minimal") {
+      buyerFitOut = `${buyerFit} Minimalist intent: clutter-free specs and return simplicity matter here.`.slice(0, 240);
+    }
+  }
+
   return {
     stance,
     stanceLabel,
-    stanceDetail,
+    stanceDetail: stanceDetailOut,
     pros: pros.slice(0, 3),
     cons: cons.slice(0, 3),
     rankWhy,
-    headlineVerdict,
-    buyerFit,
+    headlineVerdict: headlineOut,
+    buyerFit: buyerFitOut,
   };
 }
 
