@@ -21,6 +21,7 @@ import { buildProductUnderstanding, productUnderstandingRankNudge } from "./prod
 import { assessUniversalListingIdentity } from "./universalListingIdentity";
 import { computeMerchantConfidence01, merchantConfidenceRankNudge } from "./merchantIntelligence";
 import { buildQiCanonicalIdentity } from "./canonicalCommerceIdentity";
+import { buildGlobalCommerceFoundationForTray } from "./globalCommerceFoundation";
 
 export function enrichProductsWithIntelligence(
   products: QuantProduct[],
@@ -153,8 +154,14 @@ export function enrichProductsWithIntelligence(
     return enriched;
   });
 
-  scored.sort((a, b) => (b.qiComposite ?? 0) - (a.qiComposite ?? 0));
-  const curated = applyEliteFirstWindowCuration(scored, 12);
+  const globalCommerceByLink = buildGlobalCommerceFoundationForTray(scored, searchQuery);
+  const withGlobalCommerce = scored.map((p) => ({
+    ...p,
+    qiGlobalCommerce: globalCommerceByLink.get(p.link),
+  }));
+
+  withGlobalCommerce.sort((a, b) => (b.qiComposite ?? 0) - (a.qiComposite ?? 0));
+  const curated = applyEliteFirstWindowCuration(withGlobalCommerce, 12);
   return curated.map((p, i) => ({
     ...p,
     qiRank: i,

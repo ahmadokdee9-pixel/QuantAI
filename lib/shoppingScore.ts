@@ -8,6 +8,7 @@ import type { RegretRiskLevel } from "@/lib/intelligence/regretRisk";
 import type { ProductUnderstanding } from "@/lib/intelligence/productUnderstanding";
 import type { QiListingIdentity } from "@/lib/intelligence/listingIdentityTypes";
 import type { QiCanonicalIdentity } from "@/lib/intelligence/canonicalCommerceIdentity";
+import type { QiGlobalCommerceIntelligence } from "@/lib/intelligence/globalCommerceFoundation";
 import {
   getStoreTrustScore,
   TRUSTED_SUBSTRINGS,
@@ -69,6 +70,8 @@ export type QuantProduct = {
   qiMerchantConfidence01?: number;
   /** Canonical product lineage + confidence triple (commerce OS). */
   qiCanonicalIdentity?: QiCanonicalIdentity;
+  /** Global commerce foundation: query, identity, merchant, market, and decision planes. */
+  qiGlobalCommerce?: QiGlobalCommerceIntelligence;
 };
 
 export { getStoreTrustScore };

@@ -15,8 +15,10 @@ import {
   buildCommerceTimingSupportLine,
   buildNeutralCommerceChips,
   resolveCommerceBrainSurface,
+  type CommerceBrainSurface,
   type CommerceBrainFinalCode,
 } from "./commerceDecisionBrain";
+import type { GlobalCommerceAction } from "./globalCommerceFoundation";
 
 export type FinalCommerceAction = "buy_now" | "wait" | "compare" | "avoid";
 
@@ -63,6 +65,38 @@ function mapCommerceCodeToLegacyVerdict(code: CommerceBrainFinalCode): QuantAIDe
   }
 }
 
+function mapCommerceCodeToFinalAction(code: CommerceBrainFinalCode): FinalCommerceAction {
+  if (code === "AVOID") return "avoid";
+  if (code === "WAIT") return "wait";
+  if (code === "COMPARE_ALTERNATIVES") return "compare";
+  return "buy_now";
+}
+
+function reconcileWithGlobalFoundation(
+  brain: CommerceBrainSurface,
+  foundationAction: GlobalCommerceAction | undefined,
+  foundationLine: string | undefined
+): CommerceBrainSurface {
+  if (!foundationAction) return brain;
+  const detail = (foundationLine || brain.stanceDetail).slice(0, 280);
+  if (foundationAction === "AVOID" && brain.code !== "AVOID") {
+    return { code: "AVOID", chipLabel: "AVOID", stance: "avoid", stanceLabel: "Avoid", stanceDetail: detail };
+  }
+  if (foundationAction === "WAIT" && (brain.code === "BUY_READY" || brain.code === "STRONG_BUY" || brain.code === "SAFE_BUY")) {
+    return { code: "WAIT", chipLabel: "WAIT", stance: "wait", stanceLabel: "Wait", stanceDetail: detail };
+  }
+  if (foundationAction === "COMPARE" && (brain.code === "BUY_READY" || brain.code === "STRONG_BUY")) {
+    return {
+      code: "COMPARE_ALTERNATIVES",
+      chipLabel: "COMPARE ALTERNATIVES",
+      stance: "compare",
+      stanceLabel: "Compare alternatives",
+      stanceDetail: detail,
+    };
+  }
+  return brain;
+}
+
 export function resolveFinalCommerceDecision(args: {
   product: QuantProduct;
   list: QuantProduct[];
@@ -91,7 +125,7 @@ export function resolveFinalCommerceDecision(args: {
   const trust = getStoreTrustScore(p.store);
   const weak = p.qiRealityTrust?.weakRetailer ?? trust < 56;
 
-  const brain = resolveCommerceBrainSurface({
+  const brainBase = resolveCommerceBrainSurface({
     finalAction: consensus.finalAction,
     qiRounded: qi,
     trustScore: trust,
@@ -100,6 +134,11 @@ export function resolveFinalCommerceDecision(args: {
     buyStanceDetail: buy.stanceDetail,
     pred: p.qiPredictive,
   });
+  const brain = reconcileWithGlobalFoundation(
+    brainBase,
+    p.qiGlobalCommerce?.decision.action,
+    p.qiGlobalCommerce?.decision.analystLine
+  );
 
   const primaryVerdict = mapCommerceCodeToLegacyVerdict(brain.code);
   const secondaryChips = buildNeutralCommerceChips(consensus.badgeSet);
@@ -112,6 +151,9 @@ export function resolveFinalCommerceDecision(args: {
 
   const strategist = analystQueryStrategistSuffix(humanSearchIntent ?? null);
   let analystLine = `${consensus.analystLine}${strategist}`.trim();
+  if (p.qiGlobalCommerce?.decision.action === "AVOID" && brain.code === "AVOID") {
+    analystLine = p.qiGlobalCommerce.decision.analystLine;
+  }
   if (supportingTimingLine) {
     analystLine = `${analystLine} ${supportingTimingLine}`.slice(0, 280);
   } else {
@@ -119,7 +161,7 @@ export function resolveFinalCommerceDecision(args: {
   }
 
   return {
-    finalAction: mappedAction,
+    finalAction: brain.code === brainBase.code ? mappedAction : mapCommerceCodeToFinalAction(brain.code),
     primaryVerdict,
     commerceBrainCode: brain.code,
     commerceBrainChipLabel: brain.chipLabel,
