@@ -39,6 +39,7 @@ import ResultsToolbar from "./ResultsToolbar";
 import LiveIntelligenceLayer from "@/components/live/LiveIntelligenceLayer";
 import { useMobilePerf } from "@/lib/hooks/useMobilePerf";
 import { relatedTrayQueries } from "@/lib/search/relatedTrayQueries";
+import { buildUnifiedMarketGroup } from "@/lib/intelligence/unifiedMarketMatching";
 
 const IntelligenceEducationStrip = dynamic(() => import("./IntelligenceEducationStrip"), {
   loading: () => (
@@ -164,6 +165,11 @@ export default function ProductResultsSurface({
     [sortedProducts, searchQuery]
   );
   const trayDealHighlights = useMemo(() => buildTrayDealHighlights(sortedProducts), [sortedProducts]);
+
+  const unifiedMarketByLink = useMemo(
+    () => buildUnifiedMarketGroup(sortedProducts).byLink,
+    [sortedProducts]
+  );
 
   const aiTopPicks = useMemo(() => compositeRanked.slice(0, 3), [compositeRanked]);
   const compactTray = sortedProducts.length > 0 && sortedProducts.length <= 4;
@@ -764,6 +770,7 @@ export default function ProductResultsSurface({
                   onOpenIntelligence={setDetailProduct}
                   lowPower={mobilePerf}
                   imagePriority={index < 9 ? "high" : "low"}
+                  unifiedMarket={unifiedMarketByLink.get(p.link) ?? null}
                 />
               </div>
             );
@@ -801,6 +808,7 @@ export default function ProductResultsSurface({
                     onOpenIntelligence={setDetailProduct}
                     lowPower={false}
                     imagePriority={index < 9 ? "high" : "low"}
+                    unifiedMarket={unifiedMarketByLink.get(p.link) ?? null}
                   />
                 </div>
               );

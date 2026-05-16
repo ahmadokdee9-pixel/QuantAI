@@ -41,6 +41,7 @@ import {
   getStoreTrustScore,
 } from "@/lib/shoppingScore";
 import type { MarketAwarenessTray } from "@/lib/intelligence/marketAwareness";
+import type { UnifiedCardInsight } from "@/lib/intelligence/unifiedMarketMatching";
 import { resolveFinalCommerceDecision } from "@/lib/intelligence/finalCommerceDecision";
 import {
   buildProductBuyDecision,
@@ -242,6 +243,8 @@ type Props = {
   lowPower?: boolean;
   /** Above-the-fold images request high fetch priority. */
   imagePriority?: "high" | "low";
+  /** Unified market matching — same product across stores (optional). */
+  unifiedMarket?: UnifiedCardInsight | null;
 };
 
 const btnRow =
@@ -309,6 +312,7 @@ function ProductResultCard({
   marketTray,
   lowPower = false,
   imagePriority = "low",
+  unifiedMarket = null,
 }: Props) {
   const reduceMotion = useReducedMotion();
   const lite = reduceMotion || lowPower;
@@ -490,6 +494,22 @@ function ProductResultCard({
             <h3 className="text-[15px] font-semibold leading-[1.45] tracking-tight text-white/[0.97] line-clamp-2 sm:text-[16px]">
               {p.title}
             </h3>
+            {unifiedMarket && unifiedMarket.storeCount >= 2 ? (
+              <div className="mt-2 rounded-lg border border-white/[0.05] bg-white/[0.02] px-2 py-1.5 text-[9px] leading-snug text-slate-400/95">
+                <p>
+                  <span className="font-semibold text-slate-300/90">Same product family</span>
+                  {" · "}
+                  {unifiedMarket.storeCount} stores found · {unifiedMarket.marketSpreadPct}% market spread
+                </p>
+                <p className="mt-0.5 text-slate-500/90 [overflow-wrap:anywhere]">
+                  Best trusted price {formatListingPrice(unifiedMarket.bestTrustedPrice, sym)}
+                  {unifiedMarket.bestTrustedStore ? ` · ${unifiedMarket.bestTrustedStore}` : ""}
+                  {unifiedMarket.isBestTrustedInFamily ? (
+                    <span className="text-emerald-300/85"> · this listing</span>
+                  ) : null}
+                </p>
+              </div>
+            ) : null}
 
             <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] leading-snug text-slate-500/90">
               <span className="inline-flex min-w-0 max-w-full items-center gap-1.5 font-medium text-slate-400/95">
@@ -951,6 +971,26 @@ function ProductResultCard({
   );
 }
 
+function unifiedMarketEqual(
+  a: Props["unifiedMarket"],
+  b: Props["unifiedMarket"]
+): boolean {
+  if (a == null && b == null) return true;
+  if (a == null || b == null) return false;
+  return (
+    a.familyId === b.familyId &&
+    a.storeCount === b.storeCount &&
+    a.listingCount === b.listingCount &&
+    a.bestTrustedPrice === b.bestTrustedPrice &&
+    a.bestTrustedStore === b.bestTrustedStore &&
+    a.bestTrustedLink === b.bestTrustedLink &&
+    a.marketSpreadPct === b.marketSpreadPct &&
+    a.isBestTrustedInFamily === b.isBestTrustedInFamily &&
+    a.isLowestRiskInFamily === b.isLowestRiskInFamily &&
+    a.familyConsensusHeadline === b.familyConsensusHeadline
+  );
+}
+
 function marketTrayEqual(a: Props["marketTray"], b: Props["marketTray"]): boolean {
   return (
     a.categoryDemandTrend === b.categoryDemandTrend &&
@@ -967,6 +1007,7 @@ function productResultCardPropsEqual(a: Props, b: Props): boolean {
   if (a.product.link !== b.product.link) return false;
   if (a.rank !== b.rank || a.index !== b.index) return false;
   if (a.lowPower !== b.lowPower || a.imagePriority !== b.imagePriority) return false;
+  if (!unifiedMarketEqual(a.unifiedMarket, b.unifiedMarket)) return false;
   if (!marketTrayEqual(a.marketTray, b.marketTray)) return false;
   const pk = (x: QuantProduct) =>
     `${x.price}|${x.title}|${x.store}|${x.rating}|${x.image}|${x.displayPrice}|${x.oldPrice ?? ""}|${x.priceTrend}|${x.qiComposite ?? ""}|${x.availability ?? ""}|${x.shipping ?? ""}|${x.qiRealityTrust?.realityScore ?? ""}|${x.qiRealityTrust == null ? "" : x.qiRealityTrust.weakRetailer ? "1" : "0"}|${x.offerOutboundUrl ?? ""}|${x.outboundRouteKind ?? ""}|${x.qiRegretRiskLevel ?? ""}|${x.qiProductUnderstanding?.productConfidence ?? ""}|${x.qiProductUnderstanding?.titleQuality ?? ""}|${x.qiProductUnderstanding?.matchQuality ?? ""}`;
