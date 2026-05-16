@@ -13,10 +13,16 @@ import {
   parseCommerceSearchIntents,
   type CommerceSearchIntents,
 } from "@/lib/intelligence/searchIntentV2";
+import {
+  parseSemanticCommerceQuery,
+  type SemanticCommerceQueryBrain,
+} from "@/lib/intelligence/semanticQueryBrain";
 
 export type AestheticDirection = "minimal" | "premium_look" | "bold" | "neutral";
 
 export type HumanSearchIntent = {
+  /** NL / budget / brand / geo structure from the raw ask. */
+  semantic: SemanticCommerceQueryBrain;
   queryUnderstanding: QueryUnderstanding;
   commerce: CommerceSearchIntents;
   profile: HumanIntentProfile;
@@ -131,8 +137,10 @@ export function extractHumanSearchIntent(rawQuery: string): HumanSearchIntent {
     ...goalsFromInferredCategories(qu.inferredCategories),
     ...hiddenGoalsFromCommerce(commerce, envelope),
   ].filter((x, i, a) => a.indexOf(x) === i);
+  const semantic = parseSemanticCommerceQuery(base);
 
   return {
+    semantic,
     queryUnderstanding: qu,
     commerce,
     profile,
@@ -167,6 +175,11 @@ export function analystQueryStrategistSuffix(h: HumanSearchIntent | null | undef
   if (h.luxuryPreference >= 0.58) parts.push("premium taste");
   if (h.usageContext.includes("student") && h.usageContext.includes("gaming")) parts.push("student + gaming workload");
   if (h.usageContext.includes("travel") && h.commerce.portableLight) parts.push("portability priority");
+  if (h.semantic.geoFocus === "nl") parts.push("Netherlands-aware scan");
+  else if (h.semantic.geoFocus === "us") parts.push("US shelf bias");
+  if (h.semantic.brandsDetected.length && parts.length < 2) {
+    parts.push(`${h.semantic.brandsDetected.slice(0, 2).join(" + ")} anchor`);
+  }
   if (h.hiddenBuyingGoals.includes("timing_vs_discount")) parts.push("timing question in the query");
   if (parts.length === 0) return "";
   const core = parts.slice(0, 2).join(", ");
@@ -176,6 +189,7 @@ export function analystQueryStrategistSuffix(h: HumanSearchIntent | null | undef
 export function humanSearchIntentFingerprint(h: HumanSearchIntent | null | undefined): string {
   if (!h) return "";
   return [
+    h.semantic.intentSignature,
     h.budgetIntent.toFixed(2),
     h.urgencyIntent.toFixed(2),
     h.luxuryPreference.toFixed(2),

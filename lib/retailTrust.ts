@@ -60,6 +60,8 @@ export const TRUSTED_SUBSTRINGS = [
   "parfumdreams",
   "about you",
   "aboutyou",
+  "zara",
+  "h&m",
   "leen bakker",
   "dyson",
   "philips",
@@ -133,6 +135,9 @@ const TIER2 = new Set(
     "darty",
     "boulanger",
     "asos",
+    "zara",
+    "h&m",
+    "hm ",
   ].map((x) => x.toLowerCase())
 );
 
@@ -165,6 +170,7 @@ const PREFERRED_RETAIL_SUBSTRINGS = [
   "wehkamp",
   "belsimpel",
   "about you",
+  "zara",
   "philips",
   "dyson",
   "action",
@@ -196,8 +202,10 @@ const ELITE_RETAIL_SUBSTRINGS = [
   "wehkamp",
   "belsimpel",
   "about you",
+  "zara",
   "philips",
   "dyson",
+  "action",
 ] as const;
 
 /** Domains / names treated as high-variance marketplaces — down-ranked vs first-party retail. */
@@ -279,7 +287,7 @@ export function getMarketplaceSellerRiskTier(store: string, listingTitle?: strin
 /** Coarse geo signal from store naming (no IP geolocation). */
 export function inferStoreRegionHint(store: string): "us" | "eu" | "uk" | "me" | "asia" | "unknown" {
   const s = store.toLowerCase();
-  if (/\.(nl|de|fr|be|es|it|pl|se|dk|at|ch)\b|coolblue|bol\.|mediamarkt|fnac|zalando|otto|carrefour|decathlon|alternate/i.test(s)) {
+  if (/\.(nl|de|fr|be|es|it|pl|se|dk|at|ch)\b|coolblue|bol\.|mediamarkt|fnac|zalando|otto|carrefour|decathlon|alternate|zara|wehkamp|belsimpel/i.test(s)) {
     return "eu";
   }
   if (/\.co\.uk|john lewis|argos|currys/i.test(s)) return "uk";

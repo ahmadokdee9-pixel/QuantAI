@@ -46,6 +46,7 @@ import { humanSearchIntentFingerprint, type HumanSearchIntent } from "@/lib/inte
 import type { MarketMemoryState } from "@/lib/intelligence/marketMemory";
 import { marketMemoryFingerprint } from "@/lib/intelligence/marketMemory";
 import { resolveFinalCommerceDecision } from "@/lib/intelligence/finalCommerceDecision";
+import { commerceBrainChipClass } from "@/lib/intelligence/commerceDecisionBrain";
 import {
   buildProductBuyDecision,
   buildVerdictExpansion,
@@ -107,30 +108,6 @@ function predictiveSignalChipClass(tone: PredictiveTimingSignalTone): string {
       return "border-rose-400/28 bg-rose-500/[0.1] text-rose-50/90";
     default:
       return "border-violet-400/26 bg-violet-500/[0.09] text-violet-50/88";
-  }
-}
-
-function dealVerdictChipClass(v: ProductDealIntelligence["aiDealVerdict"]): string {
-  switch (v) {
-    case "Best Deal Today":
-      return "border-amber-300/35 bg-gradient-to-r from-amber-500/15 via-cyan-500/12 to-emerald-500/12 text-amber-50/95 shadow-[0_0_20px_-8px_rgba(251,191,36,0.35)]";
-    case "Strong Buy":
-    case "Trusted Discount":
-      return "border-emerald-400/32 bg-emerald-500/[0.12] text-emerald-50/95";
-    case "Safe Buy":
-      return "border-cyan-400/30 bg-cyan-500/[0.11] text-cyan-50/95";
-    case "Premium Pick":
-      return "border-violet-400/32 bg-violet-500/[0.12] text-violet-50/95";
-    case "Best Price-to-Quality":
-      return "border-sky-400/28 bg-sky-500/[0.1] text-sky-50/95";
-    case "Wait For Better Price":
-      return "border-rose-400/28 bg-rose-500/[0.09] text-rose-50/92";
-    case "Suspicious Discount":
-      return "border-amber-400/38 bg-amber-500/[0.12] text-amber-50/95";
-    case "Avoid Fake Sale":
-      return "border-rose-400/38 bg-rose-600/[0.14] text-rose-50/95";
-    default:
-      return "border-white/[0.1] bg-white/[0.05] text-slate-200/90";
   }
 }
 
@@ -396,13 +373,37 @@ function ProductResultCard({
     }),
     [buyDecision, resolved.buySurface]
   );
+  const worthSignal = useMemo((): ProductDealIntelligence["worthBuyingNow"] => {
+    switch (resolved.commerceBrainCode) {
+      case "STRONG_BUY":
+      case "BUY_READY":
+      case "SAFE_BUY":
+        return "yes";
+      case "WAIT":
+      case "COMPARE_ALTERNATIVES":
+        return "wait";
+      case "AVOID":
+        return "maybe";
+      default:
+        return deal.worthBuyingNow;
+    }
+  }, [resolved.commerceBrainCode, deal.worthBuyingNow]);
+  const worthLine = useMemo(() => {
+    if (resolved.commerceBrainCode === "AVOID") {
+      return {
+        headline: "Avoid — trust or deal hygiene is too weak to recommend checkout.",
+        cls: "text-rose-200/90",
+      };
+    }
+    return worthBuyingHeadline(worthSignal, deal.hasDiscount);
+  }, [resolved.commerceBrainCode, worthSignal, deal.hasDiscount]);
+  const worthShort = useMemo(() => {
+    if (resolved.commerceBrainCode === "AVOID") return "Skip · Capital protection";
+    return worthBuyingShort(worthSignal, deal.hasDiscount);
+  }, [resolved.commerceBrainCode, worthSignal, deal.hasDiscount]);
   const analystFrame = useMemo(
     () => buildVerdictExpansion(p, list, mergedBuyDecision),
     [p, list, mergedBuyDecision]
-  );
-  const worthLine = useMemo(
-    () => worthBuyingHeadline(deal.worthBuyingNow, deal.hasDiscount),
-    [deal.worthBuyingNow, deal.hasDiscount]
   );
   const predictiveBadgeTitle = useMemo(() => {
     if (!resolved.predictiveBadge || !p.qiPredictive) return "";
@@ -411,10 +412,6 @@ function ProductResultCard({
       .join(" — ")
       .slice(0, 240);
   }, [resolved.predictiveBadge, p.qiPredictive]);
-  const worthShort = useMemo(
-    () => worthBuyingShort(deal.worthBuyingNow, deal.hasDiscount),
-    [deal.worthBuyingNow, deal.hasDiscount]
-  );
   const stanceUi = stancePresentation(mergedBuyDecision.stance);
   const StanceIcon = stanceUi.Icon;
 
@@ -653,11 +650,11 @@ function ProductResultCard({
 
             <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2">
               <span
-                className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide transition-shadow duration-500 ease-out ${dealVerdictChipClass(resolved.primaryVerdict)}`}
+                className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide transition-shadow duration-500 ease-out ${commerceBrainChipClass(resolved.commerceBrainCode)}`}
                 title={deal.whyDealGoodOrRisky}
               >
                 <Percent className="size-2.5 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
-                <span className="truncate">{resolved.primaryVerdict}</span>
+                <span className="truncate">{resolved.commerceBrainChipLabel}</span>
               </span>
               {resolved.predictiveBadge ? (
                 <span
@@ -744,10 +741,10 @@ function ProductResultCard({
                     </p>
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
                       <span
-                        className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${dealVerdictChipClass(resolved.primaryVerdict)}`}
+                        className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${commerceBrainChipClass(resolved.commerceBrainCode)}`}
                       >
                         <Percent className="size-2.5 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
-                        <span className="truncate">{resolved.primaryVerdict}</span>
+                        <span className="truncate">{resolved.commerceBrainChipLabel}</span>
                       </span>
                       {resolved.predictiveBadge ? (
                         <span

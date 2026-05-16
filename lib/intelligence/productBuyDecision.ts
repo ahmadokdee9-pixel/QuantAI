@@ -73,6 +73,10 @@ export function buildProductBuyDecision(
   if (risk >= 62) cons.push(`Fulfillment risk ${risk}/100—confirm who ships and warranties.`);
   if (stars > 0 && stars < 3.9 && reviews < 25) cons.push("Review depth is thin—scan recent 1–2★ notes.");
   if (del < 48) cons.push("Delivery read is soft—confirm ship-by and carrier.");
+  const sem = human?.semantic;
+  if (sem?.budgetMaxAmount != null && sem.budgetCurrency === "EUR" && price > sem.budgetMaxAmount * 1.05) {
+    cons.push(`Above your ~€${sem.budgetMaxAmount} ceiling from the query—confirm totals + shipping.`);
+  }
   const anomaly = product.qiCommerce?.priceAnomaly;
   if (anomaly === "suspicious_low" || anomaly === "deep_discount") {
     cons.push("Price sits aggressive vs peers—lock the SKU before you pay.");

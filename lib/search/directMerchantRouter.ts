@@ -36,6 +36,7 @@ export function normalizeMerchantName(store: string): string {
     [/zalando/i, "zalando"],
     [/about\s*you|aboutyou/i, "aboutyou"],
     [/\bh\s*&\s*m\b|^hm\b/i, "hm"],
+    [/\bzara\b/i, "zara"],
     [/\bnike\b/i, "nike"],
     [/\badidas\b/i, "adidas"],
     [/ikea/i, "ikea"],
@@ -111,6 +112,8 @@ export function buildMerchantSearchUrl(merchantKey: string, searchTerms: string,
       return `https://www.aboutyou.nl/zoeken?searchTerm=${qEnc(q)}`;
     case "hm":
       return `https://www2.hm.com/nl_nl/search-results.html?q=${qEnc(q)}`;
+    case "zara":
+      return `https://www.zara.com/nl/en/search?searchTerm=${qEnc(q)}`;
     case "nike":
       return `https://www.nike.com/nl/w?q=${qEnc(q)}`;
     case "adidas":

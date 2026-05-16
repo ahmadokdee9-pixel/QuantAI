@@ -37,6 +37,7 @@ const CONTEXT_REWRITES: { rx: RegExp; rep: string }[] = [
   { rx: /\b(good|great)\s+quality\b/gi, rep: " rated " },
   { rx: /\bbut\s+cheaper\b/gi, rep: " budget alternative " },
   { rx: /\bsomething\s+like\b/gi, rep: " similar " },
+  { rx: /\b(in|for)\s+(the\s+)?(netherlands|nederland|holland)\b/gi, rep: " " },
   { rx: /\beuro(s)?\b/gi, rep: " EUR " },
   { rx: /\beur\b/gi, rep: " EUR " },
   { rx: /\bdollars?\b/gi, rep: " USD " },
