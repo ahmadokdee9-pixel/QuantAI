@@ -122,3 +122,44 @@ export function getCategoryBehaviorProfile(slug: ProductCategorySlug | undefined
   if (!slug) return DEFAULT;
   return BY_SLUG[slug] ?? DEFAULT;
 }
+
+/** Query-conditioned economics overlay — keeps ONE architecture across categories (no SKU-special electronics forks). */
+export function getCategoryBehaviorProfileAdaptive(
+  slug: ProductCategorySlug | undefined,
+  searchQuery: string
+): CategoryBehaviorProfile {
+  const base = getCategoryBehaviorProfile(slug);
+  const q = searchQuery.toLowerCase().trim();
+  if (!q) return base;
+
+  if (/\b(luxury|designer|boutique|haute|quiet\s+luxury)\b/.test(q)) {
+    return {
+      ...base,
+      emotionalTolerance01: Math.min(0.78, base.emotionalTolerance01 + 0.09),
+      fakeDiscountWeight: base.fakeDiscountWeight * 1.1,
+      trustWeight: base.trustWeight * 1.06,
+      volatilityWeight: base.volatilityWeight * 0.94,
+    };
+  }
+
+  if (/\b(sneaker|trainer|air\s*force|jordan|yeezy|footwear|running\s+shoes?)\b/.test(q)) {
+    return {
+      ...base,
+      volatilityWeight: base.volatilityWeight * 1.08,
+      trustWeight: base.trustWeight * 1.05,
+      timingWeight: base.timingWeight * 0.93,
+      logisticsWeight: Math.min(1.15, base.logisticsWeight * 1.05),
+    };
+  }
+
+  if (/\b(furniture|sofa|couch|dining\s+table|wardrobe|bed\s+frame|kitchen\s+cabinet)\b/.test(q)) {
+    return {
+      ...base,
+      logisticsWeight: Math.max(base.logisticsWeight, 1.22),
+      trustWeight: base.trustWeight * 1.06,
+      timingWeight: base.timingWeight * 0.9,
+    };
+  }
+
+  return base;
+}

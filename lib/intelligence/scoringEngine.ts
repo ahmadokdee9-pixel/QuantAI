@@ -15,6 +15,8 @@ import type { CommerceSearchIntents } from "./searchIntentV2";
 import { intentCompositeLift, parseCommerceSearchIntents } from "./searchIntentV2";
 import type { IntelligenceSignals, ListStats, ProductCategorySlug } from "./types";
 import { tasteCompositeLift, tasteProductAlignment01 } from "@/lib/commerce-os";
+import type { QiListingIdentity } from "@/lib/intelligence/listingIdentityTypes";
+import { normalizeQiListingIdentity } from "@/lib/intelligence/normalizeIntelligenceSignals";
 
 function clamp01(n: number): number {
   return Math.min(1, Math.max(0, n));
@@ -119,7 +121,8 @@ export function scoreProductEngine(
   searchQuery: string,
   stats: ListStats,
   listMaxValueRaw: number,
-  intents?: CommerceSearchIntents
+  intents?: CommerceSearchIntents,
+  listingIdentity?: QiListingIdentity | null
 ): EngineResult {
   const intentsResolved = intents ?? parseCommerceSearchIntents(searchQuery);
   const category = inferProductCategory(searchQuery, p.title);
@@ -184,12 +187,25 @@ export function scoreProductEngine(
     weighted * 0.86 + categoryFitBlend * 0.085 + listingFit * 0.035 + intentLift + tasteLift + mpAdj
   );
 
-  const composite = Math.min(
+  const idPlane = listingIdentity ? normalizeQiListingIdentity(listingIdentity) : null;
+
+  let composite = Math.min(
     100,
     Math.round(composite01 * 100) +
       Math.min(4, Math.round(getRetailerDiscoveryBoost(p.store) * 0.55)) +
       Math.min(3, Math.round(getElitePreferredRetailerBonus(p.store) * 0.28))
   );
+
+  if (idPlane) {
+    composite = Math.max(
+      0,
+      composite -
+        Math.round(idPlane.listingRisk01 * 13) -
+        Math.round(idPlane.contaminant01 * 9) -
+        Math.round(idPlane.semanticMismatchPenalty01 * 11) -
+        Math.round(idPlane.contaminationRisk01 * 8)
+    );
+  }
 
   // “Model layer” — emphasizes absolute quality + trust vs pure deal-chasing
   const modelLayer = Math.round(

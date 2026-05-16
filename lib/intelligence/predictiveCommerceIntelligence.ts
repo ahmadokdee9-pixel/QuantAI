@@ -17,6 +17,7 @@ import type {
   PredictiveTimingVerdict,
   QiPredictiveCommerce,
 } from "./commerceAnalysisTypes";
+import { normalizeQiListingIdentity } from "./normalizeIntelligenceSignals";
 
 function clamp(n: number, lo: number, hi: number): number {
   return Math.min(hi, Math.max(lo, n));
@@ -69,6 +70,9 @@ function categoryPredictiveLens(
   const q = query.toLowerCase();
   if (/\b(gift|present|birthday|valentine|mother|father)\b/i.test(q) || intents.giftUse) {
     return "Gifts: urgency and emotional fit weigh heavier than marginal price cuts—verify authenticity on luxury adjacency.";
+  }
+  if (/\b(sneaker|trainer|air\s*force|jordan|yeezy|footwear)\b/i.test(q)) {
+    return "Sneakers: SKU/style-code drift and GS sizing widen spreads—trusted listings beat headline discounts.";
   }
   switch (cat) {
     case "electronics":
@@ -564,7 +568,9 @@ export function applyPredictiveCommerceToTray(
       trust,
     });
     const base = getFinalComposite(p, products);
-    const qiComposite = clamp(base + d, 0, 100);
+    const idRisk = p.qiListingIdentity ? normalizeQiListingIdentity(p.qiListingIdentity).listingRisk01 : 0;
+    const damp = clamp01(1 - idRisk * 0.38);
+    const qiComposite = clamp(Math.round(base + d * damp), 0, 100);
     let qiReason = (p.qiReason ?? "").trim();
     const tail = `Predictive: ${pred.timingVerdictLabel} — ${pred.narrative.slice(0, 280)}`.trim();
     qiReason = `${qiReason} ${tail}`.trim().slice(0, 1700);

@@ -1,7 +1,7 @@
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { ratingValue } from "@/lib/shoppingScore";
 import { extractQueryCommerceHints } from "@/lib/deals/productIdentity";
-import { hardCategoryMismatch } from "@/lib/commerce/trayListingFilter";
+import { hardCategoryMismatch } from "@/lib/commerce/queryCategoryGuard";
 import { relevanceLexicalExpansion } from "@/lib/search/conversationalQueryLayer";
 import { latinSkeletonForMatching } from "@/lib/search/queryScriptNormalize";
 

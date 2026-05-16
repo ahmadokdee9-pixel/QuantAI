@@ -1,5 +1,6 @@
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getElitePreferredRetailerBonus } from "@/lib/retailTrust";
+import { normalizeQiListingIdentity } from "@/lib/intelligence/normalizeIntelligenceSignals";
 
 function normalizeStoreKey(store: string): string {
   return store.toLowerCase().replace(/\s+/g, " ").trim().slice(0, 48);
@@ -21,8 +22,17 @@ export function applyEliteFirstWindowCuration(
   const picked: QuantProduct[] = [];
   const used = new Set<string>();
 
-  const rowScore = (p: QuantProduct) =>
-    (p.qiComposite ?? 0) + getElitePreferredRetailerBonus(p.store) * 0.45;
+  const rowScore = (p: QuantProduct) => {
+    const id = p.qiListingIdentity ? normalizeQiListingIdentity(p.qiListingIdentity) : null;
+    return (
+      (p.qiComposite ?? 0) +
+      getElitePreferredRetailerBonus(p.store) * 0.45 +
+      ((p.qiCanonicalIdentity?.identityConfidence ?? 74) - 74) * 0.058 -
+      (id?.contaminationRisk01 ?? 0) * 4.4 -
+      (id?.semanticMismatchPenalty01 ?? 0) * 3.2 +
+      (id?.bundleIntegrity01 ?? 0.48) * 2.6
+    );
+  };
 
   while (picked.length < window && picked.length < sortedByComposite.length) {
     const prev = picked[picked.length - 1];

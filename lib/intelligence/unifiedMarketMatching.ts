@@ -15,6 +15,9 @@ import { buildFamilyMarketConsensus } from "@/lib/intelligence/marketConsensus";
 import { buildCrossMarketConsensusLine } from "@/lib/intelligence/crossMarketConsensus";
 import { computeFamilyEquivalenceHints } from "@/lib/intelligence/equivalentProducts";
 import { estimateFairMarketValueRange } from "@/lib/intelligence/marketSpread";
+import type { QiListingIdentity } from "@/lib/intelligence/listingIdentityTypes";
+import { normalizeCommercialRoles } from "@/lib/intelligence/normalizeIntelligenceSignals";
+import { resolveQiListingIdentity } from "@/lib/intelligence/universalListingIdentity";
 
 export type UnifiedMarketGroup = {
   familyId: string;
@@ -107,11 +110,21 @@ function meanPairConfidence(members: QuantProduct[], identities: ProductIdentity
   return n > 0 ? sum / n : 1;
 }
 
-export function buildUnifiedMarketGroups(products: QuantProduct[]): UnifiedMarketGroup[] {
+function subAssemblyCompleteness(c: string): boolean {
+  return c === "accessory_only" || c === "parts_or_subassembly";
+}
+
+function junkCommercialRole(id: QiListingIdentity): boolean {
+  const roles = normalizeCommercialRoles(id.commercialRoles);
+  return roles.includes("replica_risk") || roles.includes("packaging_only");
+}
+
+export function buildUnifiedMarketGroups(products: QuantProduct[], searchQuery = ""): UnifiedMarketGroup[] {
   const n = products.length;
   if (n === 0) return [];
   const parent = Array.from({ length: n }, (_, i) => i);
   const identities = products.map((p) => extractProductIdentity(p));
+  const listingIds = products.map((p) => resolveQiListingIdentity(p, searchQuery));
   const prices = products.map((p) => p.price).filter((x) => x > 0);
   const sorted = [...prices].sort((a, b) => a - b);
   const median = sorted.length ? sorted[Math.floor(sorted.length / 2)]! : 0;
@@ -121,7 +134,25 @@ export function buildUnifiedMarketGroups(products: QuantProduct[]): UnifiedMarke
       const conf = buildProductIdentityConfidence(products[i]!, products[j]!, identities[i]!, identities[j]!, median);
       const cross = detectCrossRetailIdentity(products[i]!, products[j]!, conf);
       const sameStoreDup = products[i]!.store.toLowerCase() === products[j]!.store.toLowerCase() && conf >= 0.9;
-      if (conf >= 0.74 && (cross || sameStoreDup)) union(parent, i, j);
+      const li = listingIds[i]!;
+      const lj = listingIds[j]!;
+      if (li.listingRisk01 >= 0.84 || lj.listingRisk01 >= 0.84) continue;
+
+      const accHeavy = li.accessoryLikelihood01 > 0.58 || lj.accessoryLikelihood01 > 0.58;
+      const contamHeavy = li.contaminationRisk01 > 0.52 || lj.contaminationRisk01 > 0.52;
+      const mismatchHeavy = li.semanticMismatchPenalty01 > 0.48 || lj.semanticMismatchPenalty01 > 0.48;
+      const completenessMismatch =
+        subAssemblyCompleteness(li.productCompleteness) !== subAssemblyCompleteness(lj.productCompleteness);
+      const junkPair = junkCommercialRole(li) || junkCommercialRole(lj);
+
+      let confMin = accHeavy ? 0.9 : 0.74;
+      if (contamHeavy) confMin = Math.max(confMin, 0.87);
+      if (mismatchHeavy) confMin = Math.max(confMin, 0.9);
+      if (completenessMismatch) confMin = Math.max(confMin, 0.93);
+      if (junkPair) confMin = Math.max(confMin, 0.96);
+
+      if (conf < confMin || !(cross || sameStoreDup)) continue;
+      union(parent, i, j);
     }
   }
 
@@ -148,14 +179,14 @@ export function buildUnifiedMarketGroups(products: QuantProduct[]): UnifiedMarke
   return groups;
 }
 
-export function buildUnifiedMarketGroup(products: QuantProduct[]): {
+export function buildUnifiedMarketGroup(products: QuantProduct[], searchQuery = ""): {
   byLink: Map<string, UnifiedCardInsight>;
   groups: UnifiedMarketGroup[];
 } {
   const byLink = new Map<string, UnifiedCardInsight>();
   if (!products.length) return { byLink, groups: [] };
 
-  const clusters = buildUnifiedMarketGroups(products);
+  const clusters = buildUnifiedMarketGroups(products, searchQuery);
   for (const g of clusters) {
     const members = g.memberIndices.map((i) => products[i]!);
     const stores = new Set(members.map((p) => p.store.toLowerCase().trim()));

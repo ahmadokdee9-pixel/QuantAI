@@ -6,26 +6,10 @@ import {
   listingSignalsRefurbished,
   userQuerySeeksUsedOrRefurb,
 } from "@/lib/commerce/listingQuality";
-import { latinSkeletonForMatching } from "@/lib/search/queryScriptNormalize";
+import { hardCategoryMismatch } from "@/lib/commerce/queryCategoryGuard";
+import { assessUniversalListingIdentity } from "@/lib/intelligence/universalListingIdentity";
 
-/** Drop listings whose category clearly diverges from a specific query (e.g. sofa rows on a laptop search). */
-export function hardCategoryMismatch(query: string, title: string): boolean {
-  const qRaw = query.toLowerCase();
-  const qLatin = latinSkeletonForMatching(query).toLowerCase();
-  const q = `${qRaw} ${qLatin}`.replace(/\s+/g, " ").trim();
-  const t = title.toLowerCase();
-  const furniture = /\b(sofa|couch|loveseat|sectional|futon|ottoman|rug|curtain|dining\s+table|coffee\s+table|bookshelf)\b/;
-  const compute =
-    /\b(laptop|notebook|ultrabook|macbook|thinkpad|chromebook|gpu|graphics\s+card|rtx|gtx|cpu|processor|monitor|oled\s+tv)\b/;
-  const mobile = /\b(iphone|ipad|galaxy\s+s\d|pixel\s+\d|smartphone|airpods)\b/;
-  const audioSmall = /\b(earbuds|earphones|headphones|wh-1000)\b/;
-
-  if (compute.test(q) && furniture.test(t)) return true;
-  if (mobile.test(q) && furniture.test(t)) return true;
-  if (/\b(tv|television|qled|oled\s+tv)\b/.test(q) && /\b(laptop|macbook|gpu|earbuds)\b/.test(t)) return true;
-  if (audioSmall.test(q) && furniture.test(t)) return true;
-  return false;
-}
+export { hardCategoryMismatch } from "@/lib/commerce/queryCategoryGuard";
 
 /**
  * Post-fetch tray hygiene: drops obvious marketplace noise and irrelevant refurb rows
@@ -34,11 +18,21 @@ export function hardCategoryMismatch(query: string, title: string): boolean {
 export function filterTrayNoise(products: QuantProduct[], query: string): QuantProduct[] {
   if (products.length <= 1) return products;
   const allowRefurb = userQuerySeeksUsedOrRefurb(query);
+  const queryAllowsAccessory = /\b(case|cover|hoesje|charger|cable|adapter|strap|protector|screenprotector)\b/i.test(
+    query
+  );
   const next: QuantProduct[] = [];
 
   for (const p of products) {
     if (hardCategoryMismatch(query, p.title)) continue;
     if (isShadyGenericMarketplaceRow(p)) continue;
+
+    const id = assessUniversalListingIdentity(p, query);
+    if (id.listingRisk01 >= 0.82) continue;
+    if (!queryAllowsAccessory && id.flags.includes("accessory_lane") && id.accessoryLikelihood01 >= 0.48) continue;
+    if (!queryAllowsAccessory && id.semanticMismatchPenalty01 >= 0.56) continue;
+    if (!queryAllowsAccessory && id.contaminationRisk01 >= 0.74) continue;
+    if (id.contaminant01 >= 0.54 && id.flags.includes("query_contamination")) continue;
 
     if (!allowRefurb && listingSignalsRefurbished(p)) {
       const trust = getStoreTrustScore(p.store);

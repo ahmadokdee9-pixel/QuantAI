@@ -9,7 +9,7 @@ import {
   listingSignalsRefurbished,
 } from "@/lib/commerce/listingQuality";
 import { queryListingRelevance01 } from "@/lib/intelligence/queryRelevance";
-import { hardCategoryMismatch } from "@/lib/commerce/trayListingFilter";
+import { hardCategoryMismatch } from "@/lib/commerce/queryCategoryGuard";
 import type { CommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
 import type { HumanIntentProfile } from "@/lib/intelligence/humanIntentEngine";
 import type { StyleQueryProfile } from "@/lib/intelligence/styleTasteProfiles";

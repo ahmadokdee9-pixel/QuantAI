@@ -18,6 +18,9 @@ import { buildHumanIntentProfile } from "./humanIntentEngine";
 import { inferQueryStyleProfile, productStyleCompositeNudge } from "./styleTasteProfiles";
 import { assessRegretRisk } from "./regretRisk";
 import { buildProductUnderstanding, productUnderstandingRankNudge } from "./productUnderstanding";
+import { assessUniversalListingIdentity } from "./universalListingIdentity";
+import { computeMerchantConfidence01, merchantConfidenceRankNudge } from "./merchantIntelligence";
+import { buildQiCanonicalIdentity } from "./canonicalCommerceIdentity";
 
 export function enrichProductsWithIntelligence(
   products: QuantProduct[],
@@ -33,7 +36,8 @@ export function enrichProductsWithIntelligence(
   const styleQuery = inferQueryStyleProfile(searchQuery, intents);
 
   const scored = productsIn.map((p) => {
-    const engine = scoreProductEngine(p, searchQuery, stats, listMaxValueRaw, intents);
+    const listingIdentity = assessUniversalListingIdentity(p, searchQuery);
+    const engine = scoreProductEngine(p, searchQuery, stats, listMaxValueRaw, intents, listingIdentity);
     const bundle = buildProductRelationshipBundle(p, productsIn, searchQuery, intents.alternativeQuery, intents, intents.taste);
     const profile = classifyDiscoveryProfile(p, productsIn, intents, bundle);
     const altWhy = buildAlternativeWhyLine(p, productsIn, intents, intents.alternativeQuery, bundle, profile);
@@ -48,9 +52,14 @@ export function enrichProductsWithIntelligence(
       if (profile.tags.includes("premium_look_budget")) relDelta += 1;
       if (profile.tags.includes("underrated")) relDelta += 1;
     }
-    const qiCompositeBase = Math.min(
+    const qiCompositeBaseRaw = Math.min(
       100,
       Math.max(0, engine.composite + relDelta + outboundCompositeNudge(p))
+    );
+    const merchantConf01 = computeMerchantConfidence01(p, listingIdentity);
+    const qiCompositeBase = Math.min(
+      100,
+      Math.max(0, qiCompositeBaseRaw + merchantConfidenceRankNudge(merchantConf01))
     );
     const styleNudge = productStyleCompositeNudge(p, styleQuery, engine.category, humanIntent);
 
@@ -111,6 +120,14 @@ export function enrichProductsWithIntelligence(
       Math.max(0, qiCompositeBase + styleNudge + regret.compositeNudge + understandingNudge)
     );
 
+    const qiCanonicalIdentity = buildQiCanonicalIdentity({
+      product: p,
+      listingIdentity,
+      merchantConfidence01: merchantConf01,
+      productUnderstanding,
+      realityTrust: qiRealityTrust,
+    });
+
     const enriched: QuantProduct = {
       ...p,
       qiComposite,
@@ -129,6 +146,9 @@ export function enrichProductsWithIntelligence(
       qiHumanIntentProfile: humanIntent,
       qiRegretRiskLevel: regret.level,
       qiProductUnderstanding: productUnderstanding,
+      qiListingIdentity: listingIdentity,
+      qiMerchantConfidence01: merchantConf01,
+      qiCanonicalIdentity,
     };
     return enriched;
   });

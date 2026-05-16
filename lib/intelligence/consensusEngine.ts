@@ -9,7 +9,7 @@ import type { MarketAwarenessTray } from "./marketAwareness";
 import type { ProductBuyDecision } from "./productBuyDecision";
 import type { QuantAIRealityTrustLayer } from "./realityTrustTypes";
 import type { ProductCategorySlug } from "./types";
-import { getCategoryBehaviorProfile } from "./categoryBehaviorProfiles";
+import { getCategoryBehaviorProfileAdaptive } from "./categoryBehaviorProfiles";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
 import { DEFAULT_HUMAN_INTENT_PROFILE } from "./humanIntentEngine";
@@ -307,9 +307,10 @@ export function buildConsensusDecision(args: {
   market: MarketAwarenessTray;
   rank: number;
   qiRounded: number;
+  searchQuery?: string;
 }): ConsensusDecision {
-  const { product: p, list, dealIntel: deal, buyDecision: buy, market, rank, qiRounded: qi } = args;
-  const profile = getCategoryBehaviorProfile((p.qiCategory ?? "general") as ProductCategorySlug);
+  const { product: p, list, dealIntel: deal, buyDecision: buy, market, rank, qiRounded: qi, searchQuery = "" } = args;
+  const profile = getCategoryBehaviorProfileAdaptive((p.qiCategory ?? "general") as ProductCategorySlug, searchQuery);
   const trust = getStoreTrustScore(p.store);
   const risk = p.qiCommerce?.retailerRiskScore ?? 40;
   const pred = p.qiPredictive;
@@ -340,6 +341,14 @@ export function buildConsensusDecision(args: {
     adjTrust -= pu.listingRisk * 0.05;
     if (pu.titleQuality === "spammy") adjTrust -= 14;
     else if (pu.titleQuality === "weak") adjTrust -= 6;
+    adjTrust = clamp(adjTrust, 0, 100);
+  }
+
+  const canon = p.qiCanonicalIdentity;
+  if (canon) {
+    adjTrust += (canon.merchantConfidence - 72) * 0.09;
+    if (canon.identityConfidence < 48) adjTrust -= 9;
+    if (canon.authenticityConfidence < 44) adjTrust -= 7;
     adjTrust = clamp(adjTrust, 0, 100);
   }
 
@@ -402,6 +411,22 @@ export function buildConsensusDecision(args: {
       consensusReason = "Predictive read favors a brief wait versus peer pricing.";
       fromHardGate = true;
     }
+  }
+
+  if (
+    !fromHardGate &&
+    canon &&
+    canon.identityConfidence < 38 &&
+    trust < 60 &&
+    qi < 74
+  ) {
+    finalAction = "compare";
+    fromHardGate = true;
+    consensusReason = "Canonical identity spine is soft versus elite-buy certainty.";
+  } else if (!fromHardGate && canon && canon.authenticityConfidence < 34 && trust < 66 && qi < 76) {
+    finalAction = "compare";
+    fromHardGate = true;
+    consensusReason = "Authenticity confidence sits low versus manipulated-market norms.";
   }
 
   if (!fromHardGate && pu) {

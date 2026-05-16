@@ -17,6 +17,7 @@ import type { ProductCategorySlug } from "@/lib/intelligence/types";
 import { getMarketplaceSellerRiskTier } from "@/lib/retailTrust";
 import { relationshipGraphRankAdjustment, alternativeSeekingRankAdjustment } from "@/lib/intelligence/alternativeRanking";
 import { tasteCompositeLift, tasteProductAlignment01 } from "@/lib/commerce-os";
+import { normalizeQiListingIdentity } from "@/lib/intelligence/normalizeIntelligenceSignals";
 
 export type PurchaseIntent =
   | "neutral"
@@ -307,6 +308,13 @@ export function sortByCompositeRankEnhanced(list: QuantProduct[], query: string)
     const mp = getMarketplaceSellerRiskTier(p.store, p.title);
     if (mp === "high") c -= 3.4;
     else if (mp === "medium") c -= 1.05;
+    const eliteRaw = p.qiListingIdentity;
+    if (eliteRaw) {
+      const eliteId = normalizeQiListingIdentity(eliteRaw);
+      c -= Math.round(eliteId.semanticMismatchPenalty01 * 11);
+      c -= Math.round(eliteId.contaminationRisk01 * 7);
+      c += Math.round(eliteId.bundleIntegrity01 * 4);
+    }
     return c;
   };
 

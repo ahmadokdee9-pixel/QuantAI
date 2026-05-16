@@ -199,8 +199,8 @@ export default function ProductResultsSurface({
   const trayDealHighlights = useMemo(() => buildTrayDealHighlights(sortedProducts), [sortedProducts]);
 
   const unifiedMarketByLink = useMemo(
-    () => buildUnifiedMarketGroup(sortedProducts).byLink,
-    [sortedProducts]
+    () => buildUnifiedMarketGroup(sortedProducts, searchQuery.trim()).byLink,
+    [sortedProducts, searchQuery]
   );
 
   const aiTopPicks = useMemo(() => compositeRanked.slice(0, 3), [compositeRanked]);
@@ -805,6 +805,7 @@ export default function ProductResultsSurface({
                   unifiedMarket={unifiedMarketByLink.get(p.link) ?? null}
                   humanSearchIntent={humanSearchIntent}
                   marketMemoryState={marketMemoryState}
+                  searchQuery={searchQuery}
                 />
               </div>
             );
@@ -845,6 +846,7 @@ export default function ProductResultsSurface({
                     unifiedMarket={unifiedMarketByLink.get(p.link) ?? null}
                     humanSearchIntent={humanSearchIntent}
                     marketMemoryState={marketMemoryState}
+                    searchQuery={searchQuery}
                   />
                 </div>
               );

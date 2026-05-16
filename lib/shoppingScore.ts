@@ -6,6 +6,8 @@ import type { ProductRelationshipBundle } from "@/lib/intelligence/relationshipT
 import type { HumanIntentProfile } from "@/lib/intelligence/humanIntentEngine";
 import type { RegretRiskLevel } from "@/lib/intelligence/regretRisk";
 import type { ProductUnderstanding } from "@/lib/intelligence/productUnderstanding";
+import type { QiListingIdentity } from "@/lib/intelligence/listingIdentityTypes";
+import type { QiCanonicalIdentity } from "@/lib/intelligence/canonicalCommerceIdentity";
 import {
   getStoreTrustScore,
   TRUSTED_SUBSTRINGS,
@@ -61,6 +63,12 @@ export type QuantProduct = {
   qiRegretRiskLevel?: RegretRiskLevel;
   /** Product understanding v1 — listing DNA, specs, query fit (tray enrichment). */
   qiProductUnderstanding?: ProductUnderstanding;
+  /** Canonical listing fingerprint + accessory/junk risk plane (tray enrichment). */
+  qiListingIdentity?: QiListingIdentity;
+  /** Merchant-route × trust confidence 0–1 (operating-system layer). */
+  qiMerchantConfidence01?: number;
+  /** Canonical product lineage + confidence triple (commerce OS). */
+  qiCanonicalIdentity?: QiCanonicalIdentity;
 };
 
 export { getStoreTrustScore };

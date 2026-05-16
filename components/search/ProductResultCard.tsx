@@ -229,6 +229,8 @@ type Props = {
   humanSearchIntent?: HumanSearchIntent | null;
   /** Client market memory snapshot for live deal intel (optional). */
   marketMemoryState?: MarketMemoryState | null;
+  /** Raw search string — feeds adaptive category economics into consensus (no UI change). */
+  searchQuery?: string;
 };
 
 const btnRow =
@@ -299,6 +301,7 @@ function ProductResultCard({
   unifiedMarket = null,
   humanSearchIntent = null,
   marketMemoryState = null,
+  searchQuery = "",
 }: Props) {
   const reduceMotion = useReducedMotion();
   const lite = reduceMotion || lowPower;
@@ -329,6 +332,18 @@ function ProductResultCard({
   const trust = getStoreTrustScore(p.store);
   const offerClickUrl = resolveOfferClickUrl(p);
   const qiTier = qiConfidenceTier(scoreNorm);
+  const canonicalConfidenceAura = useMemo((): "high" | "mid" | "low" => {
+    const idConf = p.qiCanonicalIdentity?.identityConfidence ?? 72;
+    const contam = p.qiListingIdentity?.contaminationRisk01 ?? 0;
+    const mismatch = p.qiListingIdentity?.semanticMismatchPenalty01 ?? 0;
+    if (idConf >= 79 && contam <= 0.44 && mismatch <= 0.36) return "high";
+    if (idConf <= 61 || contam >= 0.64 || mismatch >= 0.54) return "low";
+    return "mid";
+  }, [
+    p.qiCanonicalIdentity?.identityConfidence,
+    p.qiListingIdentity?.contaminationRisk01,
+    p.qiListingIdentity?.semanticMismatchPenalty01,
+  ]);
   const [g0, g1, g2] = qiRingGradientStops(qiTier);
   const inCompare = compareLinks.includes(p.link);
   const sym = currencySymbolFromListing(p);
@@ -361,8 +376,9 @@ function ProductResultCard({
         qiRounded: Math.round(scoreNorm),
         market: marketTray,
         humanSearchIntent,
+        searchQuery,
       }),
-    [p, list, deal, buyDecision, rank, scoreNorm, marketTray, humanSearchIntent]
+    [p, list, deal, buyDecision, rank, scoreNorm, marketTray, humanSearchIntent, searchQuery]
   );
   const mergedBuyDecision = useMemo(
     (): ProductBuyDecision => ({
@@ -442,15 +458,16 @@ function ProductResultCard({
         layout={false}
         initial={lite ? false : { opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ ...transition, delay: lite ? 0 : Math.min(index * 0.032, 0.38) }}
+        transition={{ ...transition, delay: lite ? 0 : Math.min(index * 0.028, 0.34) }}
         whileHover={
           lite
             ? undefined
             : {
-                y: -1,
-                transition: { type: "spring", stiffness: 360, damping: 36 },
+                y: canonicalConfidenceAura === "high" ? -2 : -1,
+                transition: { type: "spring", stiffness: canonicalConfidenceAura === "high" ? 380 : 360, damping: 36 },
               }
         }
+        data-qi-confidence={canonicalConfidenceAura}
         className={`qi-product-card-shell group relative flex h-full min-w-0 flex-col overflow-hidden rounded-[1.55rem] p-px transition-[background,box-shadow] duration-700 ease-out ${
           lite ? "" : "will-change-transform [transform:translateZ(0)]"
         } ${
@@ -501,7 +518,7 @@ function ProductResultCard({
           </div>
 
           <div className="relative z-[2] flex min-h-0 min-w-0 flex-1 flex-col px-4 pb-5 pt-4 sm:px-5 sm:pb-6 sm:pt-5">
-            <h3 className="text-[15px] font-semibold leading-[1.45] tracking-tight text-white/[0.97] line-clamp-2 sm:text-[16px]">
+            <h3 className="text-[15px] font-semibold leading-[1.45] tracking-[-0.01em] text-white/[0.97] antialiased line-clamp-2 sm:text-[16px]">
               {p.title}
             </h3>
             {unifiedMarket && unifiedMarket.storeCount >= 2 ? (
@@ -1062,10 +1079,11 @@ function productResultCardPropsEqual(a: Props, b: Props): boolean {
   if (!unifiedMarketEqual(a.unifiedMarket, b.unifiedMarket)) return false;
   if (humanSearchIntentFingerprint(a.humanSearchIntent) !== humanSearchIntentFingerprint(b.humanSearchIntent))
     return false;
+  if ((a.searchQuery ?? "") !== (b.searchQuery ?? "")) return false;
   if (marketMemoryFingerprint(a.marketMemoryState) !== marketMemoryFingerprint(b.marketMemoryState)) return false;
   if (!marketTrayEqual(a.marketTray, b.marketTray)) return false;
   const pk = (x: QuantProduct) =>
-    `${x.price}|${x.title}|${x.store}|${x.rating}|${x.image}|${x.displayPrice}|${x.oldPrice ?? ""}|${x.priceTrend}|${x.qiComposite ?? ""}|${x.availability ?? ""}|${x.shipping ?? ""}|${x.qiRealityTrust?.realityScore ?? ""}|${x.qiRealityTrust == null ? "" : x.qiRealityTrust.weakRetailer ? "1" : "0"}|${x.offerOutboundUrl ?? ""}|${x.outboundRouteKind ?? ""}|${x.qiRegretRiskLevel ?? ""}|${x.qiProductUnderstanding?.productConfidence ?? ""}|${x.qiProductUnderstanding?.titleQuality ?? ""}|${x.qiProductUnderstanding?.matchQuality ?? ""}`;
+    `${x.price}|${x.title}|${x.store}|${x.rating}|${x.image}|${x.displayPrice}|${x.oldPrice ?? ""}|${x.priceTrend}|${x.qiComposite ?? ""}|${x.availability ?? ""}|${x.shipping ?? ""}|${x.qiRealityTrust?.realityScore ?? ""}|${x.qiRealityTrust == null ? "" : x.qiRealityTrust.weakRetailer ? "1" : "0"}|${x.offerOutboundUrl ?? ""}|${x.outboundRouteKind ?? ""}|${x.qiRegretRiskLevel ?? ""}|${x.qiProductUnderstanding?.productConfidence ?? ""}|${x.qiProductUnderstanding?.titleQuality ?? ""}|${x.qiProductUnderstanding?.matchQuality ?? ""}|${x.qiListingIdentity?.fingerprintCompact ?? ""}|${x.qiListingIdentity?.listingRisk01?.toFixed(2) ?? ""}|${x.qiListingIdentity?.contaminationRisk01?.toFixed(2) ?? ""}|${x.qiListingIdentity?.semanticMismatchPenalty01?.toFixed(2) ?? ""}|${x.qiListingIdentity?.productCompleteness ?? ""}|${x.qiMerchantConfidence01?.toFixed(2) ?? ""}|${x.qiCanonicalIdentity?.canonicalProductId ?? ""}|${x.qiCanonicalIdentity?.identityConfidence ?? ""}|${x.qiCanonicalIdentity?.authenticityConfidence ?? ""}`;
   if (pk(a.product) !== pk(b.product)) return false;
   if (a.list.length !== b.list.length) return false;
   if (a.list.length > 0) {

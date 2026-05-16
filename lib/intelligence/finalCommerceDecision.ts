@@ -72,8 +72,9 @@ export function resolveFinalCommerceDecision(args: {
   qiRounded: number;
   market: MarketAwarenessTray;
   humanSearchIntent?: HumanSearchIntent | null;
+  searchQuery?: string;
 }): FinalCommerceDecision {
-  const { product: p, list, dealIntel: deal, buyDecision: buy, rank, qiRounded: qi, market, humanSearchIntent } = args;
+  const { product: p, list, dealIntel: deal, buyDecision: buy, rank, qiRounded: qi, market, humanSearchIntent, searchQuery = "" } = args;
 
   const consensus = buildConsensusDecision({
     product: p,
@@ -83,6 +84,7 @@ export function resolveFinalCommerceDecision(args: {
     market,
     rank,
     qiRounded: qi,
+    searchQuery,
   });
 
   const mappedAction = mapConsensusToFinalAction(consensus.finalAction);

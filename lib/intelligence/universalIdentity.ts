@@ -1,5 +1,7 @@
 /**
  * QuantAI universal product identity — retailer-agnostic fingerprint + cross-store confidence.
+ * Pairs with `universalListingIdentity.ts` (junk/accessory/contamination plane) and
+ * `merchantIntelligence.ts` (merchant-native routing confidence).
  */
 
 import type { QuantProduct } from "@/lib/shoppingScore";
