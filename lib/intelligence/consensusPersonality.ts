@@ -6,6 +6,7 @@ import type { ProductDealIntelligence } from "./dealIntelligenceEngine";
 import type { HumanIntentProfile } from "./humanIntentEngine";
 import type { RegretRiskLevel } from "./regretRisk";
 import type { ProductCategorySlug } from "./types";
+import type { ProductUnderstanding } from "./productUnderstanding";
 
 type FinalAction = "buy_now" | "strong_buy" | "wait" | "watch" | "compare" | "avoid" | "review";
 type TrustLevel = "high" | "moderate" | "low";
@@ -60,6 +61,10 @@ function clip(s: string, max: number): string {
   return `${t.slice(0, max - 1).trimEnd()}…`;
 }
 
+function listingRiskHigh(u: ProductUnderstanding): boolean {
+  return u.listingRisk >= 68;
+}
+
 /** Premium, short commerce language; coherence guards against trust/regret contradictions. */
 export function buildHumanAwareAnalystLine(args: {
   finalAction: FinalAction;
@@ -76,8 +81,10 @@ export function buildHumanAwareAnalystLine(args: {
   trustScore: number;
   qi: number;
   weakRetailer: boolean;
+  /** Product understanding v1 — listing depth & query fit (optional). */
+  understanding?: ProductUnderstanding | null;
 }): string {
-  const { deal, priceVsMed, human, regretLevel, category, trustScore, qi, weakRetailer } = args;
+  const { deal, priceVsMed, human, regretLevel, category, trustScore, qi, weakRetailer, understanding: u } = args;
   const { finalAction, trustLevel, timing, emotionalRisk, pricingState, confidence } = args;
   const gift = human.giftingLikelihood > 0.48;
   const aesthetic = human.aestheticSensitivity > 0.52;
@@ -98,6 +105,30 @@ export function buildHumanAwareAnalystLine(args: {
       "Strong surface appeal, but regret risk is real — buy only if you will actually use it, not chase the feeling.",
       118
     );
+  }
+
+  if (u?.titleQuality === "spammy") {
+    return clip("High marketplace noise in the title — price cannot replace missing product clarity.", 118);
+  }
+
+  if (u && u.productConfidence < 44 && listingRiskHigh(u)) {
+    return clip("Thin product signal on the listing — verify model, condition, and what is actually in the box.", 118);
+  }
+
+  if (u && u.specCompleteness >= 82 && u.matchQuality >= 74 && u.authenticityConfidence >= 70) {
+    return clip("Strong specification clarity with transparent positioning versus your search.", 118);
+  }
+
+  if (u && u.matchQuality >= 78 && aesthetic && human.signals.aestheticTaste > 0.45) {
+    return clip("Product positioning lines up with your minimal aesthetic intent on the title evidence.", 118);
+  }
+
+  if (u && u.matchQuality >= 74 && human.signals.productivity > 0.48 && category === "electronics") {
+    return clip("Good fit for premium productivity-focused buyers — still confirm ports and warranty.", 118);
+  }
+
+  if (u && u.authenticityConfidence >= 82 && u.condition !== "unknown" && u.listingRisk < 48) {
+    return clip("Transparent listing with stronger long-term confidence on what you are buying.", 118);
   }
 
   if (premiumTension) {

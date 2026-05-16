@@ -5,6 +5,7 @@ import type { QuantAIRealityTrustLayer } from "@/lib/intelligence/realityTrustTy
 import type { ProductRelationshipBundle } from "@/lib/intelligence/relationshipTypes";
 import type { HumanIntentProfile } from "@/lib/intelligence/humanIntentEngine";
 import type { RegretRiskLevel } from "@/lib/intelligence/regretRisk";
+import type { ProductUnderstanding } from "@/lib/intelligence/productUnderstanding";
 import {
   getStoreTrustScore,
   TRUSTED_SUBSTRINGS,
@@ -58,6 +59,8 @@ export type QuantProduct = {
   qiHumanIntentProfile?: HumanIntentProfile;
   /** Post-enrichment regret risk tier (ranking + consensus voice). */
   qiRegretRiskLevel?: RegretRiskLevel;
+  /** Product understanding v1 — listing DNA, specs, query fit (tray enrichment). */
+  qiProductUnderstanding?: ProductUnderstanding;
 };
 
 export { getStoreTrustScore };

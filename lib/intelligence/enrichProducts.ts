@@ -17,6 +17,7 @@ import { buildQuantAIRealityTrustLayer } from "./realityEngine";
 import { buildHumanIntentProfile } from "./humanIntentEngine";
 import { inferQueryStyleProfile, productStyleCompositeNudge } from "./styleTasteProfiles";
 import { assessRegretRisk } from "./regretRisk";
+import { buildProductUnderstanding, productUnderstandingRankNudge } from "./productUnderstanding";
 
 export function enrichProductsWithIntelligence(
   products: QuantProduct[],
@@ -86,6 +87,17 @@ export function enrichProductsWithIntelligence(
       medianPrice: stats.medianPrice,
       searchQuery,
     });
+    const productUnderstanding = buildProductUnderstanding({
+      product: p,
+      searchQuery,
+      category: engine.category,
+      intents,
+      humanIntent,
+      styleQuery,
+      list: productsIn,
+      reality: qiRealityTrust,
+    });
+    const understandingNudge = productUnderstandingRankNudge(productUnderstanding);
     const regret = assessRegretRisk({
       product: { ...preHuman, qiRealityTrust },
       list: productsIn,
@@ -94,7 +106,10 @@ export function enrichProductsWithIntelligence(
       searchQuery,
       reality: qiRealityTrust,
     });
-    const qiComposite = Math.min(100, Math.max(0, qiCompositeBase + styleNudge + regret.compositeNudge));
+    const qiComposite = Math.min(
+      100,
+      Math.max(0, qiCompositeBase + styleNudge + regret.compositeNudge + understandingNudge)
+    );
 
     const enriched: QuantProduct = {
       ...p,
@@ -113,6 +128,7 @@ export function enrichProductsWithIntelligence(
       qiRealityTrust,
       qiHumanIntentProfile: humanIntent,
       qiRegretRiskLevel: regret.level,
+      qiProductUnderstanding: productUnderstanding,
     };
     return enriched;
   });

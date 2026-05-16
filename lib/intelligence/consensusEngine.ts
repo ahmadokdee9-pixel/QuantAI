@@ -14,6 +14,7 @@ import type { QuantProduct } from "@/lib/shoppingScore";
 import { getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
 import { DEFAULT_HUMAN_INTENT_PROFILE } from "./humanIntentEngine";
 import { buildHumanAwareAnalystLine, deriveConsensusPersonality } from "./consensusPersonality";
+import type { ProductUnderstanding } from "./productUnderstanding";
 
 export type ConsensusFinalAction =
   | "buy_now"
@@ -150,8 +151,9 @@ function pickPrimaryVerdict(args: {
   weak: boolean;
   reality: number;
   fakeP: number;
+  productUnderstanding?: ProductUnderstanding;
 }): QuantAIDealVerdict {
-  const { action, deal, trust, qi, weak, reality, fakeP } = args;
+  const { action, deal, trust, qi, weak, reality, fakeP, productUnderstanding: pu } = args;
 
   if (action === "avoid") {
     if (deal.aiDealVerdict === "Suspicious Discount" || deal.aiDealVerdict === "Avoid Fake Sale") return deal.aiDealVerdict;
@@ -165,6 +167,9 @@ function pickPrimaryVerdict(args: {
     return "Best Price-to-Quality";
   }
   if (action === "strong_buy") {
+    if (pu && (pu.productConfidence < 58 || pu.titleQuality === "weak" || pu.titleQuality === "spammy")) {
+      return "Safe Buy";
+    }
     return "Strong Buy";
   }
 
@@ -286,8 +291,12 @@ function buildBadgeSet(args: {
   return badges.slice(0, 4);
 }
 
-function buildIntelligenceSummary(c: ConsensusDecision, qi: number, reality: number): string {
-  return `QI ${qi} · reality ${Math.round(reality)} · trust ${c.trustLevel} · timing ${c.timing} · emotion ${c.emotionalRisk} · price ${c.pricingState} · confidence ${Math.round(c.confidence)}`;
+function buildIntelligenceSummary(c: ConsensusDecision, qi: number, reality: number, pu?: ProductUnderstanding): string {
+  let s = `QI ${qi} · reality ${Math.round(reality)} · trust ${c.trustLevel} · timing ${c.timing} · emotion ${c.emotionalRisk} · price ${c.pricingState} · confidence ${Math.round(c.confidence)}`;
+  if (pu) {
+    s += ` · prod ${Math.round(pu.productConfidence)} · auth ${Math.round(pu.authenticityConfidence)} · title ${pu.titleQuality} · risk ${Math.round(pu.listingRisk)} · spec ${Math.round(pu.specCompleteness)}`;
+  }
+  return s.slice(0, 420);
 }
 
 export function buildConsensusDecision(args: {
@@ -324,7 +333,17 @@ export function buildConsensusDecision(args: {
   const priceVsMed = med > 0 ? price / med : 1;
   const premium = priceVsMed >= profile.premiumPriceRatio || p.price >= med * profile.premiumPriceRatio;
 
-  const trustLevel = trustLevelFrom(trust, weak);
+  const pu = p.qiProductUnderstanding;
+  let adjTrust = trust;
+  if (pu) {
+    adjTrust -= (100 - pu.productConfidence) * 0.09;
+    adjTrust -= pu.listingRisk * 0.05;
+    if (pu.titleQuality === "spammy") adjTrust -= 14;
+    else if (pu.titleQuality === "weak") adjTrust -= 6;
+    adjTrust = clamp(adjTrust, 0, 100);
+  }
+
+  const trustLevel = trustLevelFrom(adjTrust, weak);
   const timing = timingQuality(pred, market, rt?.stockVolatility01 ?? 0.2);
   const emotionalRisk = emotionalRiskFrom(emotionalRaw, profile.emotionalTolerance01);
   const pricingState = pricingStateFrom(priceVsMed, deal, manip);
@@ -385,6 +404,22 @@ export function buildConsensusDecision(args: {
     }
   }
 
+  if (!fromHardGate && pu) {
+    if (pu.titleQuality === "spammy" && qi < 74) {
+      finalAction = "compare";
+      fromHardGate = true;
+      consensusReason = "Title pattern reads as marketplace spam versus analyst-grade listing clarity.";
+    } else if (pu.productConfidence < 38 && reality < 78) {
+      finalAction = "compare";
+      fromHardGate = true;
+      consensusReason = "Product-side confidence is thin versus the proof this price asks for.";
+    } else if (pu.matchQuality < 36 && qi < 64) {
+      finalAction = "compare";
+      fromHardGate = true;
+      consensusReason = "Title fit versus your query is weak — widen alternatives before leaning in.";
+    }
+  }
+
   if (!fromHardGate) {
     if (stance === "wait") {
       finalAction = "wait";
@@ -408,7 +443,15 @@ export function buildConsensusDecision(args: {
         finalAction = "wait";
         consensusReason = "Timing and depreciation risk outweigh a clean buy-now read.";
       } else {
+        const puStrong =
+          !pu ||
+          (pu.productConfidence >= 60 &&
+            pu.titleQuality !== "spammy" &&
+            pu.titleQuality !== "weak" &&
+            pu.specCompleteness >= 44 &&
+            pu.authenticityConfidence >= 52);
         const strongGate =
+          puStrong &&
           !weak &&
           qi >= Math.round(74 * evidenceNeed) &&
           reality >= Math.round(82 * evidenceNeed) &&
@@ -444,6 +487,11 @@ export function buildConsensusDecision(args: {
     consensusReason = "Good bones, but we would watch price and stock for a cleaner entry.";
   }
 
+  if (finalAction === "strong_buy" && pu && (pu.productConfidence < 62 || pu.specCompleteness < 42)) {
+    finalAction = "buy_now";
+    consensusReason = "Product listing depth sits under a full strong-buy label.";
+  }
+
   const primary = pickPrimaryVerdict({
     action: finalAction,
     deal,
@@ -452,6 +500,7 @@ export function buildConsensusDecision(args: {
     weak,
     reality,
     fakeP,
+    productUnderstanding: pu,
   });
 
   const human = p.qiHumanIntentProfile ?? DEFAULT_HUMAN_INTENT_PROFILE;
@@ -487,6 +536,15 @@ export function buildConsensusDecision(args: {
   if (regretLevel === "HIGH" && (finalAction === "buy_now" || finalAction === "strong_buy")) {
     confidence = clamp(confidence - 9, 22, 92);
   }
+  if (pu) {
+    confidence += (pu.productConfidence - 58) * 0.055;
+    confidence += (pu.authenticityConfidence - 62) * 0.035;
+    confidence -= pu.listingRisk * 0.065;
+    confidence -= (100 - pu.specCompleteness) * 0.028;
+    if (pu.matchQuality < 48) confidence -= 5;
+    if (pu.titleQuality === "spammy") confidence -= 8;
+    confidence = clamp(confidence, 12, 96);
+  }
 
   const timingBadge = buildTimingBadge(finalAction, pred);
 
@@ -518,7 +576,7 @@ export function buildConsensusDecision(args: {
     analystLine: "",
     consensusPersonality,
   };
-  base.intelligenceSummary = buildIntelligenceSummary(base, qi, reality);
+  base.intelligenceSummary = buildIntelligenceSummary(base, qi, reality, pu);
   base.analystLine = buildHumanAwareAnalystLine({
     finalAction,
     trustLevel,
@@ -534,6 +592,7 @@ export function buildConsensusDecision(args: {
     trustScore: trust,
     qi,
     weakRetailer: weak,
+    understanding: pu,
   });
   return base;
 }
