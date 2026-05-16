@@ -2,6 +2,7 @@ import type { QuantProduct } from "@/lib/shoppingScore";
 import { getFinalComposite, getStoreTrustScore } from "@/lib/shoppingScore";
 import { buildDealIntelByLink } from "@/lib/intelligence/dealIntelligenceEngine";
 import { extractHumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
+import { loadMarketMemory } from "@/lib/intelligence/marketMemory";
 import { parseCommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
 import { queryListingRelevance01, reviewQuality01 } from "@/lib/intelligence/queryRelevance";
 
@@ -11,7 +12,8 @@ export function sortByVerifiedDealRank(list: QuantProduct[], query?: string): Qu
   const intel = buildDealIntelByLink(
     list,
     query?.trim() ? parseCommerceSearchIntents(query) : undefined,
-    query?.trim() ? extractHumanSearchIntent(query) : undefined
+    query?.trim() ? extractHumanSearchIntent(query) : undefined,
+    typeof window !== "undefined" ? loadMarketMemory() : undefined
   );
   const q = query?.trim() ?? "";
   const maxReviews = Math.max(0, ...list.map((p) => p.reviewsCount ?? 0));

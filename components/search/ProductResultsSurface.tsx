@@ -41,6 +41,10 @@ import LiveIntelligenceLayer from "@/components/live/LiveIntelligenceLayer";
 import { useMobilePerf } from "@/lib/hooks/useMobilePerf";
 import { relatedTrayQueries } from "@/lib/search/relatedTrayQueries";
 import { buildUnifiedMarketGroup } from "@/lib/intelligence/unifiedMarketMatching";
+import {
+  loadMarketMemory,
+  recordTrayPriceSnapshots,
+} from "@/lib/intelligence/marketMemory";
 
 const IntelligenceEducationStrip = dynamic(() => import("./IntelligenceEducationStrip"), {
   loading: () => (
@@ -141,10 +145,19 @@ export default function ProductResultsSurface({
   const [verdict, setVerdict] = useState<CompareVerdictPayload | null>(null);
   const [verdictSource, setVerdictSource] = useState<string | null>(null);
   const [compareExportFlash, setCompareExportFlash] = useState(false);
+  const [marketMemoryTick, setMarketMemoryTick] = useState(0);
 
   useEffect(() => {
     onCompareTrayChange?.(compareLinks);
   }, [compareLinks, onCompareTrayChange]);
+
+  useEffect(() => {
+    if (sortedProducts.length === 0) return;
+    if (typeof window === "undefined") return;
+    recordTrayPriceSnapshots(sortedProducts, searchQuery);
+    const id = window.setTimeout(() => setMarketMemoryTick((n) => n + 1), 0);
+    return () => window.clearTimeout(id);
+  }, [sortedProducts, searchQuery, resultsKey]);
 
   const compositeRanked = useMemo(
     () => sortByCompositeRankEnhanced(sortedProducts, searchQuery),
@@ -161,11 +174,24 @@ export default function ProductResultsSurface({
     [searchQuery]
   );
 
+  const marketMemoryState = useMemo(() => {
+    void marketMemoryTick;
+    void resultsKey;
+    void searchQuery;
+    if (typeof window === "undefined") return null;
+    return loadMarketMemory();
+  }, [marketMemoryTick, searchQuery, resultsKey]);
+
   const dealIntelResolved = useMemo(() => {
     if (dealIntelByLinkProp) return dealIntelByLinkProp;
     const intents = searchQuery.trim() ? parseCommerceSearchIntents(searchQuery) : undefined;
-    return buildDealIntelByLink(sortedProducts, intents, humanSearchIntent ?? undefined);
-  }, [dealIntelByLinkProp, sortedProducts, searchQuery, humanSearchIntent]);
+    return buildDealIntelByLink(
+      sortedProducts,
+      intents,
+      humanSearchIntent ?? undefined,
+      marketMemoryState ?? undefined
+    );
+  }, [dealIntelByLinkProp, sortedProducts, searchQuery, humanSearchIntent, marketMemoryState]);
   const marketTray = useMemo(
     () => computeMarketAwarenessForTray(searchQuery?.trim() ?? "", sortedProducts),
     [sortedProducts, searchQuery]
@@ -778,6 +804,7 @@ export default function ProductResultsSurface({
                   imagePriority={index < 9 ? "high" : "low"}
                   unifiedMarket={unifiedMarketByLink.get(p.link) ?? null}
                   humanSearchIntent={humanSearchIntent}
+                  marketMemoryState={marketMemoryState}
                 />
               </div>
             );
@@ -817,6 +844,7 @@ export default function ProductResultsSurface({
                     imagePriority={index < 9 ? "high" : "low"}
                     unifiedMarket={unifiedMarketByLink.get(p.link) ?? null}
                     humanSearchIntent={humanSearchIntent}
+                    marketMemoryState={marketMemoryState}
                   />
                 </div>
               );

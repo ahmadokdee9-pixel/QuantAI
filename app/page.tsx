@@ -28,6 +28,7 @@ import type { QuantPlanTier } from "@/lib/subscription/plans";
 import type { DealClusterDTO } from "@/lib/deals/types";
 import { buildDealIntelByLink } from "@/lib/intelligence/dealIntelligenceEngine";
 import { extractHumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
+import { loadMarketMemory, recordTrayPriceSnapshots } from "@/lib/intelligence/marketMemory";
 import { parseCommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
 import { sortByVerifiedDealRank } from "@/lib/intelligence/discountRank";
 import {
@@ -93,6 +94,7 @@ export default function Home() {
   const [saved, setSaved] = useState<QuantProduct[]>([]);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [resultsKey, setResultsKey] = useState(0);
+  const [marketMemoryTick, setMarketMemoryTick] = useState(0);
   const [subscriptionTier, setSubscriptionTier] = useState<QuantPlanTier | null>(null);
   const [searchEntitlements, setSearchEntitlements] = useState<SearchEntitlementsDTO | null>(null);
   const [compareTrayLinks, setCompareTrayLinks] = useState<string[]>([]);
@@ -201,11 +203,27 @@ export default function Home() {
     }
   }, [products, filters, sort, query]);
 
+  useEffect(() => {
+    if (sortedProductsMemo.length === 0) return;
+    if (typeof window === "undefined") return;
+    recordTrayPriceSnapshots(sortedProductsMemo, query);
+    const id = window.setTimeout(() => setMarketMemoryTick((n) => n + 1), 0);
+    return () => window.clearTimeout(id);
+  }, [sortedProductsMemo, query, resultsKey]);
+
+  const marketMemoryState = useMemo(() => {
+    void marketMemoryTick;
+    void resultsKey;
+    void query;
+    if (typeof window === "undefined") return null;
+    return loadMarketMemory();
+  }, [marketMemoryTick, query, resultsKey]);
+
   const dealIntelByLink = useMemo(() => {
     const intents = parseCommerceSearchIntents(query);
     const human = query.trim() ? extractHumanSearchIntent(query) : null;
-    return buildDealIntelByLink(sortedProductsMemo, intents, human ?? undefined);
-  }, [sortedProductsMemo, query]);
+    return buildDealIntelByLink(sortedProductsMemo, intents, human ?? undefined, marketMemoryState ?? undefined);
+  }, [sortedProductsMemo, query, marketMemoryState]);
 
   const searchIntelHeadline = searchIntelligence?.finalHeadline;
   const searchIntelBody = searchIntelligence?.finalBody;

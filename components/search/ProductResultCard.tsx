@@ -43,6 +43,8 @@ import {
 import type { MarketAwarenessTray } from "@/lib/intelligence/marketAwareness";
 import type { UnifiedCardInsight } from "@/lib/intelligence/unifiedMarketMatching";
 import { humanSearchIntentFingerprint, type HumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
+import type { MarketMemoryState } from "@/lib/intelligence/marketMemory";
+import { marketMemoryFingerprint } from "@/lib/intelligence/marketMemory";
 import { resolveFinalCommerceDecision } from "@/lib/intelligence/finalCommerceDecision";
 import {
   buildProductBuyDecision,
@@ -248,6 +250,8 @@ type Props = {
   unifiedMarket?: UnifiedCardInsight | null;
   /** Adaptive human shopping intent for this tray (optional). */
   humanSearchIntent?: HumanSearchIntent | null;
+  /** Client market memory snapshot for live deal intel (optional). */
+  marketMemoryState?: MarketMemoryState | null;
 };
 
 const btnRow =
@@ -317,6 +321,7 @@ function ProductResultCard({
   imagePriority = "low",
   unifiedMarket = null,
   humanSearchIntent = null,
+  marketMemoryState = null,
 }: Props) {
   const reduceMotion = useReducedMotion();
   const lite = reduceMotion || lowPower;
@@ -365,8 +370,8 @@ function ProductResultCard({
     [p, list, rank, humanSearchIntent]
   );
   const deal = useMemo(
-    () => dealIntelProp ?? buildProductDealIntelligence(p, list, undefined, humanSearchIntent),
-    [dealIntelProp, p, list, humanSearchIntent]
+    () => dealIntelProp ?? buildProductDealIntelligence(p, list, undefined, humanSearchIntent, marketMemoryState),
+    [dealIntelProp, p, list, humanSearchIntent, marketMemoryState]
   );
   const resolved = useMemo(
     () =>
@@ -1018,6 +1023,7 @@ function productResultCardPropsEqual(a: Props, b: Props): boolean {
   if (!unifiedMarketEqual(a.unifiedMarket, b.unifiedMarket)) return false;
   if (humanSearchIntentFingerprint(a.humanSearchIntent) !== humanSearchIntentFingerprint(b.humanSearchIntent))
     return false;
+  if (marketMemoryFingerprint(a.marketMemoryState) !== marketMemoryFingerprint(b.marketMemoryState)) return false;
   if (!marketTrayEqual(a.marketTray, b.marketTray)) return false;
   const pk = (x: QuantProduct) =>
     `${x.price}|${x.title}|${x.store}|${x.rating}|${x.image}|${x.displayPrice}|${x.oldPrice ?? ""}|${x.priceTrend}|${x.qiComposite ?? ""}|${x.availability ?? ""}|${x.shipping ?? ""}|${x.qiRealityTrust?.realityScore ?? ""}|${x.qiRealityTrust == null ? "" : x.qiRealityTrust.weakRetailer ? "1" : "0"}|${x.offerOutboundUrl ?? ""}|${x.outboundRouteKind ?? ""}|${x.qiRegretRiskLevel ?? ""}|${x.qiProductUnderstanding?.productConfidence ?? ""}|${x.qiProductUnderstanding?.titleQuality ?? ""}|${x.qiProductUnderstanding?.matchQuality ?? ""}`;

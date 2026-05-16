@@ -8,6 +8,11 @@ import { getMarketplaceSellerRiskTier } from "@/lib/retailTrust";
 import { buildLiveCommerceSignals, type LiveCommerceSignals } from "@/lib/intelligence/liveCommerceSignals";
 import type { CommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
 import type { HumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
+import type { MarketMemoryState } from "@/lib/intelligence/marketMemory";
+import { supplementDealAuthenticity } from "@/lib/intelligence/dealAuthenticity";
+import { buildPriceHistoryInsight, estimateForwardPriceHint } from "@/lib/intelligence/priceHistoryEngine";
+import { classifyTrayMarketBehavior } from "@/lib/intelligence/marketBehavior";
+import { computeWaitScore, type DealTimingCategoryArg } from "@/lib/intelligence/waitScore";
 import {
   adviseMarketTiming,
   appendWhyDealHumanTail,
@@ -719,7 +724,8 @@ export function buildProductDealIntelligence(
   product: QuantProduct,
   list: QuantProduct[],
   intents?: CommerceSearchIntents,
-  humanSearchIntent?: HumanSearchIntent | null
+  humanSearchIntent?: HumanSearchIntent | null,
+  marketMemory?: MarketMemoryState | null
 ): ProductDealIntelligence {
   const prices = list.map((x) => x.price).filter((x) => x > 0);
   const fair = prices.length ? median(prices) : product.price > 0 ? product.price : 0;
@@ -927,6 +933,63 @@ export function buildProductDealIntelligence(
     whyDealGoodOrRisky = appendWhyDealHumanTail(whyDealGoodOrRisky, humanSearchIntent);
   }
 
+  const trayBehavior = classifyTrayMarketBehavior(list);
+  const authSup = supplementDealAuthenticity(product, fake, peerMed, disc);
+  const hist = buildPriceHistoryInsight(
+    product.link,
+    product.price > 0 ? product.price : fair,
+    marketMemory ?? null
+  );
+  const wait = computeWaitScore({
+    goodTimeToBuy,
+    waitForBetterPricing,
+    timingCategory: timing.category as DealTimingCategoryArg,
+    fake,
+    suspiciousDiscountRisk,
+    trust,
+    fair,
+    price: product.price > 0 ? product.price : fair,
+    history: hist,
+    behavior: trayBehavior,
+  });
+
+  if (authSup.retailerDiscountPatternRisk01 >= 0.58) {
+    authenticityLines = [
+      "Elevated discount-pattern pressure—large % claims deserve off-list anchor checks.",
+      ...authenticityLines,
+    ].slice(0, 5);
+  }
+  if (fake === "high" && authSup.anchorInflationSuspected) {
+    authenticityLines = [
+      "Severe markdown skepticism: stacked anchor inflation with weak peer corroboration.",
+      ...authenticityLines,
+    ].slice(0, 5);
+  }
+  if (hist.recurringCycleNotes && hist.sampleCount >= 4) {
+    authenticityLines = [...authenticityLines, hist.recurringCycleNotes].slice(0, 5);
+  }
+  if (hist.seasonalHint) {
+    authenticityLines = [...authenticityLines, hist.seasonalHint].slice(0, 5);
+  }
+
+  timingSummary = `${timingSummary} ${wait.headline}`.replace(/\s+/g, " ").trim().slice(0, 380);
+  const forwardHint = estimateForwardPriceHint(product.price > 0 ? product.price : fair, hist);
+  if (forwardHint) {
+    timingSummary = `${timingSummary} ${forwardHint}`.replace(/\s+/g, " ").trim().slice(0, 440);
+  }
+  timingSummary = `${timingSummary} Market posture: ${trayBehavior.regime.replace(/_/g, " ")}.`
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 460);
+
+  whyDealGoodOrRisky = `${whyDealGoodOrRisky} ${trayBehavior.reasoning}`.replace(/\s+/g, " ").trim().slice(0, 380);
+  if (hist.sampleCount >= 2 && hist.recentLow != null && product.price > 0 && product.price <= hist.recentLow * 1.03) {
+    whyDealGoodOrRisky = `${whyDealGoodOrRisky} Lowest seen recently in your QuantAI memory for this link.`
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 400);
+  }
+
   const worthBuyingNow = worthBuyingNowSignal(aiDealVerdict, goodTimeToBuy, waitForBetterPricing, {
     trust,
     suspiciousDiscountRisk,
@@ -940,7 +1003,13 @@ export function buildProductDealIntelligence(
     inflatedBeforeSale: inflated,
     suspiciousFakeDiscount: fake === "high" || (fake === "medium" && (disc ?? 0) > 30),
   };
-  const historicalConfidenceLabel = historicalConfidenceText(lowestKnownInTray, fake, inflated);
+  let historicalConfidenceLabel = historicalConfidenceText(lowestKnownInTray, fake, inflated);
+  if (hist.sampleCount >= 2) {
+    historicalConfidenceLabel = `${historicalConfidenceLabel} ${hist.compactTimelineSummary}`
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 260);
+  }
   const dealStrength = Math.round((retailerAdjustedDealScore + dealConfidence) / 2);
 
   const unusualUnderpricing =
@@ -1014,11 +1083,12 @@ export function buildProductDealIntelligence(
 export function buildDealIntelByLink(
   list: QuantProduct[],
   intents?: CommerceSearchIntents,
-  humanSearchIntent?: HumanSearchIntent | null
+  humanSearchIntent?: HumanSearchIntent | null,
+  marketMemory?: MarketMemoryState | null
 ): Map<string, ProductDealIntelligence> {
   const m = new Map<string, ProductDealIntelligence>();
   for (const p of list) {
-    m.set(p.link, buildProductDealIntelligence(p, list, intents, humanSearchIntent));
+    m.set(p.link, buildProductDealIntelligence(p, list, intents, humanSearchIntent, marketMemory));
   }
   if (list.length < 2) return m;
 
