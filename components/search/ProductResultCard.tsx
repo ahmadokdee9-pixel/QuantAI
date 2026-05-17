@@ -432,20 +432,28 @@ function ProductResultCard({
   const StanceIcon = stanceUi.Icon;
 
   const signalsTerminalWhy = useMemo(() => {
+    if (resolved.whyThisProduct) return clip(resolved.whyThisProduct, 128);
     const w = worthLine.headline.trim();
     const d = deal.whyDealGoodOrRisky.trim();
     const raw = d ? `${w} · ${d}` : w;
     return clip(raw, 128);
-  }, [worthLine.headline, deal.whyDealGoodOrRisky]);
+  }, [resolved.whyThisProduct, worthLine.headline, deal.whyDealGoodOrRisky]);
   const signalsTerminalRisk = useMemo(() => {
+    if (resolved.riskReason) return clip(resolved.riskReason, 112);
     if (riskHint) return clip(riskHint, 112);
     const r = analystFrame.risks.replace(/^Watch ·\s*/, "").trim();
     if (r.length > 8) return clip(r, 112);
     return "Clean risk surface for this field.";
-  }, [riskHint, analystFrame.risks]);
+  }, [resolved.riskReason, riskHint, analystFrame.risks]);
   const signalsTerminalAction = useMemo(
-    () => clip(`${mergedBuyDecision.stanceLabel} · ${mergedBuyDecision.stanceDetail}`, 128),
-    [mergedBuyDecision.stanceLabel, mergedBuyDecision.stanceDetail]
+    () =>
+      clip(
+        `${mergedBuyDecision.stanceLabel} · ${mergedBuyDecision.stanceDetail}${
+          resolved.opportunityScore ? ` · Opportunity ${resolved.opportunityScore}/100` : ""
+        }`,
+        128
+      ),
+    [mergedBuyDecision.stanceLabel, mergedBuyDecision.stanceDetail, resolved.opportunityScore]
   );
 
   const transition = lite
@@ -1083,7 +1091,7 @@ function productResultCardPropsEqual(a: Props, b: Props): boolean {
   if (marketMemoryFingerprint(a.marketMemoryState) !== marketMemoryFingerprint(b.marketMemoryState)) return false;
   if (!marketTrayEqual(a.marketTray, b.marketTray)) return false;
   const pk = (x: QuantProduct) =>
-    `${x.price}|${x.title}|${x.store}|${x.rating}|${x.image}|${x.displayPrice}|${x.oldPrice ?? ""}|${x.priceTrend}|${x.qiComposite ?? ""}|${x.availability ?? ""}|${x.shipping ?? ""}|${x.qiRealityTrust?.realityScore ?? ""}|${x.qiRealityTrust == null ? "" : x.qiRealityTrust.weakRetailer ? "1" : "0"}|${x.offerOutboundUrl ?? ""}|${x.outboundRouteKind ?? ""}|${x.qiRegretRiskLevel ?? ""}|${x.qiProductUnderstanding?.productConfidence ?? ""}|${x.qiProductUnderstanding?.titleQuality ?? ""}|${x.qiProductUnderstanding?.matchQuality ?? ""}|${x.qiListingIdentity?.fingerprintCompact ?? ""}|${x.qiListingIdentity?.listingRisk01?.toFixed(2) ?? ""}|${x.qiListingIdentity?.contaminationRisk01?.toFixed(2) ?? ""}|${x.qiListingIdentity?.semanticMismatchPenalty01?.toFixed(2) ?? ""}|${x.qiListingIdentity?.productCompleteness ?? ""}|${x.qiMerchantConfidence01?.toFixed(2) ?? ""}|${x.qiCanonicalIdentity?.canonicalProductId ?? ""}|${x.qiCanonicalIdentity?.identityConfidence ?? ""}|${x.qiCanonicalIdentity?.authenticityConfidence ?? ""}`;
+    `${x.price}|${x.title}|${x.store}|${x.rating}|${x.image}|${x.displayPrice}|${x.oldPrice ?? ""}|${x.priceTrend}|${x.qiComposite ?? ""}|${x.availability ?? ""}|${x.shipping ?? ""}|${x.qiRealityTrust?.realityScore ?? ""}|${x.qiRealityTrust == null ? "" : x.qiRealityTrust.weakRetailer ? "1" : "0"}|${x.offerOutboundUrl ?? ""}|${x.outboundRouteKind ?? ""}|${x.qiRegretRiskLevel ?? ""}|${x.qiProductUnderstanding?.productConfidence ?? ""}|${x.qiProductUnderstanding?.titleQuality ?? ""}|${x.qiProductUnderstanding?.matchQuality ?? ""}|${x.qiListingIdentity?.fingerprintCompact ?? ""}|${x.qiListingIdentity?.listingRisk01?.toFixed(2) ?? ""}|${x.qiListingIdentity?.contaminationRisk01?.toFixed(2) ?? ""}|${x.qiListingIdentity?.semanticMismatchPenalty01?.toFixed(2) ?? ""}|${x.qiListingIdentity?.productCompleteness ?? ""}|${x.qiMerchantConfidence01?.toFixed(2) ?? ""}|${x.qiCanonicalIdentity?.canonicalProductId ?? ""}|${x.qiCanonicalIdentity?.identityConfidence ?? ""}|${x.qiCanonicalIdentity?.authenticityConfidence ?? ""}|${x.qiMarketPulse?.dailyOpportunityScore ?? ""}|${x.qiMarketPulse?.trendMomentum ?? ""}|${x.qiDiscovery?.discoveryRole ?? ""}|${x.qiDiscovery?.discoveryScore ?? ""}`;
   if (pk(a.product) !== pk(b.product)) return false;
   if (a.list.length !== b.list.length) return false;
   if (a.list.length > 0) {

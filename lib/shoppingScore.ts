@@ -9,6 +9,9 @@ import type { ProductUnderstanding } from "@/lib/intelligence/productUnderstandi
 import type { QiListingIdentity } from "@/lib/intelligence/listingIdentityTypes";
 import type { QiCanonicalIdentity } from "@/lib/intelligence/canonicalCommerceIdentity";
 import type { QiGlobalCommerceIntelligence } from "@/lib/intelligence/globalCommerceFoundation";
+import type { ProductDiscoveryIntelligence } from "@/lib/intelligence/discoveryEngine";
+import type { LiveCommerceDecision } from "@/lib/intelligence/liveCommerceDecision";
+import type { MarketPulseSnapshot } from "@/lib/intelligence/marketPulseEngine";
 import {
   getStoreTrustScore,
   TRUSTED_SUBSTRINGS,
@@ -72,6 +75,12 @@ export type QuantProduct = {
   qiCanonicalIdentity?: QiCanonicalIdentity;
   /** Global commerce foundation: query, identity, merchant, market, and decision planes. */
   qiGlobalCommerce?: QiGlobalCommerceIntelligence;
+  /** Tray-level daily market pulse duplicated per row for card/decision memo stability. */
+  qiMarketPulse?: MarketPulseSnapshot;
+  /** Living discovery role: best match/value/safe/watch/avoid/alternative. */
+  qiDiscovery?: ProductDiscoveryIntelligence;
+  /** Final live commerce decision overlay for existing chips/copy. */
+  qiLiveDecision?: LiveCommerceDecision;
 };
 
 export { getStoreTrustScore };

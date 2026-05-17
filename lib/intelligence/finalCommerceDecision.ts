@@ -10,7 +10,7 @@ import type { BuyStance } from "./productBuyDecision";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getStoreTrustScore } from "@/lib/shoppingScore";
 import { analystQueryStrategistSuffix, type HumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
-import { buildConsensusDecision, type ConsensusFinalAction, type ConsensusDecision } from "./consensusEngine";
+import { buildConsensusDecision, type ConsensusDecision } from "./consensusEngine";
 import {
   buildCommerceTimingSupportLine,
   buildNeutralCommerceChips,
@@ -19,6 +19,7 @@ import {
   type CommerceBrainFinalCode,
 } from "./commerceDecisionBrain";
 import type { GlobalCommerceAction } from "./globalCommerceFoundation";
+import { resolveLiveCommerceDecision } from "./liveCommerceDecision";
 
 export type FinalCommerceAction = "buy_now" | "wait" | "compare" | "avoid";
 
@@ -36,16 +37,13 @@ export type FinalCommerceDecision = {
   decisionReason: string;
   buySurface: { stance: BuyStance; stanceLabel: string; stanceDetail: string };
   analystLine: string;
+  marketContextLine: string;
+  opportunityScore: number;
+  riskReason: string;
+  whyThisProduct: string;
   /** Full consensus payload (hidden from layout; available for analytics / future use). */
   consensus: ConsensusDecision;
 };
-
-function mapConsensusToFinalAction(a: ConsensusFinalAction): FinalCommerceAction {
-  if (a === "avoid") return "avoid";
-  if (a === "wait" || a === "watch") return "wait";
-  if (a === "buy_now" || a === "strong_buy") return "buy_now";
-  return "compare";
-}
 
 function mapCommerceCodeToLegacyVerdict(code: CommerceBrainFinalCode): QuantAIDealVerdict {
   switch (code) {
@@ -97,6 +95,20 @@ function reconcileWithGlobalFoundation(
   return brain;
 }
 
+function liveChipClass(label: string): string {
+  const u = label.toUpperCase();
+  if (u.includes("HIDDEN VALUE") || u.includes("BEST MATCH") || u.includes("BEST TRUSTED")) {
+    return "border-emerald-400/28 bg-emerald-500/[0.1] text-emerald-50/92";
+  }
+  if (u.includes("LIVE DEAL") || u.includes("MARKET MOVING")) {
+    return "border-indigo-400/26 bg-indigo-500/[0.09] text-indigo-50/90";
+  }
+  if (u.includes("LOW RISK")) {
+    return "border-teal-400/28 bg-teal-500/[0.1] text-teal-50/92";
+  }
+  return "border-slate-400/22 bg-slate-500/[0.08] text-slate-100/85";
+}
+
 export function resolveFinalCommerceDecision(args: {
   product: QuantProduct;
   list: QuantProduct[];
@@ -121,7 +133,6 @@ export function resolveFinalCommerceDecision(args: {
     searchQuery,
   });
 
-  const mappedAction = mapConsensusToFinalAction(consensus.finalAction);
   const trust = getStoreTrustScore(p.store);
   const weak = p.qiRealityTrust?.weakRetailer ?? trust < 56;
 
@@ -140,7 +151,6 @@ export function resolveFinalCommerceDecision(args: {
     p.qiGlobalCommerce?.decision.analystLine
   );
 
-  const primaryVerdict = mapCommerceCodeToLegacyVerdict(brain.code);
   const secondaryChips = buildNeutralCommerceChips(consensus.badgeSet);
   const supportingTimingLine = buildCommerceTimingSupportLine({
     code: brain.code,
@@ -160,22 +170,55 @@ export function resolveFinalCommerceDecision(args: {
     analystLine = analystLine.slice(0, 280);
   }
 
+  const live = resolveLiveCommerceDecision({
+    brainCode: brain.code,
+    consensus,
+    productUnderstanding: p.qiProductUnderstanding,
+    marketPulse: p.qiMarketPulse,
+    discovery: p.qiDiscovery,
+    unifiedMarket: null,
+    baseAnalystLine: analystLine,
+  });
+
+  const liveChipSet = new Set(live.finalChips.map((x) => x.toUpperCase()));
+  const liveSecondary = [
+    ...live.finalChips.slice(1).map((label) => ({ label, cls: liveChipClass(label) })),
+    ...secondaryChips.filter((chip) => !liveChipSet.has(chip.label.toUpperCase())),
+  ].slice(0, 3);
+  const livePrimary = live.finalChips[0] ?? brain.chipLabel;
+  const finalBrainCode =
+    live.finalAction === "AVOID"
+      ? "AVOID"
+      : live.finalAction === "WAIT"
+        ? "WAIT"
+        : live.finalAction === "COMPARE"
+          ? "COMPARE_ALTERNATIVES"
+          : live.finalAction === "STRONG_BUY"
+            ? "STRONG_BUY"
+            : live.finalAction === "BUY_READY"
+              ? "BUY_READY"
+              : "SAFE_BUY";
+
   return {
-    finalAction: brain.code === brainBase.code ? mappedAction : mapCommerceCodeToFinalAction(brain.code),
-    primaryVerdict,
-    commerceBrainCode: brain.code,
-    commerceBrainChipLabel: brain.chipLabel,
-    secondaryChips,
+    finalAction: mapCommerceCodeToFinalAction(finalBrainCode),
+    primaryVerdict: mapCommerceCodeToLegacyVerdict(finalBrainCode),
+    commerceBrainCode: finalBrainCode,
+    commerceBrainChipLabel: livePrimary,
+    secondaryChips: liveSecondary,
     predictiveBadge: consensus.timingBadge,
     contextChip: null,
     blockedChips: [],
-    decisionReason: consensus.consensusReason,
+    decisionReason: live.riskReason || consensus.consensusReason,
     buySurface: {
-      stance: brain.stance,
-      stanceLabel: brain.stanceLabel,
-      stanceDetail: brain.stanceDetail,
+      stance: finalBrainCode === "AVOID" ? "avoid" : finalBrainCode === "WAIT" ? "wait" : finalBrainCode === "COMPARE_ALTERNATIVES" ? "compare" : "buy",
+      stanceLabel: finalBrainCode === "AVOID" ? "Avoid" : finalBrainCode === "WAIT" ? "Wait" : finalBrainCode === "COMPARE_ALTERNATIVES" ? "Compare alternatives" : brain.stanceLabel,
+      stanceDetail: live.whyThisProduct || brain.stanceDetail,
     },
-    analystLine,
+    analystLine: live.analystLine,
+    marketContextLine: live.marketContextLine,
+    opportunityScore: live.opportunityScore,
+    riskReason: live.riskReason,
+    whyThisProduct: live.whyThisProduct,
     consensus,
   };
 }

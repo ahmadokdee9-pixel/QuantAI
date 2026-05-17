@@ -26,6 +26,7 @@ import { planDefinition } from "@/lib/subscription/plans";
 import { subscriptionTierFromClerkUser } from "@/lib/subscription/resolveTier";
 import { buildUniversalCommerceContext, tasteTagListForApi } from "@/lib/commerce-os";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
+import { semanticRerankSearchResults } from "@/lib/search/semanticReranker";
 import type { DealClusterDTO } from "@/lib/deals/types";
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
 import type { SearchEntitlementsDTO } from "@/lib/subscription/entitlements";
@@ -199,6 +200,7 @@ async function handleSearch(
     );
     products = applyPersonaRanking(products, shopperPersona, commerceSessionMemory);
     products = applyMarketAwarenessRanking(products, query);
+    products = semanticRerankSearchResults(products, query);
     dealClusters = buildDealClusters(products);
     searchIntelligence = buildSearchIntelligence(query, products, dealClusters);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);

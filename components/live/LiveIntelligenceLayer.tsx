@@ -7,12 +7,14 @@ import type { QuantProduct } from "@/lib/shoppingScore";
 import { buildLiveTerminalSignals } from "@/lib/liveSignals/simulatedTerminalSignals";
 import { buildSimulatedDealSignals } from "@/lib/liveSignals/simulatedDealSignals";
 import { buildQualitativeMarketRibbon } from "@/lib/liveSignals/qualitativeRibbon";
+import type { MarketPulseSnapshot } from "@/lib/intelligence/marketPulseEngine";
 
 type Props = {
   query: string;
   products: QuantProduct[];
   /** Touch / narrow: start collapsed so heavy cards are opt-in. */
   defaultCollapsed?: boolean;
+  marketPulse?: MarketPulseSnapshot | null;
 };
 
 function formatAgo(minutes: number): string {
@@ -36,6 +38,7 @@ export default function LiveIntelligenceLayer({
   query,
   products,
   defaultCollapsed = false,
+  marketPulse = null,
 }: Props) {
   const reduce = useReducedMotion();
   const mounted = useSyncExternalStore(subscribeNoop, getClientSnapshot, getServerSnapshot);
@@ -54,6 +57,9 @@ export default function LiveIntelligenceLayer({
   }, [mounted, reduce, terminal.length, expanded]);
 
   const active = terminal.length ? terminal[terminalIndex % terminal.length]! : null;
+  const pulseHeadline = marketPulse
+    ? `Market pulse ${marketPulse.trendMomentum} · opportunity ${marketPulse.dailyOpportunityScore}/100`
+    : null;
 
   if (!mounted || !products.length) return null;
 
@@ -71,7 +77,7 @@ export default function LiveIntelligenceLayer({
             <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Live console</p>
               <p className="truncate text-[12px] font-medium text-white/88">
-                {active?.headline ?? "Tray signals"} · tap to expand
+                {pulseHeadline ?? active?.headline ?? "Tray signals"} · tap to expand
               </p>
             </div>
           </div>
@@ -123,9 +129,11 @@ export default function LiveIntelligenceLayer({
                           : "text-white/92"
                     }`}
                   >
-                    {active.headline}
+                    {pulseHeadline ?? active.headline}
                   </p>
-                  <p className="text-[11px] leading-relaxed text-slate-500">{active.detail}</p>
+                  <p className="text-[11px] leading-relaxed text-slate-500">
+                    {marketPulse?.marketPulseReason ?? active.detail}
+                  </p>
                 </motion.div>
               ) : null}
             </div>

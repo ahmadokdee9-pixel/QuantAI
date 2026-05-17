@@ -196,6 +196,7 @@ export default function ProductResultsSurface({
     () => computeMarketAwarenessForTray(searchQuery?.trim() ?? "", sortedProducts),
     [sortedProducts, searchQuery]
   );
+  const marketPulse = useMemo(() => sortedProducts[0]?.qiMarketPulse ?? null, [sortedProducts]);
   const trayDealHighlights = useMemo(() => buildTrayDealHighlights(sortedProducts), [sortedProducts]);
 
   const unifiedMarketByLink = useMemo(
@@ -550,6 +551,7 @@ export default function ProductResultsSurface({
         key={searchQuery}
         query={searchQuery}
         products={sortedProducts}
+        marketPulse={marketPulse}
         defaultCollapsed={mobilePerf}
       />
       {sortedProducts.length >= 2 && compareLinks.length === 0 && (

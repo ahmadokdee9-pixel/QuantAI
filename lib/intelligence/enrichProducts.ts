@@ -22,6 +22,8 @@ import { assessUniversalListingIdentity } from "./universalListingIdentity";
 import { computeMerchantConfidence01, merchantConfidenceRankNudge } from "./merchantIntelligence";
 import { buildQiCanonicalIdentity } from "./canonicalCommerceIdentity";
 import { buildGlobalCommerceFoundationForTray } from "./globalCommerceFoundation";
+import { buildDiscoveryIntelligenceForTray } from "./discoveryEngine";
+import { buildMarketPulseSnapshot } from "./marketPulseEngine";
 
 export function enrichProductsWithIntelligence(
   products: QuantProduct[],
@@ -155,10 +157,22 @@ export function enrichProductsWithIntelligence(
   });
 
   const globalCommerceByLink = buildGlobalCommerceFoundationForTray(scored, searchQuery);
-  const withGlobalCommerce = scored.map((p) => ({
+  const marketPulse = buildMarketPulseSnapshot(scored, searchQuery);
+  const withGlobalCommerceBase = scored.map((p) => ({
     ...p,
     qiGlobalCommerce: globalCommerceByLink.get(p.link),
+    qiMarketPulse: marketPulse,
   }));
+  const discoveryByLink = buildDiscoveryIntelligenceForTray(withGlobalCommerceBase, marketPulse);
+  const withGlobalCommerce = withGlobalCommerceBase.map((p) => {
+    const discovery = discoveryByLink.get(p.link);
+    const qiComposite = Math.min(100, Math.max(0, Math.round((p.qiComposite ?? 0) + (discovery?.rankingNudge ?? 0))));
+    return {
+      ...p,
+      qiComposite,
+      qiDiscovery: discovery,
+    };
+  });
 
   withGlobalCommerce.sort((a, b) => (b.qiComposite ?? 0) - (a.qiComposite ?? 0));
   const curated = applyEliteFirstWindowCuration(withGlobalCommerce, 12);
