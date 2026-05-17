@@ -117,8 +117,30 @@ type SearchDataPayload = {
   entitlements?: SearchEntitlementsDTO;
 };
 
-function emptySearchData(): Pick<SearchDataPayload, "products" | "dealClusters" | "meta"> {
-  return { products: [], dealClusters: [], meta: {} };
+function sourceCount(products: QuantProduct[]): number {
+  return new Set(products.map((p) => p.store.trim().toLowerCase()).filter(Boolean)).size;
+}
+
+function searchDebugMeta(args: {
+  products: QuantProduct[];
+  liveDiscovery?: LiveCommerceDiscoveryMeta | null;
+  fallbackReason?: string | null;
+  errorState?: string | null;
+}): Record<string, unknown> {
+  const { products, liveDiscovery = null, fallbackReason = null, errorState = null } = args;
+  return {
+    productCount: products.length,
+    productsCount: products.length,
+    sourceCount: sourceCount(products),
+    fallbackReason,
+    errorState,
+    liveDiscoveryStatus: liveDiscovery?.status ?? null,
+    liveDiscoverySource: liveDiscovery?.source ?? null,
+  };
+}
+
+function emptySearchData(meta?: Record<string, unknown>): Pick<SearchDataPayload, "products" | "dealClusters" | "meta"> {
+  return { products: [], dealClusters: [], meta: meta ?? searchDebugMeta({ products: [], errorState: null }) };
 }
 
 function jsonSearch(
@@ -154,7 +176,13 @@ async function handleSearch(
         success: false,
         error,
         message,
-        data: emptySearchData(),
+        data: emptySearchData(
+          searchDebugMeta({
+            products: [],
+            fallbackReason: error,
+            errorState: error,
+          })
+        ),
         ...extras,
       },
       { status }
@@ -261,6 +289,14 @@ async function handleSearch(
     }
 
     const marketAwareness = computeMarketAwarenessForTray(query, products);
+    const fallbackReason =
+      liveDiscovery.status === "enabled" ? null : liveDiscovery.error || liveDiscovery.status;
+    const debugMeta = searchDebugMeta({
+      products,
+      liveDiscovery,
+      fallbackReason,
+      errorState: null,
+    });
 
     const data: SearchDataPayload = {
       products,
@@ -277,6 +313,12 @@ async function handleSearch(
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),
         liveDiscovery,
         liveDiscoveryStatus: liveDiscovery.status,
+        searchDebug: debugMeta,
+        productCount: debugMeta.productCount,
+        productsCount: debugMeta.productsCount,
+        sourceCount: debugMeta.sourceCount,
+        fallbackReason: debugMeta.fallbackReason,
+        errorState: debugMeta.errorState,
         commerceSessionMemory,
         shopperPersona: {
           dominant: shopperPersona.dominant,
@@ -317,7 +359,13 @@ export async function GET(req: Request) {
         success: false,
         error: "SEARCH_FAILED",
         message: e instanceof Error ? e.message : "Search could not complete.",
-        data: emptySearchData(),
+        data: emptySearchData(
+          searchDebugMeta({
+            products: [],
+            fallbackReason: "GET_FATAL",
+            errorState: "SEARCH_FAILED",
+          })
+        ),
       },
       { status: 500 }
     );
@@ -339,7 +387,13 @@ export async function POST(req: Request) {
           ok: false,
           error: "BAD_REQUEST",
           message: "Invalid JSON body",
-          data: emptySearchData(),
+          data: emptySearchData(
+            searchDebugMeta({
+              products: [],
+              fallbackReason: "BAD_REQUEST",
+              errorState: "BAD_REQUEST",
+            })
+          ),
           products: [],
           results: [],
         },
@@ -355,7 +409,13 @@ export async function POST(req: Request) {
         success: false,
         error: "search_failed",
         message: error instanceof Error ? error.message : "Unknown search error",
-        data: emptySearchData(),
+        data: emptySearchData(
+          searchDebugMeta({
+            products: [],
+            fallbackReason: "POST_FATAL",
+            errorState: "search_failed",
+          })
+        ),
         products: [],
         results: [],
       },
