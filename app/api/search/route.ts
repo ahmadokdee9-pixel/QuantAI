@@ -19,6 +19,7 @@ import {
 } from "@/lib/intelligence/persistence";
 import { buildDealClusters } from "@/lib/deals";
 import { buildSearchIntelligence } from "@/lib/intelligence/searchDecisionEngine";
+import { runLiveCommerceDiscovery, type LiveCommerceDiscoveryMeta } from "@/lib/intelligence/liveCommerceDiscovery";
 import { intentMatchEnvelope, parseCommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
 import { enforceLimit, searchRatelimit } from "@/lib/rate-limit";
 import { entitlementsForTier } from "@/lib/subscription/entitlements";
@@ -40,6 +41,7 @@ async function runSearchPipeline(query: string): Promise<{
   dealClusters: DealClusterDTO[];
   searchIntelligence: SearchIntelligenceDTO | null;
   commerceMeta: SearchCommerceAIMeta;
+  liveDiscovery: LiveCommerceDiscoveryMeta;
 }> {
   const result = await fetchShoppingProductsDeduped(query);
   if (!result.ok) {
@@ -49,7 +51,8 @@ async function runSearchPipeline(query: string): Promise<{
       `${SEARCH_UPSTREAM_PREFIX}${status}:${result.error || "Search upstream failed."}`
     );
   }
-  let products = enrichProductsWithIntelligence(result.products, query);
+  const liveDiscovery = await runLiveCommerceDiscovery(query, result.products);
+  let products = enrichProductsWithIntelligence(liveDiscovery.products, query);
   const layered = await attachCommerceAiLayer(products, query);
   products = layered.products;
   const dealClusters = buildDealClusters(products);
@@ -59,13 +62,14 @@ async function runSearchPipeline(query: string): Promise<{
     dealClusters,
     searchIntelligence,
     commerceMeta: layered.commerceMeta,
+    liveDiscovery: liveDiscovery.meta,
   };
 }
 
 /** Cross-request tray cache — normalized key improves hit rate; short TTL keeps prices fresh. */
 const getCachedSearchPipeline = unstable_cache(
   async (pipelineQuery: string) => runSearchPipeline(pipelineQuery),
-  ["quantai-search-pipeline-v4"],
+  ["quantai-search-pipeline-v5-live-discovery"],
   { revalidate: 120 }
 );
 
@@ -162,12 +166,14 @@ async function handleSearch(
     let dealClusters: DealClusterDTO[];
     let searchIntelligence: SearchIntelligenceDTO | null;
     let commerceMeta: SearchCommerceAIMeta;
+    let liveDiscovery: LiveCommerceDiscoveryMeta;
     try {
       const tray = await getCachedSearchPipeline(pipelineKey);
       products = tray.products;
       dealClusters = tray.dealClusters;
       searchIntelligence = tray.searchIntelligence;
       commerceMeta = tray.commerceMeta;
+      liveDiscovery = tray.liveDiscovery;
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
       if (msg.startsWith(SEARCH_UPSTREAM_PREFIX)) {
@@ -227,6 +233,7 @@ async function handleSearch(
         commerceAI: commerceMeta,
         commerceAiEngine: resolveCommerceAiEngine(),
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),
+        liveDiscovery,
         commerceSessionMemory,
         shopperPersona: {
           dominant: shopperPersona.dominant,
