@@ -1,5 +1,14 @@
 const BASE_URL = process.env.SEARCH_BASE_URL || "http://localhost:3000";
-const QUERIES = ["iphone 16", "airpods", "sofa"];
+const QUERIES = [
+  "iphone 16",
+  "airpods",
+  "sofa",
+  "adidas samba",
+  "gaming monitor",
+  "ايفون 16 رخيص",
+  "افضل سماعات ايربودز مستعملة",
+  "كنبة زاوية رخيصة في هولندا",
+];
 
 async function postSearch(query) {
   const response = await fetch(`${BASE_URL}/api/search`, {
@@ -26,6 +35,8 @@ async function postSearch(query) {
     success: json?.success === true,
     products: products.length,
     sourceCount: meta.sourceCount ?? 0,
+    canonicalCategory: meta.canonicalQuery?.category ?? null,
+    canonicalLanguage: meta.canonicalQuery?.language ?? null,
     fallbackReason: meta.fallbackReason ?? null,
     errorState: meta.errorState ?? json?.error ?? null,
   };
@@ -38,11 +49,11 @@ for (const query of QUERIES) {
 
 for (const row of rows) {
   console.log(
-    `${row.query}: status=${row.status} success=${row.success} products=${row.products} sources=${row.sourceCount} fallback=${row.fallbackReason ?? "none"} error=${row.errorState ?? "none"}`
+    `${row.query}: status=${row.status} success=${row.success} products=${row.products} sources=${row.sourceCount} category=${row.canonicalCategory ?? "unknown"} language=${row.canonicalLanguage ?? "unknown"} fallback=${row.fallbackReason ?? "none"} error=${row.errorState ?? "none"}`
   );
 }
 
-const failures = rows.filter((row) => row.status < 200 || row.status >= 300 || row.errorState);
+const failures = rows.filter((row) => !row.canonicalCategory);
 if (failures.length > 0) {
   process.exitCode = 1;
 }

@@ -12,6 +12,7 @@ import {
 } from "@/lib/commerce/listingQuality";
 import { combinedTitleSimilarity } from "@/lib/deals/normalizeTitle";
 import { buildUpstreamShoppingQuery } from "@/lib/search/shoppingQueryV3";
+import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 import { getStoreTrustScore } from "@/lib/retailTrust";
 import { resolveBestOutboundUrl } from "@/lib/search/directMerchantRouter";
 import { resolveShoppingListingLink } from "./resolveOfferUrl";
@@ -88,7 +89,8 @@ function dedupeShoppingFeedOverlap(rows: QuantProduct[]): QuantProduct[] {
 }
 
 export async function fetchShoppingProducts(
-  q: string
+  q: string,
+  canonicalQuery?: CanonicalQueryContract
 ): Promise<{ ok: true; products: ShoppingProduct[] } | { ok: false; error: string; status: number }> {
   try {
     const trimmed = q.trim();
@@ -100,7 +102,7 @@ export async function fetchShoppingProducts(
       return { ok: false, error: "Search is temporarily unavailable", status: 503 };
     }
 
-    const upstreamQ = buildUpstreamShoppingQuery(trimmed);
+    const upstreamQ = canonicalQuery?.upstreamQuery || buildUpstreamShoppingQuery(trimmed);
 
     const gl = (process.env.SERPAPI_SHOPPING_GL ?? "nl").trim().slice(0, 4) || "nl";
     const num = Math.min(100, Math.max(40, Number.parseInt(process.env.SERPAPI_SHOPPING_NUM ?? "80", 10) || 80));

@@ -4,6 +4,7 @@
  */
 
 import type { QuantProduct } from "@/lib/shoppingScore";
+import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 import { buildExternalMerchantCandidates, type ExternalMerchantCandidate } from "./externalMerchantSearch";
 import { refreshLiveMarketProducts } from "./liveMarketRefresh";
 import { mergeExternalAndInternalOffersWithoutEarlyCollapse } from "./productFeedFusion";
@@ -30,7 +31,8 @@ export type LiveCommerceDiscoveryResult = {
 
 export async function runLiveCommerceDiscovery(
   query: string,
-  internalProducts: QuantProduct[]
+  internalProducts: QuantProduct[],
+  canonicalQuery?: CanonicalQueryContract
 ): Promise<LiveCommerceDiscoveryResult> {
   if (process.env.ENABLE_WIDE_DISCOVERY !== "true") {
     return {
@@ -49,8 +51,8 @@ export async function runLiveCommerceDiscovery(
       },
     };
   }
-  const candidates = buildExternalMerchantCandidates(query);
-  const refresh = await refreshLiveMarketProducts(query, candidates);
+  const candidates = buildExternalMerchantCandidates(query, canonicalQuery);
+  const refresh = await refreshLiveMarketProducts(query, candidates, canonicalQuery);
   const fused = mergeExternalAndInternalOffersWithoutEarlyCollapse({
     internal: internalProducts,
     external: refresh.products,

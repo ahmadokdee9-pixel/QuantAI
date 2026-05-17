@@ -5,6 +5,7 @@
 
 import { buildMerchantSearchUrl } from "@/lib/search/directMerchantRouter";
 import { buildSearchQueryUnderstanding, type SemanticQueryUnderstanding } from "@/lib/search/queryUnderstanding";
+import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { fuseProductFeeds } from "./productFeedFusion";
 
@@ -154,9 +155,10 @@ export function generateMerchantSearchRoutes(
 
 export function buildWideMerchantCandidates(
   query: string,
-  parsedIntent = buildSearchQueryUnderstanding(query)
+  parsedIntent: SemanticQueryUnderstanding | CanonicalQueryContract = buildSearchQueryUnderstanding(query)
 ): WideMerchantCandidate[] {
-  const candidates = WIDE_MERCHANTS.flatMap((merchant) => generateMerchantSearchRoutes(query, merchant, parsedIntent))
+  const semanticIntent = "semantic" in parsedIntent ? parsedIntent.semantic : parsedIntent;
+  const candidates = WIDE_MERCHANTS.flatMap((merchant) => generateMerchantSearchRoutes(query, merchant, semanticIntent))
     .filter((c) => c.routeQuality >= 50 || c.queryKind === "ean")
     .sort((a, b) => b.routeQuality - a.routeQuality || a.label.localeCompare(b.label));
   const keyed = new Map<string, WideMerchantCandidate>();

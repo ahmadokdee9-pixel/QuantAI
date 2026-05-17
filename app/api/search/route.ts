@@ -19,12 +19,13 @@ import {
 import { buildDealClusters } from "@/lib/deals";
 import { buildSearchIntelligence } from "@/lib/intelligence/searchDecisionEngine";
 import { runLiveCommerceDiscovery, type LiveCommerceDiscoveryMeta } from "@/lib/intelligence/liveCommerceDiscovery";
-import { intentMatchEnvelope, parseCommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
+import { intentMatchEnvelope } from "@/lib/intelligence/searchIntentV2";
 import { enforceLimit, searchRatelimit } from "@/lib/rate-limit";
 import { entitlementsForTier } from "@/lib/subscription/entitlements";
 import { planDefinition } from "@/lib/subscription/plans";
 import { subscriptionTierFromClerkUser } from "@/lib/subscription/resolveTier";
 import { buildUniversalCommerceContext, tasteTagListForApi } from "@/lib/commerce-os";
+import { buildCanonicalQuery, canonicalQueryForDebug, type CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import { semanticRerankSearchResults } from "@/lib/search/semanticReranker";
 import type { DealClusterDTO } from "@/lib/deals/types";
@@ -58,10 +59,11 @@ function fallbackLiveDiscoveryMeta(
 
 async function runSafeLiveCommerceDiscovery(
   query: string,
-  internalProducts: QuantProduct[]
+  internalProducts: QuantProduct[],
+  canonicalQuery?: CanonicalQueryContract
 ) {
   try {
-    return await runLiveCommerceDiscovery(query, internalProducts);
+    return await runLiveCommerceDiscovery(query, internalProducts, canonicalQuery);
   } catch (error) {
     console.error("[QuantAI:live-discovery] Falling back to internal results", error);
     return {
@@ -78,8 +80,10 @@ async function runSearchPipeline(query: string): Promise<{
   searchIntelligence: SearchIntelligenceDTO | null;
   commerceMeta: SearchCommerceAIMeta;
   liveDiscovery: LiveCommerceDiscoveryMeta;
+  canonicalQuery: CanonicalQueryContract;
 }> {
-  const result = await fetchShoppingProductsDeduped(query);
+  const canonicalQuery = buildCanonicalQuery(query);
+  const result = await fetchShoppingProductsDeduped(query, canonicalQuery);
   if (!result.ok) {
     const status =
       result.status >= 400 && result.status < 600 ? result.status : 502;
@@ -87,8 +91,8 @@ async function runSearchPipeline(query: string): Promise<{
       `${SEARCH_UPSTREAM_PREFIX}${status}:${result.error || "Search upstream failed."}`
     );
   }
-  const liveDiscovery = await runSafeLiveCommerceDiscovery(query, result.products);
-  let products = enrichProductsWithIntelligence(liveDiscovery.products, query);
+  const liveDiscovery = await runSafeLiveCommerceDiscovery(query, result.products, canonicalQuery);
+  let products = enrichProductsWithIntelligence(liveDiscovery.products, query, canonicalQuery);
   const layered = await attachCommerceAiLayer(products, query);
   products = layered.products;
   const dealClusters = buildDealClusters(products);
@@ -99,6 +103,7 @@ async function runSearchPipeline(query: string): Promise<{
     searchIntelligence,
     commerceMeta: layered.commerceMeta,
     liveDiscovery: liveDiscovery.meta,
+    canonicalQuery,
   };
 }
 
@@ -124,10 +129,11 @@ function sourceCount(products: QuantProduct[]): number {
 function searchDebugMeta(args: {
   products: QuantProduct[];
   liveDiscovery?: LiveCommerceDiscoveryMeta | null;
+  canonicalQuery?: CanonicalQueryContract | null;
   fallbackReason?: string | null;
   errorState?: string | null;
 }): Record<string, unknown> {
-  const { products, liveDiscovery = null, fallbackReason = null, errorState = null } = args;
+  const { products, liveDiscovery = null, canonicalQuery = null, fallbackReason = null, errorState = null } = args;
   return {
     productCount: products.length,
     productsCount: products.length,
@@ -136,6 +142,7 @@ function searchDebugMeta(args: {
     errorState,
     liveDiscoveryStatus: liveDiscovery?.status ?? null,
     liveDiscoverySource: liveDiscovery?.source ?? null,
+    canonicalQuery: canonicalQuery ? canonicalQueryForDebug(canonicalQuery) : null,
   };
 }
 
@@ -193,6 +200,7 @@ async function handleSearch(
     if (!query) {
       return fail(400, "BAD_REQUEST", "Missing query");
     }
+    const requestCanonicalQuery = buildCanonicalQuery(query);
 
     const { userId, user } = await optionalClerkSearchUser();
     const tier = subscriptionTierFromClerkUser(user);
@@ -230,13 +238,14 @@ async function handleSearch(
       }
     }
 
-    const pipelineKey = normalizeSearchCacheKey(query);
+    const pipelineKey = normalizeSearchCacheKey(requestCanonicalQuery.normalizedQuery || query);
 
     let products: QuantProduct[];
     let dealClusters: DealClusterDTO[];
     let searchIntelligence: SearchIntelligenceDTO | null;
     let commerceMeta: SearchCommerceAIMeta;
     let liveDiscovery: LiveCommerceDiscoveryMeta;
+    const canonicalQuery: CanonicalQueryContract = requestCanonicalQuery;
     try {
       const tray = await getCachedSearchPipeline(pipelineKey);
       products = tray.products;
@@ -253,16 +262,35 @@ async function handleSearch(
         const status = Number.parseInt(statusRaw, 10);
         const message = colon >= 0 ? rest.slice(colon + 1) : "Search upstream failed.";
         const httpStatus = Number.isFinite(status) && status >= 400 && status < 600 ? status : 502;
-        return fail(httpStatus, "SEARCH_FAILED", message || "Search upstream failed.");
+        return fail(httpStatus, "SEARCH_FAILED", message || "Search upstream failed.", {
+          data: emptySearchData(
+            searchDebugMeta({
+              products: [],
+              canonicalQuery: requestCanonicalQuery,
+              fallbackReason: "SEARCH_FAILED",
+              errorState: "SEARCH_FAILED",
+            })
+          ),
+        });
       }
       return fail(
         500,
         "SEARCH_FAILED",
-        e instanceof Error ? e.message : "Search could not complete."
+        e instanceof Error ? e.message : "Search could not complete.",
+        {
+          data: emptySearchData(
+            searchDebugMeta({
+              products: [],
+              canonicalQuery: requestCanonicalQuery,
+              fallbackReason: "SEARCH_FAILED",
+              errorState: "SEARCH_FAILED",
+            })
+          ),
+        }
       );
     }
 
-    const intents = parseCommerceSearchIntents(query);
+    const intents = canonicalQuery.commerceIntents;
     products = applyPredictiveCommerceToTray(products, query, intents);
     const shopperPersona = detectShopperPersonas(query, intents);
     const prevCommerceMemory = safeParseCommerceSessionMemory(opts?.commerceMemory);
@@ -276,7 +304,7 @@ async function handleSearch(
     );
     products = applyPersonaRanking(products, shopperPersona, commerceSessionMemory);
     products = applyMarketAwarenessRanking(products, query);
-    products = semanticRerankSearchResults(products, query);
+    products = semanticRerankSearchResults(products, query, canonicalQuery);
     dealClusters = buildDealClusters(products);
     searchIntelligence = buildSearchIntelligence(query, products, dealClusters);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
@@ -294,6 +322,7 @@ async function handleSearch(
     const debugMeta = searchDebugMeta({
       products,
       liveDiscovery,
+      canonicalQuery,
       fallbackReason,
       errorState: null,
     });
@@ -311,6 +340,7 @@ async function handleSearch(
         commerceAI: commerceMeta,
         commerceAiEngine: resolveCommerceAiEngine(),
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),
+        canonicalQuery: canonicalQueryForDebug(canonicalQuery),
         liveDiscovery,
         liveDiscoveryStatus: liveDiscovery.status,
         searchDebug: debugMeta,

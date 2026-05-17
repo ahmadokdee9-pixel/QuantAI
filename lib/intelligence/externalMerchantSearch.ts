@@ -4,6 +4,7 @@
  */
 
 import { buildSearchQueryUnderstanding } from "@/lib/search/queryUnderstanding";
+import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 import { buildWideMerchantCandidates } from "./wideMerchantDiscovery";
 
 export type ExternalMerchantCandidate = {
@@ -18,8 +19,8 @@ export type ExternalMerchantCandidate = {
   directRoute?: boolean;
 };
 
-export function buildExternalMerchantCandidates(query: string): ExternalMerchantCandidate[] {
-  return buildWideMerchantCandidates(query).map((c) => ({
+export function buildExternalMerchantCandidates(query: string, canonicalQuery?: CanonicalQueryContract): ExternalMerchantCandidate[] {
+  return buildWideMerchantCandidates(query, canonicalQuery ?? buildSearchQueryUnderstanding(query)).map((c) => ({
     merchantKey: c.merchantKey,
     label: c.label,
     url: c.url,
@@ -32,8 +33,12 @@ export function buildExternalMerchantCandidates(query: string): ExternalMerchant
   }));
 }
 
-export function buildExternalExpansionQueries(query: string, candidates: ExternalMerchantCandidate[]): string[] {
-  const q = buildSearchQueryUnderstanding(query);
+export function buildExternalExpansionQueries(
+  query: string,
+  candidates: ExternalMerchantCandidate[],
+  canonicalQuery?: CanonicalQueryContract
+): string[] {
+  const q = canonicalQuery?.semantic ?? buildSearchQueryUnderstanding(query);
   const identity = candidates.find((c) => c.queryKind === "identity")?.identityQuery ?? q.rewritten ?? query.trim();
   const exact = candidates.find((c) => c.queryKind === "exact")?.identityQuery ?? query.trim();
   const specs = candidates.find((c) => c.queryKind === "specs")?.identityQuery ?? identity;

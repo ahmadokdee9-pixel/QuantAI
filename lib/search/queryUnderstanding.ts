@@ -96,8 +96,8 @@ function hasAny(s: string, rx: RegExp): boolean {
 }
 
 function detectCategory(s: string): SemanticProductCategory {
-  if (hasAny(s, /\b(yeezy|jordan|dunk|air force|sneakers?|trainers?|shoes?|boots?|بوط|حذاء)\b/i)) return "shoes";
-  if (hasAny(s, /\b(iphone|galaxy|pixel|phone|smartphone|هاتف|جوال|موبايل)\b/i)) return "phone";
+  if (hasAny(s, /\b(yeezy|jordan|dunk|air force|samba|gazelle|adidas|nike|sneakers?|trainers?|shoes?|boots?|بوط|حذاء)\b/i)) return "shoes";
+  if (hasAny(s, /(iphone|ايفون|آيفون|\bgalaxy\b|\bpixel\b|\bphone\b|\bsmartphone\b|هاتف|جوال|موبايل)/i)) return "phone";
   if (hasAny(s, /\b(laptop|notebook|macbook|thinkpad|لابتوب)\b/i)) return "laptop";
   if (hasAny(s, /\b(headphones?|earbuds?|airpods?|bose|سماعات?)\b/i)) return "audio";
   if (hasAny(s, /\b(clean desk|minimal desk|desk setup|workspace)\b/i)) return "desk_setup";

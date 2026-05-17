@@ -13,6 +13,7 @@ import {
   buildSearchQueryUnderstanding,
   type SemanticQueryUnderstanding,
 } from "@/lib/search/queryUnderstanding";
+import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 
 const memo = new Map<string, SemanticQueryUnderstanding>();
 
@@ -179,9 +180,13 @@ function isHardJunk(q: SemanticQueryUnderstanding, p: QuantProduct, score: numbe
 }
 
 /** Search-only semantic rerank: keeps tray fast, stable, and layout-neutral. */
-export function semanticRerankSearchResults(products: QuantProduct[], query: string): QuantProduct[] {
+export function semanticRerankSearchResults(
+  products: QuantProduct[],
+  query: string,
+  canonicalQuery?: CanonicalQueryContract
+): QuantProduct[] {
   if (products.length <= 1 || !query.trim()) return products;
-  const q = queryBrain(query);
+  const q = canonicalQuery?.semantic ?? queryBrain(query);
   const prices = products.map((p) => p.price).filter((n) => n > 0).sort((a, b) => a - b);
   const medianPrice = prices[Math.floor(prices.length / 2)] ?? 0;
   const scored = products.map((p, index) => ({

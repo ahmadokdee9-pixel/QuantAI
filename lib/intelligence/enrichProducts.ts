@@ -24,17 +24,19 @@ import { buildQiCanonicalIdentity } from "./canonicalCommerceIdentity";
 import { buildGlobalCommerceFoundationForTray } from "./globalCommerceFoundation";
 import { buildDiscoveryIntelligenceForTray } from "./discoveryEngine";
 import { buildMarketPulseSnapshot } from "./marketPulseEngine";
+import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 
 export function enrichProductsWithIntelligence(
   products: QuantProduct[],
-  searchQuery: string
+  searchQuery: string,
+  canonicalQuery?: CanonicalQueryContract
 ): QuantProduct[] {
   if (products.length === 0) return [];
   const productsIn = filterTrayNoise(products, searchQuery);
   if (productsIn.length === 0) return [];
   const stats = computeListStats(productsIn);
   const listMaxValueRaw = computeListMaxValueRaw(productsIn);
-  const intents = parseCommerceSearchIntents(searchQuery);
+  const intents = canonicalQuery?.commerceIntents ?? parseCommerceSearchIntents(searchQuery);
   const humanIntent = buildHumanIntentProfile(searchQuery, intents);
   const styleQuery = inferQueryStyleProfile(searchQuery, intents);
 

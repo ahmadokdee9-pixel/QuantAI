@@ -5,6 +5,7 @@
 
 import { fetchShoppingProducts } from "@/app/api/search/lib/fetchShopping";
 import type { QuantProduct } from "@/lib/shoppingScore";
+import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 import { buildExternalExpansionQueries, type ExternalMerchantCandidate } from "./externalMerchantSearch";
 
 export type LiveMarketRefreshResult = {
@@ -26,7 +27,8 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
 
 export async function refreshLiveMarketProducts(
   query: string,
-  candidates: ExternalMerchantCandidate[]
+  candidates: ExternalMerchantCandidate[],
+  canonicalQuery?: CanonicalQueryContract
 ): Promise<LiveMarketRefreshResult> {
   if (process.env.QUANTAI_LIVE_DISCOVERY === "off") {
     return { products: [], attemptedQueries: [], timedOut: false, source: "disabled" };
@@ -35,7 +37,7 @@ export async function refreshLiveMarketProducts(
     return { products: [], attemptedQueries: [], timedOut: false, source: "disabled_missing_key" };
   }
 
-  const attemptedQueries = buildExternalExpansionQueries(query, candidates).slice(0, 4);
+  const attemptedQueries = buildExternalExpansionQueries(query, candidates, canonicalQuery).slice(0, 4);
   if (!attemptedQueries.length) return { products: [], attemptedQueries, timedOut: false, source: "empty" };
 
   const timeoutMs = Math.min(12_000, Math.max(3_000, Number(process.env.QUANTAI_LIVE_DISCOVERY_TIMEOUT_MS) || 8_000));
