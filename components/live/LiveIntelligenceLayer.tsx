@@ -8,6 +8,7 @@ import { buildLiveTerminalSignals } from "@/lib/liveSignals/simulatedTerminalSig
 import { buildSimulatedDealSignals } from "@/lib/liveSignals/simulatedDealSignals";
 import { buildQualitativeMarketRibbon } from "@/lib/liveSignals/qualitativeRibbon";
 import type { MarketPulseSnapshot } from "@/lib/intelligence/marketPulseEngine";
+import type { UnifiedCardInsight } from "@/lib/intelligence/unifiedMarketMatching";
 
 type Props = {
   query: string;
@@ -15,6 +16,7 @@ type Props = {
   /** Touch / narrow: start collapsed so heavy cards are opt-in. */
   defaultCollapsed?: boolean;
   marketPulse?: MarketPulseSnapshot | null;
+  familyInsight?: UnifiedCardInsight | null;
 };
 
 function formatAgo(minutes: number): string {
@@ -39,6 +41,7 @@ export default function LiveIntelligenceLayer({
   products,
   defaultCollapsed = false,
   marketPulse = null,
+  familyInsight = null,
 }: Props) {
   const reduce = useReducedMotion();
   const mounted = useSyncExternalStore(subscribeNoop, getClientSnapshot, getServerSnapshot);
@@ -59,6 +62,13 @@ export default function LiveIntelligenceLayer({
   const active = terminal.length ? terminal[terminalIndex % terminal.length]! : null;
   const pulseHeadline = marketPulse
     ? `Market pulse ${marketPulse.trendMomentum} · opportunity ${marketPulse.dailyOpportunityScore}/100`
+    : null;
+  const familyDetail = familyInsight
+    ? `${familyInsight.storeCount} stores found for same product family · Cheapest trusted: ${
+        familyInsight.bestTrustedStore || "n/a"
+      } ${familyInsight.bestTrustedPrice > 0 ? familyInsight.bestTrustedPrice : ""} · Market spread: ${familyInsight.marketSpreadPct}%${
+        familyInsight.suspiciousOutlierCount > 0 ? ` · ${familyInsight.suspiciousOutlierCount} suspicious outlier${familyInsight.suspiciousOutlierCount > 1 ? "s" : ""}` : ""
+      }`
     : null;
 
   if (!mounted || !products.length) return null;
@@ -129,10 +139,10 @@ export default function LiveIntelligenceLayer({
                           : "text-white/92"
                     }`}
                   >
-                    {pulseHeadline ?? active.headline}
+                    {familyInsight ? `${familyInsight.storeCount} stores found for same product family` : pulseHeadline ?? active.headline}
                   </p>
                   <p className="text-[11px] leading-relaxed text-slate-500">
-                    {marketPulse?.marketPulseReason ?? active.detail}
+                    {familyDetail ?? marketPulse?.marketPulseReason ?? active.detail}
                   </p>
                 </motion.div>
               ) : null}

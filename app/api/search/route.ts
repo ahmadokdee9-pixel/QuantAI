@@ -1,4 +1,3 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
 import { unstable_cache } from "next/cache";
 import { NextResponse } from "next/server";
 import { enrichProductsWithIntelligence } from "@/lib/intelligence/enrichProducts";
@@ -36,6 +35,43 @@ import { fetchShoppingProductsDeduped } from "./lib/fetchShoppingDeduped";
 
 const SEARCH_UPSTREAM_PREFIX = "__SEARCH_UPSTREAM__:";
 
+function fallbackLiveDiscoveryMeta(
+  products: QuantProduct[],
+  status: LiveCommerceDiscoveryMeta["status"],
+  error?: unknown
+): LiveCommerceDiscoveryMeta {
+  return {
+    version: 1,
+    status,
+    candidateCount: 0,
+    candidateMerchants: [],
+    attemptedQueries: [],
+    externalRows: 0,
+    fusedRows: products.length,
+    timedOut: false,
+    source: status === "disabled_missing_key" ? "disabled_missing_key" : "disabled",
+    ...(error
+      ? { error: error instanceof Error ? error.message : "Live discovery failed." }
+      : {}),
+  };
+}
+
+async function runSafeLiveCommerceDiscovery(
+  query: string,
+  internalProducts: QuantProduct[]
+) {
+  try {
+    return await runLiveCommerceDiscovery(query, internalProducts);
+  } catch (error) {
+    console.error("[QuantAI:live-discovery] Falling back to internal results", error);
+    return {
+      products: internalProducts,
+      candidates: [],
+      meta: fallbackLiveDiscoveryMeta(internalProducts, "failed", error),
+    };
+  }
+}
+
 async function runSearchPipeline(query: string): Promise<{
   products: QuantProduct[];
   dealClusters: DealClusterDTO[];
@@ -51,7 +87,7 @@ async function runSearchPipeline(query: string): Promise<{
       `${SEARCH_UPSTREAM_PREFIX}${status}:${result.error || "Search upstream failed."}`
     );
   }
-  const liveDiscovery = await runLiveCommerceDiscovery(query, result.products);
+  const liveDiscovery = await runSafeLiveCommerceDiscovery(query, result.products);
   let products = enrichProductsWithIntelligence(liveDiscovery.products, query);
   const layered = await attachCommerceAiLayer(products, query);
   products = layered.products;
@@ -96,6 +132,13 @@ type SearchHandleOptions = {
   commerceMemory?: unknown;
 };
 
+async function optionalClerkSearchUser(): Promise<{
+  userId: string | null;
+  user: { publicMetadata?: Record<string, unknown> } | null;
+}> {
+  return { userId: null, user: null };
+}
+
 async function handleSearch(
   q: string | null | undefined,
   opts?: SearchHandleOptions
@@ -123,8 +166,7 @@ async function handleSearch(
       return fail(400, "BAD_REQUEST", "Missing query");
     }
 
-    const { userId } = await auth();
-    const user = userId ? await currentUser() : null;
+    const { userId, user } = await optionalClerkSearchUser();
     const tier = subscriptionTierFromClerkUser(user);
     const plan = planDefinition(tier);
 
@@ -234,6 +276,7 @@ async function handleSearch(
         commerceAiEngine: resolveCommerceAiEngine(),
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),
         liveDiscovery,
+        liveDiscoveryStatus: liveDiscovery.status,
         commerceSessionMemory,
         shopperPersona: {
           dominant: shopperPersona.dominant,
@@ -282,34 +325,41 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  let q: string | null = null;
-  let commerceMemory: unknown;
   try {
-    const body = (await req.json()) as { query?: string; q?: string; commerceMemory?: unknown };
-    q = body.query ?? body.q ?? null;
-    commerceMemory = body.commerceMemory;
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-        error: "BAD_REQUEST",
-        message: "Invalid JSON body",
-        data: emptySearchData(),
-      },
-      { status: 400 }
-    );
-  }
-  try {
+    let q: string | null = null;
+    let commerceMemory: unknown;
+    try {
+      const body = (await req.json()) as { query?: string; q?: string; commerceMemory?: unknown };
+      q = body.query ?? body.q ?? null;
+      commerceMemory = body.commerceMemory;
+    } catch {
+      return NextResponse.json(
+        {
+          success: false,
+          ok: false,
+          error: "BAD_REQUEST",
+          message: "Invalid JSON body",
+          data: emptySearchData(),
+          products: [],
+          results: [],
+        },
+        { status: 200 }
+      );
+    }
     return await handleSearch(q, { commerceMemory });
-  } catch (e) {
+  } catch (error) {
+    console.error("[api/search] fatal", error);
     return NextResponse.json(
       {
+        ok: false,
         success: false,
-        error: "SEARCH_FAILED",
-        message: e instanceof Error ? e.message : "Search could not complete.",
+        error: "search_failed",
+        message: error instanceof Error ? error.message : "Unknown search error",
         data: emptySearchData(),
+        products: [],
+        results: [],
       },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }

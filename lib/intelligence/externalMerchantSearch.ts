@@ -3,8 +3,8 @@
  * Builds direct merchant search routes and compact expansion queries for NL/EU first.
  */
 
-import { buildMerchantSearchUrl } from "@/lib/search/directMerchantRouter";
 import { buildSearchQueryUnderstanding } from "@/lib/search/queryUnderstanding";
+import { buildWideMerchantCandidates } from "./wideMerchantDiscovery";
 
 export type ExternalMerchantCandidate = {
   merchantKey: string;
@@ -12,46 +12,32 @@ export type ExternalMerchantCandidate = {
   url: string;
   priority: number;
   region: "nl" | "eu" | "global";
+  identityQuery: string;
+  queryKind?: "exact" | "identity" | "specs" | "ean" | "fallback";
+  routeQuality?: number;
+  directRoute?: boolean;
 };
 
-const MERCHANTS: { key: string; label: string; region: ExternalMerchantCandidate["region"]; priority: number; cats?: string[] }[] = [
-  { key: "bol", label: "bol.com", region: "nl", priority: 96 },
-  { key: "coolblue", label: "Coolblue", region: "nl", priority: 94, cats: ["phone", "laptop", "audio", "electronics", "watch"] },
-  { key: "mediamarkt", label: "MediaMarkt", region: "nl", priority: 91, cats: ["phone", "laptop", "audio", "electronics", "watch"] },
-  { key: "amazon", label: "Amazon.nl", region: "nl", priority: 88 },
-  { key: "zalando", label: "Zalando", region: "eu", priority: 86, cats: ["shoes", "fashion", "beauty"] },
-  { key: "nike", label: "Nike", region: "eu", priority: 90, cats: ["shoes", "fashion", "sports"] },
-  { key: "adidas", label: "Adidas", region: "eu", priority: 88, cats: ["shoes", "fashion", "sports"] },
-  { key: "apple", label: "Apple", region: "eu", priority: 90, cats: ["phone", "laptop", "audio", "watch", "electronics"] },
-  { key: "samsung", label: "Samsung", region: "eu", priority: 88, cats: ["phone", "audio", "watch", "electronics"] },
-  { key: "ikea", label: "IKEA", region: "nl", priority: 88, cats: ["furniture", "home", "desk_setup"] },
-  { key: "wehkamp", label: "Wehkamp", region: "nl", priority: 78, cats: ["fashion", "beauty", "home", "furniture"] },
-  { key: "decathlon", label: "Decathlon", region: "nl", priority: 80, cats: ["sports", "shoes"] },
-  { key: "belsimpel", label: "Belsimpel", region: "nl", priority: 84, cats: ["phone", "audio", "watch"] },
-  { key: "backmarket", label: "Back Market", region: "nl", priority: 76, cats: ["phone", "laptop", "audio", "electronics"] },
-  { key: "ebay", label: "eBay", region: "global", priority: 66 },
-];
-
 export function buildExternalMerchantCandidates(query: string): ExternalMerchantCandidate[] {
-  const q = buildSearchQueryUnderstanding(query);
-  const terms = q.rewritten || query;
-  const cat = q.productCategory;
-  return MERCHANTS.flatMap((m) => {
-    const catFit = !m.cats || m.cats.includes(cat);
-    const priority = m.priority + (catFit ? 12 : -18);
-    if (priority < 60) return [];
-    const url = buildMerchantSearchUrl(m.key, terms, "nl");
-    if (!url) return [];
-    return [{ merchantKey: m.key, label: m.label, url, priority, region: m.region }];
-  })
-    .sort((a, b) => b.priority - a.priority)
-    .slice(0, 10);
+  return buildWideMerchantCandidates(query).map((c) => ({
+    merchantKey: c.merchantKey,
+    label: c.label,
+    url: c.url,
+    priority: c.priority,
+    region: c.region,
+    identityQuery: c.identityQuery,
+    queryKind: c.queryKind,
+    routeQuality: c.routeQuality,
+    directRoute: c.directRoute,
+  }));
 }
 
 export function buildExternalExpansionQueries(query: string, candidates: ExternalMerchantCandidate[]): string[] {
   const q = buildSearchQueryUnderstanding(query);
-  const base = q.rewritten || query.trim();
-  const top = candidates.slice(0, 4).map((c) => c.label.replace(/\.com$/i, ""));
+  const identity = candidates.find((c) => c.queryKind === "identity")?.identityQuery ?? q.rewritten ?? query.trim();
+  const exact = candidates.find((c) => c.queryKind === "exact")?.identityQuery ?? query.trim();
+  const specs = candidates.find((c) => c.queryKind === "specs")?.identityQuery ?? identity;
+  const chunks = [candidates.slice(0, 20), candidates.slice(20, 40), candidates.slice(40, 60), candidates.slice(60, 80)].filter((xs) => xs.length > 0);
   const vertical =
     q.productCategory === "shoes"
       ? "official sneakers shoes"
@@ -62,5 +48,11 @@ export function buildExternalExpansionQueries(query: string, candidates: Externa
           : q.productCategory === "laptop" || q.productCategory === "phone" || q.productCategory === "audio"
             ? "trusted electronics official"
             : "trusted stores";
-  return [`${base} ${top.join(" ")} ${vertical}`.replace(/\s+/g, " ").trim()].filter(Boolean);
+  return chunks
+    .map((chunk, index) => {
+      const base = index === 0 ? exact : index === 1 ? identity : specs;
+      return `${base} ${chunk.map((c) => c.label.replace(/\.com$/i, "")).join(" ")} ${vertical}`.replace(/\s+/g, " ").trim();
+    })
+    .filter(Boolean)
+    .slice(0, 4);
 }

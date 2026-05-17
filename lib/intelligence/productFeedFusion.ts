@@ -4,6 +4,8 @@
  */
 
 import { combinedTitleSimilarity } from "@/lib/deals/normalizeTitle";
+import { buildProductIdentityConfidence } from "./productIdentity";
+import { extractProductIdentity } from "@/lib/deals/productIdentity";
 import { getMarketplaceSellerRiskTier, getStoreTrustScore } from "@/lib/retailTrust";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { assessUniversalListingIdentity } from "./universalListingIdentity";
@@ -27,6 +29,18 @@ function isWeakRow(p: QuantProduct, query: string): boolean {
   return false;
 }
 
+function sameMerchant(a: QuantProduct, b: QuantProduct): boolean {
+  return a.store.toLowerCase().trim() === b.store.toLowerCase().trim();
+}
+
+function exactOfferFamily(a: QuantProduct, b: QuantProduct): boolean {
+  const ia = extractProductIdentity(a);
+  const ib = extractProductIdentity(b);
+  const median = Math.max(a.price, b.price, 1);
+  const conf = buildProductIdentityConfidence(a, b, ia, ib, median);
+  return conf >= 0.82;
+}
+
 function betterRow(a: QuantProduct, b: QuantProduct): QuantProduct {
   const ta = getStoreTrustScore(a.store);
   const tb = getStoreTrustScore(b.store);
@@ -44,8 +58,9 @@ export function fuseProductFeeds(args: {
   external: QuantProduct[];
   query: string;
   maxRows?: number;
+  preserveExactMerchantOffers?: boolean;
 }): QuantProduct[] {
-  const { internal, external, query, maxRows = 72 } = args;
+  const { internal, external, query, maxRows = 96, preserveExactMerchantOffers = true } = args;
   const merged: QuantProduct[] = [];
   const byKey = new Map<string, QuantProduct>();
   for (const raw of [...internal, ...external]) {
@@ -57,7 +72,10 @@ export function fuseProductFeeds(args: {
   }
   for (const p of byKey.values()) {
     const dup = merged.find((m) => {
-      if (m.store.toLowerCase() !== p.store.toLowerCase()) return false;
+      if (!sameMerchant(m, p)) {
+        if (preserveExactMerchantOffers && exactOfferFamily(m, p)) return false;
+        return false;
+      }
       const sim = combinedTitleSimilarity(m.title, p.title);
       if (sim < 0.9) return false;
       if (m.price <= 0 || p.price <= 0) return sim >= 0.94;
@@ -71,4 +89,16 @@ export function fuseProductFeeds(args: {
     }
   }
   return merged.slice(0, maxRows).map((p, i) => ({ ...p, id: i + 1 }));
+}
+
+export function mergeExternalAndInternalOffersWithoutEarlyCollapse(args: {
+  internal: QuantProduct[];
+  external: QuantProduct[];
+  query: string;
+}): QuantProduct[] {
+  return fuseProductFeeds({
+    ...args,
+    maxRows: 60,
+    preserveExactMerchantOffers: true,
+  });
 }

@@ -29,22 +29,43 @@ export function normalizeMerchantName(store: string): string {
     [/coolblue/i, "coolblue"],
     [/amazon/i, "amazon"],
     [/\bebay\b/i, "ebay"],
+    [/marktplaats/i, "marktplaats"],
     [/media\s*markt|mediamarkt/i, "mediamarkt"],
+    [/\bfnac\b/i, "fnac"],
+    [/galaxus/i, "galaxus"],
+    [/kaufland/i, "kaufland"],
+    [/\botto\b/i, "otto"],
     [/alternate/i, "alternate"],
+    [/azerty/i, "azerty"],
+    [/megekko/i, "megekko"],
     [/belsimpel/i, "belsimpel"],
     [/back\s*market|backmarket/i, "backmarket"],
     [/zalando/i, "zalando"],
     [/about\s*you|aboutyou/i, "aboutyou"],
     [/\bh\s*&\s*m\b|^hm\b/i, "hm"],
     [/\bzara\b/i, "zara"],
+    [/foot\s*locker|footlocker/i, "footlocker"],
+    [/jd\s*sports|jdsports/i, "jdsports"],
     [/\bnike\b/i, "nike"],
     [/\badidas\b/i, "adidas"],
     [/ikea/i, "ikea"],
     [/leen\s*bakker/i, "leenbakker"],
     [/wehkamp/i, "wehkamp"],
     [/blokker/i, "blokker"],
+    [/\bhema\b/i, "hema"],
+    [/praxis/i, "praxis"],
+    [/gamma/i, "gamma"],
+    [/hornbach/i, "hornbach"],
     [/douglas/i, "douglas"],
     [/notino/i, "notino"],
+    [/bolia/i, "bolia"],
+    [/\bfonq\b/i, "fonq"],
+    [/vidaxl/i, "vidaxl"],
+    [/westwing/i, "westwing"],
+    [/\bjysk\b/i, "jysk"],
+    [/beter\s*bed|beterbed/i, "beterbed"],
+    [/sephora/i, "sephora"],
+    [/\basos\b/i, "asos"],
     [/parfumdreams/i, "parfumdreams"],
     [/decathlon/i, "decathlon"],
     [/\bapple\b/i, "apple"],
@@ -53,6 +74,7 @@ export function normalizeMerchantName(store: string): string {
     [/philips/i, "philips"],
     [/\baction\b/i, "action"],
     [/aliexpress/i, "aliexpress"],
+    [/\btemu\b/i, "temu"],
   ];
   for (const [rx, key] of tests) {
     if (rx.test(s)) return key;
@@ -96,12 +118,28 @@ export function buildMerchantSearchUrl(merchantKey: string, searchTerms: string,
       return `https://www.coolblue.nl/zoeken?query=${qEnc(q)}`;
     case "amazon":
       return `${amazonSearchBase(geoGl)}${qEnc(q)}`;
+    case "amazon_de":
+      return `https://www.amazon.de/s?k=${qEnc(q)}`;
     case "ebay":
       return `https://www.ebay.nl/sch/i.html?_nkw=${qEnc(q)}`;
+    case "marktplaats":
+      return `https://www.marktplaats.nl/q/${qEnc(q)}/`;
     case "mediamarkt":
       return `https://www.mediamarkt.nl/nl/search.html?query=${qEnc(q)}`;
+    case "fnac":
+      return `https://www.fnac.com/SearchResult/ResultList.aspx?Search=${qEnc(q)}`;
+    case "galaxus":
+      return `https://www.galaxus.nl/en/search?q=${qEnc(q)}`;
+    case "kaufland":
+      return `https://www.kaufland.de/s/?search_value=${qEnc(q)}`;
+    case "otto":
+      return `https://www.otto.de/suche/${qEnc(q)}/`;
     case "alternate":
       return `https://www.alternate.nl/listing.xhtml?q=${qEnc(q)}`;
+    case "azerty":
+      return `https://azerty.nl/search?search=${qEnc(q)}`;
+    case "megekko":
+      return `https://www.megekko.nl/Computer/zoek?f=${qEnc(q)}`;
     case "belsimpel":
       return `https://www.belsimpel.nl/zoeken?q=${qEnc(q)}`;
     case "backmarket":
@@ -120,16 +158,44 @@ export function buildMerchantSearchUrl(merchantKey: string, searchTerms: string,
       return `https://www.adidas.nl/search?q=${qEnc(q)}`;
     case "ikea":
       return `https://www.ikea.com/nl/nl/search/?q=${qEnc(q)}`;
+    case "praxis":
+      return `https://www.praxis.nl/search?text=${qEnc(q)}`;
+    case "gamma":
+      return `https://www.gamma.nl/assortiment/zoeken?text=${qEnc(q)}`;
+    case "hornbach":
+      return `https://www.hornbach.nl/shop/zoeken/sortiment/${qEnc(q)}/`;
     case "leenbakker":
       return `https://www.leenbakker.nl/search?SearchTerm=${qEnc(q)}`;
     case "wehkamp":
       return `https://www.wehkamp.nl/wehkamp/search/?text=${qEnc(q)}`;
     case "blokker":
       return `https://www.blokker.nl/zoeken?q=${qEnc(q)}`;
+    case "hema":
+      return `https://www.hema.nl/zoeken?q=${qEnc(q)}`;
     case "douglas":
       return `https://www.douglas.nl/nl/search?q=${qEnc(q)}`;
     case "notino":
       return `https://www.notino.nl/search?q=${qEnc(q)}`;
+    case "bolia":
+      return `https://www.bolia.com/nl-nl/zoeken/?q=${qEnc(q)}`;
+    case "fonq":
+      return `https://www.fonq.nl/zoeken/?q=${qEnc(q)}`;
+    case "vidaxl":
+      return `https://www.vidaxl.nl/catalogsearch/result?q=${qEnc(q)}`;
+    case "westwing":
+      return `https://www.westwing.nl/search/?q=${qEnc(q)}`;
+    case "jysk":
+      return `https://jysk.nl/search?query=${qEnc(q)}`;
+    case "beterbed":
+      return `https://www.beterbed.nl/zoeken?query=${qEnc(q)}`;
+    case "sephora":
+      return `https://www.sephora.com/search?keyword=${qEnc(q)}`;
+    case "asos":
+      return `https://www.asos.com/search/?q=${qEnc(q)}`;
+    case "footlocker":
+      return `https://www.footlocker.nl/en/search?query=${qEnc(q)}`;
+    case "jdsports":
+      return `https://www.jdsports.nl/search/${qEnc(q)}/`;
     case "parfumdreams":
       return `https://www.parfumdreams.nl/Search.html?search=${qEnc(q)}`;
     case "decathlon":
@@ -146,6 +212,8 @@ export function buildMerchantSearchUrl(merchantKey: string, searchTerms: string,
       return `https://www.action.com/nl-nl/search/?q=${qEnc(q)}`;
     case "aliexpress":
       return `https://www.aliexpress.com/wholesale?SearchText=${qEnc(q)}`;
+    case "temu":
+      return `https://www.temu.com/search_result.html?search_key=${qEnc(q)}`;
     default:
       return null;
   }

@@ -41,6 +41,11 @@ export type UnifiedCardInsight = {
   bestTrustedStore: string;
   bestTrustedLink: string;
   marketSpreadPct: number;
+  offerCount: number;
+  averageMarketPrice: number;
+  highestDiscountPct: number | null;
+  suspiciousOutlierCount: number;
+  merchantDiversityScore: number;
   isSameProductFamily: boolean;
   isBestTrustedInFamily: boolean;
   isLowestRiskInFamily: boolean;
@@ -117,6 +122,25 @@ function subAssemblyCompleteness(c: string): boolean {
 function junkCommercialRole(id: QiListingIdentity): boolean {
   const roles = normalizeCommercialRoles(id.commercialRoles);
   return roles.includes("replica_risk") || roles.includes("packaging_only");
+}
+
+function averagePrice(members: QuantProduct[]): number {
+  const prices = members.map((p) => p.price).filter((n) => n > 0);
+  return prices.length ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
+}
+
+function highestDiscountPct(members: QuantProduct[]): number | null {
+  let best: number | null = null;
+  for (const p of members) {
+    if (p.oldPrice == null || p.oldPrice <= p.price || p.price <= 0) continue;
+    const pct = Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100);
+    best = Math.max(best ?? 0, pct);
+  }
+  return best;
+}
+
+function merchantDiversityScore(storeCount: number, listingCount: number): number {
+  return Math.min(100, Math.round(storeCount * 9 + Math.min(24, listingCount * 2.5)));
 }
 
 export function buildUnifiedMarketGroups(products: QuantProduct[], searchQuery = ""): UnifiedMarketGroup[] {
@@ -205,6 +229,15 @@ export function buildUnifiedMarketGroup(products: QuantProduct[], searchQuery = 
     const bestPrice = ct?.price ?? priceMap.minPrice;
     const bestStore = ct?.store ?? "";
     const bestLink = ct?.link ?? members[0]!.link;
+    const avgMarketPrice = averagePrice(members);
+    const bestDiscount = highestDiscountPct(members);
+    const suspiciousOutlierCount = members.filter((p) => {
+      const id = resolveQiListingIdentity(p, searchQuery);
+      const tooLow = priceMap.medianPrice > 0 && p.price > 0 && p.price < priceMap.medianPrice * 0.52;
+      const tooHigh = priceMap.medianPrice > 0 && p.price > priceMap.medianPrice * 1.75;
+      return id.contaminationRisk01 >= 0.62 || id.listingRisk01 >= 0.72 || tooLow || tooHigh;
+    }).length;
+    const diversityScore = merchantDiversityScore(stores.size, members.length);
 
     for (const p of members) {
       const isBestTrusted = ct ? p.link === ct.link : false;
@@ -218,6 +251,11 @@ export function buildUnifiedMarketGroup(products: QuantProduct[], searchQuery = 
         bestTrustedStore: bestStore || ct?.store || "",
         bestTrustedLink: bestLink,
         marketSpreadPct: priceMap.spreadPct,
+        offerCount: members.length,
+        averageMarketPrice: Math.round(avgMarketPrice),
+        highestDiscountPct: bestDiscount,
+        suspiciousOutlierCount,
+        merchantDiversityScore: diversityScore,
         isSameProductFamily: true,
         isBestTrustedInFamily: isBestTrusted,
         isLowestRiskInFamily: lowestRisk,

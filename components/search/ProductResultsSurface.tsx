@@ -203,6 +203,21 @@ export default function ProductResultsSurface({
     () => buildUnifiedMarketGroup(sortedProducts, searchQuery.trim()).byLink,
     [sortedProducts, searchQuery]
   );
+  const leadFamilyInsight = useMemo(() => {
+    let best: ReturnType<typeof unifiedMarketByLink.get> | null = null;
+    for (const p of compositeRanked) {
+      const insight = unifiedMarketByLink.get(p.link);
+      if (!insight || insight.storeCount < 2) continue;
+      if (
+        !best ||
+        insight.storeCount > best.storeCount ||
+        (insight.storeCount === best.storeCount && insight.merchantDiversityScore > best.merchantDiversityScore)
+      ) {
+        best = insight;
+      }
+    }
+    return best;
+  }, [compositeRanked, unifiedMarketByLink]);
 
   const aiTopPicks = useMemo(() => compositeRanked.slice(0, 3), [compositeRanked]);
   const compactTray = sortedProducts.length > 0 && sortedProducts.length <= 4;
@@ -552,6 +567,7 @@ export default function ProductResultsSurface({
         query={searchQuery}
         products={sortedProducts}
         marketPulse={marketPulse}
+        familyInsight={leadFamilyInsight}
         defaultCollapsed={mobilePerf}
       />
       {sortedProducts.length >= 2 && compareLinks.length === 0 && (

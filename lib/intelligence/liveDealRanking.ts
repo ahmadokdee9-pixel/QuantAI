@@ -39,6 +39,14 @@ function discountCredibility01(p: QuantProduct, trust: number): number {
 export function rankLiveDeals(products: QuantProduct[], query: string): QuantProduct[] {
   if (products.length <= 1) return products;
   const med = median(products.map((p) => p.price));
+  const familyStores = new Map<string, Set<string>>();
+  for (const p of products) {
+    const id = p.qiListingIdentity ? normalizeQiListingIdentity(p.qiListingIdentity) : null;
+    const fam = id?.retailerAgnosticStem || p.title.toLowerCase().replace(/\s+/g, " ").slice(0, 64);
+    const stores = familyStores.get(fam) ?? new Set<string>();
+    stores.add(p.store.toLowerCase().trim());
+    familyStores.set(fam, stores);
+  }
   const scored = products.map((p, index) => {
     const trust = getStoreTrustScore(p.store);
     const id = p.qiListingIdentity ? normalizeQiListingIdentity(p.qiListingIdentity) : null;
@@ -46,12 +54,15 @@ export function rankLiveDeals(products: QuantProduct[], query: string): QuantPro
     const priceAdv = med > 0 && p.price > 0 ? clamp((med - p.price) / med, -0.35, 0.45) : 0;
     const route = p.outboundRouteKind === "direct_merchant" ? 1 : p.outboundRouteKind === "merchant_search" ? 0.72 : 0.28;
     const identity = p.qiCanonicalIdentity?.identityConfidence ? p.qiCanonicalIdentity.identityConfidence / 100 : 0.58;
+    const fam = id?.retailerAgnosticStem || p.title.toLowerCase().replace(/\s+/g, " ").slice(0, 64);
+    const diversity = Math.min(1, (familyStores.get(fam)?.size ?? 1) / 10);
     const risk = (id?.listingRisk01 ?? 0.24) * 0.42 + (id?.contaminationRisk01 ?? 0.18) * 0.36 + (id?.semanticMismatchPenalty01 ?? 0.12) * 0.22;
     const score =
       relevance * 26 +
       (trust / 100) * 18 +
       route * 12 +
       identity * 14 +
+      diversity * 8 +
       availability01(p) * 9 +
       discountCredibility01(p, trust) * 8 +
       priceAdv * 18 -

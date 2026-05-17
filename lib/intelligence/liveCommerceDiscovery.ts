@@ -6,18 +6,20 @@
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { buildExternalMerchantCandidates, type ExternalMerchantCandidate } from "./externalMerchantSearch";
 import { refreshLiveMarketProducts } from "./liveMarketRefresh";
-import { fuseProductFeeds } from "./productFeedFusion";
+import { mergeExternalAndInternalOffersWithoutEarlyCollapse } from "./productFeedFusion";
 import { rankLiveDeals } from "./liveDealRanking";
 
 export type LiveCommerceDiscoveryMeta = {
   version: 1;
+  status: "enabled" | "disabled" | "disabled_missing_key" | "failed";
   candidateCount: number;
   candidateMerchants: string[];
   attemptedQueries: string[];
   externalRows: number;
   fusedRows: number;
   timedOut: boolean;
-  source: "serpapi" | "disabled" | "empty";
+  source: "serpapi" | "disabled" | "disabled_missing_key" | "empty";
+  error?: string;
 };
 
 export type LiveCommerceDiscoveryResult = {
@@ -30,9 +32,26 @@ export async function runLiveCommerceDiscovery(
   query: string,
   internalProducts: QuantProduct[]
 ): Promise<LiveCommerceDiscoveryResult> {
+  if (process.env.ENABLE_WIDE_DISCOVERY !== "true") {
+    return {
+      products: internalProducts,
+      candidates: [],
+      meta: {
+        version: 1,
+        status: "disabled",
+        candidateCount: 0,
+        candidateMerchants: [],
+        attemptedQueries: [],
+        externalRows: 0,
+        fusedRows: internalProducts.length,
+        timedOut: false,
+        source: "disabled",
+      },
+    };
+  }
   const candidates = buildExternalMerchantCandidates(query);
   const refresh = await refreshLiveMarketProducts(query, candidates);
-  const fused = fuseProductFeeds({
+  const fused = mergeExternalAndInternalOffersWithoutEarlyCollapse({
     internal: internalProducts,
     external: refresh.products,
     query,
@@ -43,8 +62,9 @@ export async function runLiveCommerceDiscovery(
     candidates,
     meta: {
       version: 1,
+      status: refresh.source === "disabled_missing_key" ? "disabled_missing_key" : refresh.source === "disabled" ? "disabled" : "enabled",
       candidateCount: candidates.length,
-      candidateMerchants: candidates.map((c) => c.label).slice(0, 10),
+      candidateMerchants: candidates.map((c) => c.label).slice(0, 80),
       attemptedQueries: refresh.attemptedQueries,
       externalRows: refresh.products.length,
       fusedRows: products.length,

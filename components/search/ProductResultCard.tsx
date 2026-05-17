@@ -547,6 +547,11 @@ function ProductResultCard({
                   {clip(unifiedMarket.crossMarketHeadline, 140)}
                 </p>
                 <p className="mt-0.5 text-slate-500/75 [overflow-wrap:anywhere]">
+                  {unifiedMarket.offerCount} offers · avg {formatListingPrice(unifiedMarket.averageMarketPrice, sym)}
+                  {unifiedMarket.highestDiscountPct != null ? ` · max discount ${unifiedMarket.highestDiscountPct}%` : ""}
+                  {unifiedMarket.suspiciousOutlierCount > 0 ? ` · ${unifiedMarket.suspiciousOutlierCount} outlier${unifiedMarket.suspiciousOutlierCount > 1 ? "s" : ""}` : ""}
+                </p>
+                <p className="mt-0.5 text-slate-500/75 [overflow-wrap:anywhere]">
                   {clip(unifiedMarket.fairMarketRangeLabel, 120)}
                 </p>
                 {unifiedMarket.sameItemCheaper && !unifiedMarket.isBestTrustedInFamily ? (
@@ -1055,6 +1060,11 @@ function unifiedMarketEqual(
     a.bestTrustedStore === b.bestTrustedStore &&
     a.bestTrustedLink === b.bestTrustedLink &&
     a.marketSpreadPct === b.marketSpreadPct &&
+    a.offerCount === b.offerCount &&
+    a.averageMarketPrice === b.averageMarketPrice &&
+    a.highestDiscountPct === b.highestDiscountPct &&
+    a.suspiciousOutlierCount === b.suspiciousOutlierCount &&
+    a.merchantDiversityScore === b.merchantDiversityScore &&
     a.isSameProductFamily === b.isSameProductFamily &&
     a.isBestTrustedInFamily === b.isBestTrustedInFamily &&
     a.isLowestRiskInFamily === b.isLowestRiskInFamily &&
