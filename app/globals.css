@@ -6,6 +6,12 @@
   --qi-cyan: #22d3ee;
   --qi-violet: #a78bfa;
   --qi-emerald: #34d399;
+  --qi-os-navy: #040a14;
+  --qi-os-graphite: #0b1220;
+  --qi-os-midnight: #0f172a;
+  --qi-os-steel: #1e293b;
+  --qi-os-teal: rgba(45, 212, 191, 0.55);
+  --qi-os-glow: rgba(34, 211, 238, 0.12);
   --glass-border: rgba(255, 255, 255, 0.09);
   --glass-surface: rgba(15, 23, 42, 0.65);
   --glow-cyan: rgba(34, 211, 238, 0.45);
@@ -737,4 +743,211 @@ textarea:focus-visible {
 .qa-scroll-touch {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+}
+
+/* —— Calm Futuristic Intelligence OS layer —— */
+.qi-os-atmosphere {
+  position: relative;
+  isolation: isolate;
+}
+
+.qi-os-atmosphere::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 50% at 12% -8%, rgba(34, 211, 238, 0.06), transparent 52%),
+    radial-gradient(ellipse 60% 40% at 88% 4%, rgba(99, 102, 241, 0.05), transparent 48%),
+    linear-gradient(180deg, var(--qi-os-navy) 0%, var(--qi-os-graphite) 42%, #020617 100%);
+}
+
+.qi-tray-atmosphere {
+  transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.qi-tray-atmosphere[data-tray-focus="true"] .qi-tray-peer-dim {
+  opacity: 0.38;
+  filter: saturate(0.82) blur(0.2px);
+  transform: scale(0.992);
+  transition:
+    opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.5s ease,
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.qi-tray-focus-active {
+  position: relative;
+  z-index: 3;
+  transform: scale(1.012);
+  transition:
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.45s ease;
+}
+
+.qi-intel-surface {
+  border-radius: 1.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background:
+    radial-gradient(120% 80% at 50% -20%, rgba(34, 211, 238, 0.05), transparent 55%),
+    linear-gradient(168deg, rgba(255, 255, 255, 0.045) 0%, rgba(4, 10, 20, 0.92) 58%, rgba(2, 6, 14, 0.98) 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.025) inset,
+    0 32px 80px -48px rgba(0, 0, 0, 0.9),
+    0 0 60px -56px var(--qi-os-glow);
+  backdrop-filter: blur(28px) saturate(140%);
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
+}
+
+.qi-tray-focus-active .qi-intel-surface {
+  border-color: rgba(34, 211, 238, 0.14);
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.08) inset,
+    0 40px 100px -36px rgba(0, 0, 0, 0.88),
+    0 0 72px -40px rgba(34, 211, 238, 0.14);
+}
+
+.qi-museum-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  border: none;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 18%, rgba(255, 255, 255, 0.1), transparent 62%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.35) 0%, rgba(2, 6, 14, 0.95) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 24px 48px -32px rgba(0, 0, 0, 0.75),
+    0 0 40px -28px rgba(34, 211, 238, 0.08);
+}
+
+.qi-museum-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 55% 40% at 50% 0%, rgba(255, 255, 255, 0.07), transparent 70%);
+  opacity: 0.85;
+}
+
+.qi-museum-spotlight {
+  position: absolute;
+  left: 50%;
+  top: 8%;
+  width: 72%;
+  height: 42%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(34, 211, 238, 0.14), transparent 68%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.qi-product-card-shell:hover .qi-museum-spotlight,
+.qi-tray-focus-active .qi-museum-spotlight {
+  opacity: 1;
+}
+
+.qi-confidence-pulse {
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.qi-confidence-pulse > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(34, 211, 238, 0.55), rgba(167, 139, 250, 0.45));
+  box-shadow: 0 0 12px -4px rgba(34, 211, 238, 0.45);
+  transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.qi-signal-chip {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.28rem 0.62rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(226, 232, 240, 0.82);
+}
+
+.qi-decision-surface {
+  border-radius: 1.15rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.qi-decision-surface--positive {
+  border-color: rgba(52, 211, 153, 0.18);
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.07), rgba(34, 211, 238, 0.04));
+}
+
+.qi-decision-surface--calm {
+  border-color: rgba(34, 211, 238, 0.16);
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.06), rgba(99, 102, 241, 0.03));
+}
+
+.qi-decision-surface--accent {
+  border-color: rgba(167, 139, 250, 0.18);
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.07), rgba(34, 211, 238, 0.03));
+}
+
+.qi-decision-surface--caution {
+  border-color: rgba(251, 191, 36, 0.18);
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.06), rgba(244, 114, 182, 0.03));
+}
+
+.qi-decision-surface--risk {
+  border-color: rgba(251, 113, 133, 0.2);
+  background: linear-gradient(135deg, rgba(251, 113, 133, 0.07), rgba(148, 163, 184, 0.03));
+}
+
+.qi-decision-surface--neutral {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.qi-os-overline {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.62);
+}
+
+.qi-os-whisper {
+  font-size: 0.6875rem;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: rgba(203, 213, 225, 0.72);
+}
+
+.qi-expand-trigger {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.qi-expand-trigger:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qi-tray-atmosphere[data-tray-focus="true"] .qi-tray-peer-dim,
+  .qi-tray-focus-active {
+    transform: none;
+    filter: none;
+    transition: opacity 0.15s ease;
+  }
 }

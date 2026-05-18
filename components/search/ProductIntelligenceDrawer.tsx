@@ -45,6 +45,7 @@ import {
   getWhyQuantAIRecommends,
   type QuantProduct,
 } from "@/lib/shoppingScore";
+import { intelligenceDecisionLabel } from "@/lib/ui/intelligencePresentation";
 import { getTrustTierLabel } from "@/lib/retailTrust";
 
 type Props = {
@@ -123,32 +124,6 @@ function GlassBlock({
       <div className="space-y-2 text-[13px] font-normal leading-relaxed text-slate-300">{children}</div>
     </section>
   );
-}
-
-function decisionLabel(action?: string): string {
-  switch (action) {
-    case "BUY_NOW":
-      return "Buy window";
-    case "WAIT_FOR_DROP":
-    case "DISCOUNT_LIKELY_SOON":
-      return "Wait for drop";
-    case "HIDDEN_VALUE":
-      return "Hidden value";
-    case "STRONG_VALUE":
-      return "Strong value";
-    case "BEST_REGIONAL_DEAL":
-      return "Best regional deal";
-    case "SAFE_TRUSTED_OFFER":
-      return "Trusted offer";
-    case "RISKY_SELLER":
-      return "Risky seller";
-    case "PREMIUM_PRICING":
-      return "Premium pricing";
-    case "HIGH_VOLATILITY":
-      return "Market volatility";
-    default:
-      return "Compare first";
-  }
 }
 
 export default function ProductIntelligenceDrawer({ product: p, list, open, onClose }: Props) {
@@ -369,7 +344,7 @@ function DrawerBody({ p, list }: { p: QuantProduct; list: QuantProduct[] }) {
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-base font-semibold tracking-tight text-white/95">
-                {decisionLabel(p.qiBuyingDecision.action)}
+                {intelligenceDecisionLabel(p.qiBuyingDecision.action)}
               </p>
               <p className="mt-1 text-slate-300/95">{p.qiBuyingDecision.analystLine}</p>
             </div>

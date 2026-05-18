@@ -149,6 +149,7 @@ export default function ProductResultsSurface({
   const [verdictSource, setVerdictSource] = useState<string | null>(null);
   const [compareExportFlash, setCompareExportFlash] = useState(false);
   const [marketMemoryTick, setMarketMemoryTick] = useState(0);
+  const [trayFocusLink, setTrayFocusLink] = useState<string | null>(null);
 
   useEffect(() => {
     onCompareTrayChange?.(compareLinks);
@@ -837,7 +838,8 @@ export default function ProductResultsSurface({
 
       {mobilePerf ? (
         <div
-          className={`grid min-w-0 ${gridCols} ${compactTray ? "gap-5 sm:gap-6" : "gap-7"} ${gridMax}`}
+          className={`qi-tray-atmosphere grid min-w-0 ${gridCols} ${compactTray ? "gap-6 sm:gap-7" : "gap-8 sm:gap-9"} ${gridMax}`}
+          data-tray-focus={trayFocusLink ? "true" : "false"}
         >
           {sortedProducts.map((p, index) => {
             const rank = rankByLink.get(p.link) ?? index;
@@ -878,7 +880,8 @@ export default function ProductResultsSurface({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className={`grid min-w-0 ${gridCols} ${compactTray ? "gap-5 sm:gap-6" : "gap-7"} ${gridMax}`}
+            className={`qi-tray-atmosphere grid min-w-0 ${gridCols} ${compactTray ? "gap-6 sm:gap-7" : "gap-8 sm:gap-9"} ${gridMax}`}
+            data-tray-focus={trayFocusLink ? "true" : "false"}
           >
             {sortedProducts.map((p, index) => {
               const rank = rankByLink.get(p.link) ?? index;

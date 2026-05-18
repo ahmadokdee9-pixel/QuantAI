@@ -57,6 +57,10 @@ import {
   buildProductDealIntelligence,
   type ProductDealIntelligence,
 } from "@/lib/intelligence/dealIntelligenceEngine";
+import {
+  intelligenceDecisionPresentation,
+  intelligenceMarketPulseLine,
+} from "@/lib/ui/intelligencePresentation";
 
 function clip(s: string, max: number): string {
   const t = s.trim();
@@ -139,76 +143,6 @@ function worthBuyingShort(w: ProductDealIntelligence["worthBuyingNow"], hasDisco
   if (w === "yes") return hasDiscount ? "Buy thesis · clean discount" : "Buy thesis · value holds";
   if (w === "wait") return hasDiscount ? "Hold thesis · verify markdown" : "Hold thesis · timing soft";
   return "Analyst check · seller terms";
-}
-
-function premiumDecisionCopy(action?: string): {
-  label: string;
-  line: string;
-  cls: string;
-} {
-  switch (action) {
-    case "BUY_NOW":
-      return {
-        label: "Buy window",
-        line: "Price, trust, and timing are aligned enough to move.",
-        cls: "border-emerald-400/24 bg-emerald-500/[0.08] text-emerald-50/95",
-      };
-    case "SAFE_TRUSTED_OFFER":
-      return {
-        label: "Trusted offer",
-        line: "Safer seller profile with a defensible market price.",
-        cls: "border-cyan-400/24 bg-cyan-500/[0.08] text-cyan-50/95",
-      };
-    case "BEST_REGIONAL_DEAL":
-      return {
-        label: "Regional edge",
-        line: "Local-market fit is stronger than the wider tray.",
-        cls: "border-emerald-400/24 bg-emerald-500/[0.08] text-emerald-50/95",
-      };
-    case "HIDDEN_VALUE":
-      return {
-        label: "Hidden value",
-        line: "Underpriced versus the tray without obvious quality collapse.",
-        cls: "border-violet-400/24 bg-violet-500/[0.08] text-violet-50/95",
-      };
-    case "STRONG_VALUE":
-      return {
-        label: "Strong value",
-        line: "Good price-to-trust balance versus comparable listings.",
-        cls: "border-cyan-400/20 bg-cyan-500/[0.065] text-cyan-50/90",
-      };
-    case "WAIT_FOR_DROP":
-    case "DISCOUNT_LIKELY_SOON":
-      return {
-        label: "Wait window",
-        line: "Market timing suggests patience may improve the entry price.",
-        cls: "border-amber-400/24 bg-amber-500/[0.075] text-amber-50/92",
-      };
-    case "PREMIUM_PRICING":
-      return {
-        label: "Premium price",
-        line: "Higher than the market band; justify it on seller safety or specs.",
-        cls: "border-violet-400/22 bg-violet-500/[0.07] text-violet-50/92",
-      };
-    case "RISKY_SELLER":
-      return {
-        label: "Risk watch",
-        line: "Seller or listing signals need verification before checkout.",
-        cls: "border-rose-400/24 bg-rose-500/[0.075] text-rose-50/92",
-      };
-    case "HIGH_VOLATILITY":
-      return {
-        label: "Volatile market",
-        line: "Wide price movement in this tray; compare before committing.",
-        cls: "border-amber-400/22 bg-amber-500/[0.065] text-amber-50/90",
-      };
-    default:
-      return {
-        label: "Compare first",
-        line: "A credible option, but the tray has meaningful alternatives.",
-        cls: "border-white/[0.1] bg-white/[0.04] text-slate-200/90",
-      };
-  }
 }
 
 function stancePresentation(stance: BuyStance): {
@@ -301,6 +235,9 @@ type Props = {
   marketMemoryState?: MarketMemoryState | null;
   /** Raw search string — feeds adaptive category economics into consensus (no UI change). */
   searchQuery?: string;
+  /** Tray focus mode — dims peer cards when another row is hovered. */
+  trayFocusLink?: string | null;
+  onTrayFocus?: (link: string | null) => void;
 };
 
 const btnRow =
@@ -329,7 +266,8 @@ function CardProductImage({
     );
   }
   return (
-    <div className="relative aspect-[4/3] max-h-[9.25rem] min-h-[7.1rem] w-full overflow-hidden rounded-[1.05rem] border border-white/[0.09] bg-gradient-to-b from-white/[0.14] to-slate-900/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]">
+    <div className="qi-museum-frame relative aspect-[4/3] max-h-[10rem] min-h-[7.5rem] w-full">
+      <div className="qi-museum-spotlight" aria-hidden />
       {!loaded && (
         <div className="qi-image-shimmer absolute inset-0 z-[1] rounded-[inherit]" aria-hidden />
       )}
@@ -341,18 +279,17 @@ function CardProductImage({
         fetchPriority={fetchPriority}
         onLoad={() => setLoaded(true)}
         onError={() => setErr(true)}
-        className="relative z-[2] mx-auto h-full w-full max-h-[8.85rem] object-contain object-center p-3 drop-shadow-[0_16px_32px_rgba(0,0,0,0.42)]"
+        className="relative z-[2] mx-auto h-full w-full max-h-[9.25rem] object-contain object-center p-4 drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
         initial={false}
         animate={{ opacity: loaded ? 1 : 0 }}
         transition={{ duration: reduceMotion ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
         whileHover={
-          reduceMotion ? undefined : { scale: 1.03, transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] } }
+          reduceMotion ? undefined : { scale: 1.02, transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] } }
         }
       />
     </div>
   );
 }
-
 function ProductResultCard({
   product: p,
   list,
@@ -372,7 +309,11 @@ function ProductResultCard({
   humanSearchIntent = null,
   marketMemoryState = null,
   searchQuery = "",
+  trayFocusLink = null,
+  onTrayFocus,
 }: Props) {
+  const isTrayFocused = trayFocusLink === p.link;
+  const isTrayDimmed = Boolean(trayFocusLink && trayFocusLink !== p.link);
   const reduceMotion = useReducedMotion();
   const lite = reduceMotion || lowPower;
   const ringGradId = useId().replace(/:/g, "");
@@ -502,10 +443,13 @@ function ProductResultCard({
   const StanceIcon = stanceUi.Icon;
   const buyingDecision = p.qiBuyingDecision;
   const premiumDecision = useMemo(
-    () => premiumDecisionCopy(buyingDecision?.action),
+    () => intelligenceDecisionPresentation(buyingDecision?.action),
     [buyingDecision?.action]
   );
-  const decisionReason = buyingDecision?.primaryReasons?.[0] ?? buyingDecision?.analystLine ?? premiumDecision.line;
+  const decisionWhisper = clip(
+    buyingDecision?.analystLine ?? premiumDecision.whisper,
+    72
+  );
   const decisionConfidence = buyingDecision?.confidence ?? buyingDecision?.decisionScore ?? Math.round(scoreNorm);
 
   const signalsTerminalWhy = useMemo(() => {
@@ -544,24 +488,32 @@ function ProductResultCard({
         initial={lite ? false : { opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ ...transition, delay: lite ? 0 : Math.min(index * 0.028, 0.34) }}
+        onMouseEnter={() => onTrayFocus?.(p.link)}
+        onMouseLeave={() => onTrayFocus?.(null)}
+        onFocus={() => onTrayFocus?.(p.link)}
+        onBlur={() => onTrayFocus?.(null)}
         whileHover={
           lite
             ? undefined
             : {
-                y: canonicalConfidenceAura === "high" ? -2 : -1,
+                y: isTrayFocused ? -3 : canonicalConfidenceAura === "high" ? -2 : -1,
                 transition: { type: "spring", stiffness: canonicalConfidenceAura === "high" ? 380 : 360, damping: 36 },
               }
         }
         data-qi-confidence={canonicalConfidenceAura}
-        className={`qi-product-card-shell group relative flex h-full min-w-0 flex-col overflow-hidden rounded-[1.55rem] p-px transition-[background,box-shadow] duration-700 ease-out ${
+        className={`qi-product-card-shell qi-intel-surface group relative flex h-full min-w-0 flex-col overflow-hidden rounded-[1.75rem] p-px transition-[background,box-shadow,opacity,transform] duration-700 ease-out ${
+          isTrayDimmed ? "qi-tray-peer-dim" : ""
+        } ${isTrayFocused ? "qi-tray-focus-active" : ""} ${
           lite ? "" : "will-change-transform [transform:translateZ(0)]"
-        } ${
-          scoreNorm >= 78
-            ? "bg-gradient-to-br from-cyan-400/9 via-white/[0.055] to-violet-500/8"
-            : "bg-gradient-to-br from-white/[0.065] via-cyan-400/4 to-violet-500/7"
         }`}
       >
-        <div className="qi-product-card-inner relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.48rem] border border-white/[0.05] bg-gradient-to-b from-white/[0.05] via-white/[0.02] to-[#040912]/98 backdrop-blur-2xl transition-[border-color,box-shadow,transform] duration-500 ease-out group-hover:border-cyan-400/16 group-hover:shadow-[0_0_0_1px_rgba(34,211,238,0.05),0_18px_44px_-28px_rgba(34,211,238,0.1)]">
+        <div
+          className={`qi-product-card-inner relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.68rem] border-0 bg-transparent transition-[box-shadow,transform] duration-500 ease-out ${
+            isTrayFocused
+              ? "shadow-[0_0_0_1px_rgba(34,211,238,0.1),0_28px_64px_-32px_rgba(34,211,238,0.16)]"
+              : ""
+          }`}
+        >
           <div className="pointer-events-none absolute -right-20 -top-20 size-48 rounded-full bg-cyan-400/8 blur-3xl opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-100" />
           <div className="pointer-events-none absolute -bottom-24 -left-16 size-44 rounded-full bg-violet-500/8 blur-3xl opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-45" />
 
@@ -655,14 +607,12 @@ function ProductResultCard({
               </span>
             </div>
 
-            <div className={`mt-4 rounded-2xl border px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)] ${premiumDecision.cls}`}>
+            <div className={`qi-decision-surface mt-5 ${premiumDecision.surfaceClass}`}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] opacity-80">
+                  <p className="qi-os-overline">AI read</p>
+                  <p className="mt-1.5 text-[13px] font-semibold leading-snug tracking-[-0.01em] text-white/96">
                     {premiumDecision.label}
-                  </p>
-                  <p className="mt-1 text-[12px] font-semibold leading-snug text-white/95 [overflow-wrap:anywhere]">
-                    {clip(decisionReason, 118)}
                   </p>
                 </div>
                 <span className="shrink-0 rounded-full border border-white/[0.1] bg-black/25 px-2 py-1 text-[10px] font-semibold tabular-nums text-white/85">
@@ -670,7 +620,7 @@ function ProductResultCard({
                 </span>
               </div>
               <p className="mt-1.5 text-[10px] leading-snug text-slate-300/80 [overflow-wrap:anywhere]">
-                {clip(buyingDecision?.analystLine ?? premiumDecision.line, 136)}
+                {decisionWhisper}
               </p>
             </div>
 
@@ -804,11 +754,11 @@ function ProductResultCard({
             <button
               type="button"
               onClick={toggleIntelOpen}
-              className="mt-4 flex w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-white/[0.06] bg-black/22 px-3 py-2.5 text-left transition duration-200 hover:border-cyan-400/15 hover:bg-white/[0.035]"
+              className="qi-expand-trigger mt-5 flex w-full min-w-0 items-center justify-between gap-2 rounded-xl px-1 py-2.5 text-left transition duration-200"
               aria-expanded={intelOpen}
             >
               <span className="cockpit-label text-[10px] tracking-[0.12em] text-slate-500/85 group-hover:text-slate-400/95">
-                Decision layers
+                Deep analysis
               </span>
               <ChevronDown
                 className={`size-4 shrink-0 text-slate-500/90 transition duration-200 ${intelOpen ? "rotate-180" : ""}`}
@@ -1032,7 +982,7 @@ function ProductResultCard({
               className="mt-4 flex w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-cyan-400/18 bg-gradient-to-r from-cyan-400/[0.08] to-violet-500/[0.07] py-2.5 text-[11px] font-semibold text-slate-100/95 transition hover:border-cyan-400/26 hover:from-cyan-400/[0.11] hover:to-violet-500/[0.09]"
             >
               <Sparkles className="size-3.5 text-slate-400" strokeWidth={1.5} aria-hidden />
-              Open intelligence
+              Open analysis
               <PanelRight className="size-3.5 opacity-80" strokeWidth={1.5} aria-hidden />
             </motion.button>
 
