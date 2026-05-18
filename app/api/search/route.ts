@@ -169,7 +169,7 @@ async function fetchShoppingProductsWithFallback(
 /** Cross-request tray cache — normalized key improves hit rate; short TTL keeps prices fresh. */
 const getCachedSearchPipeline = unstable_cache(
   async (pipelineQuery: string) => runSearchPipeline(pipelineQuery),
-  ["quantai-search-pipeline-v22-semantic-empty-guard"],
+  ["quantai-search-pipeline-v26-category-family-breadth"],
   { revalidate: 120 }
 );
 
@@ -179,6 +179,13 @@ type SearchDataPayload = {
   meta: Record<string, unknown>;
   searchIntelligence: SearchIntelligenceDTO | null;
   entitlements?: SearchEntitlementsDTO;
+};
+
+type StageSuppressionTrace = {
+  stage: string;
+  before: number;
+  after: number;
+  suppressed: number;
 };
 
 function sourceCount(products: QuantProduct[]): number {
@@ -191,8 +198,9 @@ function searchDebugMeta(args: {
   canonicalQuery?: CanonicalQueryContract | null;
   fallbackReason?: string | null;
   errorState?: string | null;
+  stageSuppression?: StageSuppressionTrace[];
 }): Record<string, unknown> {
-  const { products, liveDiscovery = null, canonicalQuery = null, fallbackReason = null, errorState = null } = args;
+  const { products, liveDiscovery = null, canonicalQuery = null, fallbackReason = null, errorState = null, stageSuppression = [] } = args;
   const identityDebug = canonicalQuery ? buildIdentityDebugSummary(products, canonicalQuery) : null;
   return {
     productCount: products.length,
@@ -225,6 +233,8 @@ function searchDebugMeta(args: {
     recoveredFromFallback: liveDiscovery?.recoveredFromFallback ?? false,
     upstreamFailures: liveDiscovery?.upstreamFailures ?? [],
     merchantReliability: liveDiscovery?.merchantReliability ?? [],
+    discoveryValidationTrace: liveDiscovery?.discoveryValidationTrace ?? null,
+    stageSuppression,
     canonicalQuery: canonicalQuery ? canonicalQueryForDebug(canonicalQuery) : null,
     identityDebug,
   };
@@ -330,6 +340,15 @@ async function handleSearch(
     let commerceMeta: SearchCommerceAIMeta;
     let liveDiscovery: LiveCommerceDiscoveryMeta;
     const canonicalQuery: CanonicalQueryContract = requestCanonicalQuery;
+    const stageSuppression: StageSuppressionTrace[] = [];
+    const traceStage = (stage: string, before: number, after: number) => {
+      stageSuppression.push({
+        stage,
+        before,
+        after,
+        suppressed: Math.max(0, before - after),
+      });
+    };
     try {
       const tray = await getCachedSearchPipeline(pipelineKey);
       products = tray.products;
@@ -337,6 +356,7 @@ async function handleSearch(
       searchIntelligence = tray.searchIntelligence;
       commerceMeta = tray.commerceMeta;
       liveDiscovery = tray.liveDiscovery;
+      traceStage("pipeline_enrichment_and_ai", liveDiscovery.fusedRows, products.length);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
       if (msg.startsWith(SEARCH_UPSTREAM_PREFIX)) {
@@ -375,7 +395,9 @@ async function handleSearch(
     }
 
     const intents = canonicalQuery.commerceIntents;
+    let stageBefore = products.length;
     products = applyPredictiveCommerceToTray(products, query, intents);
+    traceStage("predictive_ranking", stageBefore, products.length);
     const shopperPersona = detectShopperPersonas(query, intents);
     const prevCommerceMemory = safeParseCommerceSessionMemory(opts?.commerceMemory);
     const tasteTagIds = tasteTagListForApi(intents.taste);
@@ -386,17 +408,25 @@ async function handleSearch(
       shopperPersona,
       tasteTagIds
     );
+    stageBefore = products.length;
     products = applyPersonaRanking(products, shopperPersona, commerceSessionMemory);
+    traceStage("persona_ranking", stageBefore, products.length);
+    stageBefore = products.length;
     products = applyMarketAwarenessRanking(products, query);
+    traceStage("market_awareness_ranking", stageBefore, products.length);
     const preIdentityGateProducts = products;
     products = applyHardIdentityGate(products, canonicalQuery);
+    traceStage("hard_identity_gate", preIdentityGateProducts.length, products.length);
     if (products.length === 0 && preIdentityGateProducts.length > 0) {
       products = recoverSafeIdentityBreadth(preIdentityGateProducts, canonicalQuery);
+      traceStage("safe_identity_breadth_recovery", 0, products.length);
     }
     const preSemanticProducts = products;
     products = semanticRerankSearchResults(products, query, canonicalQuery);
+    traceStage("semantic_rerank", preSemanticProducts.length, products.length);
     if (products.length === 0 && preSemanticProducts.length > 0) {
       products = preSemanticProducts.map((p, i) => ({ ...p, qiRank: i }));
+      traceStage("semantic_empty_guard", 0, products.length);
     }
     dealClusters = buildDealClusters(products);
     searchIntelligence = buildSearchIntelligence(query, products, dealClusters);
@@ -418,6 +448,7 @@ async function handleSearch(
       canonicalQuery,
       fallbackReason,
       errorState: null,
+      stageSuppression,
     });
 
     const data: SearchDataPayload = {
@@ -460,6 +491,8 @@ async function handleSearch(
         recoveredFromFallback: debugMeta.recoveredFromFallback,
         upstreamFailures: debugMeta.upstreamFailures,
         merchantReliability: debugMeta.merchantReliability,
+        discoveryValidationTrace: debugMeta.discoveryValidationTrace,
+        stageSuppression: debugMeta.stageSuppression,
         searchDebug: debugMeta,
         productCount: debugMeta.productCount,
         productsCount: debugMeta.productsCount,

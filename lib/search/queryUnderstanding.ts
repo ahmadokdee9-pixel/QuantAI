@@ -101,13 +101,13 @@ function detectCategory(s: string): SemanticProductCategory {
   if (hasAny(s, /\b(laptop|notebook|macbook|thinkpad|لابتوب)\b/i)) return "laptop";
   if (hasAny(s, /\b(headphones?|earbuds?|airpods?|bose|سماعات?)\b/i)) return "audio";
   if (hasAny(s, /\b(clean desk|minimal desk|desk setup|workspace)\b/i)) return "desk_setup";
-  if (hasAny(s, /\b(sofa|couch|chair|desk|table|furniture|كنبة|اثاث|أثاث)\b/i)) return "furniture";
-  if (hasAny(s, /\b(perfume|fragrance|parfum|cologne|عطر)\b/i)) return "fragrance";
+  if (hasAny(s, /\b(sofa|sofa bed|sectional|loveseat|settee|couch|corner sofa|recliner|chaise|hoekbank|bankstel|loungebank|fauteuil|chair|stoel|desk|table|tafel|garden table|tuin tafel|tuinmeubel|loungeset|furniture|meubel|meubels|كنبة|طاولة|اثاث|أثاث)\b/i)) return "furniture";
+  if (hasAny(s, /\b(perfume|fragrance|parfum|cologne|eau de parfum|eau de toilette|aftershave|عطر)\b/i)) return "fragrance";
   if (hasAny(s, /\b(watch|smartwatch|ساعة)\b/i)) return "watch";
-  if (hasAny(s, /\b(makeup|skincare|beauty|serum|cream)\b/i)) return "beauty";
-  if (hasAny(s, /\b(jacket|dress|hoodie|shirt|fashion|outfit)\b/i)) return "fashion";
-  if (hasAny(s, /\b(home|kitchen|bedroom|living room|decor)\b/i)) return "home";
-  if (hasAny(s, /\b(gpu|monitor|tv|camera|tablet|console|electronics?)\b/i)) return "electronics";
+  if (hasAny(s, /\b(makeup|skincare|beauty|serum|cream|cosmetic|verzorging)\b/i)) return "beauty";
+  if (hasAny(s, /\b(jacket|winter jacket|jas|winterjas|coat|dress|hoodie|shirt|fashion|outfit|kleding|ملابس|جاكيت)\b/i)) return "fashion";
+  if (hasAny(s, /\b(coffee machine|espresso machine|koffiezetapparaat|koffiemachine|air fryer|vacuum|stofzuiger|blender|microwave|baby stroller|stroller|pram|buggy|kinderwagen|home|kitchen|bedroom|living room|decor|appliance|apparaat|keuken|عربة\s+اطفال|عربة\s+أطفال)\b/i)) return "home";
+  if (hasAny(s, /\b(gpu|gaming monitor|monitor|beeldscherm|scherm|tv|camera|tablet|console|electronics?|elektronica)\b/i)) return "electronics";
   return "unknown";
 }
 
@@ -179,6 +179,9 @@ function semanticKeywordsFor(q: {
   if (q.category === "fragrance") words.push("perfume", "fragrance", "parfum", "cologne", "eau");
   if (q.category === "watch") words.push("watch", "smartwatch", "wearable", "wrist");
   if (q.category === "desk_setup") words.push("desk", "workspace", "monitor", "keyboard", "minimal");
+  if (q.category === "home") words.push("home", "kitchen", "appliance", "coffee", "machine", "stroller", "baby");
+  if (q.category === "fashion") words.push("fashion", "clothing", "jacket", "coat", "style");
+  if (q.category === "beauty") words.push("beauty", "skincare", "cosmetic", "care");
   if (q.aesthetic === "minimal_clean") words.push("clean", "minimal", "simple", "white", "black", "wood", "matte");
   if (q.aesthetic === "premium_luxury") words.push("premium", "luxury", "pro", "leather", "metal", "designer");
   if (q.styles.includes("long_lasting")) words.push("long lasting", "intense", "eau de parfum", "parfum");

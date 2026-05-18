@@ -14,6 +14,12 @@ export type CanonicalQueryIntent =
   | "market_compare"
   | "general_search";
 
+export type CanonicalMarketIntentMode =
+  | "exact_sku"
+  | "category_shopping"
+  | "broad_discovery"
+  | "hybrid_compare";
+
 export type CanonicalQueryContract = {
   version: 1;
   originalQuery: string;
@@ -39,6 +45,7 @@ export type CanonicalQueryContract = {
     urgency01: number;
     quality: SemanticQueryUnderstanding["qualityExpectation"];
   };
+  marketMode: CanonicalMarketIntentMode;
   condition: "new" | "used" | "refurbished" | "any";
   merchantHints: string[];
   exclusions: string[];
@@ -206,6 +213,36 @@ function intentAlternatives(primary: CanonicalQueryIntent, semantic: SemanticQue
   return uniq(intents) as CanonicalQueryIntent[];
 }
 
+function inferMarketMode(args: {
+  envelope: string;
+  semantic: SemanticQueryUnderstanding;
+  commerce: CommerceSearchIntents;
+  brand: string | null;
+  model: string | null;
+  variant: string | null;
+  primary: CanonicalQueryIntent;
+}): CanonicalMarketIntentMode {
+  const { envelope, semantic, commerce, brand, model, variant, primary } = args;
+  const hasExactIdentity =
+    Boolean(brand && model) ||
+    Boolean(variant && (brand || model)) ||
+    /\b(ean|gtin|sku|model\s*(no|number)|\d{8,14})\b/i.test(envelope) ||
+    /(iphone\s*\d{1,2}|airpods?\s*(pro|max|\d)|adidas\s+samba)/i.test(envelope) ||
+    /(ايفون|آيفون)\s*\d{1,2}/i.test(envelope);
+  const compareLike =
+    primary === "market_compare" ||
+    primary === "best_value" ||
+    primary === "cheapest_trusted" ||
+    commerce.comparisonIntent ||
+    commerce.storeDealHunter ||
+    semantic.budgetIntent01 >= 0.52 ||
+    semantic.premiumIntent01 >= 0.56;
+  if (hasExactIdentity) return compareLike ? "hybrid_compare" : "exact_sku";
+  if (compareLike && semantic.productCategory !== "unknown") return "hybrid_compare";
+  if (semantic.productCategory !== "unknown") return "category_shopping";
+  return "broad_discovery";
+}
+
 export function buildCanonicalQuery(rawQuery: string): CanonicalQueryContract {
   const semantic = buildSearchQueryUnderstanding(rawQuery);
   const commerceIntents = parseCommerceSearchIntents(rawQuery);
@@ -218,6 +255,7 @@ export function buildCanonicalQuery(rawQuery: string): CanonicalQueryContract {
   const budget = detectBudget(envelope, semantic);
   const condition = detectCondition(envelope);
   const primary = primaryIntent(semantic, commerceIntents, condition);
+  const marketMode = inferMarketMode({ envelope, semantic, commerce: commerceIntents, brand, model, variant, primary });
   return {
     version: 1,
     originalQuery,
@@ -238,6 +276,7 @@ export function buildCanonicalQuery(rawQuery: string): CanonicalQueryContract {
       urgency01: clamp01(semantic.urgency01),
       quality: semantic.qualityExpectation,
     },
+    marketMode,
     condition,
     merchantHints: detectMerchantHints(envelope),
     exclusions: detectExclusions(envelope),
@@ -261,6 +300,7 @@ export function canonicalQueryForDebug(q: CanonicalQueryContract): Record<string
     variant: q.variant,
     budget: q.budget,
     intent: q.intent,
+    marketMode: q.marketMode,
     condition: q.condition,
     merchantHints: q.merchantHints,
     exclusions: q.exclusions,

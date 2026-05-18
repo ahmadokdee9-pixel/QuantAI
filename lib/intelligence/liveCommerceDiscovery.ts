@@ -55,6 +55,15 @@ export type LiveCommerceDiscoveryMeta = {
   recoveredFromFallback: boolean;
   upstreamFailures: { query: string; status: number; error: string; attempt: number }[];
   merchantReliability: MerchantReliabilitySnapshot[];
+  discoveryValidationTrace?: {
+    marketMode: string;
+    totalExternalRows: number;
+    identityRejected: number;
+    exactRejected: number;
+    confidenceRejected: number;
+    accepted: number;
+    rejectionReasons: Record<string, number>;
+  };
   error?: string;
 };
 
@@ -107,11 +116,24 @@ function validateExternalRows(
   canonicalQuery: CanonicalQueryContract | undefined,
   mode: LiveCommerceDiscoveryMeta["discoveryMode"],
   maxRows: number
-): { products: QuantProduct[]; rejected: number; identityGatePassed: number; exactMatchPassed: number; fusionConfidence: number } {
+): {
+  products: QuantProduct[];
+  rejected: number;
+  identityGatePassed: number;
+  exactMatchPassed: number;
+  fusionConfidence: number;
+  trace: NonNullable<LiveCommerceDiscoveryMeta["discoveryValidationTrace"]>;
+} {
   const unknownCategoryMode = !canonicalQuery || canonicalQuery.category === "unknown";
+  const exactSkuMode = canonicalQuery?.marketMode === "exact_sku";
+  const allowMarketFamily = !exactSkuMode;
   const accepted: QuantProduct[] = [];
   let identityGatePassed = 0;
   let exactMatchPassed = 0;
+  let identityRejected = 0;
+  let exactRejected = 0;
+  let confidenceRejected = 0;
+  const rejectionReasons: Record<string, number> = {};
   const confidences: number[] = [];
 
   for (const raw of products) {
@@ -119,12 +141,27 @@ function validateExternalRows(
     const decision = assessIdentityGateDecision(product, canonicalQuery, {
       strictExternalDiscovery: true,
       unknownCategoryMode,
+      allowMarketFamily,
     });
     const withGate = { ...product, qiIdentityGate: decision };
-    if (!decision.identityGatePassed) continue;
-    if (!decision.exactMatchPassed) continue;
-    if (mode === "conservative" && decision.fusionConfidence < (unknownCategoryMode ? 0.74 : 0.68)) continue;
+    if (!decision.identityGatePassed) {
+      identityRejected += 1;
+      const reason = decision.exclusionReason ?? "identity_rejected";
+      rejectionReasons[reason] = (rejectionReasons[reason] ?? 0) + 1;
+      continue;
+    }
     identityGatePassed += 1;
+    if (exactSkuMode && !decision.exactMatchPassed) {
+      exactRejected += 1;
+      rejectionReasons.exact_match_required = (rejectionReasons.exact_match_required ?? 0) + 1;
+      continue;
+    }
+    const confidenceFloor = exactSkuMode ? 0.68 : unknownCategoryMode ? 0.58 : 0.46;
+    if (mode === "conservative" && decision.fusionConfidence < confidenceFloor) {
+      confidenceRejected += 1;
+      rejectionReasons.low_fusion_confidence = (rejectionReasons.low_fusion_confidence ?? 0) + 1;
+      continue;
+    }
     if (decision.exactMatchPassed) exactMatchPassed += 1;
     confidences.push(decision.fusionConfidence);
     accepted.push(withGate);
@@ -137,6 +174,15 @@ function validateExternalRows(
     identityGatePassed,
     exactMatchPassed,
     fusionConfidence: Number(avg(confidences).toFixed(2)),
+    trace: {
+      marketMode: canonicalQuery?.marketMode ?? "unknown",
+      totalExternalRows: products.length,
+      identityRejected,
+      exactRejected,
+      confidenceRejected,
+      accepted: accepted.length,
+      rejectionReasons,
+    },
   };
 }
 
@@ -257,6 +303,15 @@ export async function runLiveCommerceDiscovery(
         recoveredFromFallback: false,
         upstreamFailures: [],
         merchantReliability: discoveryReliabilitySnapshot([]),
+        discoveryValidationTrace: {
+          marketMode: canonicalQuery?.marketMode ?? "unknown",
+          totalExternalRows: 0,
+          identityRejected: 0,
+          exactRejected: 0,
+          confidenceRejected: 0,
+          accepted: 0,
+          rejectionReasons: {},
+        },
       },
     };
   }
@@ -327,6 +382,7 @@ export async function runLiveCommerceDiscovery(
       recoveredFromFallback: refresh.recoveredFromFallback,
       upstreamFailures: refresh.upstreamFailures,
       merchantReliability,
+      discoveryValidationTrace: validated.trace,
     },
   };
 }

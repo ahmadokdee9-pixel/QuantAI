@@ -65,6 +65,8 @@ export type IdentityGateOptions = {
   strictExternalDiscovery?: boolean;
   /** Unknown categories may enter discovery, but need stronger title identity evidence. */
   unknownCategoryMode?: boolean;
+  /** Category/broad discovery can keep safe same-family market rows behind exact matches. */
+  allowMarketFamily?: boolean;
 };
 
 /** Collapse brand + primary model tokens for identity keys. */
@@ -127,13 +129,16 @@ function queryAllowsAccessory(canonicalQuery?: CanonicalQueryContract): boolean 
 function exactCoreProductIntent(canonicalQuery?: CanonicalQueryContract): boolean {
   if (!canonicalQuery || queryAllowsAccessory(canonicalQuery)) return false;
   const q = canonicalQuery.originalQuery.toLowerCase();
+  const protectedExact =
+    /(iphone|ايفون|آيفون|airpods?|ايربودز|adidas\s+samba|samba)/i.test(q);
+  if (canonicalQuery.marketMode === "category_shopping" || canonicalQuery.marketMode === "broad_discovery") return false;
+  if (canonicalQuery.marketMode === "hybrid_compare") return Boolean((canonicalQuery.brand && canonicalQuery.model) || protectedExact);
+  if (canonicalQuery.marketMode === "exact_sku") return true;
   const broadCoreCategory =
     (canonicalQuery.category === "electronics" || canonicalQuery.category === "furniture") &&
     !canonicalQuery.brand &&
     !canonicalQuery.model;
   if (broadCoreCategory) return false;
-  const protectedExact =
-    /(iphone|ايفون|آيفون|airpods?|ايربودز|adidas\s+samba|samba)/i.test(q);
   return (
     protectedExact ||
     canonicalQuery.intent.primary === "exact_product" ||
@@ -228,11 +233,11 @@ function categoryEvidence(p: QuantProduct, canonicalQuery?: CanonicalQueryContra
   if (category === "phone") return /\b(phone|iphone|galaxy|pixel|smartphone|mobile|telefoon|mobiel)\b/i.test(blob);
   if (category === "audio") return /\b(airpods?|earbuds?|headphones?|wireless audio|noise cancelling|koptelefoon|oordopjes|oortjes)\b/i.test(blob);
   if (category === "shoes") return /\b(shoe|sneaker|trainer|samba|gazelle|air force|adidas|nike)\b/i.test(blob);
-  if (category === "furniture") return /\b(sofa|couch|corner sofa|hoekbank|bankstel|loungebank|chair|stoel|table|tafel|tuinset|furniture|meubel|meubels|كنبة|طاولة)\b/i.test(blob);
+  if (category === "furniture") return /\b(sofa|sofa bed|sectional|loveseat|settee|couch|corner sofa|recliner|chaise|hoekbank|bankstel|loungebank|fauteuil|chair|stoel|table|tafel|tuinset|tuinmeubel|loungeset|furniture|meubel|meubels|كنبة|طاولة)\b/i.test(blob);
   if (category === "electronics") return /\b(monitor|display|beeldscherm|scherm|gpu|camera|tablet|console|tv|electronics?)\b/i.test(blob);
   if (category === "fragrance") return /\b(perfume|fragrance|parfum|cologne|eau de parfum|eau de toilette|عطر)\b/i.test(blob);
   if (category === "fashion") return /\b(jacket|jas|coat|hoodie|shirt|dress|fashion|kleding)\b/i.test(blob);
-  if (category === "home") return /\b(home|kitchen|coffee|machine|appliance|huis|keuken|apparaat)\b/i.test(blob);
+  if (category === "home") return /\b(home|kitchen|coffee|machine|appliance|stroller|pram|buggy|kinderwagen|babypark|prenatal|huis|keuken|apparaat|عربة)\b/i.test(blob);
   return true;
 }
 
@@ -403,6 +408,16 @@ export function assessIdentityGateDecision(
   const title = listingBlob(product);
   const evidence01 = productEvidenceScore(product, canonicalQuery);
   const variantOk = identity.relation === "variant" && identity.confidence01 >= 0.78 && explicitVariantEvidence(identity);
+  const marketFamilyPassed = Boolean(
+    options.allowMarketFamily &&
+      identity.isMainProduct &&
+      (
+        identity.relation === "same_product_family" ||
+        identity.relation === "variant" ||
+        (identity.relation === "unknown" && evidence01 >= (options.unknownCategoryMode ? 0.62 : 0.5))
+      ) &&
+      identity.confidence01 >= (options.unknownCategoryMode ? 0.58 : 0.46)
+  );
   const exactMatchPassed = Boolean(
     identity.relation === "exact_product" ||
     identity.isSafeSameFamilyCandidate ||
@@ -417,6 +432,7 @@ export function assessIdentityGateDecision(
   if (!exclusionReason && identity.relation === "wrong_product") exclusionReason = "wrong_product";
 
   if (!exclusionReason && (exactIntent || options.strictExternalDiscovery)) {
+    const familyFloor = options.allowMarketFamily ? (options.unknownCategoryMode ? 0.62 : 0.46) : 0.72;
     if (identity.relation === "accessory") exclusionReason = "accessory_for_exact_product";
     else if (identity.relation === "compatible_item") exclusionReason = "compatible_item_for_exact_product";
     else if (identity.relation === "replacement_part") exclusionReason = "replacement_part_for_exact_product";
@@ -433,17 +449,17 @@ export function assessIdentityGateDecision(
       exclusionReason = "shoe_query_apparel_or_accessory";
     } else if (/\b(case|cover|replacement|for iphone|used parts|bundle|sim tray|charger|cable)\b/i.test(title)) {
       exclusionReason = "exact_product_protected_term";
-    } else if (identity.relation === "same_product_family" && (exactIntent || fusionConfidence < 0.72)) {
+    } else if (identity.relation === "same_product_family" && (exactIntent || fusionConfidence < familyFloor)) {
       exclusionReason = "same_family_not_exact_product";
-    } else if (identity.relation === "variant" && !variantOk) {
+    } else if (identity.relation === "variant" && !variantOk && !options.allowMarketFamily) {
       exclusionReason = "weak_variant_identity";
     }
   }
 
-  if (!exclusionReason && options.strictExternalDiscovery && !exactMatchPassed) {
+  if (!exclusionReason && options.strictExternalDiscovery && !exactMatchPassed && !marketFamilyPassed) {
     exclusionReason = "external_identity_not_strong_enough";
   }
-  if (!exclusionReason && options.unknownCategoryMode && fusionConfidence < 0.72) {
+  if (!exclusionReason && options.unknownCategoryMode && fusionConfidence < (options.allowMarketFamily ? 0.58 : 0.72)) {
     exclusionReason = "unknown_category_weak_identity";
   }
 
