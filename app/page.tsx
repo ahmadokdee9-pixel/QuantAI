@@ -580,24 +580,31 @@ export default function Home() {
 
         {/* Hero */}
         <section
-          className={`relative px-4 sm:px-6 ${
-            products.length > 0 ? "pt-14 pb-16 sm:pt-16 sm:pb-20" : "pt-16 pb-28 sm:pt-20 sm:pb-36"
+          className={`qi-hero-flagship relative px-4 sm:px-6 ${
+            products.length > 0 ? "pt-14 pb-16 sm:pt-16 sm:pb-20" : "pt-16 pb-28 sm:pt-24 sm:pb-36"
           }`}
         >
+          <div className="qi-hero-aura" aria-hidden />
           <div className="mx-auto max-w-4xl text-center">
-            <p className="qi-silent-overline motion-safe:animate-[fadeIn_0.5s_ease-out]">
-              Market intelligence
+            <p className="qi-hero-manifest motion-safe:animate-[fadeIn_0.5s_ease-out]">
+              QuantAI · Commerce intelligence
             </p>
 
             <h1 className="qi-hero-headline mt-10 motion-safe:animate-[fadeIn_0.6s_ease-out]">
-              Clarity before purchase.
+              <span className="block">Read the market</span>
+              <span className="qi-hero-headline-accent block">before you buy.</span>
             </h1>
 
-            <p className="qi-hero-lead mx-auto mt-6 max-w-xl motion-safe:animate-[fadeIn_0.65s_ease-out]">
-              See the market before you enter it.
+            <p className="qi-hero-lead mx-auto mt-6 max-w-2xl motion-safe:animate-[fadeIn_0.65s_ease-out]">
+              Intelligence for consequential purchases — clarity, trust posture, and price context
+              in one decisive read.
             </p>
 
-            <motion.div className="qi-hero-instrument mx-auto mt-14 max-w-3xl sm:mt-16 sm:max-w-[48rem] motion-safe:animate-[fadeIn_0.7s_ease-out]">
+            <p className="qi-hero-credence mx-auto mt-4 max-w-lg motion-safe:animate-[fadeIn_0.68s_ease-out]">
+              Buy with context, not noise.
+            </p>
+
+            <div className="qi-hero-command-stage mx-auto mt-14 max-w-[52rem] sm:mt-16 motion-safe:animate-[fadeIn_0.7s_ease-out]">
                 <HeroSearchCommand
                   query={query}
                   onQueryChange={setQuery}
@@ -616,7 +623,7 @@ export default function Home() {
                     <SearchStreamRibbon active={loading} />
                   </div>
                 ) : null}
-            </motion.div>
+            </div>
 
             {searchError && !loading && (
               <p
@@ -746,12 +753,13 @@ export default function Home() {
             className="mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-28 scroll-mt-24 border-t border-white/[0.06]"
           >
           <div className="text-center max-w-xl mx-auto mb-14 sm:mb-16">
-            <p className="qi-silent-overline mb-4">Membership</p>
+            <p className="qi-silent-overline mb-4">Private access architecture</p>
             <h2 className="qi-editorial-display text-3xl sm:text-4xl text-white/95">
-              Private access levels
+              Intelligence layers, not subscriptions
             </h2>
             <p className="qi-silent-whisper mt-4">
-              More depth when your decisions demand it.
+              Clearance into deeper market synthesis — confidential, institutional, reserved for
+              high-intent buyers.
             </p>
             <Link
               href="/pricing"
@@ -762,7 +770,7 @@ export default function Home() {
             </Link>
           </div>
 
-          <PricingCards currentTier={subscriptionTier} />
+          <PricingCards currentTier={subscriptionTier} className="mt-2" />
 
         </section>
 

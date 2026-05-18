@@ -1,8 +1,8 @@
 "use client";
 
 import { useId, useMemo, useState, type KeyboardEvent } from "react";
-import { motion } from "framer-motion";
-import { ArrowRight, ChevronDown, Loader2 } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
+import { ArrowRight, ChevronDown, Loader2, Sparkles } from "lucide-react";
 import {
   HERO_COMMAND_HISTORY_CAP,
   HERO_COMMAND_SUGGESTION_CAP,
@@ -75,8 +75,11 @@ export default function HeroSearchCommand({
   placeholder,
   hintOptions,
   registerInput,
+  mobilePerf,
 }: Props) {
   const baseId = useId();
+  const reduceMotion = useReducedMotion();
+  const lite = mobilePerf || reduceMotion;
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const [focused, setFocused] = useState(false);
 
@@ -123,25 +126,81 @@ export default function HeroSearchCommand({
     }
   };
 
-  return (
-    <div className="qi-instrument-root">
-      <motion.div
-        className={`qi-instrument-surface relative ${focused ? "qi-instrument-surface--active" : ""} ${submitPulse ? "qi-instrument-surface--pulse" : ""}`}
-        data-loading={loading ? "true" : "false"}
-      >
-        <div className="qi-instrument-glass" aria-hidden />
-        <div className="qi-instrument-reflection" aria-hidden />
+  const active = focused || loading;
 
-        <div className="relative flex flex-col gap-4">
+  return (
+    <motion.div
+      className="qi-command-root"
+      initial={lite ? false : { opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: lite ? 0 : 0.65, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <motion.div
+        className="qi-command-halo"
+        aria-hidden
+        animate={
+          lite
+            ? undefined
+            : {
+                opacity: active ? 0.95 : 0.55,
+                scale: active ? 1.02 : 1,
+              }
+        }
+        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      />
+      <div className="qi-command-floor" aria-hidden />
+
+      <motion.div
+        className={`qi-command-deck ${active ? "qi-command-deck--active" : ""} ${submitPulse ? "qi-command-deck--pulse" : ""}`}
+        data-loading={loading ? "true" : "false"}
+        animate={lite ? undefined : { y: active ? -2 : 0 }}
+        transition={{ type: "spring", stiffness: 380, damping: 32 }}
+      >
+        <div className="qi-command-glass qi-command-glass--deep" aria-hidden />
+        <motion.div
+          className="qi-command-glass qi-command-glass--sheen"
+          aria-hidden
+          animate={lite ? undefined : { opacity: active ? 1 : 0.65 }}
+        />
+        <div className="qi-command-rim" aria-hidden />
+        <motion.div
+          className="qi-command-scan"
+          aria-hidden
+          animate={lite || !active ? { opacity: 0 } : { opacity: [0, 0.35, 0] }}
+          transition={
+            lite
+              ? { duration: 0 }
+              : { duration: 2.8, repeat: Infinity, ease: "easeInOut" }
+          }
+        />
+
+        <div className="relative z-[2] flex flex-col gap-4 p-5 sm:p-6">
+          <motion.div
+            className="flex items-center justify-between gap-3 border-b border-white/[0.06] pb-3"
+            layout={false}
+          >
+            <motion.div className="flex min-w-0 items-center gap-2.5" layout={false}>
+              <span className="qi-command-status-dot" data-active={active ? "true" : "false"} aria-hidden />
+              <span className="qi-command-manifest">
+                <Sparkles className="size-3 shrink-0 opacity-50" strokeWidth={1.75} aria-hidden />
+                Market command
+              </span>
+            </motion.div>
+            <span className="qi-command-channel hidden sm:inline">QI · live field</span>
+          </motion.div>
+
           <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
             <label className="sr-only" htmlFor={`${baseId}-q`}>
-              Search the market
+              Query the market
             </label>
             <div
-              className={`qi-instrument-field qa-search-field relative flex min-h-[58px] flex-1 items-center rounded-[1.1rem] px-5 sm:min-h-[62px] ${
-                focused ? "qi-instrument-field--focus" : ""
+              className={`qi-command-field qa-search-field relative flex min-h-[60px] flex-1 items-stretch overflow-hidden rounded-[1.15rem] ${
+                focused ? "qi-command-field--focus" : ""
               }`}
             >
+              <span className="qi-command-prefix hidden items-center pl-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500/75 sm:flex">
+                Query
+              </span>
               <input
                 ref={registerInput}
                 id={`${baseId}-q`}
@@ -154,27 +213,32 @@ export default function HeroSearchCommand({
                 enterKeyHint="search"
                 autoComplete="off"
                 disabled={loading}
-                className="qi-instrument-input min-w-0 flex-1 bg-transparent py-4 outline-none disabled:opacity-45"
+                className="qi-command-input min-w-0 flex-1 bg-transparent px-4 py-4 outline-none disabled:opacity-45 sm:px-5 sm:py-[1.05rem]"
               />
-              <span className="qi-instrument-cursor-glow" aria-hidden />
+              <span className="qi-command-cursor-beam" aria-hidden />
+              <span className="qi-command-field-glow" aria-hidden />
             </div>
 
             <button
               type="button"
               onClick={runSubmit}
               disabled={loading}
-              className="qi-instrument-submit group relative flex min-h-[58px] w-full shrink-0 items-center justify-center gap-2 rounded-[1.1rem] px-8 sm:min-h-[62px] sm:w-auto sm:min-w-[9.5rem]"
+              className="qi-command-execute group relative flex min-h-[60px] w-full shrink-0 items-center justify-center gap-2 rounded-[1.15rem] px-8 sm:min-w-[10.5rem] sm:w-auto"
             >
-              <span className="relative z-[1] flex items-center gap-2 text-[15px] font-medium tracking-[-0.02em]">
+              <span className="qi-command-execute-shine" aria-hidden />
+              <span className="relative z-[1] flex items-center gap-2 text-[15px] font-semibold tracking-[-0.02em]">
                 {loading ? (
                   <>
                     <Loader2 className="size-4 animate-spin" aria-hidden />
-                    Scanning
+                    Scanning field
                   </>
                 ) : (
                   <>
-                    Enter field
-                    <ArrowRight className="size-4 opacity-70 transition group-hover:translate-x-0.5" aria-hidden />
+                    Execute read
+                    <ArrowRight
+                      className="size-4 opacity-80 transition group-hover:translate-x-0.5"
+                      aria-hidden
+                    />
                   </>
                 )}
               </span>
@@ -182,7 +246,10 @@ export default function HeroSearchCommand({
           </div>
 
           {history.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 border-t border-white/[0.04] pt-3">
+              <span className="w-full text-[10px] font-medium uppercase tracking-[0.16em] text-slate-600/90">
+                Recent
+              </span>
               {history.map((item) => (
                 <button
                   key={`h-${item}`}
@@ -191,7 +258,7 @@ export default function HeroSearchCommand({
                   title={item}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => pickPreset(item)}
-                  className="max-w-full truncate rounded-lg px-3 py-1.5 text-left text-[12px] font-medium text-slate-500/90 transition hover:bg-white/[0.04] hover:text-slate-300/95 disabled:opacity-40"
+                  className="max-w-full truncate rounded-lg border border-transparent px-3 py-1.5 text-left text-[12px] font-medium text-slate-500/90 transition hover:border-white/[0.06] hover:bg-white/[0.04] hover:text-slate-300/95 disabled:opacity-40"
                 >
                   {item}
                 </button>
@@ -202,7 +269,7 @@ export default function HeroSearchCommand({
       </motion.div>
 
       {suggestions.length > 0 ? (
-        <div className="mt-4">
+        <div className="mt-5 px-1">
           <button
             id={toggleId}
             type="button"
@@ -210,10 +277,10 @@ export default function HeroSearchCommand({
             aria-expanded={suggestionsOpen}
             aria-controls={suggestPanelId}
             onClick={() => setSuggestionsOpen((o) => !o)}
-            className="text-[11px] font-medium tracking-wide text-slate-500/80 transition hover:text-slate-400/95 disabled:opacity-40"
+            className="text-[11px] font-medium tracking-[0.12em] uppercase text-slate-500/80 transition hover:text-slate-400/95 disabled:opacity-40"
           >
             <span className="inline-flex items-center gap-1.5">
-              {suggestionsOpen ? "Hide examples" : "Examples"}
+              {suggestionsOpen ? "Hide field examples" : "Field examples"}
               <ChevronDown
                 className={`size-3.5 transition-transform ${suggestionsOpen ? "rotate-180" : ""}`}
                 aria-hidden
@@ -226,7 +293,7 @@ export default function HeroSearchCommand({
               id={suggestPanelId}
               role="region"
               aria-labelledby={toggleId}
-              className="qi-instrument-suggest mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3"
+              className="qi-command-suggest mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3"
             >
               {suggestions.map((item) => (
                 <button
@@ -236,7 +303,7 @@ export default function HeroSearchCommand({
                   title={item}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => pickPreset(item)}
-                  className="min-h-[2.75rem] rounded-xl px-3 py-2.5 text-left text-[12px] font-medium leading-snug text-slate-400/95 transition hover:bg-white/[0.04] hover:text-slate-200/95 disabled:opacity-40"
+                  className="min-h-[2.85rem] rounded-xl border border-white/[0.05] bg-white/[0.02] px-3 py-2.5 text-left text-[12px] font-medium leading-snug text-slate-400/95 transition hover:border-cyan-400/12 hover:bg-cyan-500/[0.04] hover:text-slate-200/95 disabled:opacity-40"
                 >
                   <span className="line-clamp-2">{item}</span>
                 </button>
@@ -245,6 +312,6 @@ export default function HeroSearchCommand({
           ) : null}
         </div>
       ) : null}
-    </div>
+    </motion.div>
   );
 }

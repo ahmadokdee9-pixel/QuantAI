@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { SignInButton, SignUpButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
-import { ArrowRight, Loader2 } from "lucide-react";
-import { QUANT_PLANS, type QuantPlanTier } from "@/lib/subscription/plans";
+import { ArrowRight, Loader2, Lock } from "lucide-react";
+import {
+  PLAN_ACCESS_PRESENTATION,
+  QUANT_PLANS,
+  type QuantPlanTier,
+} from "@/lib/subscription/plans";
 import { QuantAnalyticsEvents } from "@/lib/analytics/events";
 import { trackEvent } from "@/lib/analytics/track";
 import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
@@ -38,169 +42,189 @@ async function startCheckout(plan: "pro" | "premium"): Promise<void> {
   throw new Error(apiErrorText(parsed, "Checkout unavailable"));
 }
 
+const LAYER_ORDER: QuantPlanTier[] = ["free", "pro", "premium"];
+
 export default function PricingCards({ currentTier = null, className = "" }: Props) {
   const { isSignedIn } = useUser();
   const [checkoutPlan, setCheckoutPlan] = useState<"pro" | "premium" | null>(null);
   const resolvedTier: QuantPlanTier | null = currentTier ?? (isSignedIn ? "free" : null);
-  const order: QuantPlanTier[] = ["free", "pro", "premium"];
 
   return (
-    <div className={`qi-membership-grid ${className}`}>
-      {order.map((id) => {
+    <div className={`qi-access-architecture ${className}`}>
+      {LAYER_ORDER.map((id, index) => {
         const plan = QUANT_PLANS[id];
+        const access = PLAN_ACCESS_PRESENTATION[id];
         const isCurrent = resolvedTier !== null && resolvedTier === id;
-        const isPro = id === "pro";
+        const isIntelligence = id === "pro";
+        const isPrivate = id === "premium";
 
         return (
           <article
             key={id}
-            className={`qi-membership-surface relative flex flex-col p-8 sm:p-9 ${
-              isPro ? "qi-membership-surface--emphasis" : ""
-            }`}
+            className={`qi-access-layer qi-access-layer--${id} ${
+              isIntelligence ? "qi-access-layer--featured" : ""
+            } ${isCurrent ? "qi-access-layer--active" : ""}`}
+            style={{ "--qi-access-index": index } as CSSProperties}
           >
-            {isPro ? (
-              <span className="qi-membership-ribbon">Recommended</span>
-            ) : null}
+            <div className="qi-access-layer-glow" aria-hidden />
+            <div className="qi-access-layer-rim" aria-hidden />
 
-            <p className="qi-silent-overline">{id === "premium" ? "Private tier" : "Access"}</p>
-            <h3 className="qi-editorial-display mt-3 text-2xl text-white/[0.96]">{plan.name}</h3>
-            <p className="qi-silent-whisper mt-3 max-w-[18rem]">{plan.tagline}</p>
+            <div className="qi-access-layer-inner">
+              <header className="qi-access-header">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="qi-access-layer-num">Layer {access.layerLabel}</p>
+                    <h3 className="qi-access-name mt-2">{access.accessName}</h3>
+                    <p className="qi-access-clearance mt-2">{access.clearance}</p>
+                  </div>
+                  {isIntelligence ? (
+                    <span className="qi-access-badge">Priority clearance</span>
+                  ) : isPrivate ? (
+                    <Lock className="size-4 shrink-0 text-slate-500/70" strokeWidth={1.5} aria-hidden />
+                  ) : null}
+                </div>
+                <p className="qi-access-invitation mt-5">{access.invitation}</p>
+              </header>
 
-            <p className="mt-10 text-[2.5rem] font-semibold tabular-nums tracking-[-0.04em] text-white/98">
-              {plan.monthlyPriceEur == null ? "—" : `€${plan.monthlyPriceEur}`}
-              {plan.monthlyPriceEur != null && (
-                <span className="ml-1 text-sm font-normal text-slate-500">/ month</span>
-              )}
-            </p>
-
-            <ul className="mt-8 flex-1 space-y-3 border-t border-white/[0.06] pt-8">
-              {plan.highlights.map((h) => (
-                <li key={h} className="qi-silent-whisper text-[13px] text-slate-400/90">
-                  {h}
-                </li>
-              ))}
-            </ul>
-
-            <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] text-slate-500/85">
-              <div>
-                <dt>Searches</dt>
-                <dd className="mt-0.5 font-medium tabular-nums text-slate-300/90">{plan.searchesPerDay}/day</dd>
-              </div>
-              <div>
-                <dt>Depth</dt>
-                <dd className="mt-0.5 font-medium capitalize text-slate-300/90">
-                  {plan.globalDealIntelligence}
-                </dd>
-              </div>
-            </dl>
-
-            <div className="mt-10">
-              {id === "free" &&
-                (isSignedIn && isCurrent ? (
-                  <Link
-                    href="/dashboard"
-                    onClick={() => trackEvent(QuantAnalyticsEvents.PRICING_CTA_DASHBOARD, { plan: "free" })}
-                    className="qi-membership-cta qi-membership-cta--ghost flex w-full items-center justify-center py-3"
-                  >
-                    Open workspace
-                  </Link>
-                ) : isSignedIn ? (
-                  <span className="flex w-full items-center justify-center py-3 text-sm text-slate-600">
-                    Included
-                  </span>
-                ) : (
-                  <SignUpButton mode="modal" forceRedirectUrl="/dashboard">
-                    <button type="button" className="qi-membership-cta qi-membership-cta--ghost w-full py-3">
-                      Begin
-                    </button>
-                  </SignUpButton>
+              <ul className="qi-access-capabilities">
+                {plan.highlights.map((h) => (
+                  <li key={h}>{h}</li>
                 ))}
-              {id === "pro" &&
-                (isCurrent ? (
-                  <Link
-                    href="/billing?plan=pro&focus=manage"
-                    className="qi-membership-cta flex w-full items-center justify-center gap-2 py-3"
-                  >
-                    Manage
-                    <ArrowRight className="size-4 opacity-60" aria-hidden />
-                  </Link>
-                ) : isSignedIn ? (
-                  <button
-                    type="button"
-                    disabled={checkoutPlan !== null}
-                    onClick={() => {
-                      trackEvent(QuantAnalyticsEvents.PRICING_CTA_CHECKOUT, { plan: "pro" });
-                      setCheckoutPlan("pro");
-                      void startCheckout("pro")
-                        .catch(() => {
-                          window.location.href = "/billing?plan=pro";
-                        })
-                        .finally(() => setCheckoutPlan(null));
-                    }}
-                    className="qi-membership-cta flex w-full items-center justify-center gap-2 py-3 disabled:opacity-60"
-                  >
-                    {checkoutPlan === "pro" ? (
-                      <Loader2 className="size-4 animate-spin" aria-hidden />
-                    ) : (
-                      <>
-                        Request Pro
-                        <ArrowRight className="size-4 opacity-60" aria-hidden />
-                      </>
+              </ul>
+
+              <footer className="qi-access-footer">
+                <div className="qi-access-price-block">
+                  <p className="qi-access-price-label">Clearance</p>
+                  <p className="qi-access-price">
+                    {plan.monthlyPriceEur == null ? "—" : `€${plan.monthlyPriceEur}`}
+                    {plan.monthlyPriceEur != null && (
+                      <span className="qi-access-price-unit"> / month</span>
                     )}
-                  </button>
-                ) : (
-                  <SignInButton mode="modal" forceRedirectUrl="/pricing">
-                    <button type="button" className="qi-membership-cta w-full py-3">
-                      Sign in
-                    </button>
-                  </SignInButton>
-                ))}
-              {id === "premium" &&
-                (isCurrent ? (
-                  <Link
-                    href="/billing?plan=premium&focus=manage"
-                    className="qi-membership-cta qi-membership-cta--ghost flex w-full items-center justify-center gap-2 py-3"
-                  >
-                    Manage
-                  </Link>
-                ) : isSignedIn ? (
-                  <button
-                    type="button"
-                    disabled={checkoutPlan !== null}
-                    onClick={() => {
-                      trackEvent(QuantAnalyticsEvents.PRICING_CTA_CHECKOUT, { plan: "premium" });
-                      setCheckoutPlan("premium");
-                      void startCheckout("premium")
-                        .catch(() => {
-                          window.location.href = "/billing?plan=premium";
-                        })
-                        .finally(() => setCheckoutPlan(null));
-                    }}
-                    className="qi-membership-cta qi-membership-cta--ghost flex w-full items-center justify-center gap-2 py-3 disabled:opacity-60"
-                  >
-                    {checkoutPlan === "premium" ? (
-                      <Loader2 className="size-4 animate-spin" aria-hidden />
+                  </p>
+                  <p className="qi-access-footnote">
+                    {plan.searchesPerDay} field reads · {plan.globalDealIntelligence} synthesis
+                  </p>
+                </div>
+
+                <div className="qi-access-cta-wrap">
+                  {id === "free" &&
+                    (isSignedIn && isCurrent ? (
+                      <Link
+                        href="/dashboard"
+                        onClick={() =>
+                          trackEvent(QuantAnalyticsEvents.PRICING_CTA_DASHBOARD, { plan: "free" })
+                        }
+                        className="qi-access-cta qi-access-cta--ghost flex w-full items-center justify-center gap-2 py-3.5"
+                      >
+                        Active workspace
+                        <ArrowRight className="size-4 opacity-50" aria-hidden />
+                      </Link>
+                    ) : isSignedIn ? (
+                      <span className="flex w-full items-center justify-center py-3.5 text-sm text-slate-600">
+                        Current access
+                      </span>
                     ) : (
-                      "Request Power Buyer"
-                    )}
-                  </button>
-                ) : (
-                  <SignInButton mode="modal" forceRedirectUrl="/pricing">
-                    <button type="button" className="qi-membership-cta qi-membership-cta--ghost w-full py-3">
-                      Sign in
-                    </button>
-                  </SignInButton>
-                ))}
+                      <SignUpButton mode="modal" forceRedirectUrl="/dashboard">
+                        <button type="button" className="qi-access-cta qi-access-cta--ghost w-full py-3.5">
+                          Enter access layer
+                        </button>
+                      </SignUpButton>
+                    ))}
+                  {id === "pro" &&
+                    (isCurrent ? (
+                      <Link
+                        href="/billing?plan=pro&focus=manage"
+                        className="qi-access-cta flex w-full items-center justify-center gap-2 py-3.5"
+                      >
+                        Manage clearance
+                        <ArrowRight className="size-4 opacity-50" aria-hidden />
+                      </Link>
+                    ) : isSignedIn ? (
+                      <button
+                        type="button"
+                        disabled={checkoutPlan !== null}
+                        onClick={() => {
+                          trackEvent(QuantAnalyticsEvents.PRICING_CTA_CHECKOUT, { plan: "pro" });
+                          setCheckoutPlan("pro");
+                          void startCheckout("pro")
+                            .catch(() => {
+                              window.location.href = "/billing?plan=pro";
+                            })
+                            .finally(() => setCheckoutPlan(null));
+                        }}
+                        className="qi-access-cta flex w-full items-center justify-center gap-2 py-3.5 disabled:opacity-60"
+                      >
+                        {checkoutPlan === "pro" ? (
+                          <Loader2 className="size-4 animate-spin" aria-hidden />
+                        ) : (
+                          <>
+                            Request intelligence clearance
+                            <ArrowRight className="size-4 opacity-50" aria-hidden />
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <SignInButton mode="modal" forceRedirectUrl="/pricing">
+                        <button type="button" className="qi-access-cta w-full py-3.5">
+                          Sign in to request
+                        </button>
+                      </SignInButton>
+                    ))}
+                  {id === "premium" &&
+                    (isCurrent ? (
+                      <Link
+                        href="/billing?plan=premium&focus=manage"
+                        className="qi-access-cta qi-access-cta--private flex w-full items-center justify-center gap-2 py-3.5"
+                      >
+                        Manage private clearance
+                      </Link>
+                    ) : isSignedIn ? (
+                      <button
+                        type="button"
+                        disabled={checkoutPlan !== null}
+                        onClick={() => {
+                          trackEvent(QuantAnalyticsEvents.PRICING_CTA_CHECKOUT, { plan: "premium" });
+                          setCheckoutPlan("premium");
+                          void startCheckout("premium")
+                            .catch(() => {
+                              window.location.href = "/billing?plan=premium";
+                            })
+                            .finally(() => setCheckoutPlan(null));
+                        }}
+                        className="qi-access-cta qi-access-cta--private flex w-full items-center justify-center gap-2 py-3.5 disabled:opacity-60"
+                      >
+                        {checkoutPlan === "premium" ? (
+                          <Loader2 className="size-4 animate-spin" aria-hidden />
+                        ) : (
+                          "Request private clearance"
+                        )}
+                      </button>
+                    ) : (
+                      <SignInButton mode="modal" forceRedirectUrl="/pricing">
+                        <button
+                          type="button"
+                          className="qi-access-cta qi-access-cta--private w-full py-3.5"
+                        >
+                          Sign in to request
+                        </button>
+                      </SignInButton>
+                    ))}
+                </div>
+              </footer>
             </div>
           </article>
         );
       })}
+
       {!isSignedIn && (
-        <p className="qi-silent-whisper text-center lg:col-span-3">
-          Have access?{" "}
+        <p className="qi-access-disclaimer">
+          Existing clearance?{" "}
           <SignInButton mode="modal" forceRedirectUrl="/dashboard">
-            <button type="button" className="text-slate-400 underline-offset-4 hover:text-slate-300 hover:underline">
-              Sign in
+            <button
+              type="button"
+              className="text-slate-400 underline-offset-4 hover:text-slate-300 hover:underline"
+            >
+              Authenticate
             </button>
           </SignInButton>
         </p>

@@ -4,6 +4,35 @@ export type QuantPlanTier = "free" | "pro" | "premium";
 
 export type SearchIntelligenceLevel = "summary" | "advanced" | "full";
 
+/** Private-access presentation — UI only; Stripe tier ids unchanged. */
+export type PlanAccessPresentation = {
+  layerLabel: string;
+  accessName: string;
+  clearance: string;
+  invitation: string;
+};
+
+export const PLAN_ACCESS_PRESENTATION: Record<QuantPlanTier, PlanAccessPresentation> = {
+  free: {
+    layerLabel: "01",
+    accessName: "Access Layer",
+    clearance: "Field read · standard synthesis depth",
+    invitation: "Enter the intelligence field.",
+  },
+  pro: {
+    layerLabel: "02",
+    accessName: "Intelligence Layer",
+    clearance: "Advanced synthesis · elevated throughput",
+    invitation: "Deeper reads for consequential carts.",
+  },
+  premium: {
+    layerLabel: "03",
+    accessName: "Private Buyer Layer",
+    clearance: "Full synthesis · maximum field depth",
+    invitation: "Reserved for high-intent purchase decisions.",
+  },
+};
+
 export type PlanDefinition = {
   id: QuantPlanTier;
   name: string;
@@ -26,7 +55,7 @@ export const QUANT_PLANS: Record<QuantPlanTier, PlanDefinition> = {
   free: {
     id: "free",
     name: "Free",
-    tagline: "Read the field. Decide with calm.",
+    tagline: "Market clarity without noise. Read before you commit.",
     monthlyPriceEur: 0,
     searchesPerDay: 20,
     aiIntelligencePerDay: 12,
@@ -37,9 +66,9 @@ export const QUANT_PLANS: Record<QuantPlanTier, PlanDefinition> = {
     globalDealIntelligence: "summary",
     advancedAdvisor: false,
     highlights: [
-      "Live tray · QI ranking",
-      "Three-way compare",
-      "Saved shelf",
+      "Live market tray with QI ranking",
+      "Three-way compare intelligence",
+      "Private saved intelligence shelf",
     ],
   },
   pro: {
@@ -56,15 +85,15 @@ export const QUANT_PLANS: Record<QuantPlanTier, PlanDefinition> = {
     globalDealIntelligence: "advanced",
     advancedAdvisor: true,
     highlights: [
-      "Advanced field synthesis",
-      "Higher daily throughput",
-      "Unlimited saves",
+      "Advanced commerce synthesis layer",
+      "Elevated daily intelligence throughput",
+      "Unlimited intelligence shelf",
     ],
   },
   premium: {
     id: "premium",
     name: "Power Buyer",
-    tagline: "Full intelligence for consequential purchases.",
+    tagline: "Full-depth interpretation for purchases that matter.",
     monthlyPriceEur: 49,
     searchesPerDay: 400,
     aiIntelligencePerDay: 250,
@@ -75,9 +104,9 @@ export const QUANT_PLANS: Record<QuantPlanTier, PlanDefinition> = {
     globalDealIntelligence: "full",
     advancedAdvisor: true,
     highlights: [
-      "Full synthesis layer",
-      "Maximum throughput",
-      "Unlimited watch",
+      "Full market synthesis architecture",
+      "Maximum intelligence throughput",
+      "Unlimited watch intelligence",
     ],
   },
 };

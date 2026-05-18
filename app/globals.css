@@ -973,19 +973,66 @@ textarea:focus-visible {
   color: rgba(148, 163, 184, 0.72);
 }
 
+.qi-hero-flagship {
+  isolation: isolate;
+}
+
+.qi-hero-aura {
+  pointer-events: none;
+  position: absolute;
+  left: 50%;
+  top: 2rem;
+  width: min(92vw, 56rem);
+  height: min(52vh, 28rem);
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse 55% 48% at 50% 38%, rgba(34, 211, 238, 0.09), transparent 68%),
+    radial-gradient(ellipse 40% 35% at 62% 55%, rgba(139, 92, 246, 0.06), transparent 70%);
+  filter: blur(2px);
+}
+
+.qi-hero-manifest {
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.68);
+}
+
 .qi-hero-headline {
-  font-size: clamp(2.35rem, 5.5vw, 3.65rem);
+  font-size: clamp(2.5rem, 6vw, 4.1rem);
   font-weight: 600;
-  line-height: 1.04;
-  letter-spacing: -0.045em;
+  line-height: 1.02;
+  letter-spacing: -0.048em;
   color: var(--qi-silent-fg);
+}
+
+.qi-hero-headline-accent {
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.98) 0%, rgba(186, 230, 253, 0.88) 48%, rgba(167, 139, 250, 0.82) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .qi-hero-lead {
   font-size: 1.0625rem;
-  line-height: 1.5;
+  line-height: 1.55;
   letter-spacing: -0.02em;
-  color: rgba(203, 213, 225, 0.72);
+  color: rgba(203, 213, 225, 0.74);
+}
+
+.qi-hero-credence {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(100, 116, 139, 0.78);
+}
+
+.qi-hero-command-stage {
+  position: relative;
+  text-align: left;
 }
 
 .qi-editorial-display {
@@ -1122,6 +1169,513 @@ textarea:focus-visible {
   border: 1px solid transparent;
 }
 
+/* Flagship market command deck */
+.qi-command-root {
+  position: relative;
+  width: 100%;
+}
+
+.qi-command-halo {
+  position: absolute;
+  inset: -12% -6% -28%;
+  border-radius: 2rem;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 0%, rgba(34, 211, 238, 0.14), transparent 62%),
+    radial-gradient(ellipse 45% 40% at 80% 80%, rgba(139, 92, 246, 0.08), transparent 65%);
+  filter: blur(28px);
+  pointer-events: none;
+}
+
+.qi-command-floor {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -1.25rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.55), transparent 72%);
+  filter: blur(18px);
+  pointer-events: none;
+}
+
+.qi-command-deck {
+  position: relative;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  background: rgba(3, 7, 14, 0.82);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 64px 140px -56px rgba(0, 0, 0, 0.95),
+    0 0 120px -64px rgba(34, 211, 238, 0.12);
+  backdrop-filter: blur(48px) saturate(160%);
+  -webkit-backdrop-filter: blur(48px) saturate(160%);
+  transition:
+    box-shadow 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.qi-command-deck--active {
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.14) inset,
+    0 1px 0 rgba(255, 255, 255, 0.1) inset,
+    0 72px 160px -48px rgba(0, 0, 0, 0.9),
+    0 0 140px -56px rgba(34, 211, 238, 0.18);
+}
+
+.qi-command-deck--pulse {
+  animation: qi-command-pulse 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes qi-command-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0);
+  }
+  45% {
+    box-shadow:
+      0 0 0 1px rgba(34, 211, 238, 0.2) inset,
+      0 0 64px -16px rgba(34, 211, 238, 0.28);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0);
+  }
+}
+
+.qi-command-glass {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.qi-command-glass--deep {
+  background: linear-gradient(168deg, rgba(255, 255, 255, 0.06) 0%, transparent 38%, rgba(0, 0, 0, 0.35) 100%);
+}
+
+.qi-command-glass--sheen {
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.05) 50%, transparent 60%);
+}
+
+.qi-command-rim {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.qi-command-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 42%;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.08), transparent);
+}
+
+.qi-command-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(100, 116, 139, 0.5);
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0);
+  transition: background 0.4s ease, box-shadow 0.4s ease;
+}
+
+.qi-command-status-dot[data-active="true"] {
+  background: rgba(52, 211, 153, 0.9);
+  box-shadow: 0 0 14px rgba(52, 211, 153, 0.45);
+}
+
+.qi-command-manifest {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.78);
+}
+
+.qi-command-channel {
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(100, 116, 139, 0.65);
+}
+
+.qi-command-field {
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(2, 6, 14, 0.78) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 12px 40px -28px rgba(0, 0, 0, 0.8);
+  transition:
+    border-color 0.45s ease,
+    box-shadow 0.5s ease,
+    background 0.45s ease;
+}
+
+.qi-command-field--focus {
+  border-color: rgba(34, 211, 238, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 56px -28px rgba(34, 211, 238, 0.22),
+    0 20px 48px -32px rgba(0, 0, 0, 0.75);
+}
+
+.qi-command-input {
+  font-size: 1.125rem;
+  font-weight: 500;
+  letter-spacing: -0.024em;
+  color: rgba(255, 255, 255, 0.97);
+}
+
+.qi-command-input::placeholder {
+  color: rgba(100, 116, 139, 0.5);
+  font-weight: 400;
+}
+
+.qi-command-cursor-beam {
+  position: absolute;
+  bottom: 14%;
+  left: 1rem;
+  width: 2px;
+  height: 44%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, transparent, rgba(34, 211, 238, 0.5), transparent);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.qi-command-field--focus .qi-command-cursor-beam {
+  opacity: 0.75;
+}
+
+.qi-command-field-glow {
+  position: absolute;
+  inset: auto 12% -40% 12%;
+  height: 40%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(34, 211, 238, 0.12), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  pointer-events: none;
+}
+
+.qi-command-field--focus .qi-command-field-glow {
+  opacity: 1;
+}
+
+.qi-command-execute {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.97) 0%, rgba(226, 232, 240, 0.92) 100%);
+  color: #070d18;
+  overflow: hidden;
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.45s ease,
+    background 0.35s ease;
+}
+
+.qi-command-execute-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.35) 50%, transparent 65%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.qi-command-execute:hover:not(:disabled) .qi-command-execute-shine {
+  opacity: 1;
+}
+
+.qi-command-execute:hover:not(:disabled) {
+  box-shadow:
+    0 20px 56px -24px rgba(255, 255, 255, 0.22),
+    0 0 48px -28px rgba(34, 211, 238, 0.15);
+}
+
+.qi-command-suggest button {
+  backdrop-filter: blur(12px);
+}
+
+/* Product intelligence objects */
+.qi-product-object {
+  transform-style: preserve-3d;
+}
+
+.qi-product-object-bezel {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+}
+
+.qi-product-object-body {
+  background:
+    linear-gradient(180deg, rgba(12, 18, 32, 0.92) 0%, rgba(4, 8, 16, 0.98) 48%, rgba(2, 5, 12, 1) 100%);
+}
+
+.qi-product-object-vault {
+  padding-bottom: 0.15rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.qi-product-object-deck {
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.12) 100%);
+}
+
+.qi-product-object-frame {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 32px 64px -40px rgba(0, 0, 0, 0.85),
+    0 0 48px -32px rgba(34, 211, 238, 0.1);
+}
+
+.qi-product-card-shell.qi-product-object:hover .qi-product-card-inner {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 1px 0 rgba(255, 255, 255, 0.1) inset,
+    0 40px 88px -28px rgba(0, 0, 0, 0.82),
+    0 0 56px -28px rgba(34, 211, 238, 0.08),
+    0 0 72px -36px rgba(139, 92, 246, 0.06);
+}
+
+/* Private access architecture */
+.qi-access-architecture {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .qi-access-architecture {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.15rem;
+    align-items: stretch;
+  }
+}
+
+.qi-access-layer {
+  position: relative;
+  border-radius: 1.35rem;
+  overflow: hidden;
+  min-height: 100%;
+}
+
+.qi-access-layer-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.55;
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255, 255, 255, 0.04), transparent 70%);
+}
+
+.qi-access-layer-rim {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.qi-access-layer-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1.75rem 1.65rem 1.5rem;
+  background: linear-gradient(168deg, rgba(8, 12, 22, 0.96) 0%, rgba(2, 5, 12, 0.99) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: inherit;
+  box-shadow: 0 48px 100px -56px rgba(0, 0, 0, 0.92);
+}
+
+.qi-access-layer--featured .qi-access-layer-inner {
+  border-color: rgba(34, 211, 238, 0.12);
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.06) inset,
+    0 56px 120px -48px rgba(0, 0, 0, 0.88),
+    0 0 80px -56px rgba(34, 211, 238, 0.1);
+}
+
+.qi-access-layer--premium .qi-access-layer-inner,
+.qi-access-layer--premium.qi-access-layer--active .qi-access-layer-inner {
+  border-color: rgba(167, 139, 250, 0.14);
+}
+
+.qi-access-layer--active .qi-access-layer-inner {
+  box-shadow:
+    0 0 0 1px rgba(52, 211, 153, 0.1) inset,
+    0 48px 100px -56px rgba(0, 0, 0, 0.9);
+}
+
+.qi-access-layer-num {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(100, 116, 139, 0.8);
+}
+
+.qi-access-name {
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.qi-access-clearance {
+  font-size: 0.6875rem;
+  line-height: 1.45;
+  letter-spacing: 0.02em;
+  color: rgba(148, 163, 184, 0.72);
+}
+
+.qi-access-invitation {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: rgba(203, 213, 225, 0.7);
+}
+
+.qi-access-badge {
+  shrink: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(34, 211, 238, 0.18);
+  background: rgba(34, 211, 238, 0.06);
+  padding: 0.28rem 0.55rem;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(207, 250, 254, 0.85);
+}
+
+.qi-access-capabilities {
+  margin-top: 1.35rem;
+  flex: 1;
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 1.25rem;
+}
+
+.qi-access-capabilities li {
+  position: relative;
+  padding-left: 0.85rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: rgba(203, 213, 225, 0.72);
+}
+
+.qi-access-capabilities li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(34, 211, 238, 0.45);
+}
+
+.qi-access-footer {
+  margin-top: 1.5rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.qi-access-price-label {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(100, 116, 139, 0.75);
+}
+
+.qi-access-price {
+  margin-top: 0.35rem;
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.qi-access-price-unit {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: rgba(100, 116, 139, 0.8);
+}
+
+.qi-access-footnote {
+  margin-top: 0.35rem;
+  font-size: 0.6875rem;
+  color: rgba(100, 116, 139, 0.72);
+}
+
+.qi-access-cta-wrap {
+  margin-top: 1.15rem;
+}
+
+.qi-access-cta {
+  width: 100%;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.94);
+  color: #070d18;
+  transition: background 0.35s ease, box-shadow 0.35s ease, opacity 0.3s ease;
+}
+
+.qi-access-cta:hover:not(:disabled) {
+  background: #fff;
+  box-shadow: 0 16px 48px -28px rgba(255, 255, 255, 0.2);
+}
+
+.qi-access-cta--ghost {
+  background: transparent;
+  color: rgba(226, 232, 240, 0.9);
+}
+
+.qi-access-cta--ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: none;
+}
+
+.qi-access-cta--private {
+  border-color: rgba(167, 139, 250, 0.22);
+  background: linear-gradient(165deg, rgba(167, 139, 250, 0.18) 0%, rgba(79, 70, 229, 0.12) 100%);
+  color: rgba(237, 233, 254, 0.95);
+}
+
+.qi-access-disclaimer {
+  text-align: center;
+  font-size: 0.8125rem;
+  color: rgba(148, 163, 184, 0.72);
+}
+
+@media (min-width: 1024px) {
+  .qi-access-disclaimer {
+    grid-column: 1 / -1;
+  }
+}
+
+.qi-access-page {
+  isolation: isolate;
+}
+
 .qi-membership-grid {
   display: grid;
   gap: 1.5rem;
@@ -1211,4 +1765,155 @@ textarea:focus-visible {
   border: none;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Card intelligence density — luxury signal pills */
+.qi-signal-pill {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.28rem 0.62rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  color: rgba(226, 232, 240, 0.88);
+}
+
+.qi-signal-pill--primary {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+}
+
+.qi-signal-pill--buy {
+  border-color: rgba(52, 211, 153, 0.22);
+  background: rgba(52, 211, 153, 0.08);
+  color: rgba(209, 250, 229, 0.95);
+}
+
+.qi-signal-pill--safe {
+  border-color: rgba(34, 211, 238, 0.2);
+  background: rgba(34, 211, 238, 0.07);
+  color: rgba(207, 250, 254, 0.92);
+}
+
+.qi-signal-pill--wait {
+  border-color: rgba(251, 191, 36, 0.22);
+  background: rgba(251, 191, 36, 0.07);
+  color: rgba(254, 243, 199, 0.92);
+}
+
+.qi-signal-pill--compare {
+  border-color: rgba(251, 191, 36, 0.2);
+  background: rgba(251, 191, 36, 0.06);
+  color: rgba(254, 243, 199, 0.9);
+}
+
+.qi-signal-pill--avoid {
+  border-color: rgba(251, 113, 133, 0.24);
+  background: rgba(251, 113, 133, 0.08);
+  color: rgba(255, 228, 230, 0.92);
+}
+
+.qi-signal-pill--neutral {
+  border-color: rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.025);
+  color: rgba(203, 213, 225, 0.82);
+}
+
+.qi-signal-pill--timing.qi-signal-pill--buy_now {
+  border-color: rgba(52, 211, 153, 0.2);
+  background: rgba(52, 211, 153, 0.06);
+}
+
+.qi-signal-pill--timing.qi-signal-pill--wait {
+  border-color: rgba(251, 191, 36, 0.2);
+  background: rgba(251, 191, 36, 0.06);
+}
+
+.qi-signal-pill--timing.qi-signal-pill--risk {
+  border-color: rgba(251, 113, 133, 0.22);
+  background: rgba(251, 113, 133, 0.06);
+}
+
+.qi-posture-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.85rem;
+}
+
+@media (min-width: 400px) {
+  .qi-posture-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.qi-posture-cell {
+  min-width: 0;
+}
+
+.qi-posture-label {
+  font-size: 0.5625rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(100, 116, 139, 0.75);
+}
+
+.qi-posture-value {
+  margin-top: 0.2rem;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: rgba(203, 213, 225, 0.82);
+}
+
+.qi-card-thesis {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  letter-spacing: -0.008em;
+  color: rgba(203, 213, 225, 0.78);
+}
+
+.qi-card-reason {
+  margin-top: 0.65rem;
+  padding-left: 0;
+  list-style: none;
+}
+
+.qi-card-reason li {
+  position: relative;
+  padding-left: 0.65rem;
+  font-size: 0.6875rem;
+  line-height: 1.45;
+  color: rgba(148, 163, 184, 0.78);
+}
+
+.qi-card-reason li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(34, 211, 238, 0.45);
+}
+
+.qi-card-reason li + li {
+  margin-top: 0.25rem;
+}
+
+.qi-decision-headline {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.97);
 }

@@ -56,10 +56,9 @@ import {
   buildProductDealIntelligence,
   type ProductDealIntelligence,
 } from "@/lib/intelligence/dealIntelligenceEngine";
-import {
-  intelligenceDecisionPresentation,
-  intelligenceMarketPulseLine,
-} from "@/lib/ui/intelligencePresentation";
+import { buildCommerceTimingSupportLine } from "@/lib/intelligence/commerceDecisionBrain";
+import { intelligenceMarketPulseLine } from "@/lib/ui/intelligencePresentation";
+import { buildCardIntelligenceLayer } from "@/lib/ui/cardIntelligenceLayer";
 
 function clip(s: string, max: number): string {
   const t = s.trim();
@@ -265,7 +264,7 @@ function CardProductImage({
     );
   }
   return (
-    <div className="qi-museum-frame relative aspect-[4/3] max-h-[10rem] min-h-[7.5rem] w-full">
+    <motion.div className="qi-museum-frame qi-product-object-frame relative aspect-[4/3] max-h-[11rem] min-h-[7.75rem] w-full">
       <div className="qi-museum-spotlight" aria-hidden />
       {!loaded && (
         <div className="qi-image-shimmer absolute inset-0 z-[1] rounded-[inherit]" aria-hidden />
@@ -278,7 +277,7 @@ function CardProductImage({
         fetchPriority={fetchPriority}
         onLoad={() => setLoaded(true)}
         onError={() => setErr(true)}
-        className="relative z-[2] mx-auto h-full w-full max-h-[9.25rem] object-contain object-center p-4 drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
+        className="relative z-[2] mx-auto h-full w-full max-h-[9.75rem] object-contain object-center p-5 drop-shadow-[0_28px_56px_rgba(0,0,0,0.62)]"
         initial={false}
         animate={{ opacity: loaded ? 1 : 0 }}
         transition={{ duration: reduceMotion ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
@@ -286,7 +285,7 @@ function CardProductImage({
           reduceMotion ? undefined : { scale: 1.02, transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] } }
         }
       />
-    </div>
+    </motion.div>
   );
 }
 function ProductResultCard({
@@ -440,16 +439,8 @@ function ProductResultCard({
   }, [resolved.predictiveBadge, p.qiPredictive]);
   const stanceUi = stancePresentation(mergedBuyDecision.stance);
   const StanceIcon = stanceUi.Icon;
-  const buyingDecision = p.qiBuyingDecision;
-  const premiumDecision = useMemo(
-    () => intelligenceDecisionPresentation(buyingDecision?.action),
-    [buyingDecision?.action]
-  );
-  const decisionWhisper = clip(
-    buyingDecision?.analystLine ?? premiumDecision.whisper,
-    72
-  );
-  const decisionConfidence = buyingDecision?.confidence ?? buyingDecision?.decisionScore ?? Math.round(scoreNorm);
+  const decisionConfidence = p.qiBuyingDecision?.confidence ?? p.qiBuyingDecision?.decisionScore ?? Math.round(scoreNorm);
+  const weakRetailer = p.qiRealityTrust?.weakRetailer ?? trust < 56;
 
   const marketWhisper = useMemo(() => {
     if (!unifiedMarket || unifiedMarket.storeCount < 2) return null;
@@ -460,6 +451,43 @@ function ProductResultCard({
       cheaperStore: unifiedMarket.sameItemCheaper?.store ?? null,
     });
   }, [unifiedMarket]);
+
+  const timingSupportLine = useMemo(
+    () =>
+      buildCommerceTimingSupportLine({
+        code: resolved.commerceBrainCode,
+        deal,
+        pred: p.qiPredictive,
+        market: marketTray,
+      }),
+    [resolved.commerceBrainCode, deal, p.qiPredictive, marketTray]
+  );
+
+  const cardIntel = useMemo(
+    () =>
+      buildCardIntelligenceLayer({
+        product: p,
+        resolved,
+        deal,
+        market: marketTray,
+        trust,
+        weakRetailer,
+        buyingThesisFallback: worthShort,
+        marketWhisper,
+        timingSupportLine,
+      }),
+    [
+      p,
+      resolved,
+      deal,
+      marketTray,
+      trust,
+      weakRetailer,
+      worthShort,
+      marketWhisper,
+      timingSupportLine,
+    ]
+  );
 
   const signalsTerminalWhy = useMemo(() => {
     if (resolved.whyThisProduct) return clip(resolved.whyThisProduct, 128);
@@ -510,14 +538,15 @@ function ProductResultCard({
               }
         }
         data-qi-confidence={canonicalConfidenceAura}
-        className={`qi-product-card-shell qi-intel-surface group relative flex h-full min-w-0 flex-col overflow-hidden rounded-[1.75rem] p-px transition-[background,box-shadow,opacity,transform] duration-700 ease-out ${
+        className={`qi-product-card-shell qi-product-object qi-intel-surface group relative flex h-full min-w-0 flex-col overflow-hidden rounded-[1.85rem] p-px transition-[background,box-shadow,opacity,transform] duration-700 ease-out ${
           isTrayDimmed ? "qi-tray-peer-dim" : ""
         } ${isTrayFocused ? "qi-tray-focus-active" : ""} ${
           lite ? "" : "will-change-transform [transform:translateZ(0)]"
         }`}
       >
+        <div className="qi-product-object-bezel pointer-events-none absolute inset-0 z-[1] rounded-[inherit]" aria-hidden />
         <div
-          className={`qi-product-card-inner relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.68rem] border-0 bg-transparent transition-[box-shadow,transform] duration-500 ease-out ${
+          className={`qi-product-card-inner qi-product-object-body relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.78rem] border-0 bg-transparent transition-[box-shadow,transform] duration-500 ease-out ${
             isTrayFocused
               ? "shadow-[0_0_0_1px_rgba(34,211,238,0.1),0_28px_64px_-32px_rgba(34,211,238,0.16)]"
               : ""
@@ -563,39 +592,10 @@ function ProductResultCard({
             )}
           </div>
 
-          <div className="relative z-[2] flex min-h-0 min-w-0 flex-1 flex-col px-4 pb-5 pt-4 sm:px-5 sm:pb-6 sm:pt-5">
-            <h3 className="text-[15px] font-semibold leading-[1.45] tracking-[-0.01em] text-white/[0.97] antialiased line-clamp-2 sm:text-[16px]">
-              {p.title}
-            </h3>
-            {marketWhisper ? (
-              <p className="qi-market-whisper mt-2 line-clamp-1" title={marketWhisper}>
-                {marketWhisper}
-              </p>
-            ) : null}
+          <div className="qi-product-object-deck relative z-[2] flex min-h-0 min-w-0 flex-1 flex-col px-4 pb-5 pt-5 sm:px-5 sm:pb-6 sm:pt-6">
+            <h3 className="qi-editorial-title line-clamp-2 text-[15px] sm:text-[16px]">{p.title}</h3>
 
-            <div className="qi-trust-illumination mt-3">
-              <span>
-                <Store className="size-3 opacity-45" strokeWidth={1.5} aria-hidden />
-                {p.store}
-              </span>
-              <span>
-                <Shield className="size-3 opacity-45" strokeWidth={1.5} aria-hidden />
-                {trust}
-              </span>
-            </div>
-
-            <div className={`qi-decision-surface qi-decision-surface--canvas mt-5 ${premiumDecision.surfaceClass}`}>
-              <p className="qi-silent-overline">Read</p>
-              <p className="mt-2 text-[14px] font-semibold leading-snug tracking-[-0.015em] text-white/97">
-                {premiumDecision.label}
-              </p>
-              <div className="qi-confidence-pulse mt-3" title={`${decisionConfidence}%`} aria-hidden>
-                <span style={{ width: `${Math.min(100, Math.max(8, decisionConfidence))}%` }} />
-              </div>
-              <p className="qi-os-whisper mt-2 [overflow-wrap:anywhere]">{decisionWhisper}</p>
-            </div>
-
-            <div className="mt-5 flex min-w-0 flex-wrap items-end justify-between gap-3 border-b border-white/[0.05] pb-5">
+            <div className="mt-4 flex min-w-0 flex-wrap items-end justify-between gap-3 border-b border-white/[0.05] pb-4">
               <div className="min-w-0 flex-1">
                 {p.displayPrice ? (
                   <p className="text-[12px] font-medium text-slate-500/80">{p.displayPrice}</p>
@@ -675,14 +675,80 @@ function ProductResultCard({
               </div>
             </div>
 
+            <motion.div
+              className={`qi-decision-surface qi-decision-surface--canvas mt-5 ${cardIntel.decisionSurfaceClass}`}
+            >
+              <p className="qi-silent-overline">AI read</p>
+              <p className="qi-decision-headline mt-2">{cardIntel.primaryLabel}</p>
+              <div
+                className="qi-confidence-pulse mt-3"
+                title={`Confidence ${decisionConfidence}%`}
+                aria-hidden
+              >
+                <span style={{ width: `${Math.min(100, Math.max(8, decisionConfidence))}%` }} />
+              </div>
+            </motion.div>
+
+            {cardIntel.pills.length > 0 ? (
+              <div className="mt-3 flex min-w-0 flex-wrap gap-1.5">
+                {cardIntel.pills
+                  .filter((pill) => !pill.primary)
+                  .map((pill) => (
+                    <span key={pill.label} className={`truncate ${pill.cls}`} title={pill.label}>
+                      {pill.label}
+                    </span>
+                  ))}
+              </div>
+            ) : null}
+
+            <div className="qi-posture-grid">
+              <div className="qi-posture-cell">
+                <p className="qi-posture-label">Trust</p>
+                <p className="qi-posture-value">{cardIntel.posture.trust}</p>
+              </div>
+              <div className="qi-posture-cell">
+                <p className="qi-posture-label">Price</p>
+                <p className="qi-posture-value">{cardIntel.posture.price}</p>
+              </div>
+              <div className="qi-posture-cell">
+                <p className="qi-posture-label">Market</p>
+                <p className="qi-posture-value">{cardIntel.posture.market}</p>
+              </div>
+              <div className="qi-posture-cell">
+                <p className="qi-posture-label">Risk</p>
+                <p className="qi-posture-value">{cardIntel.posture.risk}</p>
+              </div>
+            </div>
+
+            {cardIntel.reasonLines.length > 0 ? (
+              <ul className="qi-card-reason">
+                {cardIntel.reasonLines.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            ) : null}
+
+            <p className="qi-card-thesis">{cardIntel.buyingThesis}</p>
+
+            <div className="qi-trust-illumination mt-3 border-t border-white/[0.04] pt-3">
+              <span>
+                <Store className="size-3 opacity-45" strokeWidth={1.5} aria-hidden />
+                {p.store}
+              </span>
+              <span>
+                <Shield className="size-3 opacity-45" strokeWidth={1.5} aria-hidden />
+                Trust {trust}
+              </span>
+            </div>
+
             <button
               type="button"
               onClick={toggleIntelOpen}
               className="qi-expand-trigger mt-5 flex w-full min-w-0 items-center justify-between gap-2 rounded-xl px-1 py-2.5 text-left transition duration-200"
               aria-expanded={intelOpen}
             >
-              <span className="cockpit-label text-[10px] tracking-[0.12em] text-slate-500/85 group-hover:text-slate-400/95">
-                Analysis
+              <span className="qi-silent-overline text-[10px] text-slate-500/80 group-hover:text-slate-400/90">
+                Deep analysis
               </span>
               <ChevronDown
                 className={`size-4 shrink-0 text-slate-500/90 transition duration-200 ${intelOpen ? "rotate-180" : ""}`}

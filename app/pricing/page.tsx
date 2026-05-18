@@ -65,16 +65,14 @@ export default function PricingPage() {
       <AmbientBackdrop />
       <div className="relative z-10">
         <LandingNav />
-        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-24">
-          <p className="text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-300/75">
-            Plans
-          </p>
-          <h1 className="cockpit-display mt-4 text-center text-3xl text-white sm:text-4xl lg:text-5xl">
-            Clarity that scales <span className="cockpit-gradient-text">with your cart.</span>
+        <section className="qi-access-page mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-24">
+          <p className="qi-silent-overline text-center">Private access architecture</p>
+          <h1 className="qi-editorial-display mt-6 text-center text-3xl text-white sm:text-4xl lg:text-[2.75rem]">
+            Clearance into deeper intelligence
           </h1>
-          <p className="cockpit-body mx-auto mt-5 max-w-2xl text-center text-base text-slate-400/95">
-            Pay for leverage: calmer checkouts, fewer blind spots, and intelligence that keeps pace with how you shop.
-            Stripe handles billing when configured—you can still review plans safely before charging.
+          <p className="qi-silent-whisper mx-auto mt-5 max-w-2xl text-center">
+            Three layers of market synthesis — from field access to private buyer clearance. Not
+            SaaS tiers. Institutional access to how QuantAI reads commerce.
           </p>
           <div className="mt-14">
             <PricingCards currentTier={tier} />
