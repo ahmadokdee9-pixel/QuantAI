@@ -217,7 +217,15 @@ function relationFromCommercialText(blob: string): { relation: StructuredIdentit
 function hasModelEvidence(identity: ProductIdentity, canonicalQuery?: CanonicalQueryContract): boolean {
   const model = canonicalQuery?.model?.toLowerCase().replace(/\s+/g, "");
   if (!model) return identity.models.length > 0 || identity.identifiers.length > 0;
-  return identity.models.some((m) => m.toLowerCase().replace(/\s+/g, "").includes(model) || model.includes(m.toLowerCase().replace(/\s+/g, "")));
+  const identityModels = identity.models.map((m) => m.toLowerCase().replace(/\s+/g, ""));
+  const iphoneVersion = model.match(/^iphone(\d{1,2})(?:pro|max|plus|mini|e)?$/)?.[1];
+  if (iphoneVersion) {
+    return identityModels.some((m) => m === model || m.startsWith(`iphone${iphoneVersion}`));
+  }
+  return identityModels.some((m) => {
+    if (/^\d{1,3}(gb|tb)?$/.test(m)) return false;
+    return m.includes(model) || model.includes(m);
+  });
 }
 
 function hasBrandEvidence(identity: ProductIdentity, canonicalQuery?: CanonicalQueryContract): boolean {
@@ -237,7 +245,7 @@ function categoryEvidence(p: QuantProduct, canonicalQuery?: CanonicalQueryContra
   if (category === "electronics") return /\b(monitor|display|beeldscherm|scherm|gpu|camera|tablet|console|tv|electronics?)\b/i.test(blob);
   if (category === "fragrance") return /\b(perfume|fragrance|parfum|cologne|eau de parfum|eau de toilette|عطر)\b/i.test(blob);
   if (category === "fashion") return /\b(jacket|jas|coat|hoodie|shirt|dress|fashion|kleding)\b/i.test(blob);
-  if (category === "home") return /\b(home|kitchen|coffee|machine|appliance|stroller|pram|buggy|kinderwagen|babypark|prenatal|huis|keuken|apparaat|عربة)\b/i.test(blob);
+  if (category === "home") return /\b(home|kitchen|coffee|machine|espresso|koffie|air fryer|airfryer|fryer|heteluchtfriteuse|friteuse|appliance|stroller|pram|buggy|kinderwagen|babypark|prenatal|huis|keuken|apparaat|عربة)\b/i.test(blob);
   return true;
 }
 
@@ -414,9 +422,10 @@ export function assessIdentityGateDecision(
       (
         identity.relation === "same_product_family" ||
         identity.relation === "variant" ||
+        identity.relation === "bundle" ||
         (identity.relation === "unknown" && evidence01 >= (options.unknownCategoryMode ? 0.62 : 0.5))
       ) &&
-      identity.confidence01 >= (options.unknownCategoryMode ? 0.58 : 0.46)
+      identity.confidence01 >= (options.unknownCategoryMode ? 0.58 : 0.32)
   );
   const exactMatchPassed = Boolean(
     identity.relation === "exact_product" ||
@@ -432,11 +441,11 @@ export function assessIdentityGateDecision(
   if (!exclusionReason && identity.relation === "wrong_product") exclusionReason = "wrong_product";
 
   if (!exclusionReason && (exactIntent || options.strictExternalDiscovery)) {
-    const familyFloor = options.allowMarketFamily ? (options.unknownCategoryMode ? 0.62 : 0.46) : 0.72;
+    const familyFloor = options.allowMarketFamily ? (options.unknownCategoryMode ? 0.62 : 0.32) : 0.72;
     if (identity.relation === "accessory") exclusionReason = "accessory_for_exact_product";
     else if (identity.relation === "compatible_item") exclusionReason = "compatible_item_for_exact_product";
     else if (identity.relation === "replacement_part") exclusionReason = "replacement_part_for_exact_product";
-    else if (identity.relation === "bundle") exclusionReason = "bundle_not_exact_product";
+    else if (identity.relation === "bundle" && !options.allowMarketFamily) exclusionReason = "bundle_not_exact_product";
     else if (identity.relation === "refurbished_used" && canonicalQuery?.condition === "any") exclusionReason = "used_or_refurbished_noise";
     else if (
       canonicalQuery?.category === "phone" &&

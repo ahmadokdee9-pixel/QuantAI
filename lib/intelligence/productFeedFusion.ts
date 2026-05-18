@@ -78,7 +78,7 @@ export function fuseProductFeeds(args: {
   const merged: QuantProduct[] = [];
   const byKey = new Map<string, QuantProduct>();
   for (const raw of [...internal, ...external]) {
-    const validatedDiscoveryRow = raw.qiIdentityGate?.identityGatePassed === true && raw.qiIdentityGate?.exactMatchPassed === true;
+    const validatedDiscoveryRow = raw.qiIdentityGate?.identityGatePassed === true;
     if (!validatedDiscoveryRow && isWeakRow(raw, query)) continue;
     const p = raw.qiListingIdentity ? raw : { ...raw, qiListingIdentity: assessUniversalListingIdentity(raw, query) };
     const key = rowKey(p);

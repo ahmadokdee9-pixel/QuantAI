@@ -93,7 +93,7 @@ export function parseCommerceSearchIntents(q: string): CommerceSearchIntents {
   );
   return {
     budget:
-      /\b(cheap|budget|affordable|lowest|under\s+(\$|€|£|eur|gbp|usd)|less\s+than|up\s+to|at\s+most|around\s+(\$|€|£)|save|discount|clearance|bargain|steal|markdown)\b/.test(
+      /\b(cheap|budget|affordable|lowest|under\s+(\$|€|£|eur|gbp|usd)|less\s+than|up\s+to|at\s+most|around\s+(\$|€|£)|save|discount|clearance|bargain|steal|markdown|goedkoop|goedkope|aanbieding|korting)\b|رخيص|رخيصة|ارخص|أرخص|تخفيض|خصم/.test(
         s
       ),
     premium:
@@ -112,11 +112,11 @@ export function parseCommerceSearchIntents(q: string): CommerceSearchIntents {
         s
       ),
     explicitBestValue:
-      /\b(best value|bang for (the )?buck|price.to.quality|value leader|value\s+pick|worth\s+(the\s+)?money|best\s+bang)\b/.test(
+      /\b(best value|bang for (the )?buck|price.to.quality|value leader|value\s+pick|worth\s+(the\s+)?money|best\s+bang|prijs.?kwaliteit|beste\s+koop|waar\s+voor\s+geld)\b|يستاهل|أفضل\s+قيمة|افضل\s+قيمة/.test(
         s
       ),
     dealHunter:
-      /\b(biggest|deepest|largest|steepest)\s+(discount|markdown|sale)|\b(max|highest)\s*%?\s*off|half\s+price|doorbuster|flash\s+sale|on\s+sale\s+today|deal\s+of\s+the\s+day\b/.test(
+      /(?:\b(?:biggest|deepest|largest|steepest)\s+(?:discount|markdown|sale)\b|\b(?:max|highest)\s*%?\s*off\b|\b(?:half\s+price|doorbuster|flash\s+sale|on\s+sale\s+today|deal\s+of\s+the\s+day|aanbiedingen?|korting|sale|uitverkoop)\b|خصم|تخفيض|عرض)/.test(
         s
       ),
     cheapestTrusted:
@@ -136,9 +136,9 @@ export function parseCommerceSearchIntents(q: string): CommerceSearchIntents {
       ),
     alternativeSeeking: alternativeSeekingBool,
     storeDealHunter:
-      /\b(which|what)\s+store\b|\bbest\s+deal\s+now\b|\bcheapest\s+store\b|\blowest\s+price\s+where\b|\bwhere\s+to\s+buy\b|\bwho\s+sells\b/.test(
+      /\b(which|what)\s+store\b|\bbest\s+deal\s+now\b|\bcheapest\s+store\b|\blowest\s+price\s+where\b|\bwhere\s+to\s+buy\b|\bwho\s+sells\b|\bwaar\s+te\s+kopen\b|\bwelke\s+winkel\b|\bgoedkoopste\s+winkel\b/.test(
         s
-      ),
+      ) || /وين|أين|متجر|محل/.test(s),
     schoolUse:
       /\b(for\s+)?school|uni(versity)?|college(\s+laptop)?|student(\s+school|\s+budget)?\b|for\s+class\b/.test(s),
     giftUse:
@@ -147,7 +147,8 @@ export function parseCommerceSearchIntents(q: string): CommerceSearchIntents {
       ),
     comparisonIntent:
       /\b(compare|vs\.?|versus|side\s*by\s*side|which\s+is\s+better|stack\s+up|head\s*to\s*head|pick\s+between|weigh\s+up)\b/.test(s) ||
-      /\bمقارنة\b/.test(q),
+      /\b(vergelijken|vergelijk|beste\s+keuze)\b/.test(s) ||
+      /\bمقارنة|قارن|أفضل|افضل\b/.test(q),
     qualitySeeking:
       /\b(not\s+garbage|no\s+junk|doesn'?t\s+feel\s+cheap|well[\s-]?built|solid\s+build|good\s+quality|reliable\s+quality|lasts?\s+(a\s+)?long|durable|won'?t\s+fall\s+apart|cheap\s+but\s+not\s+garbage)\b/.test(
         s

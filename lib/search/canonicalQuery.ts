@@ -131,6 +131,7 @@ function detectBrand(envelope: string): string | null {
 function detectModel(envelope: string, brand: string | null): string | null {
   const patterns = [
     /\biphone\s*(\d{1,2}(?:\s*(?:pro|max|plus|mini|e))?)\b/i,
+    /(?:ايفون|آيفون)\s*(\d{1,2}(?:\s*(?:pro|max|plus|mini|e))?)/i,
     /\bairpods?\s*(pro|pro\s*\d|max|\d)?\b/i,
     /\badidas\s+(samba|gazelle|superstar|campus)\b/i,
     /\bnike\s+(air\s+force\s+1|dunk|air\s+max|jordan\s*\d*)\b/i,
@@ -139,6 +140,10 @@ function detectModel(envelope: string, brand: string | null): string | null {
   for (const rx of patterns) {
     const match = envelope.match(rx);
     if (!match) continue;
+    if (/(?:ايفون|آيفون)/i.test(match[0])) {
+      const version = match[1]?.replace(/\s+/g, " ").trim();
+      return version ? `iphone ${version}` : "iphone";
+    }
     return match[0].replace(/\s+/g, " ").trim();
   }
   if (brand) {

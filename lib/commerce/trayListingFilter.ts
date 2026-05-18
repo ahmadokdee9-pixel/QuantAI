@@ -24,15 +24,16 @@ export function filterTrayNoise(products: QuantProduct[], query: string): QuantP
   const next: QuantProduct[] = [];
 
   for (const p of products) {
-    if (hardCategoryMismatch(query, p.title)) continue;
+    const marketValidated = p.qiIdentityGate?.identityGatePassed === true;
+    if (!marketValidated && hardCategoryMismatch(query, p.title)) continue;
     if (isShadyGenericMarketplaceRow(p)) continue;
 
     const id = assessUniversalListingIdentity(p, query);
-    if (id.listingRisk01 >= 0.82) continue;
-    if (!queryAllowsAccessory && id.flags.includes("accessory_lane") && id.accessoryLikelihood01 >= 0.48) continue;
-    if (!queryAllowsAccessory && id.semanticMismatchPenalty01 >= 0.56) continue;
-    if (!queryAllowsAccessory && id.contaminationRisk01 >= 0.74) continue;
-    if (id.contaminant01 >= 0.54 && id.flags.includes("query_contamination")) continue;
+    if (!marketValidated && id.listingRisk01 >= 0.82) continue;
+    if (!marketValidated && !queryAllowsAccessory && id.flags.includes("accessory_lane") && id.accessoryLikelihood01 >= 0.48) continue;
+    if (!marketValidated && !queryAllowsAccessory && id.semanticMismatchPenalty01 >= 0.56) continue;
+    if (!marketValidated && !queryAllowsAccessory && id.contaminationRisk01 >= 0.74) continue;
+    if (!marketValidated && id.contaminant01 >= 0.54 && id.flags.includes("query_contamination")) continue;
 
     if (!allowRefurb && listingSignalsRefurbished(p)) {
       const trust = getStoreTrustScore(p.store);

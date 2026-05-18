@@ -106,7 +106,7 @@ function detectCategory(s: string): SemanticProductCategory {
   if (hasAny(s, /\b(watch|smartwatch|ساعة)\b/i)) return "watch";
   if (hasAny(s, /\b(makeup|skincare|beauty|serum|cream|cosmetic|verzorging)\b/i)) return "beauty";
   if (hasAny(s, /\b(jacket|winter jacket|jas|winterjas|coat|dress|hoodie|shirt|fashion|outfit|kleding|ملابس|جاكيت)\b/i)) return "fashion";
-  if (hasAny(s, /\b(coffee machine|espresso machine|koffiezetapparaat|koffiemachine|air fryer|vacuum|stofzuiger|blender|microwave|baby stroller|stroller|pram|buggy|kinderwagen|home|kitchen|bedroom|living room|decor|appliance|apparaat|keuken|عربة\s+اطفال|عربة\s+أطفال)\b/i)) return "home";
+  if (hasAny(s, /\b(coffee machine|espresso machine|koffiezetapparaat|koffiemachine|air fryer|airfryer|fryer|heteluchtfriteuse|friteuse|vacuum|stofzuiger|blender|microwave|baby stroller|stroller|pram|buggy|kinderwagen|home|kitchen|bedroom|living room|decor|appliance|apparaat|keuken|عربة\s+اطفال|عربة\s+أطفال)\b/i)) return "home";
   if (hasAny(s, /\b(gpu|gaming monitor|monitor|beeldscherm|scherm|tv|camera|tablet|console|electronics?|elektronica)\b/i)) return "electronics";
   return "unknown";
 }
@@ -179,7 +179,7 @@ function semanticKeywordsFor(q: {
   if (q.category === "fragrance") words.push("perfume", "fragrance", "parfum", "cologne", "eau");
   if (q.category === "watch") words.push("watch", "smartwatch", "wearable", "wrist");
   if (q.category === "desk_setup") words.push("desk", "workspace", "monitor", "keyboard", "minimal");
-  if (q.category === "home") words.push("home", "kitchen", "appliance", "coffee", "machine", "stroller", "baby");
+  if (q.category === "home") words.push("home", "kitchen", "appliance", "coffee", "machine", "stroller", "baby", "air fryer", "airfryer");
   if (q.category === "fashion") words.push("fashion", "clothing", "jacket", "coat", "style");
   if (q.category === "beauty") words.push("beauty", "skincare", "cosmetic", "care");
   if (q.aesthetic === "minimal_clean") words.push("clean", "minimal", "simple", "white", "black", "wood", "matte");

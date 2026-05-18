@@ -7,6 +7,7 @@ import { resolveCommerceAiEngine } from "@/lib/intelligence/commerceAi/commerceA
 import { mergeCommerceSessionMemory, safeParseCommerceSessionMemory } from "@/lib/intelligence/commerceSessionMemory";
 import { buildBundleSuggestions } from "@/lib/intelligence/bundleIntelligence";
 import { applyMarketAwarenessRanking, computeMarketAwarenessForTray } from "@/lib/intelligence/marketAwareness";
+import { buildCommerceQualityDebug, buildCommerceQualityLayer } from "@/lib/intelligence/commerceQualityLayer";
 import { applyPersonaRanking } from "@/lib/intelligence/personaRanking";
 import { applyPredictiveCommerceToTray } from "@/lib/intelligence/predictiveCommerceIntelligence";
 import { detectShopperPersonas } from "@/lib/intelligence/shopperPersona";
@@ -80,6 +81,10 @@ function fallbackLiveDiscoveryMeta(
     recoveredFromFallback: false,
     upstreamFailures: [],
     merchantReliability: [],
+    marketBreadthTarget: 0,
+    marketRowsPreserved: products.length,
+    merchantDiversityScore: 0,
+    priceSpreadRatio: 0,
     ...(error
       ? { error: error instanceof Error ? error.message : "Live discovery failed." }
       : {}),
@@ -169,7 +174,7 @@ async function fetchShoppingProductsWithFallback(
 /** Cross-request tray cache — normalized key improves hit rate; short TTL keeps prices fresh. */
 const getCachedSearchPipeline = unstable_cache(
   async (pipelineQuery: string) => runSearchPipeline(pipelineQuery),
-  ["quantai-search-pipeline-v26-category-family-breadth"],
+  ["quantai-search-pipeline-v33-final-quality-order"],
   { revalidate: 120 }
 );
 
@@ -202,6 +207,7 @@ function searchDebugMeta(args: {
 }): Record<string, unknown> {
   const { products, liveDiscovery = null, canonicalQuery = null, fallbackReason = null, errorState = null, stageSuppression = [] } = args;
   const identityDebug = canonicalQuery ? buildIdentityDebugSummary(products, canonicalQuery) : null;
+  const commerceQualityDebug = buildCommerceQualityDebug(products);
   return {
     productCount: products.length,
     productsCount: products.length,
@@ -233,8 +239,13 @@ function searchDebugMeta(args: {
     recoveredFromFallback: liveDiscovery?.recoveredFromFallback ?? false,
     upstreamFailures: liveDiscovery?.upstreamFailures ?? [],
     merchantReliability: liveDiscovery?.merchantReliability ?? [],
+    marketBreadthTarget: liveDiscovery?.marketBreadthTarget ?? 0,
+    marketRowsPreserved: liveDiscovery?.marketRowsPreserved ?? products.length,
+    merchantDiversityScore: liveDiscovery?.merchantDiversityScore ?? 0,
+    priceSpreadRatio: liveDiscovery?.priceSpreadRatio ?? 0,
     discoveryValidationTrace: liveDiscovery?.discoveryValidationTrace ?? null,
     stageSuppression,
+    commerceQualityDebug,
     canonicalQuery: canonicalQuery ? canonicalQueryForDebug(canonicalQuery) : null,
     identityDebug,
   };
@@ -414,6 +425,9 @@ async function handleSearch(
     stageBefore = products.length;
     products = applyMarketAwarenessRanking(products, query);
     traceStage("market_awareness_ranking", stageBefore, products.length);
+    stageBefore = products.length;
+    products = buildCommerceQualityLayer(products, query, canonicalQuery);
+    traceStage("commerce_quality_ranking", stageBefore, products.length);
     const preIdentityGateProducts = products;
     products = applyHardIdentityGate(products, canonicalQuery);
     traceStage("hard_identity_gate", preIdentityGateProducts.length, products.length);
@@ -428,6 +442,9 @@ async function handleSearch(
       products = preSemanticProducts.map((p, i) => ({ ...p, qiRank: i }));
       traceStage("semantic_empty_guard", 0, products.length);
     }
+    stageBefore = products.length;
+    products = buildCommerceQualityLayer(products, query, canonicalQuery);
+    traceStage("final_commerce_quality_order", stageBefore, products.length);
     dealClusters = buildDealClusters(products);
     searchIntelligence = buildSearchIntelligence(query, products, dealClusters);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
@@ -491,8 +508,21 @@ async function handleSearch(
         recoveredFromFallback: debugMeta.recoveredFromFallback,
         upstreamFailures: debugMeta.upstreamFailures,
         merchantReliability: debugMeta.merchantReliability,
+        marketBreadthTarget: debugMeta.marketBreadthTarget,
+        marketRowsPreserved: debugMeta.marketRowsPreserved,
+        merchantDiversityScore: debugMeta.merchantDiversityScore,
+        priceSpreadRatio: debugMeta.priceSpreadRatio,
         discoveryValidationTrace: debugMeta.discoveryValidationTrace,
         stageSuppression: debugMeta.stageSuppression,
+        commerceQualityDebug: debugMeta.commerceQualityDebug,
+        dealStrength: debugMeta.commerceQualityDebug,
+        fakeDiscountRisk: debugMeta.commerceQualityDebug,
+        buyTimingSignal: debugMeta.commerceQualityDebug,
+        merchantTrustConfidence: debugMeta.commerceQualityDebug,
+        valueScore: debugMeta.commerceQualityDebug,
+        marketSpreadAnalysis: debugMeta.commerceQualityDebug,
+        volatilitySignals: debugMeta.commerceQualityDebug,
+        rankingReasonTrace: debugMeta.commerceQualityDebug,
         searchDebug: debugMeta,
         productCount: debugMeta.productCount,
         productsCount: debugMeta.productsCount,

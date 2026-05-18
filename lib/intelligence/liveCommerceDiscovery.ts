@@ -55,6 +55,10 @@ export type LiveCommerceDiscoveryMeta = {
   recoveredFromFallback: boolean;
   upstreamFailures: { query: string; status: number; error: string; attempt: number }[];
   merchantReliability: MerchantReliabilitySnapshot[];
+  marketBreadthTarget: number;
+  marketRowsPreserved: number;
+  merchantDiversityScore: number;
+  priceSpreadRatio: number;
   discoveryValidationTrace?: {
     marketMode: string;
     totalExternalRows: number;
@@ -98,16 +102,29 @@ function boundedEnvInt(name: string, fallback: number, min: number, max: number)
 }
 
 function rolloutControls(): { enabled: boolean; maxRows: number; maxMerchants: number; timeoutMs: number; maxAttemptedQueries: number } {
-  const maxMerchants = boundedEnvInt("MAX_DISCOVERY_MERCHANTS", 18, 8, 80);
-  const maxRows = boundedEnvInt("MAX_DISCOVERY_ROWS", 12, 4, 40);
-  const timeoutMs = boundedEnvInt("DISCOVERY_TIMEOUT_MS", 4_500, 2_500, 9_000);
+  const maxMerchants = boundedEnvInt("MAX_DISCOVERY_MERCHANTS", 32, 8, 80);
+  const maxRows = boundedEnvInt("MAX_DISCOVERY_ROWS", 24, 4, 60);
+  const timeoutMs = boundedEnvInt("DISCOVERY_TIMEOUT_MS", 5_500, 2_500, 10_000);
   return {
     enabled: envFlagEnabled("ENABLE_WIDE_DISCOVERY", true),
     maxRows,
     maxMerchants,
     timeoutMs,
-    maxAttemptedQueries: 2,
+    maxAttemptedQueries: boundedEnvInt("MAX_DISCOVERY_QUERIES", 3, 1, 5),
   };
+}
+
+function priceSpreadRatio(products: QuantProduct[]): number {
+  const prices = products.map((p) => p.price).filter((n) => Number.isFinite(n) && n > 0).sort((a, b) => a - b);
+  if (prices.length < 2) return 0;
+  const low = prices[0]!;
+  const high = prices[prices.length - 1]!;
+  return Number(((high - low) / Math.max(1, low)).toFixed(2));
+}
+
+function merchantDiversityScore(products: QuantProduct[], target: number): number {
+  const merchants = new Set(products.map((p) => p.store.trim().toLowerCase()).filter(Boolean));
+  return Math.round(Math.min(100, (merchants.size / Math.max(1, target)) * 100));
 }
 
 function validateExternalRows(
@@ -156,7 +173,7 @@ function validateExternalRows(
       rejectionReasons.exact_match_required = (rejectionReasons.exact_match_required ?? 0) + 1;
       continue;
     }
-    const confidenceFloor = exactSkuMode ? 0.68 : unknownCategoryMode ? 0.58 : 0.46;
+    const confidenceFloor = exactSkuMode ? 0.68 : unknownCategoryMode ? 0.58 : 0.32;
     if (mode === "conservative" && decision.fusionConfidence < confidenceFloor) {
       confidenceRejected += 1;
       rejectionReasons.low_fusion_confidence = (rejectionReasons.low_fusion_confidence ?? 0) + 1;
@@ -303,6 +320,10 @@ export async function runLiveCommerceDiscovery(
         recoveredFromFallback: false,
         upstreamFailures: [],
         merchantReliability: discoveryReliabilitySnapshot([]),
+        marketBreadthTarget: controls.maxRows,
+        marketRowsPreserved: internalProducts.length,
+        merchantDiversityScore: merchantDiversityScore(internalProducts, controls.maxMerchants),
+        priceSpreadRatio: priceSpreadRatio(internalProducts),
         discoveryValidationTrace: {
           marketMode: canonicalQuery?.marketMode ?? "unknown",
           totalExternalRows: 0,
@@ -382,6 +403,10 @@ export async function runLiveCommerceDiscovery(
       recoveredFromFallback: refresh.recoveredFromFallback,
       upstreamFailures: refresh.upstreamFailures,
       merchantReliability,
+      marketBreadthTarget: controls.maxRows,
+      marketRowsPreserved: products.length,
+      merchantDiversityScore: merchantDiversityScore(products, controls.maxMerchants),
+      priceSpreadRatio: priceSpreadRatio(products),
       discoveryValidationTrace: validated.trace,
     },
   };
