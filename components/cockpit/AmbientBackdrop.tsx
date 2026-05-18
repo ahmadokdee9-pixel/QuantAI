@@ -3,70 +3,66 @@
 import { motion, useReducedMotion } from "framer-motion";
 
 type Props = {
-  /** Mobile / touch-primary: drop animated meshes and drifting layers for GPU budget. */
   lite?: boolean;
 };
 
 /**
- * Full-viewport ambient layer — cosmic field, no interaction.
+ * Living atmosphere — gradient drift and soft haze only. No particles or cyber effects.
  */
 export default function AmbientBackdrop({ lite = false }: Props) {
   const reduce = useReducedMotion();
   const low = reduce || lite;
 
   return (
-    <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
-      <div className="absolute inset-0 bg-[#020617]" />
-      {!low && <div className="absolute inset-0 cosmic-particles cosmic-drift-slow" />}
-      {low ? (
-        <div className="cosmic-starfield absolute inset-0 opacity-70" />
-      ) : (
-        <div className="cosmic-starfield absolute inset-0" />
-      )}
+    <motion.div className="qi-living-atmosphere pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
+      <div className="absolute inset-0 bg-[#02040a]" />
+
+      <motion.div
+        className="qi-atmosphere-veil absolute inset-[-12%] opacity-[0.92]"
+        animate={
+          low
+            ? undefined
+            : {
+                backgroundPosition: ["0% 40%", "100% 60%", "0% 40%"],
+              }
+        }
+        transition={
+          low ? undefined : { duration: 48, repeat: Infinity, ease: "easeInOut" }
+        }
+        style={{
+          backgroundImage: `
+            radial-gradient(ellipse 70% 55% at 20% 10%, rgba(34, 211, 238, 0.07), transparent 58%),
+            radial-gradient(ellipse 55% 45% at 85% 15%, rgba(99, 102, 241, 0.05), transparent 52%),
+            radial-gradient(ellipse 50% 40% at 50% 95%, rgba(15, 23, 42, 0.9), transparent 70%)
+          `,
+          backgroundSize: "120% 120%",
+        }}
+      />
+
       {!low && (
-        <div className="cosmic-constellation absolute inset-0 [mask-image:radial-gradient(ellipse_90%_70%_at_50%_30%,black,transparent)] cosmic-constellation-motion" />
+        <motion.div
+          className="absolute left-1/2 top-[-18%] h-[min(70vh,640px)] w-[min(110vw,920px)] -translate-x-1/2 rounded-full bg-cyan-400/[0.06] blur-[120px]"
+          animate={{ opacity: [0.35, 0.5, 0.35], scale: [1, 1.03, 1] }}
+          transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+        />
       )}
+
       {!low && (
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.055] neural-mesh-slow [mask-image:radial-gradient(ellipse_85%_65%_at_50%_35%,black,transparent)]"
+        <motion.div
+          className="absolute bottom-[-8%] right-[-12%] h-[45vh] w-[55vw] max-w-[720px] rounded-full bg-violet-600/[0.04] blur-[100px]"
+          animate={{ opacity: [0.2, 0.32, 0.2], x: [0, -12, 0] }}
+          transition={{ duration: 28, repeat: Infinity, ease: "easeInOut" }}
+        />
+      )}
+
+      {low && (
+        <motion.div
+          className="absolute -top-32 left-1/2 h-[420px] w-[min(88vw,680px)] -translate-x-1/2 rounded-full bg-cyan-500/[0.05] blur-3xl"
           aria-hidden
         />
       )}
-      <div
-        className="absolute inset-0 opacity-[0.88]"
-        style={{
-          background: lite
-            ? `radial-gradient(ellipse 100% 70% at 50% -15%, rgba(34, 211, 238, 0.07), transparent 54%),
-            radial-gradient(ellipse 70% 55% at 100% 20%, rgba(139, 92, 246, 0.05), transparent 50%)`
-            : `
-            radial-gradient(ellipse 100% 70% at 50% -15%, rgba(34, 211, 238, 0.11), transparent 54%),
-            radial-gradient(ellipse 70% 55% at 100% 20%, rgba(139, 92, 246, 0.08), transparent 50%),
-            radial-gradient(ellipse 60% 50% at 0% 75%, rgba(52, 211, 153, 0.045), transparent 44%),
-            radial-gradient(ellipse 50% 40% at 80% 90%, rgba(56, 189, 248, 0.035), transparent 42%)
-          `,
-        }}
-      />
-      {!low && (
-        <>
-          <motion.div
-            className="absolute -top-48 left-1/2 h-[min(85vh,900px)] w-[min(120vw,980px)] -translate-x-1/2 rounded-full bg-gradient-to-b from-cyan-400/14 via-violet-500/7 to-transparent blur-[100px]"
-            animate={{ opacity: [0.32, 0.48, 0.32], scale: [1, 1.02, 1] }}
-            transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <motion.div
-            className="absolute bottom-0 right-[-20%] h-[55vh] w-[70vw] max-w-[900px] rounded-full bg-gradient-to-tl from-violet-600/8 to-transparent blur-[90px]"
-            animate={{ opacity: [0.14, 0.24, 0.14], x: [0, -8, 0] }}
-            transition={{ duration: 24, repeat: Infinity, ease: "easeInOut" }}
-          />
-        </>
-      )}
-      {low && (
-        <div className="absolute -top-40 left-1/2 h-[520px] w-[min(90vw,720px)] -translate-x-1/2 rounded-full bg-gradient-to-b from-cyan-500/10 via-violet-500/6 to-transparent blur-3xl" />
-      )}
-      <div
-        className={`absolute inset-0 opacity-[0.14] bg-[linear-gradient(rgba(148,163,184,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.035)_1px,transparent_1px)] bg-[size:56px_56px] [mask-image:radial-gradient(ellipse_78%_62%_at_50%_22%,black,transparent)] ${low ? "" : "ai-grid-motion"}`}
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#020617]/92" />
-    </div>
+
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#02040a]/95" />
+    </motion.div>
   );
 }

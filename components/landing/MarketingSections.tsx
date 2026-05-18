@@ -48,12 +48,11 @@ export default function MarketingSections() {
             <p className="text-xs font-medium uppercase tracking-[0.22em] text-cyan-300/80 mb-4">
               Intelligence layer
             </p>
-            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white/95 leading-[1.15]">
-              Recommendations you can explain to anyone in the room.
+            <h2 className="qi-editorial-display text-3xl sm:text-4xl text-white/95 leading-[1.12]">
+              Intelligence you can stand behind.
             </h2>
-            <p className="mt-4 text-base sm:text-lg text-white/55 leading-relaxed font-normal">
-              QuantAI reads live listings, compares them as a set, and surfaces a clear
-              pick with transparent signals—not a black box score.
+            <p className="qi-silent-whisper mt-4 max-w-lg">
+              Live listings read as one field—not isolated cards.
             </p>
           </div>
           <Link

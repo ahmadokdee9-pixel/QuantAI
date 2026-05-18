@@ -27,7 +27,6 @@ import {
   formatListingPrice,
   longTermValueHint,
   marketplaceVerifiedLabel,
-  retailerMonogram,
   riskHintFromProduct,
   shippingEstimateLabel,
   stockConfidencePct,
@@ -452,6 +451,16 @@ function ProductResultCard({
   );
   const decisionConfidence = buyingDecision?.confidence ?? buyingDecision?.decisionScore ?? Math.round(scoreNorm);
 
+  const marketWhisper = useMemo(() => {
+    if (!unifiedMarket || unifiedMarket.storeCount < 2) return null;
+    return intelligenceMarketPulseLine({
+      storeCount: unifiedMarket.storeCount,
+      spreadPct: unifiedMarket.marketSpreadPct,
+      isBestTrusted: unifiedMarket.isBestTrustedInFamily,
+      cheaperStore: unifiedMarket.sameItemCheaper?.store ?? null,
+    });
+  }, [unifiedMarket]);
+
   const signalsTerminalWhy = useMemo(() => {
     if (resolved.whyThisProduct) return clip(resolved.whyThisProduct, 128);
     const w = worthLine.headline.trim();
@@ -558,70 +567,32 @@ function ProductResultCard({
             <h3 className="text-[15px] font-semibold leading-[1.45] tracking-[-0.01em] text-white/[0.97] antialiased line-clamp-2 sm:text-[16px]">
               {p.title}
             </h3>
-            {unifiedMarket && unifiedMarket.storeCount >= 2 ? (
-              <div className="mt-2 rounded-xl border border-white/[0.055] bg-white/[0.022] px-2.5 py-2 text-[10px] leading-snug text-slate-400/95">
-                <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-                  <span className="font-semibold text-slate-200/90">Market match</span>
-                  {" · "}
-                  <span>{unifiedMarket.storeCount} stores</span>
-                  <span className="text-slate-600">/</span>
-                  <span>{unifiedMarket.marketSpreadPct}% spread</span>
-                  {unifiedMarket.isBestTrustedInFamily ? (
-                    <>
-                      <span className="text-slate-600">/</span>
-                      <span className="text-emerald-300/85">best trusted route</span>
-                    </>
-                  ) : unifiedMarket.sameItemCheaper ? (
-                    <>
-                      <span className="text-slate-600">/</span>
-                      <span className="text-amber-200/88">
-                        lower at {unifiedMarket.sameItemCheaper.store}
-                      </span>
-                    </>
-                  ) : null}
-                </p>
-                <p className="mt-1 line-clamp-1 text-slate-500/90 [overflow-wrap:anywhere]">
-                  Best trusted price {formatListingPrice(unifiedMarket.bestTrustedPrice, sym)}
-                  {unifiedMarket.bestTrustedStore ? ` · ${unifiedMarket.bestTrustedStore}` : ""}
-                  {" · "}
-                  {clip(unifiedMarket.fairMarketRangeLabel, 88)}
-                </p>
-              </div>
+            {marketWhisper ? (
+              <p className="qi-market-whisper mt-2 line-clamp-1" title={marketWhisper}>
+                {marketWhisper}
+              </p>
             ) : null}
 
-            <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] leading-snug text-slate-500/90">
-              <span className="inline-flex min-w-0 max-w-full items-center gap-1.5 font-medium text-slate-400/95">
-                <span
-                  className="flex size-6 shrink-0 items-center justify-center rounded-lg border border-white/[0.07] bg-white/[0.035] text-[9px] font-semibold tracking-tight text-slate-300/90"
-                  aria-hidden
-                >
-                  {retailerMonogram(p.store)}
-                </span>
-                <Store className="size-3 shrink-0 opacity-50" strokeWidth={1.5} aria-hidden />
-                <span className="min-w-0 truncate">{p.store}</span>
+            <div className="qi-trust-illumination mt-3">
+              <span>
+                <Store className="size-3 opacity-45" strokeWidth={1.5} aria-hidden />
+                {p.store}
               </span>
-              <span className="inline-flex shrink-0 items-center gap-1.5 tabular-nums text-slate-500/85">
-                <Shield className="size-3 text-slate-500/60" strokeWidth={1.5} aria-hidden />
-                <span className="text-slate-500/75">Trust</span>
-                <span className="text-slate-300/95">{trust}</span>
+              <span>
+                <Shield className="size-3 opacity-45" strokeWidth={1.5} aria-hidden />
+                {trust}
               </span>
             </div>
 
-            <div className={`qi-decision-surface mt-5 ${premiumDecision.surfaceClass}`}>
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="qi-os-overline">AI read</p>
-                  <p className="mt-1.5 text-[13px] font-semibold leading-snug tracking-[-0.01em] text-white/96">
-                    {premiumDecision.label}
-                  </p>
-                </div>
-                <span className="shrink-0 rounded-full border border-white/[0.1] bg-black/25 px-2 py-1 text-[10px] font-semibold tabular-nums text-white/85">
-                  {decisionConfidence}%
-                </span>
-              </div>
-              <p className="mt-1.5 text-[10px] leading-snug text-slate-300/80 [overflow-wrap:anywhere]">
-                {decisionWhisper}
+            <div className={`qi-decision-surface qi-decision-surface--canvas mt-5 ${premiumDecision.surfaceClass}`}>
+              <p className="qi-silent-overline">Read</p>
+              <p className="mt-2 text-[14px] font-semibold leading-snug tracking-[-0.015em] text-white/97">
+                {premiumDecision.label}
               </p>
+              <div className="qi-confidence-pulse mt-3" title={`${decisionConfidence}%`} aria-hidden>
+                <span style={{ width: `${Math.min(100, Math.max(8, decisionConfidence))}%` }} />
+              </div>
+              <p className="qi-os-whisper mt-2 [overflow-wrap:anywhere]">{decisionWhisper}</p>
             </div>
 
             <div className="mt-5 flex min-w-0 flex-wrap items-end justify-between gap-3 border-b border-white/[0.05] pb-5">
@@ -704,53 +675,6 @@ function ProductResultCard({
               </div>
             </div>
 
-            <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2">
-              <span
-                className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide transition-shadow duration-500 ease-out ${commerceBrainChipClass(resolved.commerceBrainCode)}`}
-                title={deal.whyDealGoodOrRisky}
-              >
-                <Percent className="size-2.5 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
-                <span className="truncate">{resolved.commerceBrainChipLabel}</span>
-              </span>
-              {resolved.predictiveBadge ? (
-                <span
-                  title={predictiveBadgeTitle}
-                  className={`inline-flex max-w-[min(100%,14rem)] items-center gap-1 truncate rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] ${predictiveSignalChipClass(resolved.predictiveBadge.tone)}`}
-                >
-                  <Sparkles className="size-2.5 shrink-0 opacity-85" strokeWidth={2} aria-hidden />
-                  <span className="truncate">{resolved.predictiveBadge.text}</span>
-                </span>
-              ) : null}
-            </div>
-
-            <div className="mt-3 flex min-w-0 flex-wrap gap-1.5">
-              {resolved.secondaryChips.map((b) => (
-                <span
-                  key={b.label}
-                  className={`max-w-[min(100%,11rem)] truncate rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide ${b.cls}`}
-                >
-                  {b.label}
-                </span>
-              ))}
-              {resolved.contextChip ? (
-                <span
-                  title={resolved.decisionReason}
-                  className={`max-w-[min(100%,12rem)] truncate rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide ${resolved.contextChip.cls}`}
-                >
-                  {resolved.contextChip.label}
-                </span>
-              ) : null}
-            </div>
-
-            <p
-              className="mt-2.5 text-[11px] leading-snug text-slate-400/95 line-clamp-2"
-              title={`${resolved.analystLine} — ${deal.whyDealGoodOrRisky}`}
-            >
-              {resolved.analystLine}
-            </p>
-
-            <p className={`mt-1.5 text-[11px] font-semibold leading-snug ${worthLine.cls}`}>{worthShort}</p>
-
             <button
               type="button"
               onClick={toggleIntelOpen}
@@ -758,7 +682,7 @@ function ProductResultCard({
               aria-expanded={intelOpen}
             >
               <span className="cockpit-label text-[10px] tracking-[0.12em] text-slate-500/85 group-hover:text-slate-400/95">
-                Deep analysis
+                Analysis
               </span>
               <ChevronDown
                 className={`size-4 shrink-0 text-slate-500/90 transition duration-200 ${intelOpen ? "rotate-180" : ""}`}
@@ -982,7 +906,7 @@ function ProductResultCard({
               className="mt-4 flex w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-cyan-400/18 bg-gradient-to-r from-cyan-400/[0.08] to-violet-500/[0.07] py-2.5 text-[11px] font-semibold text-slate-100/95 transition hover:border-cyan-400/26 hover:from-cyan-400/[0.11] hover:to-violet-500/[0.09]"
             >
               <Sparkles className="size-3.5 text-slate-400" strokeWidth={1.5} aria-hidden />
-              Open analysis
+              Open
               <PanelRight className="size-3.5 opacity-80" strokeWidth={1.5} aria-hidden />
             </motion.button>
 

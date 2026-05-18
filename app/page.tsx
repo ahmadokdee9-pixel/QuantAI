@@ -572,7 +572,7 @@ export default function Home() {
   const glassCard = "cockpit-glass-card";
 
   return (
-    <main className="qi-os-atmosphere relative min-h-screen overflow-x-hidden bg-[#020617] text-slate-100">
+    <main className="qi-os-atmosphere qi-silent-luxury relative min-h-screen overflow-x-hidden bg-[#02040a] text-slate-100">
       <AmbientBackdrop lite={mobilePerf} />
 
       <div className="relative z-10">
@@ -584,53 +584,20 @@ export default function Home() {
             products.length > 0 ? "pt-14 pb-16 sm:pt-16 sm:pb-20" : "pt-16 pb-28 sm:pt-20 sm:pb-36"
           }`}
         >
-          <div className="mx-auto max-w-7xl text-center">
-            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/[0.1] bg-white/[0.04] px-5 py-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-300/95 shadow-[0_12px_40px_-20px_rgba(0,0,0,0.5)] backdrop-blur-xl motion-safe:animate-[fadeIn_0.6s_ease-out]">
-              <span className="relative flex size-1.5 rounded-full bg-emerald-400/90 shadow-[0_0_8px_rgba(52,211,153,0.45)]">
-                <span className="absolute inset-0 motion-reduce:animate-none animate-ping rounded-full bg-emerald-400/25" />
-              </span>
-              Live commerce intelligence
-            </div>
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="qi-silent-overline motion-safe:animate-[fadeIn_0.5s_ease-out]">
+              Market intelligence
+            </p>
 
-            <h1 className="cockpit-display mt-12 text-[2.55rem] font-bold leading-[1.06] sm:text-5xl lg:text-[3.55rem] text-white motion-safe:animate-[fadeIn_0.65s_ease-out]">
-              <span className="block text-white">Search naturally. Decide like a market insider.</span>
-              <span className="mt-4 block cockpit-gradient-text font-bold tracking-[-0.04em]">
-                QuantAI turns global shopping noise into premium buying intelligence.
-              </span>
+            <h1 className="qi-hero-headline mt-10 motion-safe:animate-[fadeIn_0.6s_ease-out]">
+              Clarity before purchase.
             </h1>
 
-            <p className="mx-auto mt-6 max-w-2xl text-[15px] font-semibold leading-snug tracking-[-0.02em] text-slate-200/95 sm:text-[16px] motion-safe:animate-[fadeIn_0.66s_ease-out]">
-              Live listings, regional pricing, seller trust, and timing intelligence in one elegant scan.
+            <p className="qi-hero-lead mx-auto mt-6 max-w-xl motion-safe:animate-[fadeIn_0.65s_ease-out]">
+              See the market before you enter it.
             </p>
 
-            <p className="cockpit-body mx-auto mt-5 max-w-2xl text-[15px] sm:text-[16px] text-slate-400/95 motion-safe:animate-[fadeIn_0.7s_ease-out]">
-              Ask for any product, budget, store, risk, or discount. QuantAI reads intent, compares the market, and
-              highlights the smartest move.
-            </p>
-
-            {/* Search — hero instrument */}
-            <motion.div
-              className="cockpit-search-aurora cockpit-search-aurora--premium hero-search-instrument mx-auto mt-10 max-w-3xl sm:mt-14 sm:max-w-[52rem] motion-safe:animate-[fadeIn_0.75s_ease-out] rounded-[1.5rem] p-px shadow-[0_36px_100px_-48px_rgba(15,23,42,0.92),0_0_80px_-48px_rgba(34,211,238,0.12)]"
-              data-loading={loading ? "true" : "false"}
-              animate={
-                reduceHeroMotion || mobilePerf
-                  ? undefined
-                  : { opacity: loading ? 1 : [0.94, 1, 0.97, 1] }
-              }
-              transition={
-                reduceHeroMotion || mobilePerf || loading
-                  ? undefined
-                  : { duration: 6.2, repeat: Infinity, ease: "easeInOut" }
-              }
-            >
-              <div className="hero-search-shell relative rounded-[1.45rem] border border-white/[0.08] bg-[#040b16]/94 px-3.5 py-5 sm:p-6 backdrop-blur-[40px]">
-                {loading && !mobilePerf && (
-                  <div
-                    className="pointer-events-none absolute inset-0 bg-[conic-gradient(from_200deg_at_50%_50%,transparent_0deg,rgba(34,211,238,0.05)_130deg,transparent_260deg)] motion-reduce:animate-none animate-spin opacity-35"
-                    style={{ animationDuration: "6.5s" }}
-                    aria-hidden
-                  />
-                )}
+            <motion.div className="qi-hero-instrument mx-auto mt-14 max-w-3xl sm:mt-16 sm:max-w-[48rem] motion-safe:animate-[fadeIn_0.7s_ease-out]">
                 <HeroSearchCommand
                   query={query}
                   onQueryChange={setQuery}
@@ -644,18 +611,11 @@ export default function Home() {
                   mobilePerf={mobilePerf}
                 />
 
-                <div className="relative z-[1] mt-6 min-h-[4rem] sm:mt-7 sm:min-h-[3.75rem]">
-                  {loading ? (
-                    <div className="max-w-2xl">
-                      <SearchStreamRibbon active={loading} />
-                    </div>
-                  ) : (
-                    <p className="px-0.5 text-left text-[12px] font-normal leading-relaxed tracking-[-0.01em] text-slate-500/88">
-                      Your ranked tray and reasoning appear below. Compare pins stay put while you refine the search.
-                    </p>
-                  )}
-                </div>
-              </div>
+                {loading ? (
+                  <div className="relative z-[1] mt-6 max-w-2xl text-left">
+                    <SearchStreamRibbon active={loading} />
+                  </div>
+                ) : null}
             </motion.div>
 
             {searchError && !loading && (
@@ -669,8 +629,8 @@ export default function Home() {
 
             {!isSignedIn && (
               <div className="mx-auto mt-8 flex max-w-md flex-col items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-5 py-4 backdrop-blur-md sm:flex-row sm:justify-center">
-                <p className="text-center text-sm font-normal text-slate-400">
-                  Sign in to run live search, save products, and sync your tray.
+                <p className="qi-silent-whisper text-center">
+                  Sign in to search, save, and sync.
                 </p>
                 <SignInButton mode="modal" forceRedirectUrl="/dashboard">
                   <button
@@ -785,15 +745,13 @@ export default function Home() {
             id="pricing"
             className="mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-28 scroll-mt-24 border-t border-white/[0.06]"
           >
-          <div className="text-center max-w-2xl mx-auto mb-14 sm:mb-16">
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-cyan-300/80 mb-4">
-              QuantAI plans
-            </p>
-            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white/95">
-              Intelligence that keeps pace with you
+          <div className="text-center max-w-xl mx-auto mb-14 sm:mb-16">
+            <p className="qi-silent-overline mb-4">Membership</p>
+            <h2 className="qi-editorial-display text-3xl sm:text-4xl text-white/95">
+              Private access levels
             </h2>
-            <p className="cockpit-body mt-4 text-base text-slate-500">
-              Start where you are—move up when you want more runway and a deeper read on every scan.
+            <p className="qi-silent-whisper mt-4">
+              More depth when your decisions demand it.
             </p>
             <Link
               href="/pricing"

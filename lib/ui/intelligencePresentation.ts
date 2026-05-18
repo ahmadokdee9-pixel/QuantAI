@@ -1,6 +1,5 @@
 /**
- * Calm Futuristic Intelligence — premium strategist language for UI surfaces.
- * Presentation only; engine signals stay unchanged.
+ * Silent Intelligence Luxury — restrained strategist language (presentation only).
  */
 
 export type IntelligenceDecisionPresentation = {
@@ -15,63 +14,63 @@ export function intelligenceDecisionPresentation(
   switch (action) {
     case "BUY_NOW":
       return {
-        label: "High Confidence Purchase",
-        whisper: "Price, trust, and timing align.",
+        label: "Clear to buy",
+        whisper: "Price, trust, timing align.",
         surfaceClass: "qi-decision-surface--positive",
       };
     case "SAFE_TRUSTED_OFFER":
       return {
-        label: "Trusted Fulfillment Path",
-        whisper: "Seller profile supports a safer entry.",
+        label: "Trusted route",
+        whisper: "Seller profile is sound.",
         surfaceClass: "qi-decision-surface--calm",
       };
     case "BEST_REGIONAL_DEAL":
       return {
-        label: "Regional Market Edge",
-        whisper: "Local fit outperforms the wider field.",
+        label: "Regional edge",
+        whisper: "Strong local fit.",
         surfaceClass: "qi-decision-surface--positive",
       };
     case "HIDDEN_VALUE":
       return {
-        label: "Undervalued Opportunity",
-        whisper: "Priced below comparable quality in this tray.",
+        label: "Undervalued",
+        whisper: "Below peers on quality.",
         surfaceClass: "qi-decision-surface--accent",
       };
     case "STRONG_VALUE":
       return {
-        label: "Exceptional Market Position",
-        whisper: "Strong balance of price and trust.",
+        label: "Strong position",
+        whisper: "Price and trust balance.",
         surfaceClass: "qi-decision-surface--calm",
       };
     case "WAIT_FOR_DROP":
     case "DISCOUNT_LIKELY_SOON":
       return {
-        label: "Timing Favors Patience",
-        whisper: "Current pricing conditions may improve.",
+        label: "Wait",
+        whisper: "Pricing may improve.",
         surfaceClass: "qi-decision-surface--caution",
       };
     case "PREMIUM_PRICING":
       return {
-        label: "Premium Market Band",
-        whisper: "Above fair range — justify on safety or spec.",
+        label: "Premium band",
+        whisper: "Above fair range.",
         surfaceClass: "qi-decision-surface--accent",
       };
     case "RISKY_SELLER":
       return {
-        label: "Elevated Seller Risk",
-        whisper: "Verify fulfillment before committing.",
+        label: "Seller risk",
+        whisper: "Verify before checkout.",
         surfaceClass: "qi-decision-surface--risk",
       };
     case "HIGH_VOLATILITY":
       return {
-        label: "Market Instability Detected",
-        whisper: "Wide spread — compare before you decide.",
+        label: "Unstable field",
+        whisper: "Wide spread — compare.",
         surfaceClass: "qi-decision-surface--caution",
       };
     default:
       return {
-        label: "Compare Before Committing",
-        whisper: "The market currently favors stronger alternatives.",
+        label: "Compare first",
+        whisper: "Stronger options in tray.",
         surfaceClass: "qi-decision-surface--neutral",
       };
   }
@@ -87,8 +86,7 @@ export function intelligenceMarketPulseLine(args: {
   isBestTrusted?: boolean;
   cheaperStore?: string | null;
 }): string {
-  const base = `${args.storeCount} routes · ${args.spreadPct}% spread`;
-  if (args.isBestTrusted) return `${base} · best trusted path`;
-  if (args.cheaperStore) return `${base} · stronger at ${args.cheaperStore}`;
-  return base;
+  if (args.isBestTrusted) return `${args.storeCount} routes · trusted lead`;
+  if (args.cheaperStore) return `${args.storeCount} routes · lower at ${args.cheaperStore}`;
+  return `${args.storeCount} routes · ${args.spreadPct}% spread`;
 }

@@ -5,33 +5,22 @@ export const HERO_COMMAND_HISTORY_CAP = 3 as const;
 
 /** One-tap examples — natural sentences QuantAI already understands. */
 export const HERO_SEARCH_PROMPTS: readonly string[] = [
-  "Feminine luxury perfume that lasts—trusted EU seller",
-  "Minimalist desk setup—monitor + keyboard, premium feel",
-  "Best phone for my wife under €700",
-  "Trusted gaming laptop not too heavy",
-  "Something like a MacBook but cheaper",
+  "Feminine luxury perfume — trusted EU seller",
+  "Minimalist desk setup — monitor + keyboard",
+  "Best phone under €700",
+  "Trusted gaming laptop, not heavy",
+  "MacBook alternative, cheaper",
   "Safest AirPods seller",
-  "Luxury looking monitor for my desk setup",
-  "Real discount not fake on wireless earbuds",
-  "Compare best OLED TVs",
-  "Best gift for a student",
-  "Cheap but not garbage noise-cancelling headphones",
-  "Best value iPhone today",
-  "Low-risk delivery on a 4K monitor",
-  "Premium-looking keyboard for work from home",
+  "OLED TV — real discount",
+  "Noise-cancelling headphones — value",
 ];
 
-/** Rotating placeholders — same “ask anything” voice as the examples. */
+/** Rotating placeholders — calm, minimal. */
 export const HERO_INPUT_PLACEHOLDERS: readonly string[] = [
-  "Try: “quiet luxury watch—under €400, not flashy”…",
-  "Try: “comfortable premium underwear—breathable, not cheap-looking”…",
-  "Try: “عطر فاخر لزوجتي — بائع موثوق في أوروبا” (Arabic + English works)…",
-  "Describe what you want in plain language—who it’s for, budget, trust…",
-  "Try: “safest seller for AirPods Pro, EU stores”…",
-  "Try: “gaming laptop, not too heavy, under €1200”…",
-  "Try: “something like a MacBook Air but cheaper, good reviews”…",
-  "Try: “compare OLED TVs—real discounts only”…",
-  "Try: “best gift for a student, durable, not junk”…",
-  "Ask in one line: product, budget, who it’s for, how much trust you want…",
-  "Try: “quiet mechanical keyboard, premium feel, under €200”…",
+  "What are you buying — budget, trust, region…",
+  "Quiet luxury watch under €400…",
+  "Safest seller for AirPods Pro…",
+  "Gaming laptop under €1200…",
+  "Compare OLED TVs…",
+  "Gift for a student — durable…",
 ];

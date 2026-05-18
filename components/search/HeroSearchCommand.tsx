@@ -1,8 +1,8 @@
 "use client";
 
 import { useId, useMemo, useState, type KeyboardEvent } from "react";
-import { ArrowRight, ChevronDown, Loader2, Search, Sparkles } from "lucide-react";
-import MagneticSurface from "@/components/motion/MagneticSurface";
+import { motion } from "framer-motion";
+import { ArrowRight, ChevronDown, Loader2 } from "lucide-react";
 import {
   HERO_COMMAND_HISTORY_CAP,
   HERO_COMMAND_SUGGESTION_CAP,
@@ -75,10 +75,10 @@ export default function HeroSearchCommand({
   placeholder,
   hintOptions,
   registerInput,
-  mobilePerf,
 }: Props) {
   const baseId = useId();
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+  const [focused, setFocused] = useState(false);
 
   const suggestions = useMemo(
     () => filterPresets(query, HERO_COMMAND_SUGGESTION_CAP),
@@ -111,14 +111,6 @@ export default function HeroSearchCommand({
     setSuggestionsOpen(false);
   };
 
-  const pickHistory = (value: string) => {
-    const v = value.trim();
-    if (!v || loading) return;
-    onQueryChange(v);
-    onSubmitPreset(v);
-    setSuggestionsOpen(false);
-  };
-
   const onInputKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -132,128 +124,110 @@ export default function HeroSearchCommand({
   };
 
   return (
-    <div className="hero-ai-command-root">
-      {/* Main command card — CSS forces visible/auto height (no inner scroll container) */}
-      <div className="hero-ai-command-card relative rounded-[1.35rem] border border-white/[0.06] bg-[#020308]/98 p-5 shadow-[0_0_0_1px_rgba(0,0,0,0.65),0_32px_96px_-52px_rgba(0,0,0,0.92),inset_0_1px_0_rgba(255,255,255,0.055),0_0_64px_-40px_rgba(34,211,238,0.14),0_0_72px_-48px_rgba(139,92,246,0.1)] backdrop-blur-[32px] sm:p-6">
-        <div
-          className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-[0.85]"
-          style={{
-            background:
-              "radial-gradient(100% 70% at 50% -15%, rgba(34,211,238,0.09), transparent 52%), radial-gradient(80% 55% at 100% 0%, rgba(139,92,246,0.06), transparent 45%)",
-          }}
-          aria-hidden
-        />
+    <div className="qi-instrument-root">
+      <motion.div
+        className={`qi-instrument-surface relative ${focused ? "qi-instrument-surface--active" : ""} ${submitPulse ? "qi-instrument-surface--pulse" : ""}`}
+        data-loading={loading ? "true" : "false"}
+      >
+        <div className="qi-instrument-glass" aria-hidden />
+        <div className="qi-instrument-reflection" aria-hidden />
 
-        <div className="relative flex flex-col gap-4 sm:gap-5">
-          <div className="flex flex-col gap-3.5 sm:flex-row sm:items-stretch sm:gap-4">
+        <div className="relative flex flex-col gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
+            <label className="sr-only" htmlFor={`${baseId}-q`}>
+              Search the market
+            </label>
             <div
-              className={`qa-search-field hero-search-field relative flex min-h-[56px] flex-1 items-center gap-3.5 rounded-[1.05rem] border border-white/[0.07] bg-black/55 px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-[border-color,box-shadow,background-color] duration-300 sm:min-h-[60px] sm:px-5 ${
-                submitPulse ? "hero-search-field--pulse" : ""
+              className={`qi-instrument-field qa-search-field relative flex min-h-[58px] flex-1 items-center rounded-[1.1rem] px-5 sm:min-h-[62px] ${
+                focused ? "qi-instrument-field--focus" : ""
               }`}
             >
-              <Search
-                className={`size-[1.15rem] shrink-0 sm:size-[1.2rem] ${loading ? "text-cyan-200/75 motion-reduce:animate-none animate-pulse" : "text-cyan-400/28"}`}
-                strokeWidth={1.5}
-                aria-hidden
-              />
               <input
                 ref={registerInput}
                 id={`${baseId}-q`}
                 value={query}
                 onChange={(e) => onQueryChange(e.target.value)}
                 onKeyDown={onInputKeyDown}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
                 placeholder={placeholder}
                 enterKeyHint="search"
                 autoComplete="off"
                 disabled={loading}
-                className="min-w-0 flex-1 bg-transparent py-3.5 text-[16px] font-medium leading-[1.35] tracking-[-0.022em] text-white outline-none placeholder:text-slate-500/50 placeholder:font-normal placeholder:tracking-[-0.015em] disabled:opacity-50 sm:py-4 sm:text-[17px]"
+                className="qi-instrument-input min-w-0 flex-1 bg-transparent py-4 outline-none disabled:opacity-45"
               />
+              <span className="qi-instrument-cursor-glow" aria-hidden />
             </div>
 
-            <MagneticSurface
-              className="flex w-full shrink-0 sm:w-auto sm:min-w-[10.5rem]"
-              strength={0.06}
-              disabled={mobilePerf}
+            <button
+              type="button"
+              onClick={runSubmit}
+              disabled={loading}
+              className="qi-instrument-submit group relative flex min-h-[58px] w-full shrink-0 items-center justify-center gap-2 rounded-[1.1rem] px-8 sm:min-h-[62px] sm:w-auto sm:min-w-[9.5rem]"
             >
-              <button
-                type="button"
-                onClick={runSubmit}
-                disabled={loading}
-                className="group relative flex min-h-[56px] w-full items-center justify-center gap-2.5 overflow-hidden rounded-[1.05rem] px-8 text-[15px] font-semibold tracking-[-0.02em] text-[#030712] shadow-[0_14px_44px_-20px_rgba(34,211,238,0.35),0_0_40px_-28px_rgba(167,139,250,0.25)] transition duration-300 enabled:hover:shadow-[0_18px_52px_-18px_rgba(34,211,238,0.42)] disabled:opacity-45 sm:min-h-[60px] sm:min-w-[10.5rem] sm:px-9 sm:text-[16px]"
-              >
-                <span className="absolute inset-0 bg-gradient-to-br from-cyan-200 via-sky-400 to-violet-500/95 transition duration-500 group-hover:brightness-[1.04]" />
-                <span className="absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100 bg-gradient-to-t from-transparent via-white/18 to-white/10" />
-                <span className="relative flex items-center justify-center gap-2.5">
-                  {loading ? (
-                    <>
-                      <Loader2 className="size-[1.1rem] shrink-0 animate-spin sm:size-[1.15rem]" aria-hidden />
-                      <span className="whitespace-nowrap">Searching</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="whitespace-nowrap">Search</span>
-                      <ArrowRight className="size-4 shrink-0 transition duration-300 group-hover:translate-x-0.5" aria-hidden />
-                    </>
-                  )}
-                </span>
-              </button>
-            </MagneticSurface>
+              <span className="relative z-[1] flex items-center gap-2 text-[15px] font-medium tracking-[-0.02em]">
+                {loading ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" aria-hidden />
+                    Scanning
+                  </>
+                ) : (
+                  <>
+                    Enter field
+                    <ArrowRight className="size-4 opacity-70 transition group-hover:translate-x-0.5" aria-hidden />
+                  </>
+                )}
+              </span>
+            </button>
           </div>
 
           {history.length > 0 ? (
-            <div>
-              <p className="mb-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500/95">
-                Recent
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {history.map((item) => (
-                  <button
-                    key={`h-${item}`}
-                    type="button"
-                    disabled={loading}
-                    title={item}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => pickHistory(item)}
-                    className="max-w-full truncate rounded-lg border border-white/[0.08] bg-white/[0.04] px-3.5 py-2 text-left text-[12px] font-medium leading-snug tracking-[-0.014em] text-slate-300/95 transition duration-200 hover:border-cyan-400/22 hover:bg-white/[0.07] hover:text-slate-100 disabled:pointer-events-none disabled:opacity-45 sm:px-4 sm:text-[13px]"
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
+            <div className="flex flex-wrap gap-2">
+              {history.map((item) => (
+                <button
+                  key={`h-${item}`}
+                  type="button"
+                  disabled={loading}
+                  title={item}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => pickPreset(item)}
+                  className="max-w-full truncate rounded-lg px-3 py-1.5 text-left text-[12px] font-medium text-slate-500/90 transition hover:bg-white/[0.04] hover:text-slate-300/95 disabled:opacity-40"
+                >
+                  {item}
+                </button>
+              ))}
             </div>
           ) : null}
         </div>
-      </div>
+      </motion.div>
 
-      <div className="relative mt-4 sm:mt-5">
-        <button
-          id={toggleId}
-          type="button"
-          disabled={loading || suggestions.length === 0}
-          aria-expanded={suggestionsOpen}
-          aria-controls={suggestPanelId}
-          onClick={() => setSuggestionsOpen((o) => !o)}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.07] bg-black/40 px-4 py-2.5 text-[12px] font-semibold tracking-[-0.012em] text-slate-300/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 hover:border-cyan-400/25 hover:bg-white/[0.05] hover:text-white disabled:pointer-events-none disabled:opacity-40 sm:w-auto sm:justify-start sm:py-2 sm:text-[13px]"
-        >
-          <Sparkles className="size-3.5 shrink-0 text-cyan-400/55" aria-hidden />
-          <span>{suggestionsOpen ? "Hide smart suggestions" : "Show smart suggestions"}</span>
-          <ChevronDown
-            className={`size-4 shrink-0 text-slate-500 transition-transform duration-200 ${suggestionsOpen ? "rotate-180" : ""}`}
-            aria-hidden
-          />
-        </button>
-
-        {suggestionsOpen ? (
-          <div
-            id={suggestPanelId}
-            role="region"
-            aria-labelledby={toggleId}
-            className="hero-ai-suggest-panel mt-4 rounded-[1.15rem] border border-white/[0.07] bg-[#03050a]/96 p-4 shadow-[0_24px_64px_-40px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.05),0_0_48px_-36px_rgba(34,211,238,0.12)] backdrop-blur-[24px] sm:mt-5 sm:p-5"
+      {suggestions.length > 0 ? (
+        <div className="mt-4">
+          <button
+            id={toggleId}
+            type="button"
+            disabled={loading}
+            aria-expanded={suggestionsOpen}
+            aria-controls={suggestPanelId}
+            onClick={() => setSuggestionsOpen((o) => !o)}
+            className="text-[11px] font-medium tracking-wide text-slate-500/80 transition hover:text-slate-400/95 disabled:opacity-40"
           >
-            <p className="mb-3 text-left text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500/95">
-              Smart suggestions
-            </p>
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+            <span className="inline-flex items-center gap-1.5">
+              {suggestionsOpen ? "Hide examples" : "Examples"}
+              <ChevronDown
+                className={`size-3.5 transition-transform ${suggestionsOpen ? "rotate-180" : ""}`}
+                aria-hidden
+              />
+            </span>
+          </button>
+
+          {suggestionsOpen ? (
+            <div
+              id={suggestPanelId}
+              role="region"
+              aria-labelledby={toggleId}
+              className="qi-instrument-suggest mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3"
+            >
               {suggestions.map((item) => (
                 <button
                   key={`s-${item}`}
@@ -262,15 +236,15 @@ export default function HeroSearchCommand({
                   title={item}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => pickPreset(item)}
-                  className="flex min-h-[3.25rem] items-center rounded-xl border border-white/[0.08] bg-gradient-to-b from-white/[0.06] to-black/30 px-3.5 py-3 text-left text-[12.5px] font-medium leading-snug tracking-[-0.015em] text-slate-200/95 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition duration-200 hover:border-cyan-400/28 hover:from-cyan-500/10 hover:to-black/40 hover:text-white disabled:pointer-events-none disabled:opacity-45 sm:min-h-[3.5rem] sm:px-4 sm:text-[13px]"
+                  className="min-h-[2.75rem] rounded-xl px-3 py-2.5 text-left text-[12px] font-medium leading-snug text-slate-400/95 transition hover:bg-white/[0.04] hover:text-slate-200/95 disabled:opacity-40"
                 >
-                  <span className="line-clamp-3">{item}</span>
+                  <span className="line-clamp-2">{item}</span>
                 </button>
               ))}
             </div>
-          </div>
-        ) : null}
-      </div>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
