@@ -4,12 +4,12 @@ const QUERIES = [
   "iphone 16 case",
   "airpods",
   "airpods case",
-  "sofa",
   "adidas samba",
   "gaming monitor",
+  "sofa",
+  "كنبة زاوية",
   "ايفون 16 رخيص",
-  "افضل سماعات ايربودز مستعملة",
-  "كنبة زاوية رخيصة في هولندا",
+  "سماعات ايربودز مستعملة",
 ];
 
 async function postSearch(query) {

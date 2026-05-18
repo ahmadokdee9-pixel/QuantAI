@@ -12,6 +12,7 @@ import type { QiGlobalCommerceIntelligence } from "@/lib/intelligence/globalComm
 import type { ProductDiscoveryIntelligence } from "@/lib/intelligence/discoveryEngine";
 import type { LiveCommerceDecision } from "@/lib/intelligence/liveCommerceDecision";
 import type { MarketPulseSnapshot } from "@/lib/intelligence/marketPulseEngine";
+import type { IdentityGateDecision } from "@/lib/intelligence/productIdentity";
 import {
   getStoreTrustScore,
   TRUSTED_SUBSTRINGS,
@@ -81,6 +82,8 @@ export type QuantProduct = {
   qiDiscovery?: ProductDiscoveryIntelligence;
   /** Final live commerce decision overlay for existing chips/copy. */
   qiLiveDecision?: LiveCommerceDecision;
+  /** Hard identity gate diagnostics before final rerank. */
+  qiIdentityGate?: IdentityGateDecision;
 };
 
 export { getStoreTrustScore };

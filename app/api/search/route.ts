@@ -19,7 +19,7 @@ import {
 import { buildDealClusters } from "@/lib/deals";
 import { buildSearchIntelligence } from "@/lib/intelligence/searchDecisionEngine";
 import { runLiveCommerceDiscovery, type LiveCommerceDiscoveryMeta } from "@/lib/intelligence/liveCommerceDiscovery";
-import { buildIdentityDebugSummary } from "@/lib/intelligence/productIdentity";
+import { applyHardIdentityGate, buildIdentityDebugSummary } from "@/lib/intelligence/productIdentity";
 import { intentMatchEnvelope } from "@/lib/intelligence/searchIntentV2";
 import { enforceLimit, searchRatelimit } from "@/lib/rate-limit";
 import { entitlementsForTier } from "@/lib/subscription/entitlements";
@@ -307,6 +307,7 @@ async function handleSearch(
     );
     products = applyPersonaRanking(products, shopperPersona, commerceSessionMemory);
     products = applyMarketAwarenessRanking(products, query);
+    products = applyHardIdentityGate(products, canonicalQuery);
     products = semanticRerankSearchResults(products, query, canonicalQuery);
     dealClusters = buildDealClusters(products);
     searchIntelligence = buildSearchIntelligence(query, products, dealClusters);

@@ -50,6 +50,14 @@ export type StructuredProductIdentity = {
   variantFingerprint: string;
 };
 
+export type IdentityGateDecision = {
+  identityGatePassed: boolean;
+  exclusionReason: string | null;
+  identityConfidence: number;
+  relation: StructuredIdentityRelation;
+  reasons: string[];
+};
+
 /** Collapse brand + primary model tokens for identity keys. */
 export function normalizeBrandModel(identity: ProductIdentity): { brandKey: string; modelKey: string } {
   const brandKey = (identity.brands[0] ?? "unknown").toLowerCase();
@@ -107,13 +115,43 @@ function queryAllowsAccessory(canonicalQuery?: CanonicalQueryContract): boolean 
   return /\b(case|cover|hoesje|protector|charger|cable|adapter|strap|band|screenprotector)\b/i.test(q);
 }
 
+function exactCoreProductIntent(canonicalQuery?: CanonicalQueryContract): boolean {
+  if (!canonicalQuery || queryAllowsAccessory(canonicalQuery)) return false;
+  const q = canonicalQuery.originalQuery.toLowerCase();
+  const protectedExact =
+    /(iphone|ايفون|آيفون|airpods?|ايربودز|adidas\s+samba|samba|gaming\s+monitor|monitor|sofa|couch|كنبة)/i.test(q);
+  return (
+    protectedExact ||
+    canonicalQuery.intent.primary === "exact_product" ||
+    canonicalQuery.intent.primary === "best_value" ||
+    canonicalQuery.intent.primary === "cheapest_trusted" ||
+    canonicalQuery.intent.primary === "premium"
+  );
+}
+
+function weakTitleJunk(product: QuantProduct): boolean {
+  const title = product.title.trim().toLowerCase();
+  if (title.length < 10) return true;
+  if (/^(product|item|unknown|untitled|no title|listing)$/i.test(title)) return true;
+  if (/\b(lorem|placeholder|test listing|sample title|no image yet)\b/i.test(title)) return true;
+  return false;
+}
+
+function explicitVariantEvidence(identity: StructuredProductIdentity): boolean {
+  const hasModel = identity.reasons.includes("model_or_identifier_evidence") || identity.reasons.includes("identifier_evidence");
+  const variantParts = identity.variantFingerprint
+    .split("|")
+    .filter((part) => part && part !== "cond:unknown" && part !== "cond:new");
+  return hasModel && variantParts.length > 0;
+}
+
 function relationFromCommercialText(blob: string): { relation: StructuredIdentityRelation | null; reasons: string[] } {
   const reasons: string[] = [];
-  if (/\b(dummy|placeholder|prop phone|fake shell|box only|empty box|display dummy|non[-\s]?functional)\b/i.test(blob)) {
+  if (/\b(dummy|placeholder|prop phone|fake shell|box only|empty box|display dummy|non[-\s]?functional|mockups?|commercial use license|digital download)\b/i.test(blob)) {
     reasons.push("placeholder_or_non_functional_listing");
     return { relation: "fake_placeholder", reasons };
   }
-  if (/\b(for parts|replacement part|spare part|screen replacement|battery replacement|camera lens replacement|sim tray|charging port|logic board|motherboard)\b/i.test(blob)) {
+  if (/\b(for parts|replacement part|spare part|screen replacement|battery replacement|camera lens replacement|sim tray|sim card tray|charging port|logic board|motherboard)\b/i.test(blob)) {
     reasons.push("replacement_or_parts_language");
     return { relation: "replacement_part", reasons };
   }
@@ -129,7 +167,7 @@ function relationFromCommercialText(blob: string): { relation: StructuredIdentit
     reasons.push("bundle_language");
     return { relation: "bundle", reasons };
   }
-  if (/\b(refurbished|renewed|used|second[-\s]?hand|pre[-\s]?owned|occasion|gereviseerd|مستعمل|مستعملة)\b/i.test(blob)) {
+  if (/\b(refurbished|renewed|restored|used|second[-\s]?hand|pre[-\s]?owned|occasion|gereviseerd|مستعمل|مستعملة)\b/i.test(blob)) {
     reasons.push("used_or_refurbished_language");
     return { relation: "refurbished_used", reasons };
   }
@@ -288,6 +326,9 @@ export function buildIdentityDebugSummary(
       store: product.store,
       relation: id.relation,
       confidence01: Number(id.confidence01.toFixed(2)),
+      identityGatePassed: product.qiIdentityGate?.identityGatePassed ?? null,
+      exclusionReason: product.qiIdentityGate?.exclusionReason ?? null,
+      identityConfidence: product.qiIdentityGate?.identityConfidence ?? Number(id.confidence01.toFixed(2)),
       isMainProduct: id.isMainProduct,
       isSafeSameFamilyCandidate: id.isSafeSameFamilyCandidate,
       reasons: id.reasons,
@@ -299,6 +340,79 @@ export function buildIdentityDebugSummary(
     return acc;
   }, {});
   return { counts, topRows: rows };
+}
+
+export function applyHardIdentityGate(
+  products: QuantProduct[],
+  canonicalQuery?: CanonicalQueryContract
+): QuantProduct[] {
+  if (!products.length) return products;
+  const exactIntent = exactCoreProductIntent(canonicalQuery);
+  const passed: QuantProduct[] = [];
+  const delayed: QuantProduct[] = [];
+
+  for (const product of products) {
+    const identity = assessStructuredProductIdentity({
+      product,
+      canonicalQuery,
+      listingIdentity: product.qiListingIdentity ?? null,
+    });
+    let exclusionReason: string | null = null;
+    let gatePassed = true;
+    const title = listingBlob(product);
+
+    if (weakTitleJunk(product)) exclusionReason = "weak_title_junk";
+    if (!exclusionReason && identity.relation === "fake_placeholder") exclusionReason = "fake_placeholder";
+    if (!exclusionReason && identity.relation === "wrong_product") exclusionReason = "wrong_product";
+
+    if (!exclusionReason && exactIntent) {
+      if (identity.relation === "accessory") exclusionReason = "accessory_for_exact_product";
+      else if (identity.relation === "compatible_item") exclusionReason = "compatible_item_for_exact_product";
+      else if (identity.relation === "replacement_part") exclusionReason = "replacement_part_for_exact_product";
+      else if (identity.relation === "bundle") exclusionReason = "bundle_not_exact_product";
+      else if (identity.relation === "refurbished_used" && canonicalQuery?.condition === "any") exclusionReason = "used_or_refurbished_noise";
+      else if (
+        canonicalQuery?.category === "phone" &&
+        /\biphone\b/i.test(title) &&
+        !/\bapple\b/i.test(title) &&
+        !/\b(64|128|256|512)\s?gb\b/i.test(title)
+      ) {
+        exclusionReason = "phone_exact_missing_device_evidence";
+      }
+      else if (canonicalQuery?.category === "shoes" && /\b(cap|hat|socks|hoodie|shirt|shorts|bag|backpack)\b/i.test(title)) {
+        exclusionReason = "shoe_query_apparel_or_accessory";
+      }
+      else if (/\b(case|cover|compatible|replacement|for iphone|used parts|bundle|sim tray|charger|cable)\b/i.test(title)) {
+        exclusionReason = "exact_product_protected_term";
+      } else if (identity.relation === "same_product_family") {
+        exclusionReason = "same_family_not_exact_product";
+      } else if (identity.relation === "variant" && (identity.confidence01 < 0.78 || !explicitVariantEvidence(identity))) {
+        exclusionReason = "weak_variant_identity";
+      }
+    }
+
+    if (exclusionReason) gatePassed = false;
+    const withGate: QuantProduct = {
+      ...product,
+      qiIdentityGate: {
+        identityGatePassed: gatePassed,
+        exclusionReason,
+        identityConfidence: Number(identity.confidence01.toFixed(2)),
+        relation: identity.relation,
+        reasons: identity.reasons,
+      },
+    };
+
+    if (gatePassed) passed.push(withGate);
+    else if (exclusionReason === "fake_placeholder" || exclusionReason === "weak_title_junk" || exclusionReason === "wrong_product") {
+      continue;
+    } else {
+      delayed.push(withGate);
+    }
+  }
+
+  if (!exactIntent) return [...passed, ...delayed].map((p, i) => ({ ...p, qiRank: i }));
+  return passed.map((p, i) => ({ ...p, qiRank: i }));
 }
 
 /** 0–1 confidence two rows are the same product (uses deals identity + price sanity). */
