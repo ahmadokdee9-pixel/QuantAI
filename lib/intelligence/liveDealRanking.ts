@@ -39,6 +39,8 @@ function discountCredibility01(p: QuantProduct, trust: number): number {
 export function rankLiveDeals(products: QuantProduct[], query: string): QuantProduct[] {
   if (products.length <= 1) return products;
   const med = median(products.map((p) => p.price));
+  const ebayShare = products.filter((p) => /\bebay\b/i.test(p.store)).length / Math.max(1, products.length);
+  const marketplaceShare = products.filter((p) => getMarketplaceSellerRiskTier(p.store, p.title) !== "low").length / Math.max(1, products.length);
   const familyStores = new Map<string, Set<string>>();
   for (const p of products) {
     const id = p.qiListingIdentity ? normalizeQiListingIdentity(p.qiListingIdentity) : null;
@@ -60,6 +62,10 @@ export function rankLiveDeals(products: QuantProduct[], query: string): QuantPro
     const fam = id?.retailerAgnosticStem || p.title.toLowerCase().replace(/\s+/g, " ").slice(0, 64);
     const diversity = Math.min(1, (familyStores.get(fam)?.size ?? 1) / 10);
     const risk = (id?.listingRisk01 ?? 0.24) * 0.42 + (id?.contaminationRisk01 ?? 0.18) * 0.36 + (id?.semanticMismatchPenalty01 ?? 0.12) * 0.22;
+    const marketplaceBalancePenalty =
+      getMarketplaceSellerRiskTier(p.store, p.title) !== "low"
+        ? Math.min(10, 3 + Math.max(0, ebayShare - 0.22) * 14 + Math.max(0, marketplaceShare - 0.38) * 8)
+        : 0;
     const score =
       relevance * 26 +
       (trust / 100) * 18 +
@@ -71,7 +77,8 @@ export function rankLiveDeals(products: QuantProduct[], query: string): QuantPro
       priceAdv * 18 -
       risk * 26 +
       (p.qiDiscovery?.rankingNudge ?? 0) -
-      uncertainExternalPenalty;
+      uncertainExternalPenalty -
+      marketplaceBalancePenalty;
     return { p, index, score };
   });
   return scored

@@ -1,5 +1,5 @@
 import type { QuantProduct } from "@/lib/shoppingScore";
-import { getStoreTrustScore } from "@/lib/retailTrust";
+import { getMarketplaceSellerRiskTier, getStoreTrustScore } from "@/lib/retailTrust";
 import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 
 export type MarketComparisonSummary = {
@@ -21,6 +21,11 @@ export type MarketComparisonSummary = {
     trustedCoverage01: number;
     sameProductCoverage01: number;
     regionalFit01: number;
+    marketplaceShare01: number;
+    ebayShare01: number;
+    merchantBalanceScore: number;
+    bestDecisionAction: string | null;
+    riskySellerShare01: number;
   };
 };
 
@@ -81,7 +86,12 @@ export function buildMarketComparisonSummary(
   products: QuantProduct[],
   canonicalQuery: CanonicalQueryContract
 ): MarketComparisonSummary {
-  const trusted = products.filter((p) => getStoreTrustScore(p.store) >= 66 || (p.qiCommerceQuality?.merchantTrustConfidence ?? 0) >= 66);
+  const trusted = products.filter((p) => {
+    const marketplaceRisk = getMarketplaceSellerRiskTier(p.store, p.title);
+    const confidence = p.qiCommerceQuality?.merchantTrustConfidence ?? 0;
+    if (marketplaceRisk !== "low") return confidence >= 78 && p.qiCommerceQuality?.fakeDiscountRisk === "low";
+    return getStoreTrustScore(p.store) >= 66 || confidence >= 66;
+  });
   const clean = products.filter((p) => p.qiCommerceQuality?.fakeDiscountRisk !== "high");
   const regionalCoverage = products.reduce<Record<string, number>>((acc, product) => {
     const region = regionForStore(product.store);
@@ -90,12 +100,17 @@ export function buildMarketComparisonSummary(
   }, {});
   const localRows = products.filter((p) => regionForStore(p.store) === canonicalQuery.market.country || (canonicalQuery.market.country === "NL" && regionForStore(p.store) === "EU"));
   const sameProductRows = products.filter((p) => p.qiIdentityGate?.identityGatePassed === true);
+  const marketplaceShare = products.filter((p) => getMarketplaceSellerRiskTier(p.store, p.title) !== "low").length / Math.max(1, products.length);
+  const ebayShare = products.filter((p) => /\bebay\b/i.test(p.store)).length / Math.max(1, products.length);
+  const merchantBalanceScore = Math.round(Math.max(0, Math.min(100, 100 - Math.max(0, ebayShare - 0.22) * 140 - Math.max(0, marketplaceShare - 0.42) * 90)));
   const cheapestTrusted = bestBy(trusted, (p) => (p.price > 0 ? -p.price : Number.NEGATIVE_INFINITY));
   const strongestValue = bestBy(clean, (p) => (p.qiCommerceQuality?.valueScore ?? 0) + (p.qiCommerceQuality?.dealStrength ?? 0) * 0.35);
   const highestConfidence = bestBy(clean, (p) => (p.qiCommerceQuality?.merchantTrustConfidence ?? 0) + (p.qiIdentityGate?.fusionConfidence ?? 0) * 20);
   const strongestDiscount = bestBy(clean, (p) => p.qiCommerceQuality?.dealStrength ?? 0);
   const premiumSeller = bestBy(clean, (p) => (p.qiCommerceQuality?.merchantTrustConfidence ?? 0) + getStoreTrustScore(p.store) * 0.35);
   const lowRisk = bestBy(clean, (p) => (p.qiCommerceQuality?.fakeDiscountRisk === "low" ? 30 : 0) + (p.qiCommerceQuality?.merchantTrustConfidence ?? 0) + (p.qiCommerceQuality?.valueScore ?? 0) * 0.25);
+  const bestDecision = bestBy(clean, (p) => p.qiBuyingDecision?.decisionScore ?? 0);
+  const riskySellerShare = products.filter((p) => p.qiBuyingDecision?.trustIntelligence.scamRisk !== "low").length / Math.max(1, products.length);
   return {
     version: 1,
     localMarket: canonicalQuery.market,
@@ -115,6 +130,11 @@ export function buildMarketComparisonSummary(
       trustedCoverage01: Number((trusted.length / Math.max(1, products.length)).toFixed(2)),
       sameProductCoverage01: Number((sameProductRows.length / Math.max(1, products.length)).toFixed(2)),
       regionalFit01: Number((localRows.length / Math.max(1, products.length)).toFixed(2)),
+      marketplaceShare01: Number(marketplaceShare.toFixed(2)),
+      ebayShare01: Number(ebayShare.toFixed(2)),
+      merchantBalanceScore,
+      bestDecisionAction: bestDecision?.qiBuyingDecision?.action ?? null,
+      riskySellerShare01: Number(riskySellerShare.toFixed(2)),
     },
   };
 }

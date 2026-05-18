@@ -9,6 +9,7 @@ import { buildBundleSuggestions } from "@/lib/intelligence/bundleIntelligence";
 import { applyMarketAwarenessRanking, computeMarketAwarenessForTray } from "@/lib/intelligence/marketAwareness";
 import { buildCommerceQualityDebug, buildCommerceQualityLayer } from "@/lib/intelligence/commerceQualityLayer";
 import { buildMarketComparisonSummary } from "@/lib/intelligence/marketComparisonEngine";
+import { buildBuyingDecisionDebug, buildBuyingDecisionLayer } from "@/lib/intelligence/buyingDecisionEngine";
 import { applyPersonaRanking } from "@/lib/intelligence/personaRanking";
 import { applyPredictiveCommerceToTray } from "@/lib/intelligence/predictiveCommerceIntelligence";
 import { detectShopperPersonas } from "@/lib/intelligence/shopperPersona";
@@ -82,6 +83,10 @@ function fallbackLiveDiscoveryMeta(
     recoveredFromFallback: false,
     upstreamFailures: [],
     merchantReliability: [],
+    refreshLatencyMs: 0,
+    primaryQueriesAttempted: 0,
+    duplicateQueriesSuppressed: 0,
+    fallbackConfidenceScore: 0,
     marketBreadthTarget: 0,
     marketRowsPreserved: products.length,
     merchantDiversityScore: 0,
@@ -175,7 +180,7 @@ async function fetchShoppingProductsWithFallback(
 /** Cross-request tray cache — normalized key improves hit rate; short TTL keeps prices fresh. */
 const getCachedSearchPipeline = unstable_cache(
   async (pipelineQuery: string) => runSearchPipeline(pipelineQuery),
-  ["quantai-search-pipeline-v35-global-coverage-type-fit"],
+  ["quantai-search-pipeline-v40-decision-action-balance"],
   { revalidate: 120 }
 );
 
@@ -205,10 +210,12 @@ function searchDebugMeta(args: {
   fallbackReason?: string | null;
   errorState?: string | null;
   stageSuppression?: StageSuppressionTrace[];
+  searchLatencyMs?: number;
 }): Record<string, unknown> {
-  const { products, liveDiscovery = null, canonicalQuery = null, fallbackReason = null, errorState = null, stageSuppression = [] } = args;
+  const { products, liveDiscovery = null, canonicalQuery = null, fallbackReason = null, errorState = null, stageSuppression = [], searchLatencyMs = 0 } = args;
   const identityDebug = canonicalQuery ? buildIdentityDebugSummary(products, canonicalQuery) : null;
   const commerceQualityDebug = buildCommerceQualityDebug(products);
+  const buyingDecisionDebug = buildBuyingDecisionDebug(products);
   const marketComparison = canonicalQuery ? buildMarketComparisonSummary(products, canonicalQuery) : null;
   return {
     productCount: products.length,
@@ -241,13 +248,27 @@ function searchDebugMeta(args: {
     recoveredFromFallback: liveDiscovery?.recoveredFromFallback ?? false,
     upstreamFailures: liveDiscovery?.upstreamFailures ?? [],
     merchantReliability: liveDiscovery?.merchantReliability ?? [],
+    refreshLatencyMs: liveDiscovery?.refreshLatencyMs ?? 0,
+    primaryQueriesAttempted: liveDiscovery?.primaryQueriesAttempted ?? 0,
+    duplicateQueriesSuppressed: liveDiscovery?.duplicateQueriesSuppressed ?? 0,
+    fallbackConfidenceScore: liveDiscovery?.fallbackConfidenceScore ?? 0,
     marketBreadthTarget: liveDiscovery?.marketBreadthTarget ?? 0,
     marketRowsPreserved: liveDiscovery?.marketRowsPreserved ?? products.length,
     merchantDiversityScore: liveDiscovery?.merchantDiversityScore ?? 0,
     priceSpreadRatio: liveDiscovery?.priceSpreadRatio ?? 0,
     discoveryValidationTrace: liveDiscovery?.discoveryValidationTrace ?? null,
     stageSuppression,
+    searchLatencyMs,
+    productionReadiness: {
+      jsonStable: true,
+      liveDiscoveryConfigured: Boolean(process.env.SERPAPI_KEY),
+      discoveryMode: liveDiscovery?.discoveryMode ?? "disabled",
+      cacheTtlSeconds: 120,
+      fallbackConfidenceScore: liveDiscovery?.fallbackConfidenceScore ?? 0,
+      timeoutTriggered: liveDiscovery?.timeoutTriggered ?? false,
+    },
     commerceQualityDebug,
+    buyingDecisionDebug,
     marketComparison,
     canonicalQuery: canonicalQuery ? canonicalQueryForDebug(canonicalQuery) : null,
     identityDebug,
@@ -304,6 +325,7 @@ async function handleSearch(
     );
 
   try {
+    const searchStarted = Date.now();
     const query = q?.trim();
     if (!query) {
       return fail(400, "BAD_REQUEST", "Missing query");
@@ -448,6 +470,9 @@ async function handleSearch(
     stageBefore = products.length;
     products = buildCommerceQualityLayer(products, query, canonicalQuery);
     traceStage("final_commerce_quality_order", stageBefore, products.length);
+    stageBefore = products.length;
+    products = buildBuyingDecisionLayer(products, query, canonicalQuery);
+    traceStage("buying_decision_order", stageBefore, products.length);
     dealClusters = buildDealClusters(products);
     searchIntelligence = buildSearchIntelligence(query, products, dealClusters);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
@@ -469,6 +494,7 @@ async function handleSearch(
       fallbackReason,
       errorState: null,
       stageSuppression,
+      searchLatencyMs: Date.now() - searchStarted,
     });
 
     const data: SearchDataPayload = {
@@ -511,14 +537,22 @@ async function handleSearch(
         recoveredFromFallback: debugMeta.recoveredFromFallback,
         upstreamFailures: debugMeta.upstreamFailures,
         merchantReliability: debugMeta.merchantReliability,
+        refreshLatencyMs: debugMeta.refreshLatencyMs,
+        primaryQueriesAttempted: debugMeta.primaryQueriesAttempted,
+        duplicateQueriesSuppressed: debugMeta.duplicateQueriesSuppressed,
+        fallbackConfidenceScore: debugMeta.fallbackConfidenceScore,
         marketBreadthTarget: debugMeta.marketBreadthTarget,
         marketRowsPreserved: debugMeta.marketRowsPreserved,
         merchantDiversityScore: debugMeta.merchantDiversityScore,
         priceSpreadRatio: debugMeta.priceSpreadRatio,
         discoveryValidationTrace: debugMeta.discoveryValidationTrace,
         stageSuppression: debugMeta.stageSuppression,
+        searchLatencyMs: debugMeta.searchLatencyMs,
+        productionReadiness: debugMeta.productionReadiness,
         commerceQualityDebug: debugMeta.commerceQualityDebug,
+        buyingDecisionDebug: debugMeta.buyingDecisionDebug,
         marketComparison: debugMeta.marketComparison,
+        buyingDecision: debugMeta.buyingDecisionDebug,
         localMarket: (debugMeta.marketComparison as { localMarket?: unknown } | null)?.localMarket ?? null,
         regionalCoverage: (debugMeta.marketComparison as { regionalCoverage?: unknown } | null)?.regionalCoverage ?? null,
         cheapestTrustedOffer: (debugMeta.marketComparison as { cheapestTrustedOffer?: unknown } | null)?.cheapestTrustedOffer ?? null,

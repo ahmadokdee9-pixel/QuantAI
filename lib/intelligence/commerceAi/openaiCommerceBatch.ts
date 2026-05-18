@@ -85,7 +85,8 @@ export async function runOpenAiCommerceBatch(
   const rows = slice.map(compactProduct);
 
   const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), 14_000);
+  const timeoutMs = Math.min(8_000, Math.max(1_500, Number(process.env.QUANTAI_COMMERCE_AI_TIMEOUT_MS) || 3_500));
+  const t = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const response = await client.responses.create(

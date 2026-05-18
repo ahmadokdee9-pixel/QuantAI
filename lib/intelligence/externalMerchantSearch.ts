@@ -60,7 +60,19 @@ export function buildExternalExpansionQueries(
           : q.productCategory === "laptop" || q.productCategory === "phone" || q.productCategory === "audio"
             ? "trusted electronics official"
             : "trusted stores");
-  return chunks
+  const localizedAliases: string[] = [];
+  const raw = query.toLowerCase();
+  if (canonicalQuery?.language === "arabic" || /[\u0600-\u06FF]/.test(query)) {
+    if (/كنبة\s+زاوية|زاوية/.test(raw)) localizedAliases.push("corner sofa hoekbank sofa");
+    else if (/كنبة/.test(raw)) localizedAliases.push("sofa couch bankstel");
+    if (/طاولة\s+حديقة|حديقة/.test(raw)) localizedAliases.push("garden table tuin tafel");
+    if (/ايفون|آيفون/.test(raw)) localizedAliases.push([canonicalQuery?.model ?? "iphone", canonicalQuery?.variant].filter(Boolean).join(" "));
+    if (/ايربودز|سماعات/.test(raw)) localizedAliases.push("apple airpods earbuds");
+    if (/عطر/.test(raw)) localizedAliases.push("perfume fragrance eau de parfum");
+  }
+  return [
+    ...localizedAliases,
+    ...chunks
     .map((chunk, index) => {
       const base = index === 0 ? exact : index === 1 ? identity : specs;
       const merchantHints = chunk
@@ -69,7 +81,8 @@ export function buildExternalExpansionQueries(
         .join(" ");
       if (index === 0) return base.replace(/\s+/g, " ").trim();
       return `${base} ${merchantHints} ${vertical}`.replace(/\s+/g, " ").trim();
-    })
+    }),
+  ]
     .filter(Boolean)
     .slice(0, 4);
 }

@@ -125,6 +125,20 @@ function timingSignal(args: {
   return "wait";
 }
 
+function marketplaceBalancePenalty(product: QuantProduct, products: QuantProduct[]): number {
+  const store = product.store.toLowerCase();
+  const marketplace =
+    /\bebay\b/.test(store) ||
+    /\betsy\b/.test(store) ||
+    /aliexpress|temu|wish|marketplace/.test(store) ||
+    /amazon\..*seller|amazon.*seller/.test(store);
+  if (!marketplace) return 0;
+  const ebayShare = products.filter((p) => /\bebay\b/i.test(p.store)).length / Math.max(1, products.length);
+  const marketplaceShare = products.filter((p) => getMarketplaceSellerRiskTier(p.store, p.title) !== "low").length / Math.max(1, products.length);
+  const sharePenalty = Math.max(0, ebayShare - 0.22) * 16 + Math.max(0, marketplaceShare - 0.38) * 10;
+  return clamp(4 + sharePenalty, 0, 12);
+}
+
 export function buildCommerceQualityLayer(
   products: QuantProduct[],
   query: string,
@@ -138,8 +152,18 @@ export function buildCommerceQualityLayer(
     .sort((a, b) => {
       const qa = a.qiCommerceQuality!;
       const qb = b.qiCommerceQuality!;
-      const scoreA = (a.qiComposite ?? 0) + (qa.valueScore - 50) * 0.09 + (qa.dealStrength - 50) * 0.06 - fakeRiskScore(qa.fakeDiscountRisk) * 4;
-      const scoreB = (b.qiComposite ?? 0) + (qb.valueScore - 50) * 0.09 + (qb.dealStrength - 50) * 0.06 - fakeRiskScore(qb.fakeDiscountRisk) * 4;
+      const scoreA =
+        (a.qiComposite ?? 0) +
+        (qa.valueScore - 50) * 0.09 +
+        (qa.dealStrength - 50) * 0.06 -
+        fakeRiskScore(qa.fakeDiscountRisk) * 4 -
+        marketplaceBalancePenalty(a, products);
+      const scoreB =
+        (b.qiComposite ?? 0) +
+        (qb.valueScore - 50) * 0.09 +
+        (qb.dealStrength - 50) * 0.06 -
+        fakeRiskScore(qb.fakeDiscountRisk) * 4 -
+        marketplaceBalancePenalty(b, products);
       return scoreB - scoreA;
     })
     .map((p, i) => ({ ...p, qiRank: i }));
@@ -222,6 +246,7 @@ function buildSingleInsight(
     `timing=${timing}`,
   ];
   if (getMarketplaceSellerRiskTier(product.store, product.title) !== "low") trace.push("marketplace-risk-check");
+  if (marketplaceBalancePenalty(product, products) >= 4) trace.push("marketplace-balance-penalty");
   if (normalizedListing.contaminationRisk01 >= 0.48) trace.push("listing-contamination-watch");
 
   return {
@@ -264,6 +289,10 @@ export function buildCommerceQualityDebug(products: QuantProduct[]): Record<stri
       return acc;
     }, {}),
     cheapestTrustedCount: qualities.filter((q) => q.marketSpreadAnalysis.cheapestTrusted).length,
+    marketplaceShare: Number(
+      (products.filter((p) => getMarketplaceSellerRiskTier(p.store, p.title) !== "low").length / Math.max(1, products.length)).toFixed(2)
+    ),
+    ebayShare: Number((products.filter((p) => /\bebay\b/i.test(p.store)).length / Math.max(1, products.length)).toFixed(2)),
     topRankingTraces: rows.map((p) => ({
       title: p.title.slice(0, 110),
       store: p.store,

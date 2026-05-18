@@ -21,6 +21,9 @@ export type LiveMarketRefreshResult = {
   recoveredFromFallback: boolean;
   upstreamReliabilityScore: number;
   upstreamFailures: { query: string; status: number; error: string; attempt: number }[];
+  refreshLatencyMs: number;
+  primaryQueriesAttempted: number;
+  duplicateQueriesSuppressed: number;
 };
 
 export type LiveMarketRefreshOptions = {
@@ -52,6 +55,9 @@ function emptyResult(source: LiveMarketRefreshResult["source"]): LiveMarketRefre
     recoveredFromFallback: false,
     upstreamReliabilityScore: source === "disabled" || source === "disabled_missing_key" ? 0 : 100,
     upstreamFailures: [],
+    refreshLatencyMs: 0,
+    primaryQueriesAttempted: 0,
+    duplicateQueriesSuppressed: 0,
   };
 }
 
@@ -122,6 +128,7 @@ export async function refreshLiveMarketProducts(
   canonicalQuery?: CanonicalQueryContract,
   options: LiveMarketRefreshOptions = {}
 ): Promise<LiveMarketRefreshResult> {
+  const started = Date.now();
   if (process.env.QUANTAI_LIVE_DISCOVERY === "off") {
     return emptyResult("disabled");
   }
@@ -130,12 +137,14 @@ export async function refreshLiveMarketProducts(
   }
 
   const maxAttemptedQueries = Math.min(4, Math.max(1, Math.round(options.maxAttemptedQueries ?? 2)));
-  const primaryQueries = buildExternalExpansionQueries(query, candidates, canonicalQuery).slice(0, maxAttemptedQueries);
+  const rawPrimaryQueries = buildExternalExpansionQueries(query, candidates, canonicalQuery);
+  const primaryQueries = uniqQueries(rawPrimaryQueries).slice(0, maxAttemptedQueries);
+  const duplicateQueriesSuppressed = Math.max(0, rawPrimaryQueries.length - uniqQueries(rawPrimaryQueries).length);
   if (!primaryQueries.length) return emptyResult("empty");
 
   const envTimeout = Number(process.env.DISCOVERY_TIMEOUT_MS || process.env.QUANTAI_LIVE_DISCOVERY_TIMEOUT_MS);
   const timeoutMs = Math.min(9_000, Math.max(2_500, Math.round((options.timeoutMs ?? envTimeout) || 6_000)));
-  const maxRetries = Math.min(2, Math.max(0, Number(process.env.DISCOVERY_RETRY_COUNT) || 1));
+  const maxRetries = Math.min(2, Math.max(0, Number(process.env.DISCOVERY_RETRY_COUNT) || 0));
   const fallbackChain = fallbackQueries(query, candidates, canonicalQuery);
   const attemptedQueries: string[] = [];
   const failures: LiveMarketRefreshResult["upstreamFailures"] = [];
@@ -147,9 +156,15 @@ export async function refreshLiveMarketProducts(
   let recoveredFromFallback = false;
   const products: QuantProduct[] = [];
 
-  for (const primary of primaryQueries) {
+  const primaryResults = await Promise.all(
+    primaryQueries.map(async (primary) => ({
+      primary,
+      result: await fetchWithRecovery(primary, timeoutMs, maxRetries),
+    }))
+  );
+
+  for (const { primary, result: primaryResult } of primaryResults) {
     attemptedQueries.push(primary);
-    const primaryResult = await fetchWithRecovery(primary, timeoutMs, maxRetries);
     retriesAttempted += primaryResult.retriesAttempted;
     failures.push(...primaryResult.failures);
     timedOut ||= primaryResult.timedOut;
@@ -159,9 +174,12 @@ export async function refreshLiveMarketProducts(
       continue;
     }
 
-    let recovered = false;
+    failedQueries += 1;
+  }
+
+  if (products.length === 0 && failedQueries > 0) {
     for (const fallbackQuery of fallbackChain) {
-      if (fallbackQuery.toLowerCase() === primary.toLowerCase()) continue;
+      if (primaryQueries.some((primary) => fallbackQuery.toLowerCase() === primary.toLowerCase())) continue;
       attemptedQueries.push(fallbackQuery);
       fallbackQueriesAttempted += 1;
       const fallbackResult = await fetchWithRecovery(fallbackQuery, Math.max(2_500, Math.round(timeoutMs * 0.72)), 0);
@@ -170,12 +188,11 @@ export async function refreshLiveMarketProducts(
       if (fallbackResult.ok) {
         successfulQueries += 1;
         products.push(...fallbackResult.products);
-        recovered = true;
         recoveredFromFallback = true;
+        failedQueries = Math.max(0, failedQueries - 1);
         break;
       }
     }
-    if (!recovered) failedQueries += 1;
   }
 
   const totalAttempts = successfulQueries + failedQueries + fallbackQueriesAttempted + retriesAttempted;
@@ -208,5 +225,8 @@ export async function refreshLiveMarketProducts(
     recoveredFromFallback,
     upstreamReliabilityScore,
     upstreamFailures: failures.slice(0, 6),
+    refreshLatencyMs: Date.now() - started,
+    primaryQueriesAttempted: primaryQueries.length,
+    duplicateQueriesSuppressed,
   };
 }

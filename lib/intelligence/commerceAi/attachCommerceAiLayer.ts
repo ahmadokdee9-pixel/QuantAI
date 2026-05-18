@@ -15,7 +15,7 @@ import { resolveCommerceAiEngine } from "@/lib/intelligence/commerceAi/commerceA
 import { runOpenAiCommerceBatch } from "@/lib/intelligence/commerceAi/openaiCommerceBatch";
 import type { QuantProduct } from "@/lib/shoppingScore";
 
-const AI_TOP_N = 12;
+const AI_TOP_N = 8;
 
 function fingerprints(products: QuantProduct[]): string[] {
   return products.map((p) => `${p.id}:${(p.link ?? "").slice(0, 64)}:${p.price}`);

@@ -216,7 +216,7 @@ export function getStoreTrustScore(store: string): number {
   const s = store.toLowerCase().trim();
   if (!s) return TIER4_SCORE;
   if (LOW_TRUST_MARKETPLACE.test(s)) return 32;
-  if (/\bebay\b/.test(s)) return 77;
+  if (/\bebay\b/.test(s)) return 64;
   for (const t of TIER1) {
     if (s.includes(t)) return TIER1_SCORE;
   }

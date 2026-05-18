@@ -55,6 +55,10 @@ export type LiveCommerceDiscoveryMeta = {
   recoveredFromFallback: boolean;
   upstreamFailures: { query: string; status: number; error: string; attempt: number }[];
   merchantReliability: MerchantReliabilitySnapshot[];
+  refreshLatencyMs: number;
+  primaryQueriesAttempted: number;
+  duplicateQueriesSuppressed: number;
+  fallbackConfidenceScore: number;
   marketBreadthTarget: number;
   marketRowsPreserved: number;
   merchantDiversityScore: number;
@@ -320,6 +324,10 @@ export async function runLiveCommerceDiscovery(
         recoveredFromFallback: false,
         upstreamFailures: [],
         merchantReliability: discoveryReliabilitySnapshot([]),
+        refreshLatencyMs: 0,
+        primaryQueriesAttempted: 0,
+        duplicateQueriesSuppressed: 0,
+        fallbackConfidenceScore: 0,
         marketBreadthTarget: controls.maxRows,
         marketRowsPreserved: internalProducts.length,
         merchantDiversityScore: merchantDiversityScore(internalProducts, controls.maxMerchants),
@@ -403,6 +411,12 @@ export async function runLiveCommerceDiscovery(
       recoveredFromFallback: refresh.recoveredFromFallback,
       upstreamFailures: refresh.upstreamFailures,
       merchantReliability,
+      refreshLatencyMs: refresh.refreshLatencyMs,
+      primaryQueriesAttempted: refresh.primaryQueriesAttempted,
+      duplicateQueriesSuppressed: refresh.duplicateQueriesSuppressed,
+      fallbackConfidenceScore: Math.round(
+        Math.max(0, Math.min(100, refresh.upstreamReliabilityScore + (refresh.recoveredFromFallback ? 8 : 0) - (refresh.timedOut ? 16 : 0)))
+      ),
       marketBreadthTarget: controls.maxRows,
       marketRowsPreserved: products.length,
       merchantDiversityScore: merchantDiversityScore(products, controls.maxMerchants),
