@@ -3,9 +3,8 @@
 import type { Dispatch, SetStateAction } from "react";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { AlertCircle, BarChart3, Loader2, Sparkles } from "lucide-react";
+import { AlertCircle, Loader2, Sparkles } from "lucide-react";
 import { QuantAnalyticsEvents } from "@/lib/analytics/events";
 import { trackEvent } from "@/lib/analytics/track";
 import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
@@ -16,7 +15,6 @@ import ShareSnapshotBar from "@/components/share/ShareSnapshotBar";
 import { buildCompareIntelligenceSnapshot } from "@/lib/intelligence/compareIntelligence";
 import {
   buildDealIntelByLink,
-  buildTrayDealHighlights,
   type ProductDealIntelligence,
 } from "@/lib/intelligence/dealIntelligenceEngine";
 import type { CompareVerdictPayload } from "@/lib/intelligence/compareVerdict";
@@ -26,12 +24,10 @@ import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTyp
 import type { SearchIntelligenceLevel } from "@/lib/subscription/plans";
 import type { ResultsFiltersState } from "@/lib/resultsFilters";
 import { buildCompareExport, buildTraySummary, copyText } from "@/lib/share/intelligenceExport";
-import { currencySymbolFromListing, formatListingPrice } from "@/lib/commerce/cues";
 import { sortByCompositeRankEnhanced } from "@/lib/intelligence/searchRankEnhance";
 import { parseCommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
 import { extractHumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
 import { computeMarketAwarenessForTray } from "@/lib/intelligence/marketAwareness";
-import { getFinalComposite } from "@/lib/shoppingScore";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import CompareIntelligencePanel from "./CompareIntelligencePanel";
 import ProductIntelligenceDrawer from "./ProductIntelligenceDrawer";
@@ -45,12 +41,6 @@ import {
   loadMarketMemory,
   recordTrayPriceSnapshots,
 } from "@/lib/intelligence/marketMemory";
-
-const IntelligenceEducationStrip = dynamic(() => import("./IntelligenceEducationStrip"), {
-  loading: () => (
-    <div className="mb-10 h-28 max-w-5xl rounded-2xl border border-white/[0.06] bg-white/[0.03] animate-pulse" />
-  ),
-});
 
 const MultiStoreDealAdvisor = dynamic(() => import("@/components/deals/MultiStoreDealAdvisor"), {
   ssr: false,
@@ -201,7 +191,6 @@ export default function ProductResultsSurface({
     [sortedProducts, searchQuery]
   );
   const marketPulse = useMemo(() => sortedProducts[0]?.qiMarketPulse ?? null, [sortedProducts]);
-  const trayDealHighlights = useMemo(() => buildTrayDealHighlights(sortedProducts), [sortedProducts]);
   const marketComparison = searchMeta?.marketComparison as
     | {
         merchantCount?: number;
@@ -236,7 +225,6 @@ export default function ProductResultsSurface({
     return best;
   }, [compositeRanked, unifiedMarketByLink]);
 
-  const aiTopPicks = useMemo(() => compositeRanked.slice(0, 3), [compositeRanked]);
   const compactTray = sortedProducts.length > 0 && sortedProducts.length <= 4;
   const sparseTray = sortedProducts.length > 0 && sortedProducts.length <= 3;
   const relatedQueries = useMemo(
@@ -560,8 +548,8 @@ export default function ProductResultsSurface({
         onClearFilters={onClearFilters}
       />
 
-      {marketComparison ? (
-        <div className="mb-5 grid gap-2 rounded-[1.35rem] border border-white/[0.075] bg-gradient-to-r from-white/[0.045] via-cyan-500/[0.035] to-violet-500/[0.035] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)] sm:grid-cols-4 sm:p-4">
+      {marketComparison && !searchIntelligence ? (
+        <div className="mb-6 grid gap-2 rounded-[1.25rem] border border-white/[0.06] bg-white/[0.02] p-3 sm:grid-cols-4 sm:p-3.5">
           {[
             ["Market depth", `${marketComparison.merchantCount ?? sortedProducts.length} merchants`],
             ["Trusted lanes", `${marketComparison.trustedMerchantCount ?? 0} verified`],
@@ -583,11 +571,11 @@ export default function ProductResultsSurface({
           aria-live="polite"
         >
           <Loader2 className="size-3.5 shrink-0 animate-spin text-cyan-200/90" aria-hidden />
-          Updating your tray—previous results stay visible until the new scan lands.
+          Updating tray…
         </div>
       ) : null}
 
-      <div className={compactTray ? "mb-4" : "mb-6"}>
+      <div className={compactTray ? "mb-5" : "mb-8"}>
         <ShareSnapshotBar
           query={searchQuery}
           products={sortedProducts}
@@ -595,46 +583,34 @@ export default function ProductResultsSurface({
         />
       </div>
 
-      <LiveIntelligenceLayer
-        key={searchQuery}
-        query={searchQuery}
-        products={sortedProducts}
-        marketPulse={marketPulse}
-        familyInsight={leadFamilyInsight}
-        defaultCollapsed={mobilePerf}
-      />
-      {sortedProducts.length >= 2 && compareLinks.length === 0 && (
-        <div className="-mt-1 mb-4 flex flex-wrap items-center justify-center gap-2 text-center">
-          <p className="cockpit-body text-[12px] leading-snug text-slate-500">
-            Open the decision lab when two offers look close.
-          </p>
+      {!searchIntelligence ? (
+        <LiveIntelligenceLayer
+          key={searchQuery}
+          query={searchQuery}
+          products={sortedProducts}
+          marketPulse={marketPulse}
+          familyInsight={leadFamilyInsight}
+          defaultCollapsed
+        />
+      ) : null}
+      {sortedProducts.length >= 2 && compareLinks.length === 0 ? (
+        <div className="mb-7 flex justify-center">
           <button
             type="button"
             onClick={() => setCompareLinks(sortedProducts.slice(0, 2).map((p) => p.link))}
-            className="rounded-full border border-cyan-400/14 bg-cyan-500/[0.06] px-3 py-1.5 text-[11px] font-semibold text-cyan-100/90 transition hover:border-cyan-300/25 hover:bg-cyan-400/[0.1]"
+            className="rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-[11px] font-medium text-slate-400 transition hover:border-cyan-400/15 hover:text-slate-200"
           >
             Compare top two
           </button>
         </div>
-      )}
-      {sortedProducts.length === 1 && compareLinks.length === 0 && (
-        <p className="cockpit-body -mt-1 mb-4 text-center text-[12px] leading-snug text-slate-500">
-          One row in field—run an adjacent scan to build a stronger comparison set.
-        </p>
-      )}
+      ) : null}
 
       {sparseTray && onRunRelatedQuery && relatedQueries.length > 0 ? (
-        <div className="mb-6 rounded-[1.25rem] border border-white/[0.1] bg-white/[0.03] px-4 py-4 sm:px-5">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-              Adjacent scans
-            </p>
-            <span className="text-[11px] text-slate-500">Same session · new field</span>
-          </div>
-          <p className="cockpit-body mt-1.5 text-[13px] text-slate-400">
-            Few rows in this tray—open a sibling query to keep the analyst surface populated.
+        <div className="mb-8 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3.5 sm:px-5">
+          <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500">
+            Adjacent scans
           </p>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-2.5 flex flex-wrap gap-2">
             {relatedQueries.map((rq) => (
               <button
                 key={rq}
@@ -650,36 +626,6 @@ export default function ProductResultsSurface({
         </div>
       ) : null}
 
-      {!compactTray ? <IntelligenceEducationStrip /> : null}
-
-      {sortedProducts.length >= 2 && trayDealHighlights.length > 0 && (
-        <div className="mb-8 min-w-0">
-          <div className="mb-2 flex items-center justify-center gap-2">
-            <BarChart3 className="size-3.5 text-emerald-300/80" aria-hidden />
-            <p className="cockpit-label text-center text-[11px] tracking-[0.1em] text-slate-500">
-              Market signals · this tray
-            </p>
-          </div>
-          <div className="flex min-w-0 gap-2 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch]">
-            {trayDealHighlights.map((h) => (
-              <a
-                key={h.id}
-                href={h.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="min-w-[min(14rem,78vw)] shrink-0 rounded-2xl border border-white/[0.08] bg-black/35 px-3 py-2.5 text-left transition hover:border-cyan-400/25 hover:bg-white/[0.04]"
-              >
-                <p className="text-[11px] font-semibold text-cyan-100/90">{h.label}</p>
-                <p className="mt-0.5 truncate text-[10px] text-slate-500">{h.store}</p>
-                <p className="mt-1 line-clamp-3 text-[10px] leading-relaxed text-slate-400 [overflow-wrap:anywhere]">
-                  {h.blurb}
-                </p>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-
       {searchIntelligence && (
         <motion.div
           initial={reduceMotion || mobilePerf ? { opacity: 1, y: 0 } : { opacity: 0.88, y: 10 }}
@@ -689,7 +635,7 @@ export default function ProductResultsSurface({
               ? { duration: 0 }
               : { type: "spring", stiffness: 300, damping: 36 }
           }
-          className={`intel-panel-shimmer relative z-0 min-w-0 overflow-hidden rounded-[1.75rem] ${compactTray ? "mb-6" : "mb-12"}`}
+          className={`intel-panel-shimmer relative z-0 min-w-0 overflow-hidden rounded-[1.5rem] ${compactTray ? "mb-8" : "mb-14"}`}
         >
           <div className="relative z-[1] min-w-0">
             <GlobalIntelligencePanel
@@ -697,102 +643,6 @@ export default function ProductResultsSurface({
               displayLevel={intelligenceLevel}
               performanceMode={mobilePerf}
             />
-          </div>
-        </motion.div>
-      )}
-
-      {aiTopPicks.length > 0 && sortedProducts.length > 3 && (
-        <motion.div
-          initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={transition}
-          className="mb-12"
-        >
-          <div className="rounded-[1.35rem] border border-cyan-400/20 bg-gradient-to-b from-cyan-500/[0.06] via-[#050a14]/90 to-black/50 p-1 shadow-[0_0_0_1px_rgba(34,211,238,0.06),0_28px_80px_-40px_rgba(34,211,238,0.12)]">
-            <div className="rounded-[1.25rem] border border-white/[0.06] bg-[#030712]/80 px-4 py-4 sm:px-5 sm:py-5">
-              <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="cockpit-overline text-[10px] text-cyan-200/75">Lead lane</p>
-                  <h2 className="mt-1 text-base font-semibold tracking-tight text-white">Highest-conviction starts</h2>
-                  <p className="cockpit-body mt-1 max-w-xl text-[13px] text-slate-400">
-                    Start here, then scan the full market tray for price, seller, and regional contrast.
-                  </p>
-                </div>
-              </div>
-              <div className="flex min-w-0 gap-3 overflow-x-auto pb-1 pt-0.5 snap-x snap-mandatory [-webkit-overflow-scrolling:touch] sm:gap-4">
-            {aiTopPicks.map((p, idx) => {
-              const comp = getFinalComposite(p, sortedProducts);
-              const sym = currencySymbolFromListing(p);
-              const lead = idx === 0;
-              return (
-                <motion.div
-                  key={p.link}
-                  initial={reduceMotion ? { opacity: 1, x: 0 } : { opacity: 0, x: 14 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ ...transition, delay: idx * 0.05 }}
-                  whileHover={
-                    reduceMotion ? undefined : { y: -2, transition: { type: "spring", stiffness: 340, damping: 34 } }
-                  }
-                  className={`min-w-[min(100%,300px)] max-w-[300px] shrink-0 snap-start rounded-2xl p-[1px] ${
-                    lead
-                      ? "bg-gradient-to-br from-cyan-400/35 via-white/10 to-violet-400/25 shadow-[0_0_40px_-18px_rgba(34,211,238,0.25)]"
-                      : "bg-gradient-to-br from-white/[0.08] to-white/[0.02]"
-                  }`}
-                >
-                  <div
-                    className={`h-full rounded-[0.95rem] p-4 backdrop-blur-xl ${
-                      lead
-                        ? "border border-cyan-400/20 bg-gradient-to-br from-[#06121f]/95 via-black/60 to-black/40"
-                        : "border border-white/[0.07] bg-gradient-to-br from-white/[0.07] via-white/[0.03] to-black/40"
-                    }`}
-                  >
-                  <div className="flex gap-3">
-                    {p.image && (
-                      <div className="relative size-[4.5rem] shrink-0 overflow-hidden rounded-xl border border-white/[0.1] bg-gradient-to-b from-white to-slate-100 p-1.5">
-                        <Image
-                          src={p.image}
-                          alt=""
-                          fill
-                          sizes="72px"
-                          className="object-contain object-center p-0.5"
-                          unoptimized
-                        />
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      {lead ? (
-                        <span className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-500/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-cyan-100/95">
-                          Lead pick
-                        </span>
-                      ) : (
-                        <p className="cockpit-label text-[10px] text-slate-500/90">#{idx + 1}</p>
-                      )}
-                      <p className="cockpit-body mt-1 line-clamp-2 text-[14px] font-semibold leading-snug text-white/[0.97]">
-                        {p.title}
-                      </p>
-                      <p className="cockpit-body mt-1 text-[12px] text-slate-500">{p.store}</p>
-                    </div>
-                  </div>
-                  <div className="mt-3.5 flex min-w-0 items-center justify-between gap-2 border-t border-white/[0.08] pt-3">
-                    <span className={`tabular-nums tracking-tight text-white ${lead ? "text-xl font-semibold" : "text-lg font-semibold"}`}>
-                      {formatListingPrice(p.price, sym)}
-                    </span>
-                    <span
-                      className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold tabular-nums ${
-                        lead
-                          ? "border-cyan-400/35 bg-cyan-500/15 text-cyan-50/95"
-                          : "border-white/[0.1] bg-black/35 text-slate-300"
-                      }`}
-                    >
-                      QI {comp}
-                    </span>
-                  </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-              </div>
-            </div>
           </div>
         </motion.div>
       )}

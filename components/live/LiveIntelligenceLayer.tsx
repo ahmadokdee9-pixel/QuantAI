@@ -5,7 +5,6 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Activity, ChevronDown, Radio } from "lucide-react";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { buildLiveTerminalSignals } from "@/lib/liveSignals/simulatedTerminalSignals";
-import { buildSimulatedDealSignals } from "@/lib/liveSignals/simulatedDealSignals";
 import { buildQualitativeMarketRibbon } from "@/lib/liveSignals/qualitativeRibbon";
 import type { MarketPulseSnapshot } from "@/lib/intelligence/marketPulseEngine";
 import type { UnifiedCardInsight } from "@/lib/intelligence/unifiedMarketMatching";
@@ -18,13 +17,6 @@ type Props = {
   marketPulse?: MarketPulseSnapshot | null;
   familyInsight?: UnifiedCardInsight | null;
 };
-
-function formatAgo(minutes: number): string {
-  if (minutes < 60) return `${minutes}m ago`;
-  const h = Math.floor(minutes / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
-}
 
 function subscribeNoop() {
   return () => {};
@@ -48,7 +40,6 @@ export default function LiveIntelligenceLayer({
   const [expanded, setExpanded] = useState(!defaultCollapsed);
   const [terminalIndex, setTerminalIndex] = useState(0);
   const terminal = useMemo(() => buildLiveTerminalSignals(query, products), [query, products]);
-  const deals = useMemo(() => buildSimulatedDealSignals(query, products), [query, products]);
   const ribbon = useMemo(() => buildQualitativeMarketRibbon(products), [products]);
 
   useEffect(() => {
@@ -161,26 +152,6 @@ export default function LiveIntelligenceLayer({
           <p className="text-[11px] leading-relaxed text-slate-500 sm:max-w-[70%] sm:text-right">{ribbon.detail}</p>
         </div>
       ) : null}
-
-      {deals.length > 0 ? (
-        <div>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Signal cards</p>
-          <div className="flex gap-2 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch]">
-            {deals.map((d) => (
-              <div
-                key={d.id}
-                className="min-w-[min(100%,260px)] max-w-[280px] shrink-0 rounded-xl border border-white/[0.07] bg-black/35 px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
-              >
-                <p className="text-[10px] font-medium uppercase tracking-wide text-slate-500">
-                  {formatAgo(d.recencyMinutes)}
-                </p>
-                <p className="mt-1 text-[12px] font-semibold leading-snug text-white/90">{d.headline}</p>
-                <p className="mt-1 text-[11px] leading-relaxed text-slate-500">{d.detail}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
-    </div>
+</div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useId, useMemo, useState, type KeyboardEvent } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, ChevronDown, Loader2, Sparkles } from "lucide-react";
+import { ArrowRight, ChevronDown, Loader2 } from "lucide-react";
 import {
   HERO_COMMAND_HISTORY_CAP,
   HERO_COMMAND_SUGGESTION_CAP,
@@ -153,16 +153,19 @@ export default function HeroSearchCommand({
       <motion.div
         className={`qi-command-deck ${active ? "qi-command-deck--active" : ""} ${submitPulse ? "qi-command-deck--pulse" : ""}`}
         data-loading={loading ? "true" : "false"}
-        animate={lite ? undefined : { y: active ? -2 : 0 }}
+        animate={lite ? undefined : { y: active ? -3 : 0 }}
         transition={{ type: "spring", stiffness: 380, damping: 32 }}
       >
+        <motion.div className="qi-command-plinth" aria-hidden />
         <div className="qi-command-glass qi-command-glass--deep" aria-hidden />
         <motion.div
           className="qi-command-glass qi-command-glass--sheen"
           aria-hidden
           animate={lite ? undefined : { opacity: active ? 1 : 0.65 }}
         />
-        <div className="qi-command-rim" aria-hidden />
+        <motion.div className="qi-command-shimmer" aria-hidden />
+        <motion.div className="qi-command-rim" aria-hidden />
+        <motion.div className="qi-command-inner-glow" aria-hidden />
         <motion.div
           className="qi-command-scan"
           aria-hidden
@@ -175,26 +178,12 @@ export default function HeroSearchCommand({
         />
 
         <div className="relative z-[2] flex flex-col gap-4 p-5 sm:p-6">
-          <motion.div
-            className="flex items-center justify-between gap-3 border-b border-white/[0.06] pb-3"
-            layout={false}
-          >
-            <motion.div className="flex min-w-0 items-center gap-2.5" layout={false}>
-              <span className="qi-command-status-dot" data-active={active ? "true" : "false"} aria-hidden />
-              <span className="qi-command-manifest">
-                <Sparkles className="size-3 shrink-0 opacity-50" strokeWidth={1.75} aria-hidden />
-                Market command
-              </span>
-            </motion.div>
-            <span className="qi-command-channel hidden sm:inline">QI · live field</span>
-          </motion.div>
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
+          <motion.div className="flex flex-col gap-3.5 sm:flex-row sm:items-stretch sm:gap-4">
             <label className="sr-only" htmlFor={`${baseId}-q`}>
               Query the market
             </label>
             <div
-              className={`qi-command-field qa-search-field relative flex min-h-[60px] flex-1 items-stretch overflow-hidden rounded-[1.15rem] ${
+              className={`qi-command-field qa-search-field relative flex min-h-[68px] flex-1 items-stretch overflow-hidden sm:min-h-[72px] ${
                 focused ? "qi-command-field--focus" : ""
               }`}
             >
@@ -223,7 +212,7 @@ export default function HeroSearchCommand({
               type="button"
               onClick={runSubmit}
               disabled={loading}
-              className="qi-command-execute group relative flex min-h-[60px] w-full shrink-0 items-center justify-center gap-2 rounded-[1.15rem] px-8 sm:min-w-[10.5rem] sm:w-auto"
+              className="qi-command-execute group relative flex min-h-[68px] w-full shrink-0 items-center justify-center gap-2 px-8 sm:min-h-[72px] sm:min-w-[11.5rem] sm:w-auto"
             >
               <span className="qi-command-execute-shine" aria-hidden />
               <span className="relative z-[1] flex items-center gap-2 text-[15px] font-semibold tracking-[-0.02em]">
@@ -243,13 +232,10 @@ export default function HeroSearchCommand({
                 )}
               </span>
             </button>
-          </div>
+          </motion.div>
 
           {history.length > 0 ? (
-            <div className="flex flex-wrap gap-2 border-t border-white/[0.04] pt-3">
-              <span className="w-full text-[10px] font-medium uppercase tracking-[0.16em] text-slate-600/90">
-                Recent
-              </span>
+            <div className="flex flex-wrap gap-2 border-t border-white/[0.04] pt-2.5">
               {history.map((item) => (
                 <button
                   key={`h-${item}`}

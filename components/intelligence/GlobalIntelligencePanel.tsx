@@ -42,10 +42,10 @@ function finalTone(kind: SearchIntelligenceDTO["finalRecommendation"]): string {
 }
 
 function tierLabel(t: SearchIntelligenceDTO["confidenceTier"]): string {
-  if (t === "high") return "High-conviction market read";
-  if (t === "moderate") return "Useful read, verify the final details";
-  if (t === "low") return "Thin market signal, inspect before buying";
-  return "Use as a first-pass analyst view";
+  if (t === "high") return "High conviction";
+  if (t === "moderate") return "Solid — verify checkout";
+  if (t === "low") return "Thin signal";
+  return "First-pass read";
 }
 
 export default function GlobalIntelligencePanel({
@@ -55,7 +55,7 @@ export default function GlobalIntelligencePanel({
 }: Props) {
   const reduceMotion = useReducedMotion();
   const showDeepLayers = displayLevel !== "summary";
-  const [deepOpen, setDeepOpen] = useState(!performanceMode);
+  const [deepOpen, setDeepOpen] = useState(false);
   const confPct = Math.max(8, 100 - intel.buyerUncertaintyScore);
   const radarVals = useMemo(() => {
     const clarity = Math.max(10, 100 - intel.buyerUncertaintyScore);
@@ -94,7 +94,7 @@ export default function GlobalIntelligencePanel({
       initial={reduceMotion ? false : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 36 }}
-      className="mb-16 space-y-10 md:mb-20 md:space-y-12"
+      className="space-y-8 md:space-y-10"
       aria-label="Global shopping intelligence"
     >
       <div
@@ -111,12 +111,8 @@ export default function GlobalIntelligencePanel({
             <h3 className="cockpit-display mt-4 text-[1.35rem] leading-[1.12] text-white sm:text-[1.65rem]">
               {intel.finalHeadline}
             </h3>
-            <p className="cockpit-body mt-4 max-w-3xl text-[15px] leading-relaxed text-slate-400/95">{intel.finalBody}</p>
-            <p className="cockpit-body mt-4 max-w-3xl text-[13px] leading-relaxed text-slate-500/88">
-              Confidence reflects market agreement, seller quality, and price spread. Treat it as an analyst layer,
-              then verify the merchant page before checkout.
-            </p>
-            <div className="mt-6 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:gap-x-3">
+            <p className="cockpit-body mt-3 max-w-3xl text-[15px] leading-relaxed text-slate-400/95">{intel.finalBody}</p>
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-2.5">
               {intel.globalDeal && (
                 <a
                   href={intel.globalDeal.link}
@@ -162,7 +158,7 @@ export default function GlobalIntelligencePanel({
               )}
             </div>
           </div>
-          <div className="w-full shrink-0 lg:w-72">
+          <div className="w-full shrink-0 lg:w-64">
             <p className="cockpit-overline text-slate-500/80">Read quality</p>
             <div className="mt-4 flex justify-center lg:justify-start">
               <ConfidenceTriRadar
@@ -180,8 +176,7 @@ export default function GlobalIntelligencePanel({
               />
             </div>
             <p className="mt-3 text-[12px] leading-relaxed text-slate-500/90">
-              {tierLabel(intel.confidenceTier)} · uncertainty {intel.buyerUncertaintyScore}/100 — higher suggests a
-              second look before checkout.
+              {tierLabel(intel.confidenceTier)} · uncertainty {intel.buyerUncertaintyScore}/100
             </p>
             {intel.insufficientDataWarnings.length > 0 && (
               <ul className="mt-3 space-y-1.5 text-[11px] text-amber-200/90">
@@ -220,24 +215,21 @@ export default function GlobalIntelligencePanel({
         </div>
       )}
 
-      {showDeepLayers && performanceMode && !deepOpen && (
-        <div className="cockpit-glass-panel p-4 sm:p-5">
+      {showDeepLayers && !deepOpen && (
+        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-1">
           <button
             type="button"
             onClick={() => setDeepOpen(true)}
-            className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/[0.08] bg-black/25 px-3 py-2.5 text-left transition hover:border-cyan-400/22"
+            className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-white/[0.03]"
             aria-expanded={false}
           >
-            <span className="text-sm font-medium text-white/90">Expand the full analyst layer</span>
+            <span className="text-[13px] font-medium text-slate-300/95">Full analyst layer</span>
             <ChevronDown className="size-4 text-slate-500" aria-hidden />
           </button>
-          <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
-            Seller graph, buyer fit, and price lanes stay collapsed until needed to keep mobile fast.
-          </p>
         </div>
       )}
 
-      {showDeepLayers && (!performanceMode || deepOpen) && (
+      {showDeepLayers && deepOpen && (
         <>
           <div className="cockpit-glass-panel p-6 sm:p-8">
             <div className="grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-12">

@@ -565,7 +565,7 @@ body {
       105deg,
       transparent 0%,
       transparent 40%,
-      rgba(148, 163, 184, 0.06) 50%,
+      rgba(148, 163, 184, 0.03) 50%,
       transparent 60%,
       transparent 100%
     );
@@ -652,10 +652,10 @@ body {
     rgba(129, 140, 248, 0.055),
     rgba(34, 211, 238, 0.088)
   );
-  opacity: 0.2;
+  opacity: 0.12;
   z-index: 0;
   pointer-events: none;
-  filter: blur(11px);
+  filter: blur(9px);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -1177,7 +1177,7 @@ textarea:focus-visible {
 
 .qi-command-halo {
   position: absolute;
-  inset: -12% -6% -28%;
+  inset: -8% -4% -20%;
   border-radius: 2rem;
   background:
     radial-gradient(ellipse 60% 50% at 50% 0%, rgba(34, 211, 238, 0.14), transparent 62%),
@@ -1490,7 +1490,7 @@ textarea:focus-visible {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 1.75rem 1.65rem 1.5rem;
+  padding: 1.5rem 1.35rem 1.25rem;
   background: linear-gradient(168deg, rgba(8, 12, 22, 0.96) 0%, rgba(2, 5, 12, 0.99) 100%);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: inherit;
@@ -1498,11 +1498,11 @@ textarea:focus-visible {
 }
 
 .qi-access-layer--featured .qi-access-layer-inner {
-  border-color: rgba(34, 211, 238, 0.12);
+  border-color: rgba(34, 211, 238, 0.1);
   box-shadow:
-    0 0 0 1px rgba(34, 211, 238, 0.06) inset,
-    0 56px 120px -48px rgba(0, 0, 0, 0.88),
-    0 0 80px -56px rgba(34, 211, 238, 0.1);
+    0 0 0 1px rgba(34, 211, 238, 0.05) inset,
+    0 48px 100px -48px rgba(0, 0, 0, 0.88),
+    0 0 56px -56px rgba(34, 211, 238, 0.07);
 }
 
 .qi-access-layer--premium .qi-access-layer-inner,
@@ -1559,15 +1559,15 @@ textarea:focus-visible {
 }
 
 .qi-access-capabilities {
-  margin-top: 1.35rem;
+  margin-top: 1.1rem;
   flex: 1;
   list-style: none;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
-  padding-top: 1.25rem;
+  padding-top: 1rem;
 }
 
 .qi-access-capabilities li {
@@ -1843,8 +1843,8 @@ textarea:focus-visible {
 .qi-posture-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.5rem 0.75rem;
-  margin-top: 0.85rem;
+  gap: 0.4rem 0.65rem;
+  margin-top: 0.65rem;
 }
 
 @media (min-width: 400px) {
@@ -1874,7 +1874,7 @@ textarea:focus-visible {
 }
 
 .qi-card-thesis {
-  margin-top: 0.75rem;
+  margin-top: 0.55rem;
   font-size: 0.75rem;
   line-height: 1.5;
   letter-spacing: -0.008em;
@@ -1917,3 +1917,5 @@ textarea:focus-visible {
   line-height: 1.2;
   color: rgba(255, 255, 255, 0.97);
 }
+
+@import "./globals-premium-os.css";

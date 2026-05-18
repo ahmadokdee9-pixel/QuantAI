@@ -17,6 +17,7 @@ import { useCopilotSession } from "../components/copilot/CopilotContext";
 import { calculateAIScore } from "./api/search/lib/aiScoring";
 import ProductResultsSurface from "../components/search/ProductResultsSurface";
 import HeroSearchCommand from "../components/search/HeroSearchCommand";
+import HeroIntelMicroStrip from "../components/search/HeroIntelMicroStrip";
 import {
   applyResultsFilters,
   countActiveFilters,
@@ -595,16 +596,13 @@ export default function Home() {
               <span className="qi-hero-headline-accent block">before you buy.</span>
             </h1>
 
-            <p className="qi-hero-lead mx-auto mt-6 max-w-2xl motion-safe:animate-[fadeIn_0.65s_ease-out]">
-              Intelligence for consequential purchases — clarity, trust posture, and price context
-              in one decisive read.
+            <p className="qi-hero-lead mx-auto mt-6 max-w-xl motion-safe:animate-[fadeIn_0.65s_ease-out]">
+              Consequential purchases deserve one decisive read — context, not noise.
             </p>
 
-            <p className="qi-hero-credence mx-auto mt-4 max-w-lg motion-safe:animate-[fadeIn_0.68s_ease-out]">
-              Buy with context, not noise.
-            </p>
+            <HeroIntelMicroStrip />
 
-            <div className="qi-hero-command-stage mx-auto mt-14 max-w-[52rem] sm:mt-16 motion-safe:animate-[fadeIn_0.7s_ease-out]">
+            <div className="qi-hero-command-stage mx-auto mt-8 max-w-[54rem] sm:mt-10 motion-safe:animate-[fadeIn_0.7s_ease-out]">
                 <HeroSearchCommand
                   query={query}
                   onQueryChange={setQuery}
@@ -750,16 +748,15 @@ export default function Home() {
           {/* Pricing */}
           <section
             id="pricing"
-            className="mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-28 scroll-mt-24 border-t border-white/[0.06]"
+            className="mx-auto max-w-6xl px-4 sm:px-6 py-24 sm:py-32 scroll-mt-24 border-t border-white/[0.05]"
           >
           <div className="text-center max-w-xl mx-auto mb-14 sm:mb-16">
             <p className="qi-silent-overline mb-4">Private access architecture</p>
             <h2 className="qi-editorial-display text-3xl sm:text-4xl text-white/95">
               Intelligence layers, not subscriptions
             </h2>
-            <p className="qi-silent-whisper mt-4">
-              Clearance into deeper market synthesis — confidential, institutional, reserved for
-              high-intent buyers.
+            <p className="qi-silent-whisper mt-4 max-w-md mx-auto">
+              Deeper synthesis clearance for serious buyers.
             </p>
             <Link
               href="/pricing"

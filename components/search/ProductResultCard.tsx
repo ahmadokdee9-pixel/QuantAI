@@ -489,13 +489,6 @@ function ProductResultCard({
     ]
   );
 
-  const signalsTerminalWhy = useMemo(() => {
-    if (resolved.whyThisProduct) return clip(resolved.whyThisProduct, 128);
-    const w = worthLine.headline.trim();
-    const d = deal.whyDealGoodOrRisky.trim();
-    const raw = d ? `${w} · ${d}` : w;
-    return clip(raw, 128);
-  }, [resolved.whyThisProduct, worthLine.headline, deal.whyDealGoodOrRisky]);
   const signalsTerminalRisk = useMemo(() => {
     if (resolved.riskReason) return clip(resolved.riskReason, 112);
     if (riskHint) return clip(riskHint, 112);
@@ -503,16 +496,6 @@ function ProductResultCard({
     if (r.length > 8) return clip(r, 112);
     return "Clean risk surface for this field.";
   }, [resolved.riskReason, riskHint, analystFrame.risks]);
-  const signalsTerminalAction = useMemo(
-    () =>
-      clip(
-        `${mergedBuyDecision.stanceLabel} · ${mergedBuyDecision.stanceDetail}${
-          resolved.opportunityScore ? ` · Opportunity ${resolved.opportunityScore}/100` : ""
-        }`,
-        128
-      ),
-    [mergedBuyDecision.stanceLabel, mergedBuyDecision.stanceDetail, resolved.opportunityScore]
-  );
 
   const transition = lite
     ? { duration: 0 }
@@ -552,8 +535,8 @@ function ProductResultCard({
               : ""
           }`}
         >
-          <div className="pointer-events-none absolute -right-20 -top-20 size-48 rounded-full bg-cyan-400/8 blur-3xl opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-100" />
-          <div className="pointer-events-none absolute -bottom-24 -left-16 size-44 rounded-full bg-violet-500/8 blur-3xl opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-45" />
+          <div className="pointer-events-none absolute -right-20 -top-20 size-48 rounded-full bg-cyan-400/6 blur-3xl opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-55" />
+          <div className="pointer-events-none absolute -bottom-24 -left-16 size-44 rounded-full bg-violet-500/6 blur-3xl opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-28" />
 
           <div className="relative z-[2] flex justify-end px-4 pt-4 sm:px-5 sm:pt-5">
             <button
@@ -622,7 +605,7 @@ function ProductResultCard({
                 </div>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-0.5">
-                <div className="relative size-[3.15rem] shrink-0 opacity-[0.97] sm:size-[3.65rem]">
+                <div className="qi-qi-ring-luxury relative size-[3.15rem] shrink-0 opacity-[0.97] sm:size-[3.65rem]">
                   <svg
                     className="size-[3.15rem] -rotate-90 sm:size-[3.65rem]"
                     viewBox="0 0 54 54"
@@ -675,76 +658,67 @@ function ProductResultCard({
               </div>
             </div>
 
-            <motion.div
-              className={`qi-decision-surface qi-decision-surface--canvas mt-5 ${cardIntel.decisionSurfaceClass}`}
+            <div
+              className={`qi-decision-surface qi-decision-surface--canvas qi-analyst-verdict mt-4 ${cardIntel.decisionSurfaceClass}`}
             >
               <p className="qi-silent-overline">AI read</p>
-              <p className="qi-decision-headline mt-2">{cardIntel.primaryLabel}</p>
+              <p className="qi-decision-headline mt-1.5">{cardIntel.primaryLabel}</p>
               <div
-                className="qi-confidence-pulse mt-3"
+                className="qi-confidence-pulse mt-2.5"
                 title={`Confidence ${decisionConfidence}%`}
                 aria-hidden
               >
                 <span style={{ width: `${Math.min(100, Math.max(8, decisionConfidence))}%` }} />
               </div>
-            </motion.div>
+            </div>
 
             {cardIntel.pills.length > 0 ? (
-              <div className="mt-3 flex min-w-0 flex-wrap gap-1.5">
-                {cardIntel.pills
-                  .filter((pill) => !pill.primary)
-                  .map((pill) => (
-                    <span key={pill.label} className={`truncate ${pill.cls}`} title={pill.label}>
-                      {pill.label}
-                    </span>
-                  ))}
-              </div>
+              <motion.div className="qi-signal-cluster mt-3" role="list" aria-label="Live intelligence signals">
+                {cardIntel.pills.map((pill) => (
+                  <span
+                    key={pill.label}
+                    role="listitem"
+                    className={`truncate ${pill.cls} ${pill.primary ? "qi-signal-pill--primary" : ""}`}
+                    title={pill.label}
+                  >
+                    {pill.label}
+                  </span>
+                ))}
+              </motion.div>
             ) : null}
 
             <div className="qi-posture-grid">
-              <div className="qi-posture-cell">
+              <div className="qi-posture-cell qi-posture-dimension qi-posture-dimension--trust">
                 <p className="qi-posture-label">Trust</p>
                 <p className="qi-posture-value">{cardIntel.posture.trust}</p>
               </div>
-              <div className="qi-posture-cell">
+              <div className="qi-posture-cell qi-posture-dimension qi-posture-dimension--price">
                 <p className="qi-posture-label">Price</p>
                 <p className="qi-posture-value">{cardIntel.posture.price}</p>
               </div>
-              <div className="qi-posture-cell">
+              <div className="qi-posture-cell qi-posture-dimension qi-posture-dimension--market">
                 <p className="qi-posture-label">Market</p>
                 <p className="qi-posture-value">{cardIntel.posture.market}</p>
               </div>
-              <div className="qi-posture-cell">
+              <div className="qi-posture-cell qi-posture-dimension qi-posture-dimension--risk">
                 <p className="qi-posture-label">Risk</p>
                 <p className="qi-posture-value">{cardIntel.posture.risk}</p>
               </div>
             </div>
 
-            {cardIntel.reasonLines.length > 0 ? (
-              <ul className="qi-card-reason">
-                {cardIntel.reasonLines.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
-            ) : null}
-
             <p className="qi-card-thesis">{cardIntel.buyingThesis}</p>
 
-            <div className="qi-trust-illumination mt-3 border-t border-white/[0.04] pt-3">
+            <div className="qi-trust-illumination mt-3 border-t border-white/[0.04] pt-2.5">
               <span>
                 <Store className="size-3 opacity-45" strokeWidth={1.5} aria-hidden />
                 {p.store}
-              </span>
-              <span>
-                <Shield className="size-3 opacity-45" strokeWidth={1.5} aria-hidden />
-                Trust {trust}
               </span>
             </div>
 
             <button
               type="button"
               onClick={toggleIntelOpen}
-              className="qi-expand-trigger mt-5 flex w-full min-w-0 items-center justify-between gap-2 rounded-xl px-1 py-2.5 text-left transition duration-200"
+              className="qi-expand-trigger qi-analyst-vault-trigger mt-5 flex w-full min-w-0 items-center justify-between gap-2 text-left transition duration-200"
               aria-expanded={intelOpen}
             >
               <span className="qi-silent-overline text-[10px] text-slate-500/80 group-hover:text-slate-400/90">
@@ -772,7 +746,7 @@ function ProductResultCard({
                       <div className="h-16 rounded-xl bg-white/[0.04] animate-pulse" />
                     </div>
                   ) : (
-                  <div className="mt-2 rounded-2xl border border-white/[0.07] bg-gradient-to-b from-[#070d1a]/95 via-black/35 to-black/20 px-3 py-3.5 sm:px-4 sm:py-4">
+                  <div className="qi-analyst-vault-panel mt-2 rounded-2xl px-3 py-3.5 sm:px-4 sm:py-4">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">Purchase read</p>
                       <span
@@ -782,26 +756,13 @@ function ProductResultCard({
                         {mergedBuyDecision.stanceLabel}
                       </span>
                     </div>
-                    <p className="mt-1 text-[11px] font-semibold leading-snug text-white/95 [overflow-wrap:anywhere]">
-                      {clip(buyDecision.headlineVerdict, 120)}
-                    </p>
-                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      <span
-                        className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${commerceBrainChipClass(resolved.commerceBrainCode)}`}
-                      >
-                        <Percent className="size-2.5 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
-                        <span className="truncate">{resolved.commerceBrainChipLabel}</span>
-                      </span>
-                      {resolved.predictiveBadge ? (
-                        <span
-                          title={predictiveBadgeTitle}
-                          className={`inline-flex max-w-[min(100%,13rem)] items-center gap-1 truncate rounded-full border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.05em] ${predictiveSignalChipClass(resolved.predictiveBadge.tone)}`}
-                        >
-                          <Sparkles className="size-2 shrink-0 opacity-85" strokeWidth={2} aria-hidden />
-                          <span className="truncate">{resolved.predictiveBadge.text}</span>
-                        </span>
-                      ) : null}
-                    </div>
+                    {cardIntel.reasonLines.length > 0 ? (
+                      <ul className="qi-card-reason mt-2">
+                        {cardIntel.reasonLines.map((line) => (
+                          <li key={line}>{line}</li>
+                        ))}
+                      </ul>
+                    ) : null}
                     <div className="mt-3 grid grid-cols-2 gap-3">
                       <div>
                         <p className="text-[9px] uppercase tracking-wider text-slate-500">Market fit</p>
@@ -824,16 +785,8 @@ function ProductResultCard({
                       </div>
                     </div>
                     <div className="mt-3 border-t border-white/[0.05] pt-2.5">
-                      <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-500">Commerce thesis</p>
-                      <p className="mt-0.5 text-[10px] leading-snug text-slate-300/95">{signalsTerminalWhy}</p>
-                    </div>
-                    <div className="mt-2">
-                      <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-rose-200/50">Risk lens</p>
+                      <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-500">Risk</p>
                       <p className="mt-0.5 text-[10px] leading-snug text-amber-100/85">{signalsTerminalRisk}</p>
-                    </div>
-                    <div className="mt-2">
-                      <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-emerald-200/60">Best move</p>
-                      <p className="mt-0.5 text-[10px] font-medium leading-snug text-cyan-50/95">{signalsTerminalAction}</p>
                     </div>
                     <div className="mt-2.5 flex flex-wrap gap-1.5 text-[9px] text-slate-500">
                       <span className="rounded-full border border-white/[0.07] bg-black/30 px-2 py-0.5 tabular-nums">

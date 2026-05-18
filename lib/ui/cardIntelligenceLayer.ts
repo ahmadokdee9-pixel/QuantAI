@@ -151,7 +151,7 @@ function buildReasonLines(args: {
     lines.push("Timing favors patience over immediate checkout.");
   }
 
-  return lines.slice(0, 4);
+  return lines.slice(0, 2);
 }
 
 export function buildCardIntelligenceLayer(args: {
@@ -178,7 +178,7 @@ export function buildCardIntelligenceLayer(args: {
   ];
 
   for (const chip of resolved.secondaryChips) {
-    if (pills.length >= 4) break;
+    if (pills.length >= 3) break;
     if (pillConflictsVerdict(code, chip.label)) continue;
     if (pills.some((p) => p.label === chip.label.toUpperCase())) continue;
     pills.push({
@@ -209,7 +209,7 @@ export function buildCardIntelligenceLayer(args: {
       resolved.buySurface.stanceDetail ||
       buyingThesisFallback ||
       resolved.analystLine,
-    140
+    110
   );
 
   return {

@@ -68,6 +68,7 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
           >
             <div className="qi-access-layer-glow" aria-hidden />
             <div className="qi-access-layer-rim" aria-hidden />
+            {isIntelligence ? <div className="qi-access-featured-pedestal" aria-hidden /> : null}
 
             <div className="qi-access-layer-inner">
               <header className="qi-access-header">
@@ -80,10 +81,13 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
                   {isIntelligence ? (
                     <span className="qi-access-badge">Priority clearance</span>
                   ) : isPrivate ? (
-                    <Lock className="size-4 shrink-0 text-slate-500/70" strokeWidth={1.5} aria-hidden />
+                    <span className="qi-access-private-seal">
+                      <Lock className="size-3 shrink-0 opacity-80" strokeWidth={1.5} aria-hidden />
+                      Private
+                    </span>
                   ) : null}
                 </div>
-                <p className="qi-access-invitation mt-5">{access.invitation}</p>
+                <p className="qi-access-invitation mt-4 hidden sm:block">{access.invitation}</p>
               </header>
 
               <ul className="qi-access-capabilities">

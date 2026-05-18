@@ -1,0 +1,596 @@
+/* QuantAI premium OS elevation — layered on qi-* tokens */
+
+/* —— Hero command: luxury terminal —— */
+.qi-command-root {
+  padding: 0.15rem 0 0.35rem;
+}
+
+.qi-command-halo {
+  inset: -14% -8% -32%;
+  filter: blur(36px);
+  opacity: 0.75;
+}
+
+.qi-command-deck {
+  border-radius: 1.65rem;
+  background:
+    linear-gradient(165deg, rgba(12, 20, 36, 0.94) 0%, rgba(3, 7, 14, 0.98) 55%, rgba(2, 5, 12, 1) 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.07) inset,
+    0 2px 0 rgba(255, 255, 255, 0.1) inset,
+    0 1px 0 rgba(34, 211, 238, 0.06) inset,
+    0 80px 160px -48px rgba(0, 0, 0, 0.92),
+    0 0 160px -56px rgba(34, 211, 238, 0.14),
+    0 0 120px -72px rgba(139, 92, 246, 0.08);
+}
+
+.qi-command-deck--active {
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.18) inset,
+    0 2px 0 rgba(255, 255, 255, 0.12) inset,
+    0 88px 180px -44px rgba(0, 0, 0, 0.88),
+    0 0 180px -48px rgba(34, 211, 238, 0.22),
+    0 0 100px -64px rgba(52, 211, 153, 0.1);
+}
+
+.qi-command-shimmer {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .qi-command-shimmer::after {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -60%;
+    width: 55%;
+    height: 200%;
+    background: linear-gradient(
+      105deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.04) 42%,
+      rgba(34, 211, 238, 0.08) 50%,
+      rgba(255, 255, 255, 0.03) 58%,
+      transparent 100%
+    );
+    animation: qi-command-shimmer-sweep 7s ease-in-out infinite;
+  }
+}
+
+@keyframes qi-command-shimmer-sweep {
+  0%,
+  100% {
+    transform: translateX(-20%) rotate(12deg);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateX(220%) rotate(12deg);
+    opacity: 0.85;
+  }
+}
+
+.qi-command-plinth {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 0 80px rgba(34, 211, 238, 0.04);
+  z-index: 0;
+}
+
+.qi-command-inner-glow {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 0;
+  height: 45%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(34, 211, 238, 0.1), transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.6;
+  transition: opacity 0.5s ease;
+}
+
+.qi-command-deck--active .qi-command-inner-glow {
+  opacity: 1;
+}
+
+.qi-command-field {
+  min-height: 4.25rem;
+  border-radius: 1.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, rgba(4, 10, 20, 0.88) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -12px 32px rgba(0, 0, 0, 0.35),
+    0 16px 48px -28px rgba(0, 0, 0, 0.75);
+}
+
+.qi-command-field--focus {
+  border-color: rgba(34, 211, 238, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(34, 211, 238, 0.12),
+    0 0 72px -24px rgba(34, 211, 238, 0.28),
+    0 24px 56px -32px rgba(0, 0, 0, 0.8);
+}
+
+.qi-command-input {
+  font-size: 1.1875rem;
+  font-weight: 500;
+  letter-spacing: -0.026em;
+}
+
+.qi-command-execute {
+  min-height: 4.25rem;
+  border-radius: 1.2rem;
+  background: linear-gradient(168deg, #ffffff 0%, #e8eef8 48%, #dce8f5 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset,
+    0 20px 56px -24px rgba(255, 255, 255, 0.18),
+    0 8px 32px -16px rgba(0, 0, 0, 0.4);
+}
+
+/* —— Micro intelligence strip —— */
+.qi-micro-intel-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-top: 2.5rem;
+  margin-bottom: 0.25rem;
+}
+
+@media (min-width: 768px) {
+  .qi-micro-intel-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+}
+
+.qi-micro-intel-cell {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.04) 0%, rgba(4, 8, 16, 0.75) 100%);
+  padding: 0.75rem 0.85rem 0.7rem;
+  text-align: left;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 12px 32px -24px rgba(0, 0, 0, 0.65);
+  transition:
+    border-color 0.35s ease,
+    box-shadow 0.35s ease,
+    transform 0.35s ease;
+}
+
+.qi-micro-intel-cell:hover {
+  border-color: rgba(34, 211, 238, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 16px 40px -20px rgba(34, 211, 238, 0.12);
+}
+
+.qi-micro-intel-cell-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.35), transparent);
+  opacity: 0.7;
+}
+
+.qi-micro-intel-title {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(203, 213, 225, 0.88);
+}
+
+.qi-micro-intel-body {
+  margin-top: 0.35rem;
+  font-size: 0.6875rem;
+  line-height: 1.45;
+  color: rgba(100, 116, 139, 0.85);
+}
+
+.qi-micro-intel-index {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.55rem;
+  font-size: 0.5625rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: rgba(100, 116, 139, 0.45);
+}
+
+/* —— Analyst cards —— */
+.qi-analyst-verdict {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.2rem;
+  padding: 1rem 1.1rem 1.05rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.045) 0%, rgba(0, 0, 0, 0.35) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 20px 48px -32px rgba(0, 0, 0, 0.75);
+}
+
+.qi-analyst-verdict::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 3px 0 0 3px;
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.5), rgba(52, 211, 153, 0.35));
+  opacity: 0.85;
+}
+
+.qi-decision-surface--canvas.qi-analyst-verdict.qi-decision-surface--positive::before {
+  background: linear-gradient(180deg, rgba(52, 211, 153, 0.9), rgba(34, 211, 238, 0.4));
+  box-shadow: 0 0 24px rgba(52, 211, 153, 0.35);
+}
+
+.qi-decision-surface--canvas.qi-analyst-verdict.qi-decision-surface--caution::before {
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.85), rgba(251, 113, 133, 0.35));
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.25);
+}
+
+.qi-decision-surface--canvas.qi-analyst-verdict.qi-decision-surface--risk::before {
+  background: linear-gradient(180deg, rgba(251, 113, 133, 0.9), rgba(148, 163, 184, 0.3));
+  box-shadow: 0 0 20px rgba(251, 113, 133, 0.28);
+}
+
+.qi-decision-headline {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 40px rgba(34, 211, 238, 0.12);
+}
+
+.qi-confidence-pulse {
+  height: 4px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.qi-confidence-pulse > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(34, 211, 238, 0.65), rgba(52, 211, 153, 0.85), rgba(167, 139, 250, 0.55));
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.45);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .qi-confidence-pulse > span {
+    animation: qi-confidence-breathe 3.2s ease-in-out infinite;
+  }
+}
+
+@keyframes qi-confidence-breathe {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.15);
+  }
+}
+
+.qi-signal-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.55rem 0.6rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.qi-signal-pill {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 4px 14px -8px rgba(0, 0, 0, 0.5);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.qi-product-card-shell:hover .qi-signal-pill {
+  transform: translateY(-1px);
+}
+
+.qi-signal-pill--primary {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 28px -6px rgba(34, 211, 238, 0.35);
+  border-color: rgba(34, 211, 238, 0.22);
+}
+
+.qi-signal-pill--buy,
+.qi-signal-pill--safe {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 20px -8px rgba(52, 211, 153, 0.25);
+}
+
+.qi-signal-pill--wait,
+.qi-signal-pill--compare {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 18px -8px rgba(251, 191, 36, 0.2);
+}
+
+.qi-signal-pill--avoid {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 18px -8px rgba(251, 113, 133, 0.22);
+}
+
+.qi-posture-grid {
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.5rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.22) 0%, rgba(0, 0, 0, 0.38) 100%);
+}
+
+.qi-posture-dimension {
+  position: relative;
+  padding: 0.45rem 0.5rem 0.5rem;
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition:
+    border-color 0.3s ease,
+    background 0.3s ease;
+}
+
+.qi-product-card-shell:hover .qi-posture-dimension {
+  border-color: rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.qi-posture-dimension--trust {
+  border-left: 2px solid rgba(34, 211, 238, 0.35);
+}
+
+.qi-posture-dimension--price {
+  border-left: 2px solid rgba(52, 211, 153, 0.35);
+}
+
+.qi-posture-dimension--market {
+  border-left: 2px solid rgba(167, 139, 250, 0.35);
+}
+
+.qi-posture-dimension--risk {
+  border-left: 2px solid rgba(251, 191, 36, 0.35);
+}
+
+.qi-posture-label {
+  font-size: 0.5rem;
+  letter-spacing: 0.16em;
+  color: rgba(100, 116, 139, 0.8);
+}
+
+.qi-posture-value {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: rgba(226, 232, 240, 0.9);
+}
+
+.qi-qi-ring-luxury {
+  position: relative;
+}
+
+.qi-qi-ring-luxury::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.2), transparent 68%);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .qi-qi-ring-luxury::before {
+    animation: qi-ring-glow-pulse 4s ease-in-out infinite;
+  }
+}
+
+@keyframes qi-ring-glow-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.02);
+  }
+}
+
+.qi-qi-ring-luxury svg {
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 0 12px rgba(34, 211, 238, 0.15));
+}
+
+.qi-analyst-vault-trigger {
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0.9rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(0, 0, 0, 0.25) 100%);
+  padding: 0.65rem 0.85rem !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.qi-analyst-vault-trigger:hover {
+  border-color: rgba(34, 211, 238, 0.15);
+  background: linear-gradient(180deg, rgba(34, 211, 238, 0.06) 0%, rgba(0, 0, 0, 0.3) 100%);
+}
+
+.qi-analyst-vault-panel {
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: linear-gradient(180deg, rgba(8, 14, 28, 0.98) 0%, rgba(2, 5, 12, 0.99) 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 24px 56px -28px rgba(0, 0, 0, 0.85) !important;
+}
+
+/* —— Private access clearance —— */
+.qi-access-architecture {
+  gap: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+  .qi-access-architecture {
+    gap: 1rem;
+    align-items: flex-end;
+  }
+}
+
+.qi-access-featured-pedestal {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -0.75rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(34, 211, 238, 0.22), transparent 72%);
+  filter: blur(10px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.qi-access-layer--featured {
+  z-index: 2;
+}
+
+@media (min-width: 1024px) {
+  .qi-access-layer--featured {
+    transform: translateY(-0.65rem);
+  }
+}
+
+.qi-access-layer-inner {
+  padding: 1.65rem 1.5rem 1.35rem;
+  backdrop-filter: blur(32px) saturate(150%);
+  -webkit-backdrop-filter: blur(32px) saturate(150%);
+  transition:
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.45s ease,
+    border-color 0.35s ease;
+}
+
+.qi-access-layer:hover .qi-access-layer-inner {
+  transform: translateY(-3px);
+}
+
+.qi-access-layer--featured .qi-access-layer-inner {
+  border-color: rgba(34, 211, 238, 0.16);
+  background: linear-gradient(168deg, rgba(10, 22, 38, 0.98) 0%, rgba(3, 7, 14, 0.99) 100%);
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.08) inset,
+    0 2px 0 rgba(255, 255, 255, 0.08) inset,
+    0 64px 120px -40px rgba(0, 0, 0, 0.88),
+    0 0 100px -48px rgba(34, 211, 238, 0.14);
+}
+
+.qi-access-layer--premium .qi-access-layer-inner {
+  border-color: rgba(167, 139, 250, 0.14);
+  background: linear-gradient(168deg, rgba(12, 10, 28, 0.98) 0%, rgba(2, 4, 12, 0.99) 100%);
+  box-shadow:
+    0 0 0 1px rgba(167, 139, 250, 0.06) inset,
+    0 56px 110px -48px rgba(0, 0, 0, 0.9),
+    0 0 72px -56px rgba(139, 92, 246, 0.12);
+}
+
+.qi-access-layer-glow {
+  opacity: 0.85;
+  background: radial-gradient(ellipse 90% 55% at 50% 0%, rgba(34, 211, 238, 0.08), transparent 72%);
+}
+
+.qi-access-layer--premium .qi-access-layer-glow {
+  background: radial-gradient(ellipse 90% 55% at 50% 0%, rgba(167, 139, 250, 0.1), transparent 72%);
+}
+
+.qi-access-name {
+  font-size: 1.45rem;
+  letter-spacing: -0.04em;
+}
+
+.qi-access-badge {
+  border-color: rgba(34, 211, 238, 0.28);
+  background: rgba(34, 211, 238, 0.1);
+  box-shadow: 0 0 24px -8px rgba(34, 211, 238, 0.35);
+}
+
+.qi-access-private-seal {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid rgba(167, 139, 250, 0.22);
+  background: rgba(139, 92, 246, 0.08);
+  padding: 0.3rem 0.55rem;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(221, 214, 254, 0.88);
+}
+
+.qi-product-object-body {
+  background: linear-gradient(
+    180deg,
+    rgba(14, 20, 34, 0.94) 0%,
+    rgba(5, 9, 18, 0.98) 42%,
+    rgba(2, 5, 12, 1) 100%
+  );
+}
+
+.qi-hero-command-stage::before {
+  content: "";
+  position: absolute;
+  inset: -12% -6% -28%;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 0%, rgba(34, 211, 238, 0.1), transparent 68%),
+    radial-gradient(ellipse 40% 35% at 85% 90%, rgba(139, 92, 246, 0.06), transparent 70%);
+  filter: blur(32px);
+  opacity: 0.85;
+  z-index: 0;
+}
+
+.qi-hero-command-stage > * {
+  position: relative;
+  z-index: 1;
+}
+
+.qi-product-card-shell:hover .qi-product-card-inner {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 1px 0 rgba(255, 255, 255, 0.1) inset,
+    0 40px 88px -28px rgba(0, 0, 0, 0.82),
+    0 0 64px -28px rgba(34, 211, 238, 0.1),
+    0 0 80px -36px rgba(139, 92, 246, 0.07);
+}

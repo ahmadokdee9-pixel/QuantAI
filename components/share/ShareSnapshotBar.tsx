@@ -64,9 +64,8 @@ export default function ShareSnapshotBar({
   return (
     <>
       <div
-        className={`flex flex-wrap items-center gap-2 rounded-2xl border border-white/[0.08] bg-black/25 px-3 py-2 backdrop-blur-md ${className}`}
+        className={`flex flex-wrap items-center gap-1.5 rounded-xl border border-white/[0.06] bg-black/20 px-2.5 py-1.5 backdrop-blur-md ${className}`}
       >
-        <span className="cockpit-label pl-1 text-[10px] text-slate-500">Share layer</span>
         <button
           type="button"
           onClick={() => void onCopy()}
