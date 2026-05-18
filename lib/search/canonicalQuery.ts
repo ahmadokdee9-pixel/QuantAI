@@ -48,6 +48,12 @@ export type CanonicalQueryContract = {
   marketMode: CanonicalMarketIntentMode;
   condition: "new" | "used" | "refurbished" | "any";
   merchantHints: string[];
+  market: {
+    country: "NL" | "BE" | "DE" | "FR" | "UK" | "US" | "ES" | "IT" | "EU" | "GLOBAL";
+    currency: "EUR" | "USD" | "GBP" | "unknown";
+    regionHints: string[];
+    localPreference01: number;
+  };
   exclusions: string[];
   semantic: SemanticQueryUnderstanding;
   commerceIntents: CommerceSearchIntents;
@@ -188,6 +194,58 @@ function detectMerchantHints(envelope: string): string[] {
   return uniq(MERCHANT_HINTS.filter((m) => envelope.includes(m)));
 }
 
+function detectMarket(envelope: string, budgetCurrency: CanonicalQueryContract["budget"]["currency"]): CanonicalQueryContract["market"] {
+  const hints: string[] = [];
+  let country: CanonicalQueryContract["market"]["country"] = "NL";
+  if (/\b(netherlands|nederland|holland|nl|amsterdam|rotterdam|utrecht|eindhoven)\b|هولندا/i.test(envelope)) {
+    country = "NL";
+    hints.push("netherlands");
+  } else if (/\b(belgium|belgie|belgië|brussels|brussel|be)\b/i.test(envelope)) {
+    country = "BE";
+    hints.push("belgium");
+  } else if (/\b(germany|deutschland|de|berlin|munich)\b/i.test(envelope)) {
+    country = "DE";
+    hints.push("germany");
+  } else if (/\b(france|frankrijk|fr|paris)\b/i.test(envelope)) {
+    country = "FR";
+    hints.push("france");
+  } else if (/\b(uk|united kingdom|britain|england|london)\b/i.test(envelope)) {
+    country = "UK";
+    hints.push("united_kingdom");
+  } else if (/\b(us|usa|united states|america|walmart|bestbuy|target)\b/i.test(envelope)) {
+    country = "US";
+    hints.push("united_states");
+  } else if (/\b(spain|espana|españa|madrid|barcelona)\b/i.test(envelope)) {
+    country = "ES";
+    hints.push("spain");
+  } else if (/\b(italy|italia|rome|milano|milan)\b/i.test(envelope)) {
+    country = "IT";
+    hints.push("italy");
+  } else if (/\b(eu|europe|european)\b/i.test(envelope)) {
+    country = "EU";
+    hints.push("europe");
+  } else if (/\b(global|international|worldwide)\b/i.test(envelope)) {
+    country = "GLOBAL";
+    hints.push("global");
+  }
+  const currency =
+    budgetCurrency !== "unknown"
+      ? budgetCurrency
+      : country === "US"
+        ? "USD"
+        : country === "UK"
+          ? "GBP"
+          : country === "GLOBAL"
+            ? "unknown"
+            : "EUR";
+  const localPreference01 = /\b(near me|nearby|local|in de buurt|in nederland|in holland|in nl|shipping|delivery|bezorging|ophalen|pickup)\b|هولندا|قريب/i.test(envelope)
+    ? 0.82
+    : country === "GLOBAL"
+      ? 0.28
+      : 0.58;
+  return { country, currency, regionHints: uniq(hints), localPreference01 };
+}
+
 function detectExclusions(envelope: string): string[] {
   const out: string[] = [];
   if (/\b(no|not|without|exclude|avoid)\s+(case|cover|protector|accessory|box|parts?)\b/i.test(envelope)) out.push("accessories");
@@ -261,6 +319,7 @@ export function buildCanonicalQuery(rawQuery: string): CanonicalQueryContract {
   const condition = detectCondition(envelope);
   const primary = primaryIntent(semantic, commerceIntents, condition);
   const marketMode = inferMarketMode({ envelope, semantic, commerce: commerceIntents, brand, model, variant, primary });
+  const market = detectMarket(envelope, budget.currency);
   return {
     version: 1,
     originalQuery,
@@ -284,6 +343,7 @@ export function buildCanonicalQuery(rawQuery: string): CanonicalQueryContract {
     marketMode,
     condition,
     merchantHints: detectMerchantHints(envelope),
+    market,
     exclusions: detectExclusions(envelope),
     semantic,
     commerceIntents,
@@ -308,6 +368,7 @@ export function canonicalQueryForDebug(q: CanonicalQueryContract): Record<string
     marketMode: q.marketMode,
     condition: q.condition,
     merchantHints: q.merchantHints,
+    market: q.market,
     exclusions: q.exclusions,
   };
 }

@@ -27,11 +27,35 @@ export function normalizeMerchantName(store: string): string {
   const tests: [RegExp, string][] = [
     [/bol\.com|^bol\b/i, "bol"],
     [/coolblue/i, "coolblue"],
+    [/amazon\.de/i, "amazon_de"],
+    [/amazon\.co\.uk|amazon uk/i, "amazon_uk"],
+    [/amazon\.com|amazon us/i, "amazon_us"],
     [/amazon/i, "amazon"],
     [/\bebay\b/i, "ebay"],
+    [/walmart/i, "walmart"],
+    [/best\s*buy|bestbuy/i, "bestbuy"],
+    [/\btarget\b/i, "target"],
+    [/\betsy\b/i, "etsy"],
+    [/newegg/i, "newegg"],
+    [/\bb\s*&\s*h\b|bh\s*photo/i, "bhphoto"],
+    [/wayfair/i, "wayfair"],
+    [/home\s*depot/i, "homedepot"],
+    [/lowe'?s/i, "lowes"],
     [/marktplaats/i, "marktplaats"],
     [/media\s*markt|mediamarkt/i, "mediamarkt"],
     [/\bfnac\b/i, "fnac"],
+    [/darty/i, "darty"],
+    [/boulanger/i, "boulanger"],
+    [/cdiscount/i, "cdiscount"],
+    [/carrefour/i, "carrefour"],
+    [/rakuten/i, "rakuten"],
+    [/currys/i, "currys"],
+    [/argos/i, "argos"],
+    [/john\s*lewis/i, "johnlewis"],
+    [/\bao\b/i, "ao"],
+    [/el\s*corte\s*ingles/i, "elcorteingles"],
+    [/pccomponentes/i, "pccomponentes"],
+    [/manomano/i, "manomano"],
     [/galaxus/i, "galaxus"],
     [/kaufland/i, "kaufland"],
     [/\botto\b/i, "otto"],
@@ -67,6 +91,9 @@ export function normalizeMerchantName(store: string): string {
     [/sephora/i, "sephora"],
     [/\basos\b/i, "asos"],
     [/parfumdreams/i, "parfumdreams"],
+    [/flaconi/i, "flaconi"],
+    [/lookfantastic/i, "lookfantastic"],
+    [/fragrancex/i, "fragrancex"],
     [/decathlon/i, "decathlon"],
     [/\bapple\b/i, "apple"],
     [/\bsamsung\b/i, "samsung"],
@@ -126,14 +153,60 @@ export function buildMerchantSearchUrl(merchantKey: string, searchTerms: string,
       return `${amazonSearchBase(geoGl)}${qEnc(q)}`;
     case "amazon_de":
       return `https://www.amazon.de/s?k=${qEnc(q)}`;
+    case "amazon_us":
+      return `https://www.amazon.com/s?k=${qEnc(q)}`;
+    case "amazon_uk":
+      return `https://www.amazon.co.uk/s?k=${qEnc(q)}`;
     case "ebay":
       return `https://www.ebay.nl/sch/i.html?_nkw=${qEnc(q)}`;
+    case "walmart":
+      return `https://www.walmart.com/search?q=${qEnc(q)}`;
+    case "bestbuy":
+      return `https://www.bestbuy.com/site/searchpage.jsp?st=${qEnc(q)}`;
+    case "target":
+      return `https://www.target.com/s?searchTerm=${qEnc(q)}`;
+    case "etsy":
+      return `https://www.etsy.com/search?q=${qEnc(q)}`;
+    case "newegg":
+      return `https://www.newegg.com/p/pl?d=${qEnc(q)}`;
+    case "bhphoto":
+      return `https://www.bhphotovideo.com/c/search?Ntt=${qEnc(q)}`;
+    case "wayfair":
+      return `https://www.wayfair.com/keyword.php?keyword=${qEnc(q)}`;
+    case "homedepot":
+      return `https://www.homedepot.com/s/${qEnc(q)}`;
+    case "lowes":
+      return `https://www.lowes.com/search?searchTerm=${qEnc(q)}`;
     case "marktplaats":
       return `https://www.marktplaats.nl/q/${qEnc(q)}/`;
     case "mediamarkt":
       return `https://www.mediamarkt.nl/nl/search.html?query=${qEnc(q)}`;
     case "fnac":
       return `https://www.fnac.com/SearchResult/ResultList.aspx?Search=${qEnc(q)}`;
+    case "darty":
+      return `https://www.darty.com/nav/recherche?text=${qEnc(q)}`;
+    case "boulanger":
+      return `https://www.boulanger.com/resultats?tr=${qEnc(q)}`;
+    case "cdiscount":
+      return `https://www.cdiscount.com/search/10/${qEnc(q)}.html`;
+    case "carrefour":
+      return `https://www.carrefour.fr/s?q=${qEnc(q)}`;
+    case "rakuten":
+      return `https://fr.shopping.rakuten.com/search/${qEnc(q)}`;
+    case "currys":
+      return `https://www.currys.co.uk/search?q=${qEnc(q)}`;
+    case "argos":
+      return `https://www.argos.co.uk/search/${qEnc(q)}/`;
+    case "johnlewis":
+      return `https://www.johnlewis.com/search?search-term=${qEnc(q)}`;
+    case "ao":
+      return `https://ao.com/search?search=${qEnc(q)}`;
+    case "elcorteingles":
+      return `https://www.elcorteingles.es/search/?s=${qEnc(q)}`;
+    case "pccomponentes":
+      return `https://www.pccomponentes.com/search/?query=${qEnc(q)}`;
+    case "manomano":
+      return `https://www.manomano.nl/zoek/${qEnc(q)}`;
     case "galaxus":
       return `https://www.galaxus.nl/en/search?q=${qEnc(q)}`;
     case "kaufland":
@@ -204,6 +277,12 @@ export function buildMerchantSearchUrl(merchantKey: string, searchTerms: string,
       return `https://www.jdsports.nl/search/${qEnc(q)}/`;
     case "parfumdreams":
       return `https://www.parfumdreams.nl/Search.html?search=${qEnc(q)}`;
+    case "flaconi":
+      return `https://www.flaconi.de/suche/?q=${qEnc(q)}`;
+    case "lookfantastic":
+      return `https://www.lookfantastic.nl/elysium.search?search=${qEnc(q)}`;
+    case "fragrancex":
+      return `https://www.fragrancex.com/search/search_results?stext=${qEnc(q)}`;
     case "decathlon":
       return `https://www.decathlon.nl/search?Ntt=${qEnc(q)}`;
     case "apple":

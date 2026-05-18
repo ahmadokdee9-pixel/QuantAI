@@ -238,14 +238,34 @@ function categoryEvidence(p: QuantProduct, canonicalQuery?: CanonicalQueryContra
   const category = canonicalQuery?.category;
   if (!category || category === "unknown") return true;
   const blob = listingBlob(p);
+  const query = canonicalQuery.originalQuery.toLowerCase();
   if (category === "phone") return /\b(phone|iphone|galaxy|pixel|smartphone|mobile|telefoon|mobiel)\b/i.test(blob);
   if (category === "audio") return /\b(airpods?|earbuds?|headphones?|wireless audio|noise cancelling|koptelefoon|oordopjes|oortjes)\b/i.test(blob);
   if (category === "shoes") return /\b(shoe|sneaker|trainer|samba|gazelle|air force|adidas|nike)\b/i.test(blob);
-  if (category === "furniture") return /\b(sofa|sofa bed|sectional|loveseat|settee|couch|corner sofa|recliner|chaise|hoekbank|bankstel|loungebank|fauteuil|chair|stoel|table|tafel|tuinset|tuinmeubel|loungeset|furniture|meubel|meubels|كنبة|طاولة)\b/i.test(blob);
+  if (category === "furniture") {
+    if (/\b(sofa|couch|sectional|loveseat|settee|hoekbank|bankstel|loungebank)\b|كنبة/i.test(query)) {
+      return /\b(sofa|sofa bed|sectional|loveseat|settee|couch|corner sofa|recliner|chaise|hoekbank|bankstel|loungebank|fauteuil|bank)\b|كنبة/i.test(blob);
+    }
+    if (/\b(table|tafel|garden table|tuin tafel)\b|طاولة/i.test(query)) {
+      return /\b(table|tafel|tuinset|tuinmeubel|loungeset)\b|طاولة/i.test(blob);
+    }
+    return /\b(sofa|sofa bed|sectional|loveseat|settee|couch|corner sofa|recliner|chaise|hoekbank|bankstel|loungebank|fauteuil|chair|stoel|table|tafel|tuinset|tuinmeubel|loungeset|furniture|meubel|meubels|كنبة|طاولة)\b/i.test(blob);
+  }
   if (category === "electronics") return /\b(monitor|display|beeldscherm|scherm|gpu|camera|tablet|console|tv|electronics?)\b/i.test(blob);
   if (category === "fragrance") return /\b(perfume|fragrance|parfum|cologne|eau de parfum|eau de toilette|عطر)\b/i.test(blob);
   if (category === "fashion") return /\b(jacket|jas|coat|hoodie|shirt|dress|fashion|kleding)\b/i.test(blob);
-  if (category === "home") return /\b(home|kitchen|coffee|machine|espresso|koffie|air fryer|airfryer|fryer|heteluchtfriteuse|friteuse|appliance|stroller|pram|buggy|kinderwagen|babypark|prenatal|huis|keuken|apparaat|عربة)\b/i.test(blob);
+  if (category === "home") {
+    if (/\b(baby stroller|stroller|pram|buggy|kinderwagen)\b|عربة/i.test(query)) {
+      return /\b(baby stroller|stroller|pram|buggy|pushchair|car seat|kinderwagen|bugaboo|cybex|joolz|uppababy|maxi[-\s]?cosi|babypark|prenatal)\b|عربة/i.test(blob);
+    }
+    if (/\b(coffee machine|espresso machine|koffiemachine|koffiezetapparaat)\b/i.test(query)) {
+      return /\b(coffee|espresso|koffie|machine|keurig|nespresso|delonghi|sage|jura|philips|krups)\b/i.test(blob);
+    }
+    if (/\b(air fryer|airfryer|fryer|friteuse|heteluchtfriteuse)\b/i.test(query)) {
+      return /\b(air fryer|airfryer|fryer|friteuse|heteluchtfriteuse|ninja|philips|tefal|cosori)\b/i.test(blob);
+    }
+    return /\b(home|kitchen|coffee|machine|espresso|koffie|air fryer|airfryer|fryer|heteluchtfriteuse|friteuse|appliance|stroller|pram|buggy|kinderwagen|babypark|prenatal|huis|keuken|apparaat|عربة)\b/i.test(blob);
+  }
   return true;
 }
 

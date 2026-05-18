@@ -18,6 +18,7 @@ export type WideMerchant = {
   region: WideMerchantRegion;
   priority: number;
   cats?: string[];
+  countries?: CanonicalQueryContract["market"]["country"][];
   lowTrustFallback?: boolean;
 };
 
@@ -39,6 +40,17 @@ const WIDE_MERCHANTS: WideMerchant[] = [
   { key: "mediamarkt", label: "MediaMarkt", region: "nl", priority: 93, cats: ["phone", "laptop", "audio", "electronics", "watch"] },
   { key: "amazon", label: "Amazon.nl", region: "nl", priority: 89 },
   { key: "amazon_de", label: "Amazon.de", region: "eu", priority: 84 },
+  { key: "amazon_us", label: "Amazon.com", region: "global", priority: 82, countries: ["US", "GLOBAL"] },
+  { key: "amazon_uk", label: "Amazon UK", region: "global", priority: 80, countries: ["UK", "GLOBAL"] },
+  { key: "walmart", label: "Walmart", region: "global", priority: 79, countries: ["US", "GLOBAL"] },
+  { key: "bestbuy", label: "Best Buy", region: "global", priority: 83, cats: ["phone", "laptop", "audio", "electronics", "home"], countries: ["US", "GLOBAL"] },
+  { key: "target", label: "Target", region: "global", priority: 74, cats: ["home", "fashion", "beauty", "electronics"], countries: ["US", "GLOBAL"] },
+  { key: "etsy", label: "Etsy", region: "global", priority: 70, cats: ["fashion", "home", "beauty", "furniture"], countries: ["GLOBAL", "US", "EU"] },
+  { key: "newegg", label: "Newegg", region: "global", priority: 78, cats: ["laptop", "electronics"], countries: ["US", "GLOBAL"] },
+  { key: "bhphoto", label: "B&H Photo", region: "global", priority: 77, cats: ["laptop", "audio", "electronics"], countries: ["US", "GLOBAL"] },
+  { key: "wayfair", label: "Wayfair", region: "global", priority: 78, cats: ["furniture", "home"], countries: ["US", "UK", "DE", "GLOBAL"] },
+  { key: "homedepot", label: "The Home Depot", region: "global", priority: 75, cats: ["home", "furniture", "electronics"], countries: ["US", "GLOBAL"] },
+  { key: "lowes", label: "Lowe's", region: "global", priority: 74, cats: ["home", "furniture", "electronics"], countries: ["US", "GLOBAL"] },
   { key: "apple", label: "Apple", region: "eu", priority: 93, cats: ["phone", "laptop", "audio", "watch", "electronics"] },
   { key: "samsung", label: "Samsung", region: "eu", priority: 90, cats: ["phone", "audio", "watch", "electronics"] },
   { key: "nike", label: "Nike", region: "eu", priority: 91, cats: ["shoes", "fashion", "sports"] },
@@ -51,6 +63,19 @@ const WIDE_MERCHANTS: WideMerchant[] = [
   { key: "ebay", label: "eBay", region: "global", priority: 66 },
   { key: "marktplaats", label: "Marktplaats", region: "nl", priority: 63 },
   { key: "fnac", label: "Fnac", region: "eu", priority: 80, cats: ["phone", "laptop", "audio", "electronics", "beauty"] },
+  { key: "darty", label: "Darty", region: "eu", priority: 79, cats: ["phone", "laptop", "audio", "electronics", "home"], countries: ["FR", "EU"] },
+  { key: "boulanger", label: "Boulanger", region: "eu", priority: 78, cats: ["phone", "laptop", "audio", "electronics", "home"], countries: ["FR", "EU"] },
+  { key: "cdiscount", label: "Cdiscount", region: "eu", priority: 74, countries: ["FR", "EU"] },
+  { key: "carrefour", label: "Carrefour", region: "eu", priority: 73, cats: ["home", "beauty", "electronics"], countries: ["FR", "BE", "ES", "IT", "EU"] },
+  { key: "rakuten", label: "Rakuten", region: "eu", priority: 72, countries: ["FR", "EU", "GLOBAL"] },
+  { key: "currys", label: "Currys", region: "global", priority: 78, cats: ["phone", "laptop", "audio", "electronics", "home"], countries: ["UK", "GLOBAL"] },
+  { key: "argos", label: "Argos", region: "global", priority: 76, cats: ["home", "electronics", "phone", "audio", "furniture"], countries: ["UK", "GLOBAL"] },
+  { key: "johnlewis", label: "John Lewis", region: "global", priority: 77, cats: ["home", "electronics", "fashion", "beauty", "furniture"], countries: ["UK", "GLOBAL"] },
+  { key: "ao", label: "AO", region: "global", priority: 75, cats: ["home", "electronics"], countries: ["UK", "GLOBAL"] },
+  { key: "elcorteingles", label: "El Corte Ingles", region: "eu", priority: 74, countries: ["ES", "EU"] },
+  { key: "pccomponentes", label: "PcComponentes", region: "eu", priority: 76, cats: ["phone", "laptop", "electronics", "audio"], countries: ["ES", "EU"] },
+  { key: "manomano", label: "ManoMano", region: "eu", priority: 72, cats: ["home", "furniture"], countries: ["FR", "ES", "IT", "DE", "EU"] },
+  { key: "kaufland", label: "Kaufland", region: "eu", priority: 74, countries: ["DE", "EU"] },
   { key: "galaxus", label: "Galaxus", region: "eu", priority: 83, cats: ["phone", "laptop", "audio", "electronics", "home"] },
   { key: "alternate", label: "Alternate", region: "nl", priority: 84, cats: ["laptop", "electronics"] },
   { key: "azerty", label: "Azerty", region: "nl", priority: 82, cats: ["laptop", "electronics"] },
@@ -66,6 +91,10 @@ const WIDE_MERCHANTS: WideMerchant[] = [
   { key: "hema", label: "HEMA", region: "nl", priority: 70, cats: ["home", "fashion", "beauty"] },
   { key: "douglas", label: "Douglas", region: "nl", priority: 84, cats: ["fragrance", "beauty"] },
   { key: "notino", label: "Notino", region: "eu", priority: 82, cats: ["fragrance", "beauty"] },
+  { key: "parfumdreams", label: "Parfumdreams", region: "eu", priority: 79, cats: ["fragrance", "beauty"], countries: ["NL", "DE", "FR", "EU"] },
+  { key: "flaconi", label: "Flaconi", region: "eu", priority: 77, cats: ["fragrance", "beauty"], countries: ["DE", "EU"] },
+  { key: "lookfantastic", label: "Lookfantastic", region: "global", priority: 76, cats: ["fragrance", "beauty"], countries: ["UK", "EU", "GLOBAL"] },
+  { key: "fragrancex", label: "FragranceX", region: "global", priority: 66, cats: ["fragrance", "beauty"], countries: ["US", "GLOBAL"] },
   { key: "bolia", label: "Bolia", region: "eu", priority: 80, cats: ["furniture", "home"] },
   { key: "fonq", label: "FonQ", region: "nl", priority: 80, cats: ["furniture", "home", "desk_setup"] },
   { key: "vidaxl", label: "VidaXL", region: "eu", priority: 70, cats: ["furniture", "home"] },
@@ -145,12 +174,26 @@ export function scoreMerchantRouteQuality(args: {
   queryKind: WideMerchantQueryKind;
   directRoute: boolean;
   parsedIntent: SemanticQueryUnderstanding;
+  market?: CanonicalQueryContract["market"];
 }): number {
-  const { merchant, queryKind, directRoute, parsedIntent } = args;
+  const { merchant, queryKind, directRoute, parsedIntent, market } = args;
   const catFit = !merchant.cats || merchant.cats.includes(parsedIntent.productCategory);
   let score = merchant.priority + (catFit ? 14 : parsedIntent.productCategory === "unknown" ? 0 : -8);
-  if (merchant.region === "nl") score += 5;
-  if (merchant.region === "eu") score += 2;
+  if (market?.country === "NL") {
+    if (merchant.region === "nl") score += 8;
+    if (merchant.region === "eu") score += 3;
+  } else if (market?.country === "EU") {
+    if (merchant.region === "eu" || merchant.region === "nl") score += 4;
+  } else if (market?.country && market.country !== "GLOBAL") {
+    if (merchant.countries?.includes(market.country)) score += 9;
+    else if (merchant.region === "global") score += 2;
+    else if (merchant.region === "eu" && ["BE", "DE", "FR", "ES", "IT"].includes(market.country)) score += 4;
+  } else {
+    if (merchant.region === "nl") score += 5;
+    if (merchant.region === "eu") score += 2;
+    if (merchant.region === "global") score += 1;
+  }
+  if (merchant.countries?.includes("GLOBAL")) score += 1;
   if (queryKind === "ean") score += 12;
   if (queryKind === "identity") score += 7;
   if (queryKind === "specs") score += 4;
@@ -169,7 +212,7 @@ export function generateMerchantSearchRoutes(
   return queryVariants(query, semanticIntent, canonicalQuery).map(({ kind, value }) => {
     const directUrl = buildMerchantSearchUrl(merchant.key, value, merchant.key === "amazon_de" ? "de" : "nl");
     const directRoute = Boolean(directUrl);
-    const routeQuality = scoreMerchantRouteQuality({ merchant, queryKind: kind, directRoute, parsedIntent: semanticIntent });
+    const routeQuality = scoreMerchantRouteQuality({ merchant, queryKind: kind, directRoute, parsedIntent: semanticIntent, market: canonicalQuery?.market });
     return {
       merchantKey: merchant.key,
       label: merchant.label,

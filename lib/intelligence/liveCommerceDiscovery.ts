@@ -102,15 +102,15 @@ function boundedEnvInt(name: string, fallback: number, min: number, max: number)
 }
 
 function rolloutControls(): { enabled: boolean; maxRows: number; maxMerchants: number; timeoutMs: number; maxAttemptedQueries: number } {
-  const maxMerchants = boundedEnvInt("MAX_DISCOVERY_MERCHANTS", 32, 8, 80);
-  const maxRows = boundedEnvInt("MAX_DISCOVERY_ROWS", 24, 4, 60);
-  const timeoutMs = boundedEnvInt("DISCOVERY_TIMEOUT_MS", 5_500, 2_500, 10_000);
+  const maxMerchants = boundedEnvInt("MAX_DISCOVERY_MERCHANTS", 48, 8, 96);
+  const maxRows = boundedEnvInt("MAX_DISCOVERY_ROWS", 32, 4, 72);
+  const timeoutMs = boundedEnvInt("DISCOVERY_TIMEOUT_MS", 6_500, 2_500, 11_000);
   return {
     enabled: envFlagEnabled("ENABLE_WIDE_DISCOVERY", true),
     maxRows,
     maxMerchants,
     timeoutMs,
-    maxAttemptedQueries: boundedEnvInt("MAX_DISCOVERY_QUERIES", 3, 1, 5),
+    maxAttemptedQueries: boundedEnvInt("MAX_DISCOVERY_QUERIES", 4, 1, 6),
   };
 }
 

@@ -8,6 +8,7 @@ import { mergeCommerceSessionMemory, safeParseCommerceSessionMemory } from "@/li
 import { buildBundleSuggestions } from "@/lib/intelligence/bundleIntelligence";
 import { applyMarketAwarenessRanking, computeMarketAwarenessForTray } from "@/lib/intelligence/marketAwareness";
 import { buildCommerceQualityDebug, buildCommerceQualityLayer } from "@/lib/intelligence/commerceQualityLayer";
+import { buildMarketComparisonSummary } from "@/lib/intelligence/marketComparisonEngine";
 import { applyPersonaRanking } from "@/lib/intelligence/personaRanking";
 import { applyPredictiveCommerceToTray } from "@/lib/intelligence/predictiveCommerceIntelligence";
 import { detectShopperPersonas } from "@/lib/intelligence/shopperPersona";
@@ -174,7 +175,7 @@ async function fetchShoppingProductsWithFallback(
 /** Cross-request tray cache — normalized key improves hit rate; short TTL keeps prices fresh. */
 const getCachedSearchPipeline = unstable_cache(
   async (pipelineQuery: string) => runSearchPipeline(pipelineQuery),
-  ["quantai-search-pipeline-v33-final-quality-order"],
+  ["quantai-search-pipeline-v35-global-coverage-type-fit"],
   { revalidate: 120 }
 );
 
@@ -208,6 +209,7 @@ function searchDebugMeta(args: {
   const { products, liveDiscovery = null, canonicalQuery = null, fallbackReason = null, errorState = null, stageSuppression = [] } = args;
   const identityDebug = canonicalQuery ? buildIdentityDebugSummary(products, canonicalQuery) : null;
   const commerceQualityDebug = buildCommerceQualityDebug(products);
+  const marketComparison = canonicalQuery ? buildMarketComparisonSummary(products, canonicalQuery) : null;
   return {
     productCount: products.length,
     productsCount: products.length,
@@ -246,6 +248,7 @@ function searchDebugMeta(args: {
     discoveryValidationTrace: liveDiscovery?.discoveryValidationTrace ?? null,
     stageSuppression,
     commerceQualityDebug,
+    marketComparison,
     canonicalQuery: canonicalQuery ? canonicalQueryForDebug(canonicalQuery) : null,
     identityDebug,
   };
@@ -515,6 +518,15 @@ async function handleSearch(
         discoveryValidationTrace: debugMeta.discoveryValidationTrace,
         stageSuppression: debugMeta.stageSuppression,
         commerceQualityDebug: debugMeta.commerceQualityDebug,
+        marketComparison: debugMeta.marketComparison,
+        localMarket: (debugMeta.marketComparison as { localMarket?: unknown } | null)?.localMarket ?? null,
+        regionalCoverage: (debugMeta.marketComparison as { regionalCoverage?: unknown } | null)?.regionalCoverage ?? null,
+        cheapestTrustedOffer: (debugMeta.marketComparison as { cheapestTrustedOffer?: unknown } | null)?.cheapestTrustedOffer ?? null,
+        strongestValueOffer: (debugMeta.marketComparison as { strongestValueOffer?: unknown } | null)?.strongestValueOffer ?? null,
+        highestConfidenceOffer: (debugMeta.marketComparison as { highestConfidenceOffer?: unknown } | null)?.highestConfidenceOffer ?? null,
+        strongestDiscountOffer: (debugMeta.marketComparison as { strongestDiscountOffer?: unknown } | null)?.strongestDiscountOffer ?? null,
+        premiumSellerOption: (debugMeta.marketComparison as { premiumSellerOption?: unknown } | null)?.premiumSellerOption ?? null,
+        lowRiskOption: (debugMeta.marketComparison as { lowRiskOption?: unknown } | null)?.lowRiskOption ?? null,
         dealStrength: debugMeta.commerceQualityDebug,
         fakeDiscountRisk: debugMeta.commerceQualityDebug,
         buyTimingSignal: debugMeta.commerceQualityDebug,
