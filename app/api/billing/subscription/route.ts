@@ -5,7 +5,7 @@ import { stripeSecretKey } from "@/lib/stripe/config";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { entitlementsForTier } from "@/lib/subscription/entitlements";
 import { planDefinition, QUANT_PLANS } from "@/lib/subscription/plans";
-import { subscriptionTierFromClerkUser } from "@/lib/subscription/resolveTier";
+import { resolveServerSubscriptionTier } from "@/lib/subscription/resolveTier";
 
 /** Stripe-ready: tier from Clerk `publicMetadata`; billing portal URL wired later. */
 export async function GET() {
@@ -16,7 +16,7 @@ export async function GET() {
     }
 
     const { userId } = await auth();
-    let tier = subscriptionTierFromClerkUser(user);
+    let tier = await resolveServerSubscriptionTier(userId, user);
     let billingState: Record<string, unknown> | null = null;
     if (userId && supabaseAdmin) {
       const { data } = await supabaseAdmin

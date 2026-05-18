@@ -1,7 +1,7 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { countSavedProducts } from "@/lib/intelligence/persistence";
 import { planDefinition } from "@/lib/subscription/plans";
-import { subscriptionTierFromClerkUser } from "@/lib/subscription/resolveTier";
+import { resolveServerSubscriptionTier } from "@/lib/subscription/resolveTier";
 import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
 import { logDevError } from "@/lib/log/devLog";
 import { isBenignStorageSchemaError } from "@/lib/supabase/benignStorageError";
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     }
 
     const user = await currentUser();
-    const tier = subscriptionTierFromClerkUser(user);
+    const tier = await resolveServerSubscriptionTier(userId, user);
     const plan = planDefinition(tier);
     if (plan.savedProductsMax != null) {
       const n = await countSavedProducts(userId);

@@ -255,6 +255,9 @@ function categoryEvidence(p: QuantProduct, canonicalQuery?: CanonicalQueryContra
   if (category === "fragrance") return /\b(perfume|fragrance|parfum|cologne|eau de parfum|eau de toilette|عطر)\b/i.test(blob);
   if (category === "fashion") return /\b(jacket|jas|coat|hoodie|shirt|dress|fashion|kleding)\b/i.test(blob);
   if (category === "home") {
+    if (/\b(robot vacuum|robotstofzuiger|stofzuiger robot|roomba|roborock|irobot)\b/i.test(query)) {
+      return /\b(robot vacuum|robotstofzuiger|stofzuiger robot|roomba|roborock|irobot|dreame|ecovacs|deebot|eufy|shark|xiaomi|stofzuiger)\b/i.test(blob);
+    }
     if (/\b(baby stroller|stroller|pram|buggy|kinderwagen)\b|عربة/i.test(query)) {
       return /\b(baby stroller|stroller|pram|buggy|pushchair|car seat|kinderwagen|bugaboo|cybex|joolz|uppababy|maxi[-\s]?cosi|babypark|prenatal)\b|عربة/i.test(blob);
     }
@@ -264,7 +267,7 @@ function categoryEvidence(p: QuantProduct, canonicalQuery?: CanonicalQueryContra
     if (/\b(air fryer|airfryer|fryer|friteuse|heteluchtfriteuse)\b/i.test(query)) {
       return /\b(air fryer|airfryer|fryer|friteuse|heteluchtfriteuse|ninja|philips|tefal|cosori)\b/i.test(blob);
     }
-    return /\b(home|kitchen|coffee|machine|espresso|koffie|air fryer|airfryer|fryer|heteluchtfriteuse|friteuse|appliance|stroller|pram|buggy|kinderwagen|babypark|prenatal|huis|keuken|apparaat|عربة)\b/i.test(blob);
+    return /\b(home|kitchen|coffee|machine|espresso|koffie|air fryer|airfryer|fryer|heteluchtfriteuse|friteuse|appliance|robot vacuum|robotstofzuiger|stofzuiger|roomba|roborock|irobot|stroller|pram|buggy|kinderwagen|babypark|prenatal|huis|keuken|apparaat|عربة)\b/i.test(blob);
   }
   return true;
 }

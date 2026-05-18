@@ -62,6 +62,34 @@ function parseAvailability(row: Record<string, unknown>, extensions: string[]): 
 
 export type ShoppingProduct = QuantProduct;
 
+function glForMarket(canonicalQuery?: CanonicalQueryContract): string {
+  const envGl = (process.env.SERPAPI_SHOPPING_GL ?? "").trim().toLowerCase();
+  if (envGl) return envGl.slice(0, 4);
+  const country = canonicalQuery?.market.country;
+  switch (country) {
+    case "US":
+      return "us";
+    case "UK":
+      return "gb";
+    case "DE":
+      return "de";
+    case "FR":
+      return "fr";
+    case "BE":
+      return "be";
+    case "ES":
+      return "es";
+    case "IT":
+      return "it";
+    case "EU":
+    case "GLOBAL":
+      return "us";
+    case "NL":
+    default:
+      return "nl";
+  }
+}
+
 function dedupeShoppingFeedOverlap(rows: QuantProduct[]): QuantProduct[] {
   if (rows.length < 2) return rows;
   const out: QuantProduct[] = [];
@@ -104,7 +132,7 @@ export async function fetchShoppingProducts(
 
     const upstreamQ = canonicalQuery?.upstreamQuery || buildUpstreamShoppingQuery(trimmed);
 
-    const gl = (process.env.SERPAPI_SHOPPING_GL ?? "nl").trim().slice(0, 4) || "nl";
+    const gl = glForMarket(canonicalQuery);
     const num = Math.min(100, Math.max(40, Number.parseInt(process.env.SERPAPI_SHOPPING_NUM ?? "80", 10) || 80));
     const url = `https://serpapi.com/search.json?engine=google_shopping&q=${encodeURIComponent(
       upstreamQ

@@ -9,6 +9,21 @@ function safeTarget(raw: string | null): URL | null {
   try {
     const url = new URL(raw);
     if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+    if (url.username || url.password) return null;
+    const host = url.hostname.toLowerCase();
+    if (
+      host === "localhost" ||
+      host.endsWith(".local") ||
+      host.endsWith(".internal") ||
+      /^127\./.test(host) ||
+      /^10\./.test(host) ||
+      /^192\.168\./.test(host) ||
+      /^172\.(1[6-9]|2\d|3[0-1])\./.test(host) ||
+      host === "0.0.0.0" ||
+      host === "::1"
+    ) {
+      return null;
+    }
     return url;
   } catch {
     return null;
@@ -52,7 +67,7 @@ export async function GET(req: Request) {
   });
 
   if (supabaseAdmin) {
-    void supabaseAdmin.from("outbound_clicks").insert({
+    const { error } = await supabaseAdmin.from("outbound_clicks").insert({
       user_id: userId,
       click_id: clickId,
       target_url: target.toString(),
@@ -62,6 +77,9 @@ export async function GET(req: Request) {
       search_query: searchQuery,
       decision_action: decisionAction,
     });
+    if (error && process.env.NODE_ENV !== "production") {
+      console.warn("[api/outbound] click insert failed", error.message);
+    }
   }
 
   target.searchParams.set("qai_click", clickId);

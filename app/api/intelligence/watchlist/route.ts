@@ -2,7 +2,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
 import { countWatchlistItems } from "@/lib/intelligence/persistence";
 import { planDefinition } from "@/lib/subscription/plans";
-import { subscriptionTierFromClerkUser } from "@/lib/subscription/resolveTier";
+import { resolveServerSubscriptionTier } from "@/lib/subscription/resolveTier";
 import { isBenignStorageSchemaError } from "@/lib/supabase/benignStorageError";
 import { supabaseAdmin, supabaseAdminConfigured } from "@/lib/supabaseAdmin";
 
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
     } catch {
       user = null;
     }
-    const tier = subscriptionTierFromClerkUser(user);
+    const tier = await resolveServerSubscriptionTier(userId, user);
     const plan = planDefinition(tier);
     if (plan.watchlistMax != null) {
       const n = await countWatchlistItems(userId);

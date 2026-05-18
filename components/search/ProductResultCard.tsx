@@ -607,53 +607,33 @@ function ProductResultCard({
               {p.title}
             </h3>
             {unifiedMarket && unifiedMarket.storeCount >= 2 ? (
-              <div className="mt-2 rounded-lg border border-white/[0.05] bg-white/[0.02] px-2 py-1.5 text-[9px] leading-snug text-slate-400/95">
-                <p>
-                  <span className="font-semibold text-slate-300/90">Matched market set</span>
+              <div className="mt-2 rounded-xl border border-white/[0.055] bg-white/[0.022] px-2.5 py-2 text-[10px] leading-snug text-slate-400/95">
+                <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                  <span className="font-semibold text-slate-200/90">Market match</span>
                   {" · "}
-                  {unifiedMarket.storeCount} stores found · {unifiedMarket.marketSpreadPct}% market spread
-                </p>
-                <p className="mt-0.5 text-slate-500/90 [overflow-wrap:anywhere]">
-                  Best trusted price {formatListingPrice(unifiedMarket.bestTrustedPrice, sym)}
-                  {unifiedMarket.bestTrustedStore ? ` · ${unifiedMarket.bestTrustedStore}` : ""}
+                  <span>{unifiedMarket.storeCount} stores</span>
+                  <span className="text-slate-600">/</span>
+                  <span>{unifiedMarket.marketSpreadPct}% spread</span>
                   {unifiedMarket.isBestTrustedInFamily ? (
-                    <span className="text-emerald-300/85"> · this listing</span>
+                    <>
+                      <span className="text-slate-600">/</span>
+                      <span className="text-emerald-300/85">best trusted route</span>
+                    </>
+                  ) : unifiedMarket.sameItemCheaper ? (
+                    <>
+                      <span className="text-slate-600">/</span>
+                      <span className="text-amber-200/88">
+                        lower at {unifiedMarket.sameItemCheaper.store}
+                      </span>
+                    </>
                   ) : null}
                 </p>
-                <p className="mt-0.5 text-slate-500/80 [overflow-wrap:anywhere]">
-                  {clip(unifiedMarket.crossMarketHeadline, 140)}
+                <p className="mt-1 line-clamp-1 text-slate-500/90 [overflow-wrap:anywhere]">
+                  Best trusted price {formatListingPrice(unifiedMarket.bestTrustedPrice, sym)}
+                  {unifiedMarket.bestTrustedStore ? ` · ${unifiedMarket.bestTrustedStore}` : ""}
+                  {" · "}
+                  {clip(unifiedMarket.fairMarketRangeLabel, 88)}
                 </p>
-                <p className="mt-0.5 text-slate-500/75 [overflow-wrap:anywhere]">
-                  {unifiedMarket.offerCount} offers · avg {formatListingPrice(unifiedMarket.averageMarketPrice, sym)}
-                  {unifiedMarket.highestDiscountPct != null ? ` · max discount ${unifiedMarket.highestDiscountPct}%` : ""}
-                  {unifiedMarket.suspiciousOutlierCount > 0 ? ` · ${unifiedMarket.suspiciousOutlierCount} outlier${unifiedMarket.suspiciousOutlierCount > 1 ? "s" : ""}` : ""}
-                </p>
-                <p className="mt-0.5 text-slate-500/75 [overflow-wrap:anywhere]">
-                  {clip(unifiedMarket.fairMarketRangeLabel, 120)}
-                </p>
-                {unifiedMarket.sameItemCheaper && !unifiedMarket.isBestTrustedInFamily ? (
-                  <p className="mt-0.5 text-amber-200/88 [overflow-wrap:anywhere]">
-                    Lower trusted route · {unifiedMarket.sameItemCheaper.store}{" "}
-                    {formatListingPrice(unifiedMarket.sameItemCheaper.price, sym)}
-                  </p>
-                ) : null}
-                {unifiedMarket.betterValueAlternative &&
-                unifiedMarket.betterValueAlternative.link !== p.link &&
-                unifiedMarket.betterValueAlternative.link !== unifiedMarket.sameItemCheaper?.link ? (
-                  <p className="mt-0.5 text-cyan-200/85 [overflow-wrap:anywhere]">
-                    Better value route · {unifiedMarket.betterValueAlternative.store}{" "}
-                    {formatListingPrice(unifiedMarket.betterValueAlternative.price, sym)}
-                  </p>
-                ) : null}
-                {unifiedMarket.premiumUpgrade && unifiedMarket.premiumUpgrade.link !== p.link ? (
-                  <p className="mt-0.5 text-violet-200/85 [overflow-wrap:anywhere]">
-                    Premium-safe route · {unifiedMarket.premiumUpgrade.store}{" "}
-                    {formatListingPrice(unifiedMarket.premiumUpgrade.price, sym)}
-                  </p>
-                ) : null}
-                {unifiedMarket.overpricedVsFair ? (
-                  <p className="mt-0.5 text-rose-200/85">Above the fair band for this matched set.</p>
-                ) : null}
               </div>
             ) : null}
 
@@ -1094,7 +1074,7 @@ function ProductResultCard({
                   className="absolute inset-0 bg-gradient-to-r from-cyan-200/0 via-cyan-200/20 to-violet-200/0 opacity-0 transition group-hover:opacity-100"
                   aria-hidden
                 />
-                <span className="relative">Inspect offer</span>
+                <span className="relative">View retailer</span>
               </motion.a>
               ) : (
                 <motion.button
@@ -1103,7 +1083,7 @@ function ProductResultCard({
                   title="No reliable outbound link from this listing"
                   className={`${btnRow} relative flex min-w-0 flex-[1.1_1_7rem] cursor-not-allowed items-center justify-center overflow-hidden bg-gradient-to-r from-white/40 via-slate-100/50 to-white/40 px-4 text-slate-600 opacity-55`}
                 >
-                  <span className="relative">Inspect offer</span>
+                  <span className="relative">View retailer</span>
                 </motion.button>
               )}
               {addToWatchlist && (

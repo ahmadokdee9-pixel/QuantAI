@@ -28,7 +28,7 @@ import { intentMatchEnvelope } from "@/lib/intelligence/searchIntentV2";
 import { enforceLimit, searchRatelimit } from "@/lib/rate-limit";
 import { entitlementsForTier } from "@/lib/subscription/entitlements";
 import { planDefinition } from "@/lib/subscription/plans";
-import { subscriptionTierFromClerkUser } from "@/lib/subscription/resolveTier";
+import { resolveServerSubscriptionTier } from "@/lib/subscription/resolveTier";
 import { buildUniversalCommerceContext, tasteTagListForApi } from "@/lib/commerce-os";
 import { buildCanonicalQuery, canonicalQueryForDebug, type CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
@@ -156,24 +156,67 @@ async function fetchShoppingProductsWithFallback(
   canonicalQuery: CanonicalQueryContract
 ) {
   const primary = await fetchShoppingProductsDeduped(query, canonicalQuery);
-  if (primary.ok) return primary;
 
+  const semanticFallback = canonicalQuery.semantic.semanticKeywords
+    .slice(0, 6)
+    .join(" ");
+  const normalizedEnvelope = `${canonicalQuery.normalizedQuery} ${canonicalQuery.semantic.envelope}`.toLowerCase();
+  const productSpecificFallback =
+    /\b(robot vacuum|robotstofzuiger|stofzuiger robot|roborock|irobot)\b/i.test(normalizedEnvelope)
+      ? "robot vacuum robotstofzuiger roborock irobot"
+      : /\b(ps5|dualsense|playstation controller)\b/i.test(normalizedEnvelope)
+        ? "ps5 dualsense wireless controller"
+        : "";
+  const categoryFallback =
+    canonicalQuery.category === "furniture"
+      ? "corner sofa hoekbank couch living room"
+      : canonicalQuery.category === "beauty"
+        ? "skincare serum beauty"
+        : canonicalQuery.category === "home"
+          ? "home appliance household"
+          : canonicalQuery.category === "electronics"
+            ? "electronics device"
+            : canonicalQuery.productType !== "unknown"
+              ? canonicalQuery.productType
+              : "";
   const fallbackQueries = [
     [canonicalQuery.brand, canonicalQuery.model, canonicalQuery.variant, canonicalQuery.productType !== "unknown" ? canonicalQuery.productType : ""]
       .filter(Boolean)
       .join(" "),
+    productSpecificFallback,
+    semanticFallback,
+    categoryFallback,
     canonicalQuery.upstreamQuery,
     canonicalQuery.normalizedQuery,
     query,
   ];
+
+  if (primary.ok && primary.products.length >= 8) return primary;
+
+  const merged = new Map<string, QuantProduct>();
+  if (primary.ok) {
+    for (const product of primary.products) merged.set(product.link || product.title, product);
+  }
   const seen = new Set<string>();
   for (const fallbackQuery of fallbackQueries) {
     const q = fallbackQuery.replace(/\s+/g, " ").trim();
     const key = q.toLowerCase();
     if (!q || seen.has(key) || key === canonicalQuery.upstreamQuery.toLowerCase()) continue;
     seen.add(key);
-    const recovered = await fetchShoppingProducts(q);
-    if (recovered.ok) return recovered;
+    const recovered = await fetchShoppingProducts(q, { ...canonicalQuery, upstreamQuery: q });
+    if (recovered.ok) {
+      for (const product of recovered.products) {
+        const productKey = product.link || `${product.store}:${product.title}:${product.price}`;
+        if (!merged.has(productKey)) merged.set(productKey, product);
+      }
+      if (primary.ok && merged.size >= 18) {
+        return { ok: true as const, products: [...merged.values()].slice(0, 60) };
+      }
+      if (!primary.ok && recovered.products.length >= 8) return recovered;
+    }
+  }
+  if (primary.ok && merged.size > primary.products.length) {
+    return { ok: true as const, products: [...merged.values()].slice(0, 60) };
   }
   return primary;
 }
@@ -181,7 +224,7 @@ async function fetchShoppingProductsWithFallback(
 /** Cross-request tray cache — normalized key improves hit rate; short TTL keeps prices fresh. */
 const getCachedSearchPipeline = unstable_cache(
   async (pipelineQuery: string) => runSearchPipeline(pipelineQuery),
-  ["quantai-search-pipeline-v44-launch-finish"],
+  ["quantai-search-pipeline-v46-home-category-evidence"],
   { revalidate: 120 }
 );
 
@@ -289,6 +332,7 @@ function jsonSearch(
 
 type SearchHandleOptions = {
   commerceMemory?: unknown;
+  headers?: Headers;
 };
 
 async function optionalClerkSearchUser(): Promise<{
@@ -307,6 +351,13 @@ async function optionalClerkSearchUser(): Promise<{
   } catch {
     return { userId: null, user: null };
   }
+}
+
+function requestIdentifier(headers?: Headers): string {
+  const forwarded = headers?.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const realIp = headers?.get("x-real-ip")?.trim();
+  const cfIp = headers?.get("cf-connecting-ip")?.trim();
+  return cfIp || realIp || forwarded || "unknown";
 }
 
 async function handleSearch(
@@ -345,8 +396,27 @@ async function handleSearch(
     const requestCanonicalQuery = buildCanonicalQuery(query);
 
     const { userId, user } = await optionalClerkSearchUser();
-    const tier = subscriptionTierFromClerkUser(user);
+    const tier = await resolveServerSubscriptionTier(userId, user);
     const plan = planDefinition(tier);
+
+    if (!userId) {
+      const limited = await enforceLimit(searchRatelimit, `guest:${requestIdentifier(opts?.headers)}`);
+      if (!limited.ok) {
+        return jsonSearch(
+          {
+            success: false,
+            error: "RATE_LIMIT",
+            message: "Guest search is cooling down. Sign in for a larger intelligence window.",
+            data: emptySearchData(),
+            retryAfter: limited.retryAfter,
+          },
+          {
+            status: 429,
+            headers: { "Retry-After": String(limited.retryAfter) },
+          }
+        );
+      }
+    }
 
     if (userId) {
       const usedToday = await countSearchesTodayUtc(userId);
@@ -668,7 +738,7 @@ export async function POST(req: Request) {
         { status: 200 }
       );
     }
-    return await handleSearch(q, { commerceMemory });
+    return await handleSearch(q, { commerceMemory, headers: req.headers });
   } catch (error) {
     console.error("[api/search] fatal", error);
     return NextResponse.json(

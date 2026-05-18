@@ -289,7 +289,7 @@ export default function ProductIntelligenceDrawer({ product: p, list, open, onCl
                 rel="noopener noreferrer"
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-500 py-3 text-sm font-semibold text-slate-950 shadow-[0_0_32px_-8px_rgba(34,211,238,0.4)] transition hover:brightness-105"
               >
-                Inspect offer
+                View retailer
                 <ExternalLink className="size-4 opacity-80" strokeWidth={1.5} aria-hidden />
               </a>
             </footer>

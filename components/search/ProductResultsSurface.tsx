@@ -603,9 +603,18 @@ export default function ProductResultsSurface({
         defaultCollapsed={mobilePerf}
       />
       {sortedProducts.length >= 2 && compareLinks.length === 0 && (
-          <p className="cockpit-body -mt-1 mb-4 text-center text-[12px] leading-snug text-slate-500">
-          Pin <span className="font-medium text-slate-400">Compare</span> on two or three rows to open the decision lab.
-        </p>
+        <div className="-mt-1 mb-4 flex flex-wrap items-center justify-center gap-2 text-center">
+          <p className="cockpit-body text-[12px] leading-snug text-slate-500">
+            Open the decision lab when two offers look close.
+          </p>
+          <button
+            type="button"
+            onClick={() => setCompareLinks(sortedProducts.slice(0, 2).map((p) => p.link))}
+            className="rounded-full border border-cyan-400/14 bg-cyan-500/[0.06] px-3 py-1.5 text-[11px] font-semibold text-cyan-100/90 transition hover:border-cyan-300/25 hover:bg-cyan-400/[0.1]"
+          >
+            Compare top two
+          </button>
+        </div>
       )}
       {sortedProducts.length === 1 && compareLinks.length === 0 && (
         <p className="cockpit-body -mt-1 mb-4 text-center text-[12px] leading-snug text-slate-500">

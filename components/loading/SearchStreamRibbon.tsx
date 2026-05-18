@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
 const STAGES = [
-  { id: "intent", label: "Reading what you meant", sub: "Budget, trust, and the product you have in mind" },
-  { id: "offers", label: "Pulling live offers", sub: "Stores and prices for this exact moment" },
-  { id: "rank", label: "Ranking what matters to you", sub: "Trust, value, and fit—without the noise" },
+  { id: "intent", label: "Understanding the buying mission", sub: "Product identity, budget pressure, region, and intent" },
+  { id: "offers", label: "Scanning live commerce routes", sub: "Trusted stores, marketplaces, and regional offer spread" },
+  { id: "trust", label: "Checking seller and listing risk", sub: "Store trust, suspicious pricing, and weak-listing signals" },
+  { id: "rank", label: "Building the decision tray", sub: "Value, timing, confidence, and safest next move" },
 ] as const;
 
 type Props = {
@@ -31,7 +32,7 @@ export default function SearchStreamRibbon({ active, className = "" }: Props) {
         return;
       }
       setStage(0);
-      const steps = [380, 520, 620];
+      const steps = [320, 460, 540, 660];
       let acc = 0;
       for (let i = 0; i < steps.length; i++) {
         acc += steps[i]!;
