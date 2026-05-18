@@ -9,6 +9,8 @@ import {
   buildProductIdentityConfidence,
   createCanonicalProductIdentity,
   detectCrossRetailIdentity,
+  assessStructuredProductIdentity,
+  sameStructuredIdentityFamily,
 } from "@/lib/intelligence/productIdentity";
 import { buildFamilyPriceMap } from "@/lib/intelligence/marketPriceMap";
 import { buildFamilyMarketConsensus } from "@/lib/intelligence/marketConsensus";
@@ -25,6 +27,7 @@ export type UnifiedMarketGroup = {
   /** Mean pairwise identity confidence inside cluster */
   groupConfidence: number;
   duplicateSpamPenalty: number;
+  identityReasons: string[];
 };
 
 export type UnifiedCardOfferRef = {
@@ -57,6 +60,7 @@ export type UnifiedCardInsight = {
   premiumUpgrade: UnifiedCardOfferRef | null;
   overpricedVsFair: boolean;
   fairMarketRangeLabel: string;
+  identityReasons: string[];
 };
 
 function find(parent: number[], i: number): number {
@@ -149,6 +153,12 @@ export function buildUnifiedMarketGroups(products: QuantProduct[], searchQuery =
   const parent = Array.from({ length: n }, (_, i) => i);
   const identities = products.map((p) => extractProductIdentity(p));
   const listingIds = products.map((p) => resolveQiListingIdentity(p, searchQuery));
+  const structuredIds = products.map((p, i) =>
+    assessStructuredProductIdentity({
+      product: p,
+      listingIdentity: listingIds[i]!,
+    })
+  );
   const prices = products.map((p) => p.price).filter((x) => x > 0);
   const sorted = [...prices].sort((a, b) => a - b);
   const median = sorted.length ? sorted[Math.floor(sorted.length / 2)]! : 0;
@@ -160,7 +170,11 @@ export function buildUnifiedMarketGroups(products: QuantProduct[], searchQuery =
       const sameStoreDup = products[i]!.store.toLowerCase() === products[j]!.store.toLowerCase() && conf >= 0.9;
       const li = listingIds[i]!;
       const lj = listingIds[j]!;
+      const si = structuredIds[i]!;
+      const sj = structuredIds[j]!;
       if (li.listingRisk01 >= 0.84 || lj.listingRisk01 >= 0.84) continue;
+      const identityGate = sameStructuredIdentityFamily(si, sj);
+      if (!identityGate.ok) continue;
 
       const accHeavy = li.accessoryLikelihood01 > 0.58 || lj.accessoryLikelihood01 > 0.58;
       const contamHeavy = li.contaminationRisk01 > 0.52 || lj.contaminationRisk01 > 0.52;
@@ -170,6 +184,7 @@ export function buildUnifiedMarketGroups(products: QuantProduct[], searchQuery =
       const junkPair = junkCommercialRole(li) || junkCommercialRole(lj);
 
       let confMin = accHeavy ? 0.9 : 0.74;
+      confMin = Math.max(confMin, 0.82);
       if (contamHeavy) confMin = Math.max(confMin, 0.87);
       if (mismatchHeavy) confMin = Math.max(confMin, 0.9);
       if (completenessMismatch) confMin = Math.max(confMin, 0.93);
@@ -191,13 +206,17 @@ export function buildUnifiedMarketGroups(products: QuantProduct[], searchQuery =
   for (const idxs of buckets.values()) {
     if (idxs.length < 2) continue;
     const members = idxs.map((i) => products[i]!);
+    const memberStructured = idxs.map((i) => structuredIds[i]!);
     const dupPen = duplicateSpamPenalty01(members);
-    const conf = meanPairConfidence(members, idxs.map((i) => identities[i]!), median) * (1 - dupPen);
+    const identityConfidenceFloor = Math.min(...memberStructured.map((id) => id.confidence01));
+    const conf = meanPairConfidence(members, idxs.map((i) => identities[i]!), median) * (1 - dupPen) * Math.max(0.72, identityConfidenceFloor);
+    const identityReasons = [...new Set(memberStructured.flatMap((id) => id.reasons))].slice(0, 8);
     groups.push({
       familyId: simpleFamilyId(members),
       memberIndices: idxs,
       groupConfidence: Math.max(0.35, Math.min(1, conf)),
       duplicateSpamPenalty: dupPen,
+      identityReasons,
     });
   }
   return groups;
@@ -266,6 +285,7 @@ export function buildUnifiedMarketGroup(products: QuantProduct[], searchQuery = 
         premiumUpgrade: hints.premiumUpgrade,
         overpricedVsFair: hints.overpricedVsFair,
         fairMarketRangeLabel: hints.fairMarketRangeLabel,
+        identityReasons: g.identityReasons,
       });
     }
   }

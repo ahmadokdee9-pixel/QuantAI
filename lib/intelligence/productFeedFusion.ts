@@ -4,10 +4,15 @@
  */
 
 import { combinedTitleSimilarity } from "@/lib/deals/normalizeTitle";
-import { buildProductIdentityConfidence } from "./productIdentity";
+import {
+  assessStructuredProductIdentity,
+  buildProductIdentityConfidence,
+  sameStructuredIdentityFamily,
+} from "./productIdentity";
 import { extractProductIdentity } from "@/lib/deals/productIdentity";
 import { getMarketplaceSellerRiskTier, getStoreTrustScore } from "@/lib/retailTrust";
 import type { QuantProduct } from "@/lib/shoppingScore";
+import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 import { assessUniversalListingIdentity } from "./universalListingIdentity";
 
 function rowKey(p: QuantProduct): string {
@@ -33,12 +38,17 @@ function sameMerchant(a: QuantProduct, b: QuantProduct): boolean {
   return a.store.toLowerCase().trim() === b.store.toLowerCase().trim();
 }
 
-function exactOfferFamily(a: QuantProduct, b: QuantProduct): boolean {
+function exactOfferFamily(a: QuantProduct, b: QuantProduct, query: string, canonicalQuery?: CanonicalQueryContract): boolean {
+  const listingA = a.qiListingIdentity ?? assessUniversalListingIdentity(a, query);
+  const listingB = b.qiListingIdentity ?? assessUniversalListingIdentity(b, query);
+  const structuredA = assessStructuredProductIdentity({ product: a, canonicalQuery, listingIdentity: listingA });
+  const structuredB = assessStructuredProductIdentity({ product: b, canonicalQuery, listingIdentity: listingB });
+  if (!sameStructuredIdentityFamily(structuredA, structuredB).ok) return false;
   const ia = extractProductIdentity(a);
   const ib = extractProductIdentity(b);
   const median = Math.max(a.price, b.price, 1);
   const conf = buildProductIdentityConfidence(a, b, ia, ib, median);
-  return conf >= 0.82;
+  return conf >= 0.84;
 }
 
 function betterRow(a: QuantProduct, b: QuantProduct): QuantProduct {
@@ -59,8 +69,9 @@ export function fuseProductFeeds(args: {
   query: string;
   maxRows?: number;
   preserveExactMerchantOffers?: boolean;
+  canonicalQuery?: CanonicalQueryContract;
 }): QuantProduct[] {
-  const { internal, external, query, maxRows = 96, preserveExactMerchantOffers = true } = args;
+  const { internal, external, query, maxRows = 96, preserveExactMerchantOffers = true, canonicalQuery } = args;
   const merged: QuantProduct[] = [];
   const byKey = new Map<string, QuantProduct>();
   for (const raw of [...internal, ...external]) {
@@ -73,7 +84,7 @@ export function fuseProductFeeds(args: {
   for (const p of byKey.values()) {
     const dup = merged.find((m) => {
       if (!sameMerchant(m, p)) {
-        if (preserveExactMerchantOffers && exactOfferFamily(m, p)) return false;
+        if (preserveExactMerchantOffers && exactOfferFamily(m, p, query, canonicalQuery)) return false;
         return false;
       }
       const sim = combinedTitleSimilarity(m.title, p.title);
@@ -95,6 +106,7 @@ export function mergeExternalAndInternalOffersWithoutEarlyCollapse(args: {
   internal: QuantProduct[];
   external: QuantProduct[];
   query: string;
+  canonicalQuery?: CanonicalQueryContract;
 }): QuantProduct[] {
   return fuseProductFeeds({
     ...args,

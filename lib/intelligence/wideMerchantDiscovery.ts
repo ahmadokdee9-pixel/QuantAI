@@ -173,6 +173,7 @@ export function mergeExternalAndInternalOffersWithoutEarlyCollapse(args: {
   internal: QuantProduct[];
   external: QuantProduct[];
   query: string;
+  canonicalQuery?: CanonicalQueryContract;
 }): QuantProduct[] {
   return fuseProductFeeds({
     ...args,

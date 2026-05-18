@@ -19,6 +19,7 @@ import {
 import { buildDealClusters } from "@/lib/deals";
 import { buildSearchIntelligence } from "@/lib/intelligence/searchDecisionEngine";
 import { runLiveCommerceDiscovery, type LiveCommerceDiscoveryMeta } from "@/lib/intelligence/liveCommerceDiscovery";
+import { buildIdentityDebugSummary } from "@/lib/intelligence/productIdentity";
 import { intentMatchEnvelope } from "@/lib/intelligence/searchIntentV2";
 import { enforceLimit, searchRatelimit } from "@/lib/rate-limit";
 import { entitlementsForTier } from "@/lib/subscription/entitlements";
@@ -134,6 +135,7 @@ function searchDebugMeta(args: {
   errorState?: string | null;
 }): Record<string, unknown> {
   const { products, liveDiscovery = null, canonicalQuery = null, fallbackReason = null, errorState = null } = args;
+  const identityDebug = canonicalQuery ? buildIdentityDebugSummary(products, canonicalQuery) : null;
   return {
     productCount: products.length,
     productsCount: products.length,
@@ -143,6 +145,7 @@ function searchDebugMeta(args: {
     liveDiscoveryStatus: liveDiscovery?.status ?? null,
     liveDiscoverySource: liveDiscovery?.source ?? null,
     canonicalQuery: canonicalQuery ? canonicalQueryForDebug(canonicalQuery) : null,
+    identityDebug,
   };
 }
 
@@ -341,6 +344,7 @@ async function handleSearch(
         commerceAiEngine: resolveCommerceAiEngine(),
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),
         canonicalQuery: canonicalQueryForDebug(canonicalQuery),
+        identityDebug: debugMeta.identityDebug,
         liveDiscovery,
         liveDiscoveryStatus: liveDiscovery.status,
         searchDebug: debugMeta,

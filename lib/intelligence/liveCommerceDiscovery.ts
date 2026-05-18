@@ -57,6 +57,7 @@ export async function runLiveCommerceDiscovery(
     internal: internalProducts,
     external: refresh.products,
     query,
+    canonicalQuery,
   });
   const products = rankLiveDeals(fused, query);
   return {

@@ -5,6 +5,9 @@
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { extractProductIdentity, type ProductIdentity } from "@/lib/deals/productIdentity";
 import { identityMatchScore } from "@/lib/deals/identityMatchScore";
+import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
+import type { QiListingIdentity } from "@/lib/intelligence/listingIdentityTypes";
+import { normalizeCommercialRoles } from "@/lib/intelligence/normalizeIntelligenceSignals";
 import {
   normalizeColorKey,
   normalizeConditionLabel,
@@ -21,6 +24,30 @@ export type CanonicalProductIdentity = {
   variantFingerprint: string;
   condition: ReturnType<typeof normalizeConditionLabel>;
   normalizedTitleHint: string;
+};
+
+export type StructuredIdentityRelation =
+  | "exact_product"
+  | "same_product_family"
+  | "variant"
+  | "accessory"
+  | "compatible_item"
+  | "replacement_part"
+  | "bundle"
+  | "refurbished_used"
+  | "fake_placeholder"
+  | "wrong_product"
+  | "unknown";
+
+export type StructuredProductIdentity = {
+  relation: StructuredIdentityRelation;
+  confidence01: number;
+  isMainProduct: boolean;
+  isSafeSameFamilyCandidate: boolean;
+  reasons: string[];
+  brandKey: string;
+  modelKey: string;
+  variantFingerprint: string;
 };
 
 /** Collapse brand + primary model tokens for identity keys. */
@@ -64,6 +91,214 @@ export function createCanonicalProductIdentity(p: QuantProduct): CanonicalProduc
     condition,
     normalizedTitleHint,
   };
+}
+
+function clamp01(n: number): number {
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(1, Math.max(0, n));
+}
+
+function listingBlob(p: QuantProduct): string {
+  return `${p.title} ${Array.isArray(p.extensions) ? p.extensions.join(" ") : ""} ${p.availability ?? ""}`.toLowerCase();
+}
+
+function queryAllowsAccessory(canonicalQuery?: CanonicalQueryContract): boolean {
+  const q = canonicalQuery?.originalQuery.toLowerCase() ?? "";
+  return /\b(case|cover|hoesje|protector|charger|cable|adapter|strap|band|screenprotector)\b/i.test(q);
+}
+
+function relationFromCommercialText(blob: string): { relation: StructuredIdentityRelation | null; reasons: string[] } {
+  const reasons: string[] = [];
+  if (/\b(dummy|placeholder|prop phone|fake shell|box only|empty box|display dummy|non[-\s]?functional)\b/i.test(blob)) {
+    reasons.push("placeholder_or_non_functional_listing");
+    return { relation: "fake_placeholder", reasons };
+  }
+  if (/\b(for parts|replacement part|spare part|screen replacement|battery replacement|camera lens replacement|sim tray|charging port|logic board|motherboard)\b/i.test(blob)) {
+    reasons.push("replacement_or_parts_language");
+    return { relation: "replacement_part", reasons };
+  }
+  if (/\b(compatible with|made for|for iphone|for galaxy|for airpods|voor iphone|voor galaxy|fits)\b/i.test(blob)) {
+    reasons.push("compatible_with_language");
+    return { relation: "compatible_item", reasons };
+  }
+  if (/\b(case only|cover only|charging case|protective case|wallet case|phone case|airpods case|hoesje|screen protector|tempered glass|charger|charging cable|usb[-\s]?c cable|adapter)\b/i.test(blob)) {
+    reasons.push("accessory_language");
+    return { relation: "accessory", reasons };
+  }
+  if (/\b(bundle|set|kit|with case|with charger|starter pack)\b/i.test(blob)) {
+    reasons.push("bundle_language");
+    return { relation: "bundle", reasons };
+  }
+  if (/\b(refurbished|renewed|used|second[-\s]?hand|pre[-\s]?owned|occasion|gereviseerd|مستعمل|مستعملة)\b/i.test(blob)) {
+    reasons.push("used_or_refurbished_language");
+    return { relation: "refurbished_used", reasons };
+  }
+  return { relation: null, reasons };
+}
+
+function hasModelEvidence(identity: ProductIdentity, canonicalQuery?: CanonicalQueryContract): boolean {
+  const model = canonicalQuery?.model?.toLowerCase().replace(/\s+/g, "");
+  if (!model) return identity.models.length > 0 || identity.identifiers.length > 0;
+  return identity.models.some((m) => m.toLowerCase().replace(/\s+/g, "").includes(model) || model.includes(m.toLowerCase().replace(/\s+/g, "")));
+}
+
+function hasBrandEvidence(identity: ProductIdentity, canonicalQuery?: CanonicalQueryContract): boolean {
+  const brand = canonicalQuery?.brand?.toLowerCase();
+  if (!brand) return identity.brands.length > 0;
+  return identity.brands.some((b) => b === brand || (brand === "apple" && b === "apple") || b.includes(brand));
+}
+
+function categoryEvidence(p: QuantProduct, canonicalQuery?: CanonicalQueryContract): boolean {
+  const category = canonicalQuery?.category;
+  if (!category || category === "unknown") return true;
+  const blob = listingBlob(p);
+  if (category === "phone") return /\b(phone|iphone|galaxy|pixel|smartphone|mobile)\b/i.test(blob);
+  if (category === "audio") return /\b(airpods?|earbuds?|headphones?|wireless audio|noise cancelling)\b/i.test(blob);
+  if (category === "shoes") return /\b(shoe|sneaker|trainer|samba|gazelle|air force|adidas|nike)\b/i.test(blob);
+  if (category === "furniture") return /\b(sofa|couch|corner sofa|chair|table|furniture|كنبة)\b/i.test(blob);
+  if (category === "electronics") return /\b(monitor|display|gpu|camera|tablet|console|tv|electronics?)\b/i.test(blob);
+  return true;
+}
+
+export function assessStructuredProductIdentity(args: {
+  product: QuantProduct;
+  canonicalQuery?: CanonicalQueryContract;
+  listingIdentity?: QiListingIdentity | null;
+}): StructuredProductIdentity {
+  const { product, canonicalQuery, listingIdentity } = args;
+  const identity = extractProductIdentity(product);
+  const canonical = createCanonicalProductIdentity(product);
+  const blob = listingBlob(product);
+  const reasons: string[] = [];
+  const commercial = relationFromCommercialText(blob);
+  reasons.push(...commercial.reasons);
+
+  const roles = normalizeCommercialRoles(listingIdentity?.commercialRoles);
+  const accessoryRisk = listingIdentity?.accessoryLikelihood01 ?? 0;
+  const contaminationRisk = listingIdentity?.contaminationRisk01 ?? 0;
+  const mismatch = listingIdentity?.semanticMismatchPenalty01 ?? 0;
+
+  let relation = commercial.relation;
+  if (!relation && roles.includes("replacement_part")) {
+    relation = "replacement_part";
+    reasons.push("ontology_replacement_part");
+  }
+  if (!relation && (roles.includes("accessory") || roles.includes("charging_case_component") || roles.includes("single_audio_piece"))) {
+    relation = "accessory";
+    reasons.push("ontology_accessory_or_component");
+  }
+  if (!relation && (roles.includes("used_inventory") || roles.includes("refurbished_inventory"))) {
+    relation = "refurbished_used";
+    reasons.push("ontology_used_or_refurbished");
+  }
+  if (!relation && roles.includes("bundle_listing")) {
+    relation = "bundle";
+    reasons.push("ontology_bundle");
+  }
+  if (!relation && (roles.includes("replica_risk") || roles.includes("packaging_only"))) {
+    relation = "fake_placeholder";
+    reasons.push("ontology_fake_or_packaging_only");
+  }
+  if (!relation && accessoryRisk >= 0.68) {
+    relation = "accessory";
+    reasons.push("high_accessory_likelihood");
+  }
+
+  const brand = hasBrandEvidence(identity, canonicalQuery);
+  const model = hasModelEvidence(identity, canonicalQuery);
+  const category = categoryEvidence(product, canonicalQuery);
+  if (brand) reasons.push("brand_evidence");
+  if (model) reasons.push("model_or_identifier_evidence");
+  if (category) reasons.push("category_evidence");
+  if (identity.identifiers.length > 0) reasons.push("identifier_evidence");
+
+  if (!relation) {
+    if (!category && canonicalQuery?.category !== "unknown") relation = "wrong_product";
+    else if (brand && model) relation = "exact_product";
+    else if (brand || model || category) relation = "same_product_family";
+    else relation = "unknown";
+  }
+
+  const accessoryAllowed = queryAllowsAccessory(canonicalQuery);
+  const isAccessoryLike = relation === "accessory" || relation === "compatible_item" || relation === "replacement_part";
+  const isBad = relation === "fake_placeholder" || relation === "wrong_product";
+  const isMainProduct =
+    !isBad &&
+    (!isAccessoryLike || accessoryAllowed) &&
+    relation !== "replacement_part" &&
+    contaminationRisk < 0.7 &&
+    mismatch < 0.72;
+  const exactEvidence = relation === "exact_product" || (brand && model) || identity.identifiers.length > 0;
+  const isSafeSameFamilyCandidate =
+    isMainProduct &&
+    exactEvidence &&
+    listingIdentity?.productCompleteness !== "accessory_only" &&
+    listingIdentity?.productCompleteness !== "parts_or_subassembly";
+
+  let confidence01 = 0.34;
+  if (category) confidence01 += 0.14;
+  if (brand) confidence01 += 0.16;
+  if (model) confidence01 += 0.2;
+  if (identity.identifiers.length > 0) confidence01 += 0.18;
+  if (relation === "variant" || relation === "bundle" || relation === "refurbished_used") confidence01 += 0.04;
+  if (isAccessoryLike && !accessoryAllowed) confidence01 -= 0.24;
+  if (isBad) confidence01 -= 0.3;
+  confidence01 -= contaminationRisk * 0.16 + mismatch * 0.12;
+
+  return {
+    relation,
+    confidence01: clamp01(confidence01),
+    isMainProduct,
+    isSafeSameFamilyCandidate,
+    reasons: [...new Set(reasons)].slice(0, 8),
+    brandKey: canonical.brandKey,
+    modelKey: canonical.modelKey,
+    variantFingerprint: canonical.variantFingerprint,
+  };
+}
+
+export function sameStructuredIdentityFamily(
+  a: StructuredProductIdentity,
+  b: StructuredProductIdentity
+): { ok: boolean; reason: string } {
+  if (!a.isSafeSameFamilyCandidate || !b.isSafeSameFamilyCandidate) {
+    return { ok: false, reason: "unsafe_identity_candidate" };
+  }
+  if (a.brandKey !== "unknown" && b.brandKey !== "unknown" && a.brandKey !== b.brandKey) {
+    return { ok: false, reason: "brand_conflict" };
+  }
+  if (a.modelKey && b.modelKey && a.modelKey !== b.modelKey) {
+    return { ok: false, reason: "model_conflict" };
+  }
+  return { ok: true, reason: "strong_brand_model_identity" };
+}
+
+export function buildIdentityDebugSummary(
+  products: QuantProduct[],
+  canonicalQuery?: CanonicalQueryContract
+): Record<string, unknown> {
+  const rows = products.slice(0, 12).map((product) => {
+    const id = assessStructuredProductIdentity({
+      product,
+      canonicalQuery,
+      listingIdentity: product.qiListingIdentity ?? null,
+    });
+    return {
+      title: product.title.slice(0, 120),
+      store: product.store,
+      relation: id.relation,
+      confidence01: Number(id.confidence01.toFixed(2)),
+      isMainProduct: id.isMainProduct,
+      isSafeSameFamilyCandidate: id.isSafeSameFamilyCandidate,
+      reasons: id.reasons,
+    };
+  });
+  const counts = rows.reduce<Record<string, number>>((acc, row) => {
+    const key = String(row.relation);
+    acc[key] = (acc[key] ?? 0) + 1;
+    return acc;
+  }, {});
+  return { counts, topRows: rows };
 }
 
 /** 0–1 confidence two rows are the same product (uses deals identity + price sanity). */

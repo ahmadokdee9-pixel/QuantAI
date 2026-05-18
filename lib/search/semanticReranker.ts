@@ -8,6 +8,7 @@ import { getMarketplaceSellerRiskTier, getStoreTrustScore } from "@/lib/retailTr
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { ratingValue } from "@/lib/shoppingScore";
 import { normalizeQiListingIdentity } from "@/lib/intelligence/normalizeIntelligenceSignals";
+import { assessStructuredProductIdentity } from "@/lib/intelligence/productIdentity";
 import { queryListingRelevance01 } from "@/lib/intelligence/queryRelevance";
 import {
   buildSearchQueryUnderstanding,
@@ -126,7 +127,13 @@ function budgetPremiumFit(q: SemanticQueryUnderstanding, p: QuantProduct, median
   return clamp(score, 0, 1);
 }
 
-function semanticScore(q: SemanticQueryUnderstanding, p: QuantProduct, list: QuantProduct[], medianPrice: number): number {
+function semanticScore(
+  q: SemanticQueryUnderstanding,
+  p: QuantProduct,
+  list: QuantProduct[],
+  medianPrice: number,
+  canonicalQuery?: CanonicalQueryContract
+): number {
   const text = normText(p);
   const trust = getStoreTrustScore(p.store) / 100;
   const id = p.qiListingIdentity ? normalizeQiListingIdentity(p.qiListingIdentity) : null;
@@ -160,6 +167,12 @@ function semanticScore(q: SemanticQueryUnderstanding, p: QuantProduct, list: Qua
     score -= id.accessoryLikelihood01 * (q.productCategory === "unknown" ? 4 : 13);
     score += id.bundleIntegrity01 * 5;
   }
+  const structured = assessStructuredProductIdentity({ product: p, canonicalQuery, listingIdentity: id });
+  if (structured.relation === "exact_product") score += 5;
+  else if (structured.relation === "same_product_family" || structured.relation === "variant") score += 2.5;
+  else if (!structured.isMainProduct) score -= 14;
+  if (structured.relation === "compatible_item" || structured.relation === "replacement_part") score -= 8;
+  if (structured.relation === "fake_placeholder" || structured.relation === "wrong_product") score -= 18;
   if (mp === "high") score -= 9;
   else if (mp === "medium") score -= 3.5;
   score += (listingTextQuality01(p.title) - 0.5) * 9;
@@ -169,10 +182,13 @@ function semanticScore(q: SemanticQueryUnderstanding, p: QuantProduct, list: Qua
   return score;
 }
 
-function isHardJunk(q: SemanticQueryUnderstanding, p: QuantProduct, score: number): boolean {
+function isHardJunk(q: SemanticQueryUnderstanding, p: QuantProduct, score: number, canonicalQuery?: CanonicalQueryContract): boolean {
   const id = p.qiListingIdentity ? normalizeQiListingIdentity(p.qiListingIdentity) : null;
   const trust = getStoreTrustScore(p.store);
   if (id?.commercialRoles.includes("replica_risk") || id?.commercialRoles.includes("packaging_only")) return true;
+  const structured = assessStructuredProductIdentity({ product: p, canonicalQuery, listingIdentity: id });
+  if (structured.relation === "fake_placeholder" || structured.relation === "wrong_product") return true;
+  if ((structured.relation === "compatible_item" || structured.relation === "replacement_part") && q.productCategory !== "unknown") return true;
   if (id && id.semanticMismatchPenalty01 >= 0.72 && id.contaminationRisk01 >= 0.68) return true;
   if (q.productCategory !== "unknown" && id && id.accessoryLikelihood01 >= 0.82 && id.semanticMismatchPenalty01 >= 0.5) return true;
   if (getMarketplaceSellerRiskTier(p.store, p.title) === "high" && trust < 42 && score < 36) return true;
@@ -192,10 +208,10 @@ export function semanticRerankSearchResults(
   const scored = products.map((p, index) => ({
     p,
     index,
-    score: semanticScore(q, p, products, medianPrice),
+    score: semanticScore(q, p, products, medianPrice, canonicalQuery),
   }));
 
-  const survivors = scored.filter((x) => !isHardJunk(q, x.p, x.score));
+  const survivors = scored.filter((x) => !isHardJunk(q, x.p, x.score, canonicalQuery));
   const pool = survivors.length >= Math.min(5, products.length) ? survivors : scored;
 
   return pool

@@ -1,7 +1,9 @@
 const BASE_URL = process.env.SEARCH_BASE_URL || "http://localhost:3000";
 const QUERIES = [
   "iphone 16",
+  "iphone 16 case",
   "airpods",
+  "airpods case",
   "sofa",
   "adidas samba",
   "gaming monitor",
