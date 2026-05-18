@@ -136,9 +136,79 @@ function worthBuyingHeadline(
 
 /** Surface scan — short phrases only. */
 function worthBuyingShort(w: ProductDealIntelligence["worthBuyingNow"], hasDiscount: boolean): string {
-  if (w === "yes") return hasDiscount ? "Favorable · Discount + trust" : "Favorable · Value + trust";
-  if (w === "wait") return hasDiscount ? "Hold · Verify the price story" : "Hold · Value timing";
-  return "Review · Check seller";
+  if (w === "yes") return hasDiscount ? "Buy thesis · clean discount" : "Buy thesis · value holds";
+  if (w === "wait") return hasDiscount ? "Hold thesis · verify markdown" : "Hold thesis · timing soft";
+  return "Analyst check · seller terms";
+}
+
+function premiumDecisionCopy(action?: string): {
+  label: string;
+  line: string;
+  cls: string;
+} {
+  switch (action) {
+    case "BUY_NOW":
+      return {
+        label: "Buy window",
+        line: "Price, trust, and timing are aligned enough to move.",
+        cls: "border-emerald-400/24 bg-emerald-500/[0.08] text-emerald-50/95",
+      };
+    case "SAFE_TRUSTED_OFFER":
+      return {
+        label: "Trusted offer",
+        line: "Safer seller profile with a defensible market price.",
+        cls: "border-cyan-400/24 bg-cyan-500/[0.08] text-cyan-50/95",
+      };
+    case "BEST_REGIONAL_DEAL":
+      return {
+        label: "Regional edge",
+        line: "Local-market fit is stronger than the wider tray.",
+        cls: "border-emerald-400/24 bg-emerald-500/[0.08] text-emerald-50/95",
+      };
+    case "HIDDEN_VALUE":
+      return {
+        label: "Hidden value",
+        line: "Underpriced versus the tray without obvious quality collapse.",
+        cls: "border-violet-400/24 bg-violet-500/[0.08] text-violet-50/95",
+      };
+    case "STRONG_VALUE":
+      return {
+        label: "Strong value",
+        line: "Good price-to-trust balance versus comparable listings.",
+        cls: "border-cyan-400/20 bg-cyan-500/[0.065] text-cyan-50/90",
+      };
+    case "WAIT_FOR_DROP":
+    case "DISCOUNT_LIKELY_SOON":
+      return {
+        label: "Wait window",
+        line: "Market timing suggests patience may improve the entry price.",
+        cls: "border-amber-400/24 bg-amber-500/[0.075] text-amber-50/92",
+      };
+    case "PREMIUM_PRICING":
+      return {
+        label: "Premium price",
+        line: "Higher than the market band; justify it on seller safety or specs.",
+        cls: "border-violet-400/22 bg-violet-500/[0.07] text-violet-50/92",
+      };
+    case "RISKY_SELLER":
+      return {
+        label: "Risk watch",
+        line: "Seller or listing signals need verification before checkout.",
+        cls: "border-rose-400/24 bg-rose-500/[0.075] text-rose-50/92",
+      };
+    case "HIGH_VOLATILITY":
+      return {
+        label: "Volatile market",
+        line: "Wide price movement in this tray; compare before committing.",
+        cls: "border-amber-400/22 bg-amber-500/[0.065] text-amber-50/90",
+      };
+    default:
+      return {
+        label: "Compare first",
+        line: "A credible option, but the tray has meaningful alternatives.",
+        cls: "border-white/[0.1] bg-white/[0.04] text-slate-200/90",
+      };
+  }
 }
 
 function stancePresentation(stance: BuyStance): {
@@ -430,6 +500,13 @@ function ProductResultCard({
   }, [resolved.predictiveBadge, p.qiPredictive]);
   const stanceUi = stancePresentation(mergedBuyDecision.stance);
   const StanceIcon = stanceUi.Icon;
+  const buyingDecision = p.qiBuyingDecision;
+  const premiumDecision = useMemo(
+    () => premiumDecisionCopy(buyingDecision?.action),
+    [buyingDecision?.action]
+  );
+  const decisionReason = buyingDecision?.primaryReasons?.[0] ?? buyingDecision?.analystLine ?? premiumDecision.line;
+  const decisionConfidence = buyingDecision?.confidence ?? buyingDecision?.decisionScore ?? Math.round(scoreNorm);
 
   const signalsTerminalWhy = useMemo(() => {
     if (resolved.whyThisProduct) return clip(resolved.whyThisProduct, 128);
@@ -532,7 +609,7 @@ function ProductResultCard({
             {unifiedMarket && unifiedMarket.storeCount >= 2 ? (
               <div className="mt-2 rounded-lg border border-white/[0.05] bg-white/[0.02] px-2 py-1.5 text-[9px] leading-snug text-slate-400/95">
                 <p>
-                  <span className="font-semibold text-slate-300/90">Same product family</span>
+                  <span className="font-semibold text-slate-300/90">Matched market set</span>
                   {" · "}
                   {unifiedMarket.storeCount} stores found · {unifiedMarket.marketSpreadPct}% market spread
                 </p>
@@ -556,7 +633,7 @@ function ProductResultCard({
                 </p>
                 {unifiedMarket.sameItemCheaper && !unifiedMarket.isBestTrustedInFamily ? (
                   <p className="mt-0.5 text-amber-200/88 [overflow-wrap:anywhere]">
-                    Same item found cheaper · {unifiedMarket.sameItemCheaper.store}{" "}
+                    Lower trusted route · {unifiedMarket.sameItemCheaper.store}{" "}
                     {formatListingPrice(unifiedMarket.sameItemCheaper.price, sym)}
                   </p>
                 ) : null}
@@ -564,18 +641,18 @@ function ProductResultCard({
                 unifiedMarket.betterValueAlternative.link !== p.link &&
                 unifiedMarket.betterValueAlternative.link !== unifiedMarket.sameItemCheaper?.link ? (
                   <p className="mt-0.5 text-cyan-200/85 [overflow-wrap:anywhere]">
-                    Better value alternative · {unifiedMarket.betterValueAlternative.store}{" "}
+                    Better value route · {unifiedMarket.betterValueAlternative.store}{" "}
                     {formatListingPrice(unifiedMarket.betterValueAlternative.price, sym)}
                   </p>
                 ) : null}
                 {unifiedMarket.premiumUpgrade && unifiedMarket.premiumUpgrade.link !== p.link ? (
                   <p className="mt-0.5 text-violet-200/85 [overflow-wrap:anywhere]">
-                    Premium upgrade · {unifiedMarket.premiumUpgrade.store}{" "}
+                    Premium-safe route · {unifiedMarket.premiumUpgrade.store}{" "}
                     {formatListingPrice(unifiedMarket.premiumUpgrade.price, sym)}
                   </p>
                 ) : null}
                 {unifiedMarket.overpricedVsFair ? (
-                  <p className="mt-0.5 text-rose-200/85">Overpriced vs fair band for this match.</p>
+                  <p className="mt-0.5 text-rose-200/85">Above the fair band for this matched set.</p>
                 ) : null}
               </div>
             ) : null}
@@ -596,6 +673,25 @@ function ProductResultCard({
                 <span className="text-slate-500/75">Trust</span>
                 <span className="text-slate-300/95">{trust}</span>
               </span>
+            </div>
+
+            <div className={`mt-4 rounded-2xl border px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)] ${premiumDecision.cls}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] opacity-80">
+                    {premiumDecision.label}
+                  </p>
+                  <p className="mt-1 text-[12px] font-semibold leading-snug text-white/95 [overflow-wrap:anywhere]">
+                    {clip(decisionReason, 118)}
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-full border border-white/[0.1] bg-black/25 px-2 py-1 text-[10px] font-semibold tabular-nums text-white/85">
+                  {decisionConfidence}%
+                </span>
+              </div>
+              <p className="mt-1.5 text-[10px] leading-snug text-slate-300/80 [overflow-wrap:anywhere]">
+                {clip(buyingDecision?.analystLine ?? premiumDecision.line, 136)}
+              </p>
             </div>
 
             <div className="mt-5 flex min-w-0 flex-wrap items-end justify-between gap-3 border-b border-white/[0.05] pb-5">
@@ -732,7 +828,7 @@ function ProductResultCard({
               aria-expanded={intelOpen}
             >
               <span className="cockpit-label text-[10px] tracking-[0.12em] text-slate-500/85 group-hover:text-slate-400/95">
-                Signals
+                Decision layers
               </span>
               <ChevronDown
                 className={`size-4 shrink-0 text-slate-500/90 transition duration-200 ${intelOpen ? "rotate-180" : ""}`}
@@ -758,7 +854,7 @@ function ProductResultCard({
                   ) : (
                   <div className="mt-2 rounded-2xl border border-white/[0.07] bg-gradient-to-b from-[#070d1a]/95 via-black/35 to-black/20 px-3 py-3.5 sm:px-4 sm:py-4">
                     <div className="flex flex-wrap items-start justify-between gap-2">
-                      <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">Verdict</p>
+                      <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">Purchase read</p>
                       <span
                         className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] ${stanceUi.border} ${stanceUi.bg} ${stanceUi.text}`}
                       >
@@ -788,7 +884,7 @@ function ProductResultCard({
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-3">
                       <div>
-                        <p className="text-[9px] uppercase tracking-wider text-slate-500">QI field</p>
+                        <p className="text-[9px] uppercase tracking-wider text-slate-500">Market fit</p>
                         <p className="text-lg font-semibold tabular-nums text-white">{Math.round(scoreNorm)}</p>
                         <div className="mt-1 h-1 overflow-hidden rounded-full bg-black/50">
                           <div className="h-full rounded-full bg-cyan-400/80" style={{ width: `${scoreNorm}%` }} />
@@ -796,7 +892,7 @@ function ProductResultCard({
                       </div>
                       <div>
                         <p className="text-[9px] uppercase tracking-wider text-slate-500">
-                          {deal.hasDiscount ? "Deal trust" : "List trust"}
+                          {deal.hasDiscount ? "Markdown trust" : "Seller trust"}
                         </p>
                         <p className="text-lg font-semibold tabular-nums text-slate-100">{deal.discountConfidence}</p>
                         <div className="mt-1 h-1 overflow-hidden rounded-full bg-black/50">
@@ -808,15 +904,15 @@ function ProductResultCard({
                       </div>
                     </div>
                     <div className="mt-3 border-t border-white/[0.05] pt-2.5">
-                      <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-500">Why it matters</p>
+                      <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-500">Commerce thesis</p>
                       <p className="mt-0.5 text-[10px] leading-snug text-slate-300/95">{signalsTerminalWhy}</p>
                     </div>
                     <div className="mt-2">
-                      <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-rose-200/50">Risk</p>
+                      <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-rose-200/50">Risk lens</p>
                       <p className="mt-0.5 text-[10px] leading-snug text-amber-100/85">{signalsTerminalRisk}</p>
                     </div>
                     <div className="mt-2">
-                      <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-emerald-200/60">Best action</p>
+                      <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-emerald-200/60">Best move</p>
                       <p className="mt-0.5 text-[10px] font-medium leading-snug text-cyan-50/95">{signalsTerminalAction}</p>
                     </div>
                     <div className="mt-2.5 flex flex-wrap gap-1.5 text-[9px] text-slate-500">
@@ -827,7 +923,7 @@ function ProductResultCard({
                         Trust {trust}
                       </span>
                       <span className="rounded-full border border-white/[0.07] bg-black/30 px-2 py-0.5 tabular-nums">
-                        Del {delPct}%
+                        Fulfillment {delPct}%
                       </span>
                       <span className="rounded-full border border-white/[0.07] bg-black/30 px-2 py-0.5 tabular-nums">
                         Stock {stockPct}%
@@ -837,17 +933,17 @@ function ProductResultCard({
                     {p.outboundRouteKind ? (
                       <p className="mt-2 text-[9px] leading-snug text-slate-500/90">
                         {p.outboundRouteKind === "direct_merchant"
-                          ? "Outbound: Direct merchant route"
+                          ? "Route: direct merchant"
                           : p.outboundRouteKind === "merchant_search"
-                            ? "Outbound: Merchant search fallback"
+                            ? "Route: merchant search"
                             : p.outboundRouteKind === "google_interstitial"
-                              ? "Outbound: Google Shopping bridge"
-                              : "Outbound: Google fallback"}
+                              ? "Route: shopping bridge"
+                              : "Route: fallback"}
                       </p>
                     ) : null}
                     <details className="group mt-3 overflow-hidden rounded-xl border border-white/[0.06] bg-black/25">
                       <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 transition hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
-                        <span>Signal depth</span>
+                        <span>Analyst depth</span>
                         <ChevronDown
                           className="size-3.5 shrink-0 text-slate-500 transition group-open:rotate-180"
                           strokeWidth={2}
@@ -875,7 +971,7 @@ function ProductResultCard({
                         <p className="text-[10px] text-violet-200/75 [overflow-wrap:anywhere]">{clip(buyDecision.buyerFit, 100)}</p>
                         <div className="space-y-2.5 text-[10px] leading-snug text-slate-400/95">
                           <div>
-                            <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">Deal engine</p>
+                            <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">Price engine</p>
                             <p className="mt-1 [overflow-wrap:anywhere]">{clip(deal.whyDealGoodOrRisky, 140)}</p>
                             <p className="mt-1 text-slate-500 [overflow-wrap:anywhere]">
                               {clip(
@@ -907,7 +1003,7 @@ function ProductResultCard({
                               </ul>
                             </div>
                             <div>
-                              <p className="text-[9px] font-semibold uppercase text-rose-200/65">Watch</p>
+                              <p className="text-[9px] font-semibold uppercase text-rose-200/65">Verify</p>
                               <ul className="mt-1 space-y-0.5">
                                 {(buyDecision.cons.length ? buyDecision.cons : ["Confirm seller before checkout."]).map(
                                   (line, i) => (
@@ -956,7 +1052,7 @@ function ProductResultCard({
               className="mt-4 flex w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-cyan-400/18 bg-gradient-to-r from-cyan-400/[0.08] to-violet-500/[0.07] py-2.5 text-[11px] font-semibold text-slate-100/95 transition hover:border-cyan-400/26 hover:from-cyan-400/[0.11] hover:to-violet-500/[0.09]"
             >
               <Sparkles className="size-3.5 text-slate-400" strokeWidth={1.5} aria-hidden />
-              QuantAI verdict
+              Open intelligence
               <PanelRight className="size-3.5 opacity-80" strokeWidth={1.5} aria-hidden />
             </motion.button>
 
@@ -981,7 +1077,7 @@ function ProductResultCard({
                 ) : (
                   <Copy className="size-3.5 opacity-85" aria-hidden />
                 )}
-                {cardCopyFlash ? "Copied" : "Export"}
+                {cardCopyFlash ? "Copied" : "Brief"}
               </motion.button>
               {isValidHttpOfferUrl(offerClickUrl) ? (
               <motion.a
@@ -998,7 +1094,7 @@ function ProductResultCard({
                   className="absolute inset-0 bg-gradient-to-r from-cyan-200/0 via-cyan-200/20 to-violet-200/0 opacity-0 transition group-hover:opacity-100"
                   aria-hidden
                 />
-                <span className="relative">View offer</span>
+                <span className="relative">Inspect offer</span>
               </motion.a>
               ) : (
                 <motion.button
@@ -1007,7 +1103,7 @@ function ProductResultCard({
                   title="No reliable outbound link from this listing"
                   className={`${btnRow} relative flex min-w-0 flex-[1.1_1_7rem] cursor-not-allowed items-center justify-center overflow-hidden bg-gradient-to-r from-white/40 via-slate-100/50 to-white/40 px-4 text-slate-600 opacity-55`}
                 >
-                  <span className="relative">View offer</span>
+                  <span className="relative">Inspect offer</span>
                 </motion.button>
               )}
               {addToWatchlist && (
@@ -1017,9 +1113,9 @@ function ProductResultCard({
                   whileHover={lite ? undefined : { scale: 1.015 }}
                   whileTap={{ scale: 0.985 }}
                   className={`${btnRow} border border-violet-400/22 bg-violet-500/10 px-3.5 text-violet-100/90 hover:bg-violet-500/[0.14]`}
-                  title="Add to watchlist"
+                  title="Track price and timing"
                 >
-                  Watch
+                  Track
                 </motion.button>
               )}
               <motion.button

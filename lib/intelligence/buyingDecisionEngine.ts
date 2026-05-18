@@ -30,6 +30,11 @@ export type BuyingDecisionSignal = {
     priceQuality: "underpriced" | "good" | "fair" | "premium" | "overpriced" | "unknown";
     discountConfidence: number;
     volatilityScore: number;
+    regionalSpreadRatio: number;
+    discountProbability: number;
+    premiumMarkupPct: number;
+    historicalConfidence: number;
+    marketTimingConfidence: number;
     seasonalDiscountPattern: boolean;
     pricingAnomaly: "none" | "underpriced_anomaly" | "overpriced" | "fake_markdown_risk";
   };
@@ -52,6 +57,23 @@ export type BuyingDecisionSignal = {
   };
 };
 
+type DecisionTrayStats = {
+  prices: number[];
+  medianPrice: number;
+  averagePrice: number;
+  regionalProducts: QuantProduct[];
+  regionalBaseline: number;
+  regionalSpreadRatio: number;
+  merchantCount: number;
+  merchantCounts: Map<string, number>;
+  sourceCount: number;
+  bestValueScore: number;
+  bestDealStrength: number;
+  cheapestTrustedPrice: number;
+  bestRegionalValueScore: number;
+  historicalConfidence: number;
+};
+
 function clamp(n: number, lo: number, hi: number): number {
   if (!Number.isFinite(n)) return lo;
   return Math.min(hi, Math.max(lo, n));
@@ -69,6 +91,12 @@ function average(nums: number[]): number {
   return clean.length ? clean.reduce((sum, n) => sum + n, 0) / clean.length : 0;
 }
 
+function spreadRatio(prices: number[]): number {
+  const clean = prices.filter((n) => Number.isFinite(n) && n > 0).sort((a, b) => a - b);
+  if (clean.length < 2) return 0;
+  return Number(((clean[clean.length - 1]! - clean[0]!) / Math.max(1, clean[0]!)).toFixed(2));
+}
+
 function regionForStore(store: string): string {
   const s = store.toLowerCase();
   if (/\b(bol|coolblue|wehkamp|hema|blokker|expert|fonq|leen bakker|jysk|praxis|gamma|hornbach|babypark|prenatal|koffie|tuinmeubelland)\b/i.test(s)) return "NL";
@@ -84,6 +112,38 @@ function localFit(product: QuantProduct, canonicalQuery?: CanonicalQueryContract
   const region = regionForStore(product.store);
   if (region === canonicalQuery.market.country) return true;
   return canonicalQuery.market.country === "NL" && region === "EU";
+}
+
+function buildDecisionTrayStats(products: QuantProduct[], canonicalQuery?: CanonicalQueryContract): DecisionTrayStats {
+  const prices = products.map((p) => p.price).filter((n) => n > 0);
+  const regionalProducts = products.filter((p) => localFit(p, canonicalQuery));
+  const stores = products.map((p) => p.store.toLowerCase().trim()).filter(Boolean);
+  const merchantCounts = stores.reduce<Map<string, number>>((acc, store) => {
+    acc.set(store, (acc.get(store) ?? 0) + 1);
+    return acc;
+  }, new Map());
+  const trustedPrices = products.filter((p) => (p.qiCommerceQuality?.merchantTrustConfidence ?? getStoreTrustScore(p.store)) >= 66 && p.price > 0);
+  const sourceCount = new Set(stores).size;
+  const regionalPrices = regionalProducts.map((p) => p.price).filter((n) => n > 0);
+  const marketDepthScore = clamp(products.length * 2.2 + sourceCount * 4.5, 0, 78);
+  const localDepthScore = clamp(regionalProducts.length * 4, 0, 18);
+  const identityScore = clamp(products.filter((p) => p.qiIdentityGate?.identityGatePassed).length * 1.2, 0, 12);
+  return {
+    prices,
+    medianPrice: median(prices),
+    averagePrice: average(prices),
+    regionalProducts,
+    regionalBaseline: median(regionalPrices) || median(prices),
+    regionalSpreadRatio: spreadRatio(regionalPrices.length >= 3 ? regionalPrices : prices),
+    merchantCount: sourceCount,
+    merchantCounts,
+    sourceCount,
+    bestValueScore: Math.max(...products.map((p) => p.qiCommerceQuality?.valueScore ?? 0), 0),
+    bestDealStrength: Math.max(...products.map((p) => p.qiCommerceQuality?.dealStrength ?? 0), 0),
+    cheapestTrustedPrice: Math.min(...trustedPrices.map((p) => p.price), Number.POSITIVE_INFINITY),
+    bestRegionalValueScore: Math.max(...regionalProducts.map((p) => p.qiCommerceQuality?.valueScore ?? 0), 0),
+    historicalConfidence: Math.round(clamp(marketDepthScore + localDepthScore + identityScore, 12, 100)),
+  };
 }
 
 function priceQuality(priceVsMedian: number, fakeRisk: string): BuyingDecisionSignal["priceIntelligence"]["priceQuality"] {
@@ -123,16 +183,19 @@ function chooseAction(args: {
   bestValue: boolean;
   localBest: boolean;
   likelyMove: string;
+  discountProbability: number;
+  historicalConfidence: number;
 }): BuyingDecisionAction {
   if (args.marketplaceRisk === "high" || args.fakeRisk === "high" || args.trust < 42) return "RISKY_SELLER";
   if (args.priceQuality === "overpriced") return args.likelyMove === "down" ? "DISCOUNT_LIKELY_SOON" : "PREMIUM_PRICING";
   if (args.localBest && args.value >= 62 && args.trust >= 55) return "BEST_REGIONAL_DEAL";
   if (args.cheapestTrusted && args.value >= 64) return "SAFE_TRUSTED_OFFER";
   if (args.bestValue && args.value >= 74 && args.deal >= 62) return "HIDDEN_VALUE";
-  if (args.value >= 76 && args.trust >= 62 && args.fakeRisk === "low") return "BUY_NOW";
+  if (args.value >= 76 && args.trust >= 62 && args.fakeRisk === "low" && args.discountProbability < 74) return "BUY_NOW";
+  if (args.marketplaceRisk === "medium" && args.trust < 58) return "COMPARE";
   if (args.value >= 68 && args.deal >= 58) return "STRONG_VALUE";
-  if (args.volatility >= 0.82 && args.likelyMove !== "stable" && (args.value < 64 || args.trust < 58)) return "HIGH_VOLATILITY";
-  if (args.likelyMove === "down") return "WAIT_FOR_DROP";
+  if (args.volatility >= 0.82 && args.likelyMove !== "stable" && args.historicalConfidence >= 45 && (args.value < 64 || args.trust < 58)) return "HIGH_VOLATILITY";
+  if (args.likelyMove === "down" || args.discountProbability >= 76) return "WAIT_FOR_DROP";
   if (args.value < 48 && args.deal < 48) return "WEAK_MARKET_TIMING";
   return "COMPARE";
 }
@@ -143,30 +206,46 @@ export function buildBuyingDecisionLayer(
   canonicalQuery?: CanonicalQueryContract
 ): QuantProduct[] {
   if (!products.length) return products;
+  const stats = buildDecisionTrayStats(products, canonicalQuery);
   const withDecisions = products.map((product) => ({
     ...product,
-    qiBuyingDecision: buildDecision(product, products, query, canonicalQuery),
+    qiBuyingDecision: buildDecision(product, products, stats, query, canonicalQuery),
   }));
   return withDecisions
     .sort((a, b) => {
-      const scoreA = (a.qiComposite ?? 0) + (a.qiBuyingDecision?.decisionScore ?? 0) * 0.055;
-      const scoreB = (b.qiComposite ?? 0) + (b.qiBuyingDecision?.decisionScore ?? 0) * 0.055;
+      const scoreA =
+        (a.qiComposite ?? 0) +
+        (a.qiBuyingDecision?.decisionScore ?? 0) * 0.055 -
+        merchantDiversityPenalty(a, stats);
+      const scoreB =
+        (b.qiComposite ?? 0) +
+        (b.qiBuyingDecision?.decisionScore ?? 0) * 0.055 -
+        merchantDiversityPenalty(b, stats);
       return scoreB - scoreA;
     })
     .map((product, index) => ({ ...product, qiRank: index }));
 }
 
+function merchantDiversityPenalty(product: QuantProduct, stats: DecisionTrayStats): number {
+  const store = product.store.toLowerCase().trim();
+  const merchantShare = (stats.merchantCounts.get(store) ?? 0) / Math.max(1, stats.prices.length);
+  const marketplaceRisk = getMarketplaceSellerRiskTier(product.store, product.title);
+  const ebayPenalty = /\bebay\b/i.test(product.store) ? 2.2 : 0;
+  const marketplacePenalty = marketplaceRisk === "high" ? 3.2 : marketplaceRisk === "medium" ? 1.7 : 0;
+  const floodPenalty = Math.max(0, merchantShare - 0.16) * 18;
+  return clamp(ebayPenalty + marketplacePenalty + floodPenalty, 0, 8);
+}
+
 function buildDecision(
   product: QuantProduct,
   products: QuantProduct[],
+  stats: DecisionTrayStats,
   query: string,
   canonicalQuery?: CanonicalQueryContract
 ): BuyingDecisionSignal {
-  const prices = products.map((p) => p.price).filter((n) => n > 0);
-  const med = median(prices);
-  const avg = average(prices);
-  const regionalProducts = products.filter((p) => localFit(p, canonicalQuery));
-  const regionalBaseline = median(regionalProducts.map((p) => p.price)) || med;
+  const med = stats.medianPrice;
+  const avg = stats.averagePrice;
+  const regionalBaseline = stats.regionalBaseline;
   const quality = product.qiCommerceQuality;
   const trust = quality?.merchantTrustConfidence ?? Math.round(getStoreTrustScore(product.store));
   const value = quality?.valueScore ?? 50;
@@ -191,17 +270,26 @@ function buildDecision(
   const fulfillmentConfidence = clamp(44 + trust * 0.35 + (product.shipping ? 12 : 0) + (product.availability ? 8 : 0) - listingRisk * 22, 0, 100);
   const seasonal = seasonalPattern(query, canonicalQuery);
   const discountConfidence = clamp(deal * 0.54 + (fakeRisk === "low" ? 24 : fakeRisk === "medium" ? 8 : -12) + (sellerTrustworthy ? 10 : 0), 0, 100);
-  const trustedPrices = products.filter((p) => (p.qiCommerceQuality?.merchantTrustConfidence ?? getStoreTrustScore(p.store)) >= 66 && p.price > 0);
-  const cheapestTrustedPrice = Math.min(...trustedPrices.map((p) => p.price), Number.POSITIVE_INFINITY);
-  const bestValue = value >= Math.max(...products.map((p) => p.qiCommerceQuality?.valueScore ?? 0)) - 2;
-  const cheapestTrusted = product.price > 0 && product.price <= cheapestTrustedPrice * 1.015 && sellerTrustworthy;
+  const discountProbability = clamp(
+    discountConfidence * 0.48 +
+      (quality?.volatilitySignals.likelyPriceMove === "down" ? 22 : 0) +
+      (pq === "premium" || pq === "overpriced" ? 14 : 0) +
+      (seasonal ? 8 : 0) -
+      (pq === "good" || pq === "underpriced" ? 10 : 0) -
+      (sellerTrustworthy && quality?.volatilitySignals.likelyPriceMove === "stable" ? 8 : 0),
+    0,
+    100
+  );
+  const bestValue = value >= stats.bestValueScore - 2;
+  const cheapestTrusted = product.price > 0 && product.price <= stats.cheapestTrustedPrice * 1.015 && sellerTrustworthy;
   const premiumSafest = trust >= 82 && pq === "premium" && marketplaceRisk === "low";
-  const bestDiscount = deal >= Math.max(...products.map((p) => p.qiCommerceQuality?.dealStrength ?? 0)) - 2;
+  const bestDiscount = deal >= stats.bestDealStrength - 2;
   const mostStablePrice = volatility <= 0.34 && fakeRisk === "low";
   const lowRiskPurchase = sellerTrustworthy && listingRisk < 0.38 && fakeRisk === "low";
-  const localRows = regionalProducts.filter((p) => (p.qiCommerceQuality?.valueScore ?? 0) >= value + 6 && (p.qiCommerceQuality?.fakeDiscountRisk ?? "low") === "low");
+  const localRows = stats.regionalProducts.filter((p) => (p.qiCommerceQuality?.valueScore ?? 0) >= value + 6 && (p.qiCommerceQuality?.fakeDiscountRisk ?? "low") === "low");
   const betterRegionalOfferLikely = !localFit(product, canonicalQuery) && localRows.length > 0 && (canonicalQuery?.market.localPreference01 ?? 0) >= 0.58;
-  const localBest = localFit(product, canonicalQuery) && value >= Math.max(...regionalProducts.map((p) => p.qiCommerceQuality?.valueScore ?? 0), 0) - 2;
+  const localBest = localFit(product, canonicalQuery) && value >= stats.bestRegionalValueScore - 2;
+  const marketTimingConfidence = Math.round(clamp(stats.historicalConfidence * 0.54 + stats.merchantCount * 2 + (quality ? 18 : 0), 0, 100));
   const action = chooseAction({
     value,
     deal,
@@ -214,6 +302,8 @@ function buildDecision(
     bestValue,
     localBest,
     likelyMove: quality?.volatilitySignals.likelyPriceMove ?? "uncertain",
+    discountProbability,
+    historicalConfidence: stats.historicalConfidence,
   });
   const scamRisk: "low" | "medium" | "high" =
     marketplaceRisk === "high" || fakeRisk === "high" || listingRisk >= 0.76
@@ -231,6 +321,7 @@ function buildDecision(
         completeness * 0.08 +
         (cheapestTrusted ? 8 : 0) +
         (bestValue ? 6 : 0) -
+        merchantDiversityPenalty(product, stats) * 1.4 -
         (betterRegionalOfferLikely ? 8 : 0) -
         (scamRisk === "high" ? 24 : scamRisk === "medium" ? 8 : 0),
       0,
@@ -239,7 +330,7 @@ function buildDecision(
   );
   const reasons = [
     `${pq} price vs market baseline`,
-    `${Math.round(discountConfidence)}/100 discount confidence`,
+    `${Math.round(discountProbability)}/100 discount probability`,
     `${Math.round(fulfillmentConfidence)}/100 fulfillment confidence`,
   ];
   if (cheapestTrusted) reasons.push("cheapest trusted offer in tray");
@@ -267,7 +358,12 @@ function buildDecision(
       regionalBaselineEstimate: Math.round(regionalBaseline || med),
       priceQuality: pq,
       discountConfidence: Math.round(discountConfidence),
+      discountProbability: Math.round(discountProbability),
       volatilityScore: Math.round(volatility * 100),
+      regionalSpreadRatio: stats.regionalSpreadRatio,
+      premiumMarkupPct: Math.round(Math.max(0, priceVsMedian - 1) * 100),
+      historicalConfidence: stats.historicalConfidence,
+      marketTimingConfidence,
       seasonalDiscountPattern: seasonal,
       pricingAnomaly:
         fakeRisk === "high"

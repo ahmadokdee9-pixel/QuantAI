@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
 import { appUrl } from "@/lib/stripe/config";
 import { getStripe } from "@/lib/stripe/client";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 /**
  * Customer Portal — requires STRIPE_SECRET_KEY and a Stripe customer id per user
@@ -15,7 +16,15 @@ export async function POST() {
     }
 
     const stripe = getStripe();
-    const customerId = process.env.STRIPE_CUSTOMER_ID_PLACEHOLDER?.trim();
+    let customerId = process.env.STRIPE_CUSTOMER_ID_PLACEHOLDER?.trim() || "";
+    if (!customerId && supabaseAdmin) {
+      const { data } = await supabaseAdmin
+        .from("user_billing_state")
+        .select("stripe_customer_id")
+        .eq("user_id", userId)
+        .maybeSingle();
+      customerId = typeof data?.stripe_customer_id === "string" ? data.stripe_customer_id : "";
+    }
 
     if (!stripe || !customerId) {
       return jsonOk({

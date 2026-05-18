@@ -36,8 +36,8 @@ export type WideMerchantCandidate = {
 
 const WIDE_MERCHANTS: WideMerchant[] = [
   { key: "bol", label: "bol.com", region: "nl", priority: 98 },
-  { key: "coolblue", label: "Coolblue", region: "nl", priority: 96, cats: ["phone", "laptop", "audio", "electronics", "watch"] },
-  { key: "mediamarkt", label: "MediaMarkt", region: "nl", priority: 93, cats: ["phone", "laptop", "audio", "electronics", "watch"] },
+  { key: "coolblue", label: "Coolblue", region: "nl", priority: 96, cats: ["phone", "laptop", "audio", "electronics", "watch", "home"] },
+  { key: "mediamarkt", label: "MediaMarkt", region: "nl", priority: 93, cats: ["phone", "laptop", "audio", "electronics", "watch", "home"] },
   { key: "amazon", label: "Amazon.nl", region: "nl", priority: 89 },
   { key: "amazon_de", label: "Amazon.de", region: "eu", priority: 84 },
   { key: "amazon_us", label: "Amazon.com", region: "global", priority: 82, countries: ["US", "GLOBAL"] },
@@ -117,6 +117,7 @@ function cleanQuery(s: string): string {
   return s
     .toLowerCase()
     .replace(/\b(cheap|cheaper|discount|deal|deals|best|trusted|safe|buy|now|official|stores?|winkel|kopen)\b/g, " ")
+    .replace(/\b(netherlands|nederland|holland|uk|united kingdom|england|germany|deutschland|france|frankrijk|spain|italy|usa|us)\b/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }

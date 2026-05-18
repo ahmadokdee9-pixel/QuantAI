@@ -96,24 +96,27 @@ function hasAny(s: string, rx: RegExp): boolean {
 }
 
 function detectCategory(s: string): SemanticProductCategory {
+  if (/سيروم|فيتامين\s*سي|كريم|مكياج|عناية|مرطب|واقي\s+شمس/.test(s)) return "beauty";
+  if (/قلاية\s+هوائية|ماكينة\s+قهوة|مكنسة|روبوت\s+مكنسة|عربة\s+اطفال|عربة\s+أطفال/.test(s)) return "home";
+  if (/يد\s+تحكم|كنترولر|بلايستيشن|شاشة|تلفزيون|كاميرا/.test(s)) return "electronics";
   if (hasAny(s, /\b(yeezy|jordan|dunk|air force|samba|gazelle|adidas|nike|sneakers?|trainers?|shoes?|boots?|بوط|حذاء)\b/i)) return "shoes";
   if (hasAny(s, /(iphone|ايفون|آيفون|\bgalaxy\b|\bpixel\b|\bphone\b|\bsmartphone\b|هاتف|جوال|موبايل)/i)) return "phone";
-  if (hasAny(s, /\b(laptop|notebook|macbook|thinkpad|لابتوب)\b/i)) return "laptop";
-  if (hasAny(s, /\b(headphones?|earbuds?|airpods?|bose|سماعات?)\b/i)) return "audio";
+  if (hasAny(s, /\b(gaming laptop|laptop|notebook|macbook|thinkpad|chromebook|ultrabook|لابتوب|لاب\s*توب)\b/i)) return "laptop";
+  if (hasAny(s, /\b(headphones?|earbuds?|airpods?|bose|sony wh|noise cancelling|bluetooth speaker|soundbar|سماعات?|ايربودز)\b/i)) return "audio";
   if (hasAny(s, /\b(clean desk|minimal desk|desk setup|workspace)\b/i)) return "desk_setup";
-  if (hasAny(s, /\b(sofa|sofa bed|sectional|loveseat|settee|couch|corner sofa|recliner|chaise|hoekbank|bankstel|loungebank|fauteuil|chair|stoel|desk|table|tafel|garden table|tuin tafel|tuinmeubel|loungeset|furniture|meubel|meubels|كنبة|طاولة|اثاث|أثاث)\b/i)) return "furniture";
-  if (hasAny(s, /\b(perfume|fragrance|parfum|cologne|eau de parfum|eau de toilette|aftershave|عطر)\b/i)) return "fragrance";
+  if (hasAny(s, /\b(sofa|sofa bed|sectional|loveseat|settee|couch|corner sofa|recliner|chaise|hoekbank|bankstel|loungebank|fauteuil|eetkamerstoel|chair|stoel|desk|bureau|table|tafel|garden table|tuin tafel|tuinmeubel|loungeset|furniture|meubel|meubels|كنبة|اريكة|أريكة|ركنة|زاوية|طاولة|اثاث|أثاث)\b/i)) return "furniture";
+  if (hasAny(s, /\b(perfume|fragrance|parfum|cologne|eau de parfum|eau de toilette|aftershave|niche fragrance|designer fragrance|عطر|عطور|برفان)\b/i)) return "fragrance";
   if (hasAny(s, /\b(watch|smartwatch|ساعة)\b/i)) return "watch";
-  if (hasAny(s, /\b(makeup|skincare|beauty|serum|cream|cosmetic|verzorging)\b/i)) return "beauty";
-  if (hasAny(s, /\b(jacket|winter jacket|jas|winterjas|coat|dress|hoodie|shirt|fashion|outfit|kleding|ملابس|جاكيت)\b/i)) return "fashion";
-  if (hasAny(s, /\b(coffee machine|espresso machine|koffiezetapparaat|koffiemachine|air fryer|airfryer|fryer|heteluchtfriteuse|friteuse|vacuum|stofzuiger|blender|microwave|baby stroller|stroller|pram|buggy|kinderwagen|home|kitchen|bedroom|living room|decor|appliance|apparaat|keuken|عربة\s+اطفال|عربة\s+أطفال)\b/i)) return "home";
-  if (hasAny(s, /\b(gpu|gaming monitor|monitor|beeldscherm|scherm|tv|camera|tablet|console|electronics?|elektronica)\b/i)) return "electronics";
+  if (hasAny(s, /\b(makeup|skincare|beauty|serum|retinol|vitamin c|moisturizer|cleanser|sunscreen|cream|cosmetic|verzorging|huidverzorging|gezichtscreme|zonnebrand|مكياج|سيروم|كريم|عناية)\b/i)) return "beauty";
+  if (hasAny(s, /\b(jacket|winter jacket|puffer|jas|winterjas|coat|dress|hoodie|shirt|jeans|sneaker outfit|fashion|outfit|kleding|dames|heren|ملابس|جاكيت|فستان|هودي)\b/i)) return "fashion";
+  if (hasAny(s, /\b(coffee machine|espresso machine|koffiezetapparaat|koffiemachine|air fryer|airfryer|fryer|heteluchtfriteuse|friteuse|vacuum|stofzuiger|robot vacuum|robotstofzuiger|roomba|dreame|roborock|dyson|blender|microwave|dishwasher|wasmachine|droger|baby stroller|stroller|pram|buggy|kinderwagen|home|kitchen|bedroom|living room|decor|appliance|apparaat|keuken|قلاية\s+هوائية|ماكينة\s+قهوة|مكنسة|عربة\s+اطفال|عربة\s+أطفال)\b/i)) return "home";
+  if (hasAny(s, /\b(gpu|graphics card|gaming monitor|oled monitor|monitor|beeldscherm|scherm|tv|oled tv|qled|camera|tablet|console|controller|dualsense|gamepad|ps5|playstation|xbox|nintendo|keyboard|mouse|electronics?|elektronica|شاشة|تلفزيون|كاميرا|بلايستيشن)\b/i)) return "electronics";
   return "unknown";
 }
 
 function detectAesthetic(s: string): SemanticAestheticDirection {
   if (hasAny(s, /\b(clean|minimal|minimalist|simple|scandi|monochrome|هادئ|بسيط)\b/i)) return "minimal_clean";
-  if (hasAny(s, /\b(premium looking|luxury feel|luxury|fancy|expensive look|quiet luxury|فخم|فاخر)\b/i)) return "premium_luxury";
+  if (hasAny(s, /\b(premium looking|luxury feel|luxury|designer|fancy|expensive look|quiet luxury|high end|luxe|فخم|فاخر|ماركة)\b/i)) return "premium_luxury";
   if (hasAny(s, /\b(sporty|gym|running|streetwear|athletic|رياضي)\b/i)) return "sporty";
   if (hasAny(s, /\b(cozy|soft|warm|living room|comfortable|مريح)\b/i)) return "cozy_home";
   if (hasAny(s, /\b(bold|statement|colorful|rgb|loud|viral)\b/i)) return "bold_statement";
@@ -123,17 +126,17 @@ function detectAesthetic(s: string): SemanticAestheticDirection {
 function detectStyles(s: string, aesthetic: SemanticAestheticDirection): string[] {
   const styles: string[] = [];
   if (aesthetic !== "neutral") styles.push(aesthetic);
-  if (hasAny(s, /\b(premium looking|luxury feel|expensive look|فخم|فاخر)\b/i)) styles.push("premium_look");
+  if (hasAny(s, /\b(premium looking|luxury feel|expensive look|designer|quiet luxury|high end|luxe|فخم|فاخر|ماركة)\b/i)) styles.push("premium_look");
   if (hasAny(s, /\b(clean|minimal|minimalist|desk setup)\b/i)) styles.push("clean_minimal");
   if (hasAny(s, /\b(streetwear|yeezy|jordan|sneakerhead)\b/i)) styles.push("streetwear");
   if (hasAny(s, /\b(ثابت|long lasting|lasts long|projection|sillage)\b/i)) styles.push("long_lasting");
-  if (hasAny(s, /\b(cheap but good|cheap but premium|budget luxury|ارخص|أرخص)\b/i)) styles.push("budget_premium_balance");
+  if (hasAny(s, /\b(cheap but good|cheap but premium|budget luxury|best value|worth it|goede deal|aanbieding|ارخص|أرخص|رخيص بس كويس)\b/i)) styles.push("budget_premium_balance");
   return uniq(styles);
 }
 
 function detectUsageContext(s: string): string[] {
   const ctx: string[] = [];
-  if (hasAny(s, /\b(gaming|gamer|rtx|playstation|xbox|قيمنق|جيمنق|ألعاب)\b/i)) ctx.push("gaming");
+  if (hasAny(s, /\b(gaming|gamer|rtx|fps|hz|refresh rate|playstation|xbox|ps5|قيمنق|جيمنق|ألعاب)\b/i)) ctx.push("gaming");
   if (hasAny(s, /\b(work|office|productivity|business|wfh)\b/i)) ctx.push("work");
   if (hasAny(s, /\b(student|school|college|university|جامعة|مدرسة)\b/i)) ctx.push("student");
   if (hasAny(s, /\b(travel|commute|portable|not heavy|lightweight|خفيف)\b/i)) ctx.push("travel");
@@ -144,8 +147,8 @@ function detectUsageContext(s: string): string[] {
 
 function detectProductPurpose(category: SemanticProductCategory, s: string, usage: string[]): string[] {
   const purpose = [...usage];
-  if (category === "fragrance" && hasAny(s, /\b(ثابت|long lasting|date night|office|daily)\b/i)) purpose.push("scent_performance");
-  if (category === "furniture" && hasAny(s, /\b(premium looking|comfortable|living room|cheap but premium)\b/i)) purpose.push("home_aesthetic");
+  if (category === "fragrance" && hasAny(s, /\b(ثابت|long lasting|date night|office|daily|projection|sillage|summer scent|winter scent)\b/i)) purpose.push("scent_performance");
+  if (category === "furniture" && hasAny(s, /\b(premium looking|comfortable|living room|cheap but premium|hoekbank|corner sofa|زاوية)\b/i)) purpose.push("home_aesthetic");
   if (category === "shoes" && hasAny(s, /\b(yeezy|streetwear|running|gym|daily)\b/i)) purpose.push("style_reference");
   if (category === "laptop" && hasAny(s, /\b(not heavy|lightweight|portable)\b/i)) purpose.push("portable_power");
   if (category === "desk_setup") purpose.push("workspace_aesthetic");
@@ -175,13 +178,14 @@ function semanticKeywordsFor(q: {
   if (q.category === "phone") words.push("phone", "smartphone", "iphone", "galaxy", "pixel");
   if (q.category === "laptop") words.push("laptop", "notebook", "ultrabook", "portable", "computer");
   if (q.category === "audio") words.push("headphone", "earbud", "wireless", "audio", "noise cancelling");
-  if (q.category === "furniture") words.push("sofa", "couch", "chair", "furniture", "living room");
-  if (q.category === "fragrance") words.push("perfume", "fragrance", "parfum", "cologne", "eau");
+  if (q.category === "furniture") words.push("sofa", "couch", "chair", "furniture", "living room", "hoekbank", "corner sofa");
+  if (q.category === "fragrance") words.push("perfume", "fragrance", "parfum", "cologne", "eau", "designer", "niche");
   if (q.category === "watch") words.push("watch", "smartwatch", "wearable", "wrist");
   if (q.category === "desk_setup") words.push("desk", "workspace", "monitor", "keyboard", "minimal");
-  if (q.category === "home") words.push("home", "kitchen", "appliance", "coffee", "machine", "stroller", "baby", "air fryer", "airfryer");
-  if (q.category === "fashion") words.push("fashion", "clothing", "jacket", "coat", "style");
-  if (q.category === "beauty") words.push("beauty", "skincare", "cosmetic", "care");
+  if (q.category === "home") words.push("home", "kitchen", "appliance", "coffee", "machine", "stroller", "baby", "air fryer", "airfryer", "vacuum", "robot vacuum", "roomba", "roborock");
+  if (q.category === "electronics") words.push("electronics", "monitor", "tv", "gaming", "display", "console", "controller", "dualsense", "playstation");
+  if (q.category === "fashion") words.push("fashion", "clothing", "jacket", "coat", "style", "outfit");
+  if (q.category === "beauty") words.push("beauty", "skincare", "cosmetic", "serum", "cream", "care");
   if (q.aesthetic === "minimal_clean") words.push("clean", "minimal", "simple", "white", "black", "wood", "matte");
   if (q.aesthetic === "premium_luxury") words.push("premium", "luxury", "pro", "leather", "metal", "designer");
   if (q.styles.includes("long_lasting")) words.push("long lasting", "intense", "eau de parfum", "parfum");

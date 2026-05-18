@@ -69,7 +69,13 @@ export function buildExternalExpansionQueries(
     if (/ايفون|آيفون/.test(raw)) localizedAliases.push([canonicalQuery?.model ?? "iphone", canonicalQuery?.variant].filter(Boolean).join(" "));
     if (/ايربودز|سماعات/.test(raw)) localizedAliases.push("apple airpods earbuds");
     if (/عطر/.test(raw)) localizedAliases.push("perfume fragrance eau de parfum");
+    if (/سيروم|فيتامين\s*سي|عناية|كريم/.test(raw)) localizedAliases.push("vitamin c serum skincare beauty");
+    if (/مكنسة|روبوت/.test(raw)) localizedAliases.push("robot vacuum roomba roborock");
+    if (/بلايستيشن|كنترولر|يد\s+تحكم/.test(raw)) localizedAliases.push("ps5 dualsense controller");
   }
+  if (/\b(robot vacuum|robotstofzuiger|roomba|roborock)\b/i.test(raw)) localizedAliases.push("robotstofzuiger robot vacuum roomba roborock irobot bol coolblue mediamarkt");
+  if (/\b(ps5 controller|dualsense|playstation controller|gamepad)\b/i.test(raw)) localizedAliases.push("ps5 dualsense controller playstation currys argos john lewis");
+  if (/\b(vitamin c serum|vitamine c serum|beauty serum)\b/i.test(raw)) localizedAliases.push("vitamin c serum skincare beauty");
   return [
     ...localizedAliases,
     ...chunks

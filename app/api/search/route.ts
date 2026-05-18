@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { NextResponse } from "next/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { enrichProductsWithIntelligence } from "@/lib/intelligence/enrichProducts";
 import type { SearchCommerceAIMeta } from "@/lib/intelligence/commerceAnalysisTypes";
 import { attachCommerceAiLayer } from "@/lib/intelligence/commerceAi/attachCommerceAiLayer";
@@ -180,7 +181,7 @@ async function fetchShoppingProductsWithFallback(
 /** Cross-request tray cache — normalized key improves hit rate; short TTL keeps prices fresh. */
 const getCachedSearchPipeline = unstable_cache(
   async (pipelineQuery: string) => runSearchPipeline(pipelineQuery),
-  ["quantai-search-pipeline-v40-decision-action-balance"],
+  ["quantai-search-pipeline-v44-launch-finish"],
   { revalidate: 120 }
 );
 
@@ -294,7 +295,18 @@ async function optionalClerkSearchUser(): Promise<{
   userId: string | null;
   user: { publicMetadata?: Record<string, unknown> } | null;
 }> {
-  return { userId: null, user: null };
+  try {
+    const { userId } = await auth();
+    if (!userId) return { userId: null, user: null };
+    try {
+      const user = await currentUser();
+      return { userId, user };
+    } catch {
+      return { userId, user: null };
+    }
+  } catch {
+    return { userId: null, user: null };
+  }
 }
 
 async function handleSearch(

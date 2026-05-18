@@ -2,6 +2,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
 import { countSearchesTodayUtc } from "@/lib/intelligence/persistence";
 import { stripeSecretKey } from "@/lib/stripe/config";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { entitlementsForTier } from "@/lib/subscription/entitlements";
 import { planDefinition, QUANT_PLANS } from "@/lib/subscription/plans";
 import { subscriptionTierFromClerkUser } from "@/lib/subscription/resolveTier";
@@ -15,7 +16,23 @@ export async function GET() {
     }
 
     const { userId } = await auth();
-    const tier = subscriptionTierFromClerkUser(user);
+    let tier = subscriptionTierFromClerkUser(user);
+    let billingState: Record<string, unknown> | null = null;
+    if (userId && supabaseAdmin) {
+      const { data } = await supabaseAdmin
+        .from("user_billing_state")
+        .select("subscription_tier, status, stripe_customer_id, current_period_end, updated_at")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (data) {
+        billingState = data;
+        const status = typeof data.status === "string" ? data.status : "";
+        const storedTier = data.subscription_tier;
+        if ((status === "active" || status === "trialing") && (storedTier === "pro" || storedTier === "premium")) {
+          tier = storedTier;
+        }
+      }
+    }
     const plan = planDefinition(tier);
     const entitlements = entitlementsForTier(tier);
 
@@ -59,9 +76,10 @@ export async function GET() {
       billing: {
         status: stripeSecretKey() ? "stripe_configured" : "not_connected",
         message: stripeSecretKey()
-          ? "Stripe secret present—complete Checkout price IDs and webhooks to sync Clerk metadata."
-          : "Set STRIPE_SECRET_KEY and webhook to sync `publicMetadata.subscriptionTier`.",
+          ? "Stripe is configured and billing state syncs through the webhook when Supabase is available."
+          : "Set STRIPE_SECRET_KEY and webhook to activate live billing sync.",
         manageUrl: null as string | null,
+        state: billingState,
       },
     });
   } catch {

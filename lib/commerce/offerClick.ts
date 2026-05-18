@@ -5,6 +5,7 @@ import { isGoogleShoppingInterstitial, isGoogleUrl } from "@/lib/search/googleSh
 /** True when href is a safe http(s) URL for an outbound product click. */
 export function isValidHttpOfferUrl(href: string): boolean {
   const t = href.trim();
+  if (t.startsWith("/api/outbound?")) return true;
   if (!t.startsWith("http://") && !t.startsWith("https://")) return false;
   try {
     const u = new URL(t);
@@ -23,7 +24,7 @@ function looksUnsafeProtocol(href: string): boolean {
  * `link` if usable; otherwise merchant-site search (never a bare `#` when avoidable).
  */
 export function resolveOfferClickUrl(
-  p: Pick<QuantProduct, "link" | "offerOutboundUrl" | "store" | "title">
+  p: Pick<QuantProduct, "link" | "offerOutboundUrl" | "store" | "title" | "outboundRouteKind" | "qiBuyingDecision">
 ): string {
   const pickUsable = (u: string | undefined): string | null => {
     if (!u || !isValidHttpOfferUrl(u) || looksUnsafeProtocol(u)) return null;
@@ -32,11 +33,22 @@ export function resolveOfferClickUrl(
     return u;
   };
 
+  const withTracking = (url: string): string => {
+    const params = new URLSearchParams({
+      to: url,
+      merchant: p.store,
+      title: p.title.slice(0, 180),
+    });
+    if (p.outboundRouteKind) params.set("route", p.outboundRouteKind);
+    if (p.qiBuyingDecision?.action) params.set("decision", p.qiBuyingDecision.action);
+    return `/api/outbound?${params.toString()}`;
+  };
+
   const outbound = pickUsable(p.offerOutboundUrl);
-  if (outbound) return outbound;
+  if (outbound) return withTracking(outbound);
 
   const link = pickUsable(p.link);
-  if (link) return link;
+  if (link) return withTracking(link);
 
   const mr = resolveBestOutboundUrl({
     link: typeof p.link === "string" && p.link.startsWith("http") ? p.link : "#",
@@ -44,11 +56,11 @@ export function resolveOfferClickUrl(
     title: p.title,
     geoGl: "nl",
   });
-  if (mr.href.startsWith("http") && mr.kind === "merchant_search") return mr.href;
+  if (mr.href.startsWith("http") && mr.kind === "merchant_search") return withTracking(mr.href);
 
   if (p.offerOutboundUrl && isValidHttpOfferUrl(p.offerOutboundUrl) && !looksUnsafeProtocol(p.offerOutboundUrl)) {
-    return p.offerOutboundUrl;
+    return withTracking(p.offerOutboundUrl);
   }
-  if (p.link && isValidHttpOfferUrl(p.link) && !looksUnsafeProtocol(p.link)) return p.link;
+  if (p.link && isValidHttpOfferUrl(p.link) && !looksUnsafeProtocol(p.link)) return withTracking(p.link);
   return "#";
 }

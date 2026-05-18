@@ -42,10 +42,10 @@ function finalTone(kind: SearchIntelligenceDTO["finalRecommendation"]): string {
 }
 
 function tierLabel(t: SearchIntelligenceDTO["confidenceTier"]): string {
-  if (t === "high") return "Strong confidence in this read";
-  if (t === "moderate") return "Moderate confidence—double-check details";
-  if (t === "low") return "Limited signal—verify before you buy";
-  return "Treat as a starting point only";
+  if (t === "high") return "High-conviction market read";
+  if (t === "moderate") return "Useful read, verify the final details";
+  if (t === "low") return "Thin market signal, inspect before buying";
+  return "Use as a first-pass analyst view";
 }
 
 export default function GlobalIntelligencePanel({
@@ -113,8 +113,8 @@ export default function GlobalIntelligencePanel({
             </h3>
             <p className="cockpit-body mt-4 max-w-3xl text-[15px] leading-relaxed text-slate-400/95">{intel.finalBody}</p>
             <p className="cockpit-body mt-4 max-w-3xl text-[13px] leading-relaxed text-slate-500/88">
-              Confidence reflects how much this tray agrees with itself—not a guarantee. Sparse reviews or uneven
-              stores mean you should still verify price and seller before paying.
+              Confidence reflects market agreement, seller quality, and price spread. Treat it as an analyst layer,
+              then verify the merchant page before checkout.
             </p>
             <div className="mt-6 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:gap-x-3">
               {intel.globalDeal && (
@@ -124,7 +124,7 @@ export default function GlobalIntelligencePanel({
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-full border border-emerald-400/18 bg-emerald-500/[0.06] px-3.5 py-2 text-[13px] font-medium text-emerald-50/95 transition hover:bg-emerald-500/10"
                 >
-                  Best pick · {intel.globalDeal.store}
+                  Global value · {intel.globalDeal.store}
                   <ArrowRight className="size-3.5" aria-hidden />
                 </a>
               )}
@@ -136,7 +136,7 @@ export default function GlobalIntelligencePanel({
                   className="inline-flex items-center gap-2 rounded-full border border-cyan-400/16 bg-cyan-500/[0.05] px-3.5 py-2 text-[13px] font-medium text-cyan-50/95 transition hover:bg-cyan-500/10"
                 >
                   <MapPin className="size-3.5" aria-hidden />
-                  Regional pick · {intel.localDeal.store}
+                  Regional edge · {intel.localDeal.store}
                 </a>
               )}
               {intel.cheapestReliable && (
@@ -146,7 +146,7 @@ export default function GlobalIntelligencePanel({
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.035] px-3.5 py-2 text-[13px] font-medium text-slate-300/95 transition hover:border-white/[0.12]"
                 >
-                  Value pick · {intel.cheapestReliable.store}
+                  Trusted value · {intel.cheapestReliable.store}
                 </a>
               )}
               {intel.mostTrustedListing && (
@@ -157,7 +157,7 @@ export default function GlobalIntelligencePanel({
                   className="inline-flex items-center gap-2 rounded-full border border-violet-400/16 bg-violet-500/[0.05] px-3.5 py-2 text-[13px] font-medium text-violet-100/95 transition hover:bg-violet-500/10"
                 >
                   <Shield className="size-3.5" aria-hidden />
-                  Most trusted · {intel.mostTrustedListing.store}
+                  Safest seller · {intel.mostTrustedListing.store}
                 </a>
               )}
             </div>
@@ -206,14 +206,14 @@ export default function GlobalIntelligencePanel({
                 Intelligence preview
               </p>
               <p className="mt-1 max-w-xl text-sm font-medium text-white/90">
-                Pro and Power Buyer unlock retailer trust graphs, persona lanes, and full global synthesis on every scan.
+              Pro and Power Buyer unlock richer seller graphs, market timing, and full global synthesis on every scan.
               </p>
             </div>
             <Link
               href="/pricing"
               className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-[0_12px_36px_-14px_rgba(15,23,42,0.55)] transition hover:brightness-[1.02]"
             >
-              View plans & limits
+              View intelligence plans
               <ArrowRight className="size-4" aria-hidden />
             </Link>
           </div>
@@ -228,11 +228,11 @@ export default function GlobalIntelligencePanel({
             className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/[0.08] bg-black/25 px-3 py-2.5 text-left transition hover:border-cyan-400/22"
             aria-expanded={false}
           >
-            <span className="text-sm font-medium text-white/90">Expand full intelligence layers</span>
+            <span className="text-sm font-medium text-white/90">Expand the full analyst layer</span>
             <ChevronDown className="size-4 text-slate-500" aria-hidden />
           </button>
           <p className="mt-2 text-[11px] leading-relaxed text-slate-500">
-            Retailer graph, persona lane, and price lanes stay hidden until you expand—saves GPU on mobile.
+            Seller graph, buyer fit, and price lanes stay collapsed until needed to keep mobile fast.
           </p>
         </div>
       )}

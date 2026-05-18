@@ -22,29 +22,29 @@ const fontArabic = IBM_Plex_Sans_Arabic({
 const defaultSite = appUrl();
 
 const description =
-  "Commerce search that reads intent—price, trust, and deals in one calm scan. Built for confident checkout decisions.";
+  "Premium AI commerce intelligence for product search, market comparison, price timing, seller trust, and smarter buying decisions.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultSite),
   title: {
-    default: "QuantAI — AI shopping intelligence",
+    default: "QuantAI — Premium AI shopping intelligence",
     template: "%s · QuantAI",
   },
   description,
   applicationName: "QuantAI",
-  keywords: ["AI shopping", "product intelligence", "price comparison", "commerce", "QuantAI"],
+  keywords: ["AI shopping", "product intelligence", "price comparison", "commerce intelligence", "shopping decisions", "QuantAI"],
   authors: [{ name: "QuantAI" }],
   openGraph: {
     type: "website",
     locale: "en_US",
     url: "/",
     siteName: "QuantAI",
-    title: "QuantAI — AI shopping intelligence",
+    title: "QuantAI — Premium AI shopping intelligence",
     description,
   },
   twitter: {
     card: "summary_large_image",
-    title: "QuantAI — AI shopping intelligence",
+    title: "QuantAI — Premium AI shopping intelligence",
     description,
   },
   robots: {

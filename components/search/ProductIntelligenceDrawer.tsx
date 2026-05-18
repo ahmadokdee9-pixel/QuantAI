@@ -125,6 +125,32 @@ function GlassBlock({
   );
 }
 
+function decisionLabel(action?: string): string {
+  switch (action) {
+    case "BUY_NOW":
+      return "Buy window";
+    case "WAIT_FOR_DROP":
+    case "DISCOUNT_LIKELY_SOON":
+      return "Wait for drop";
+    case "HIDDEN_VALUE":
+      return "Hidden value";
+    case "STRONG_VALUE":
+      return "Strong value";
+    case "BEST_REGIONAL_DEAL":
+      return "Best regional deal";
+    case "SAFE_TRUSTED_OFFER":
+      return "Trusted offer";
+    case "RISKY_SELLER":
+      return "Risky seller";
+    case "PREMIUM_PRICING":
+      return "Premium pricing";
+    case "HIGH_VOLATILITY":
+      return "Market volatility";
+    default:
+      return "Compare first";
+  }
+}
+
 export default function ProductIntelligenceDrawer({ product: p, list, open, onClose }: Props) {
   const reduceMotion = useReducedMotion();
   const titleId = useId();
@@ -263,7 +289,7 @@ export default function ProductIntelligenceDrawer({ product: p, list, open, onCl
                 rel="noopener noreferrer"
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-500 py-3 text-sm font-semibold text-slate-950 shadow-[0_0_32px_-8px_rgba(34,211,238,0.4)] transition hover:brightness-105"
               >
-                Open listing
+                Inspect offer
                 <ExternalLink className="size-4 opacity-80" strokeWidth={1.5} aria-hidden />
               </a>
             </footer>
@@ -337,6 +363,46 @@ function DrawerBody({ p, list }: { p: QuantProduct; list: QuantProduct[] }) {
           </p>
         ) : null}
       </div>
+
+      {p.qiBuyingDecision ? (
+        <GlassBlock title="Buying intelligence" icon={<Sparkles className="size-4" strokeWidth={1.5} />}>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-base font-semibold tracking-tight text-white/95">
+                {decisionLabel(p.qiBuyingDecision.action)}
+              </p>
+              <p className="mt-1 text-slate-300/95">{p.qiBuyingDecision.analystLine}</p>
+            </div>
+            <span className="rounded-full border border-cyan-400/20 bg-cyan-500/[0.1] px-2.5 py-1 text-[11px] font-semibold tabular-nums text-cyan-100">
+              {p.qiBuyingDecision.confidence}%
+            </span>
+          </div>
+          <div className="mt-3 grid gap-2 text-[12px] sm:grid-cols-3">
+            <div className="rounded-xl border border-white/[0.06] bg-black/25 px-3 py-2">
+              <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">Price read</p>
+              <p className="mt-1 capitalize text-slate-100">{p.qiBuyingDecision.priceIntelligence.priceQuality}</p>
+            </div>
+            <div className="rounded-xl border border-white/[0.06] bg-black/25 px-3 py-2">
+              <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">Drop odds</p>
+              <p className="mt-1 tabular-nums text-slate-100">{p.qiBuyingDecision.priceIntelligence.discountProbability}%</p>
+            </div>
+            <div className="rounded-xl border border-white/[0.06] bg-black/25 px-3 py-2">
+              <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">Seller risk</p>
+              <p className="mt-1 capitalize text-slate-100">{p.qiBuyingDecision.trustIntelligence.scamRisk}</p>
+            </div>
+          </div>
+          {p.qiBuyingDecision.primaryReasons.length > 0 ? (
+            <ul className="mt-3 space-y-1.5 text-[12px] text-slate-400">
+              {p.qiBuyingDecision.primaryReasons.slice(0, 3).map((reason) => (
+                <li key={reason} className="flex gap-2">
+                  <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-cyan-300/80" aria-hidden />
+                  <span>{reason}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </GlassBlock>
+      ) : null}
 
       <div className="grid grid-cols-3 gap-2">
         <BandPill

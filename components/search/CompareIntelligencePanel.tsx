@@ -101,7 +101,7 @@ export default function CompareIntelligencePanel({
               <GitCompare className="size-4 shrink-0 text-cyan-300" aria-hidden />
               <div className="min-w-0">
                 <p className="cockpit-display truncate text-[13px] text-white/95">
-                  Compare Intelligence · {compareProducts.length}/3
+                  Decision Lab · {compareProducts.length}/3
                 </p>
                 <p className="truncate text-[10px] text-slate-500">
                   Confidence {intelligence.comparisonConfidenceScore}%
@@ -134,7 +134,7 @@ export default function CompareIntelligencePanel({
                 ) : (
                   <>
                     <Sparkles className="size-3.5 text-cyan-200/90" aria-hidden />
-                    AI verdict
+                    Analyst verdict
                   </>
                 )}
               </button>
@@ -186,7 +186,7 @@ export default function CompareIntelligencePanel({
                 {intelligence.smartSignals.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                      Difference scan
+                      Decision spread
                     </p>
                     <ul className="space-y-2">
                       {intelligence.smartSignals.map((s) => (
@@ -204,7 +204,7 @@ export default function CompareIntelligencePanel({
 
                 {trayInsightLines.length > 0 && (
                   <div className="rounded-2xl border border-white/[0.07] bg-black/35 px-3 py-3 sm:px-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Quick scan</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Market read</p>
                     <ul className="mt-2 space-y-2.5">
                       {trayInsightLines.map((line) => (
                         <li key={line.id} className="min-w-0">

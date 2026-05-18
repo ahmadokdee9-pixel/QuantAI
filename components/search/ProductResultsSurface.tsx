@@ -85,6 +85,8 @@ type Props = {
   dealIntelByLink?: Map<string, ProductDealIntelligence>;
   /** Sparse-tray follow-up scans (hero prompts / token match). */
   onRunRelatedQuery?: (q: string) => void;
+  /** API market/debug metadata retained for premium tray context. */
+  searchMeta?: Record<string, unknown> | null;
 };
 
 function ResultSkeleton() {
@@ -131,6 +133,7 @@ export default function ProductResultsSurface({
   onCompareTrayChange,
   dealIntelByLink: dealIntelByLinkProp,
   onRunRelatedQuery,
+  searchMeta = null,
 }: Props) {
   const { registerQuickHandlers } = useCockpit();
   const reduceMotion = useReducedMotion();
@@ -198,6 +201,19 @@ export default function ProductResultsSurface({
   );
   const marketPulse = useMemo(() => sortedProducts[0]?.qiMarketPulse ?? null, [sortedProducts]);
   const trayDealHighlights = useMemo(() => buildTrayDealHighlights(sortedProducts), [sortedProducts]);
+  const marketComparison = searchMeta?.marketComparison as
+    | {
+        merchantCount?: number;
+        trustedMerchantCount?: number;
+        comparisonSignals?: {
+          merchantBalanceScore?: number;
+          marketplaceShare01?: number;
+          regionalFit01?: number;
+          strongestFamilyMerchantDepth?: number;
+        };
+      }
+    | undefined;
+  const marketComparisonSignals = marketComparison?.comparisonSignals;
 
   const unifiedMarketByLink = useMemo(
     () => buildUnifiedMarketGroup(sortedProducts, searchQuery.trim()).byLink,
@@ -543,6 +559,22 @@ export default function ProductResultsSurface({
         onClearFilters={onClearFilters}
       />
 
+      {marketComparison ? (
+        <div className="mb-5 grid gap-2 rounded-[1.35rem] border border-white/[0.075] bg-gradient-to-r from-white/[0.045] via-cyan-500/[0.035] to-violet-500/[0.035] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)] sm:grid-cols-4 sm:p-4">
+          {[
+            ["Market depth", `${marketComparison.merchantCount ?? sortedProducts.length} merchants`],
+            ["Trusted lanes", `${marketComparison.trustedMerchantCount ?? 0} verified`],
+            ["Balance", `${marketComparisonSignals?.merchantBalanceScore ?? 0}/100`],
+            ["Regional fit", `${Math.round((marketComparisonSignals?.regionalFit01 ?? 0) * 100)}% local`],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-2xl border border-white/[0.055] bg-black/20 px-3 py-2.5">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</p>
+              <p className="mt-1 text-[13px] font-semibold text-slate-100">{value}</p>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
       {loading && products.length > 0 ? (
         <div
           className="mb-4 flex items-center justify-center gap-2.5 rounded-xl border border-cyan-400/14 bg-cyan-500/[0.07] px-4 py-3 text-center text-[12px] font-medium text-cyan-50/92 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-opacity duration-300"
@@ -571,13 +603,13 @@ export default function ProductResultsSurface({
         defaultCollapsed={mobilePerf}
       />
       {sortedProducts.length >= 2 && compareLinks.length === 0 && (
-        <p className="cockpit-body -mt-1 mb-4 text-center text-[12px] leading-snug text-slate-500">
-          Pin <span className="font-medium text-slate-400">Compare</span> on two or three rows to open the lab below.
+          <p className="cockpit-body -mt-1 mb-4 text-center text-[12px] leading-snug text-slate-500">
+          Pin <span className="font-medium text-slate-400">Compare</span> on two or three rows to open the decision lab.
         </p>
       )}
       {sortedProducts.length === 1 && compareLinks.length === 0 && (
         <p className="cockpit-body -mt-1 mb-4 text-center text-[12px] leading-snug text-slate-500">
-          One row in field—add a second listing or run an adjacent scan to enable Compare.
+          One row in field—run an adjacent scan to build a stronger comparison set.
         </p>
       )}
 
@@ -615,7 +647,7 @@ export default function ProductResultsSurface({
           <div className="mb-2 flex items-center justify-center gap-2">
             <BarChart3 className="size-3.5 text-emerald-300/80" aria-hidden />
             <p className="cockpit-label text-center text-[11px] tracking-[0.1em] text-slate-500">
-              Deal signals · this tray
+              Market signals · this tray
             </p>
           </div>
           <div className="flex min-w-0 gap-2 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch]">
@@ -671,9 +703,9 @@ export default function ProductResultsSurface({
               <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
                 <div className="min-w-0">
                   <p className="cockpit-overline text-[10px] text-cyan-200/75">Lead lane</p>
-                  <h2 className="mt-1 text-base font-semibold tracking-tight text-white">Top picks in this field</h2>
+                  <h2 className="mt-1 text-base font-semibold tracking-tight text-white">Highest-conviction starts</h2>
                   <p className="cockpit-body mt-1 max-w-xl text-[13px] text-slate-400">
-                    Highest QI composite here—start your eye path here, then scan the full tray for contrast.
+                    Start here, then scan the full market tray for price, seller, and regional contrast.
                   </p>
                 </div>
               </div>

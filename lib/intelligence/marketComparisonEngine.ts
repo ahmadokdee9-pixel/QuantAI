@@ -26,6 +26,9 @@ export type MarketComparisonSummary = {
     merchantBalanceScore: number;
     bestDecisionAction: string | null;
     riskySellerShare01: number;
+    productFamilyCount: number;
+    strongestFamilyMerchantDepth: number;
+    duplicateMerchantPressure01: number;
   };
 };
 
@@ -72,6 +75,14 @@ function priceSpreadRatio(products: QuantProduct[]): number {
   return Number(((prices[prices.length - 1]! - prices[0]!) / Math.max(1, prices[0]!)).toFixed(2));
 }
 
+function familyKey(product: QuantProduct): string {
+  return (
+    product.qiCanonicalIdentity?.familyClusterId ||
+    product.qiGlobalCommerce?.market.familyId ||
+    product.title.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().slice(0, 80)
+  );
+}
+
 function regionForStore(store: string): string {
   const s = store.toLowerCase();
   if (/\b(bol|coolblue|wehkamp|hema|blokker|expert|fonq|leen bakker|jysk|praxis|gamma|hornbach|babypark|prenatal|koffie|tuinmeubelland)\b/i.test(s)) return "NL";
@@ -102,6 +113,21 @@ export function buildMarketComparisonSummary(
   const sameProductRows = products.filter((p) => p.qiIdentityGate?.identityGatePassed === true);
   const marketplaceShare = products.filter((p) => getMarketplaceSellerRiskTier(p.store, p.title) !== "low").length / Math.max(1, products.length);
   const ebayShare = products.filter((p) => /\bebay\b/i.test(p.store)).length / Math.max(1, products.length);
+  const familyMerchants = products.reduce<Map<string, Set<string>>>((acc, product) => {
+    const key = familyKey(product);
+    const merchants = acc.get(key) ?? new Set<string>();
+    merchants.add(product.store.toLowerCase().trim());
+    acc.set(key, merchants);
+    return acc;
+  }, new Map());
+  const merchantCounts = products.reduce<Map<string, number>>((acc, product) => {
+    const key = product.store.toLowerCase().trim();
+    acc.set(key, (acc.get(key) ?? 0) + 1);
+    return acc;
+  }, new Map());
+  const strongestFamilyMerchantDepth = Math.max(0, ...Array.from(familyMerchants.values()).map((merchants) => merchants.size));
+  const duplicateMerchantPressure =
+    Math.max(0, ...Array.from(merchantCounts.values()).map((count) => count / Math.max(1, products.length))) || 0;
   const merchantBalanceScore = Math.round(Math.max(0, Math.min(100, 100 - Math.max(0, ebayShare - 0.22) * 140 - Math.max(0, marketplaceShare - 0.42) * 90)));
   const cheapestTrusted = bestBy(trusted, (p) => (p.price > 0 ? -p.price : Number.NEGATIVE_INFINITY));
   const strongestValue = bestBy(clean, (p) => (p.qiCommerceQuality?.valueScore ?? 0) + (p.qiCommerceQuality?.dealStrength ?? 0) * 0.35);
@@ -135,6 +161,9 @@ export function buildMarketComparisonSummary(
       merchantBalanceScore,
       bestDecisionAction: bestDecision?.qiBuyingDecision?.action ?? null,
       riskySellerShare01: Number(riskySellerShare.toFixed(2)),
+      productFamilyCount: familyMerchants.size,
+      strongestFamilyMerchantDepth,
+      duplicateMerchantPressure01: Number(duplicateMerchantPressure.toFixed(2)),
     },
   };
 }

@@ -15,6 +15,7 @@ export const QuantAnalyticsEvents = {
   COMPARE_VERDICT_FAIL: "quantai.compare.verdict_fail",
   WATCHLIST_ADD: "quantai.watchlist.add",
   WATCHLIST_ADD_FAIL: "quantai.watchlist.add_fail",
+  OFFER_CLICK: "quantai.offer.click",
   PRICING_CTA_CHECKOUT: "quantai.pricing.checkout_start",
   PRICING_CTA_DASHBOARD: "quantai.pricing.dashboard_open",
   DASHBOARD_VIEW: "quantai.dashboard.view",

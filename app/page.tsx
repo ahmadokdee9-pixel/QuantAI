@@ -88,6 +88,7 @@ export default function Home() {
   const [products, setProducts] = useState<QuantProduct[]>([]);
   const [dealClusters, setDealClusters] = useState<DealClusterDTO[]>([]);
   const [searchIntelligence, setSearchIntelligence] = useState<SearchIntelligenceDTO | null>(null);
+  const [searchMeta, setSearchMeta] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
   const [sort, setSort] = useState("value");
   const [filters, setFilters] = useState(defaultResultsFilters());
@@ -364,6 +365,7 @@ export default function Home() {
 
       if (searchData?.products && searchData.products.length > 0) {
         setProducts(searchData.products);
+        setSearchMeta(searchData.meta && typeof searchData.meta === "object" ? searchData.meta : null);
         const mem = searchData.meta?.commerceSessionMemory;
         if (mem != null && typeof mem === "object") {
           writeCommerceSessionMemoryToBrowser(mem);
@@ -390,6 +392,7 @@ export default function Home() {
         setProducts([]);
         setDealClusters([]);
         setSearchIntelligence(null);
+        setSearchMeta(null);
         setSearchError("No products found for this query.");
         trackEvent(QuantAnalyticsEvents.SEARCH_ERROR, { code: "empty" });
       }
@@ -506,9 +509,15 @@ export default function Home() {
 
   async function addToWatchlist(product: QuantProduct) {
     if (!isSignedIn) {
-      setSearchError("Sign in to use the watchlist foundation.");
+      setSearchError("Sign in to track price drops and market timing.");
       return;
     }
+    const targetPrice =
+      product.qiBuyingDecision?.action === "WAIT_FOR_DROP" ||
+      product.qiBuyingDecision?.action === "DISCOUNT_LIKELY_SOON" ||
+      product.qiBuyingDecision?.action === "PREMIUM_PRICING"
+        ? Math.max(1, Math.round(product.price * 0.92))
+        : null;
     try {
       const res = await fetch("/api/intelligence/watchlist", {
         method: "POST",
@@ -529,7 +538,8 @@ export default function Home() {
               qiComposite: product.qiComposite ?? null,
             },
           },
-          targetPrice: null,
+          targetPrice,
+          alertMode: targetPrice == null ? "discount" : "price_drop",
         }),
       });
       const parsed = await readApiJson<{ error?: string; duplicate?: boolean; code?: string }>(
@@ -579,24 +589,23 @@ export default function Home() {
               <span className="relative flex size-1.5 rounded-full bg-emerald-400/90 shadow-[0_0_8px_rgba(52,211,153,0.45)]">
                 <span className="absolute inset-0 motion-reduce:animate-none animate-ping rounded-full bg-emerald-400/25" />
               </span>
-              Live shopping intelligence
+              Live commerce intelligence
             </div>
 
             <h1 className="cockpit-display mt-12 text-[2.55rem] font-bold leading-[1.06] sm:text-5xl lg:text-[3.55rem] text-white motion-safe:animate-[fadeIn_0.65s_ease-out]">
-              <span className="block text-white">Search in plain language. Buy with confidence.</span>
+              <span className="block text-white">Search naturally. Decide like a market insider.</span>
               <span className="mt-4 block cockpit-gradient-text font-bold tracking-[-0.04em]">
-                QuantAI turns messy shopping searches into ranked buying decisions.
+                QuantAI turns global shopping noise into premium buying intelligence.
               </span>
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-[15px] font-semibold leading-snug tracking-[-0.02em] text-slate-200/95 sm:text-[16px] motion-safe:animate-[fadeIn_0.66s_ease-out]">
-              Built to surface sharper buying decisions than ordinary search—live listings, ranked for trust and
-              value.
+              Live listings, regional pricing, seller trust, and timing intelligence in one elegant scan.
             </p>
 
             <p className="cockpit-body mx-auto mt-5 max-w-2xl text-[15px] sm:text-[16px] text-slate-400/95 motion-safe:animate-[fadeIn_0.7s_ease-out]">
-              Ask for any product, budget, store, risk, or discount. QuantAI reads product, budget, trust, and deal
-              intent in one calm scan.
+              Ask for any product, budget, store, risk, or discount. QuantAI reads intent, compares the market, and
+              highlights the smartest move.
             </p>
 
             {/* Search — hero instrument */}
@@ -684,7 +693,7 @@ export default function Home() {
                     Saved products
                   </h2>
                   <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
-                    Synced account
+                      Private intelligence shelf
                   </span>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -719,7 +728,7 @@ export default function Home() {
                           rel="noopener noreferrer"
                           className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-900 transition hover:bg-slate-100"
                         >
-                          View
+                          Inspect
                         </a>
                         <button
                           type="button"
@@ -764,6 +773,7 @@ export default function Home() {
             onCompareTrayChange={setCompareTrayLinks}
             dealIntelByLink={dealIntelByLink}
             onRunRelatedQuery={(q) => void search(q)}
+            searchMeta={searchMeta}
           />
         )}
 
