@@ -54,6 +54,9 @@ export function rankLiveDeals(products: QuantProduct[], query: string): QuantPro
     const priceAdv = med > 0 && p.price > 0 ? clamp((med - p.price) / med, -0.35, 0.45) : 0;
     const route = p.outboundRouteKind === "direct_merchant" ? 1 : p.outboundRouteKind === "merchant_search" ? 0.72 : 0.28;
     const identity = p.qiCanonicalIdentity?.identityConfidence ? p.qiCanonicalIdentity.identityConfidence / 100 : 0.58;
+    const gateConfidence = p.qiIdentityGate?.fusionConfidence ?? p.qiIdentityGate?.identityConfidence ?? 0.58;
+    const uncertainExternalPenalty =
+      Array.isArray(p.extensions) && p.extensions.includes("Live market refresh") && gateConfidence < 0.76 ? 8 : 0;
     const fam = id?.retailerAgnosticStem || p.title.toLowerCase().replace(/\s+/g, " ").slice(0, 64);
     const diversity = Math.min(1, (familyStores.get(fam)?.size ?? 1) / 10);
     const risk = (id?.listingRisk01 ?? 0.24) * 0.42 + (id?.contaminationRisk01 ?? 0.18) * 0.36 + (id?.semanticMismatchPenalty01 ?? 0.12) * 0.22;
@@ -67,7 +70,8 @@ export function rankLiveDeals(products: QuantProduct[], query: string): QuantPro
       discountCredibility01(p, trust) * 8 +
       priceAdv * 18 -
       risk * 26 +
-      (p.qiDiscovery?.rankingNudge ?? 0);
+      (p.qiDiscovery?.rankingNudge ?? 0) -
+      uncertainExternalPenalty;
     return { p, index, score };
   });
   return scored

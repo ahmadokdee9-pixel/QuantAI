@@ -19,7 +19,7 @@ import {
 import { buildDealClusters } from "@/lib/deals";
 import { buildSearchIntelligence } from "@/lib/intelligence/searchDecisionEngine";
 import { runLiveCommerceDiscovery, type LiveCommerceDiscoveryMeta } from "@/lib/intelligence/liveCommerceDiscovery";
-import { applyHardIdentityGate, buildIdentityDebugSummary } from "@/lib/intelligence/productIdentity";
+import { applyHardIdentityGate, buildIdentityDebugSummary, recoverSafeIdentityBreadth } from "@/lib/intelligence/productIdentity";
 import { intentMatchEnvelope } from "@/lib/intelligence/searchIntentV2";
 import { enforceLimit, searchRatelimit } from "@/lib/rate-limit";
 import { entitlementsForTier } from "@/lib/subscription/entitlements";
@@ -34,6 +34,7 @@ import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTyp
 import type { SearchEntitlementsDTO } from "@/lib/subscription/entitlements";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { fetchShoppingProductsDeduped } from "./lib/fetchShoppingDeduped";
+import { fetchShoppingProducts } from "./lib/fetchShopping";
 
 const SEARCH_UPSTREAM_PREFIX = "__SEARCH_UPSTREAM__:";
 
@@ -45,13 +46,40 @@ function fallbackLiveDiscoveryMeta(
   return {
     version: 1,
     status,
+    discoveryEnabled: false,
+    discoveryMode: "disabled",
+    discoveryStatus: status,
+    discoveryCandidates: 0,
     candidateCount: 0,
     candidateMerchants: [],
     attemptedQueries: [],
     externalRows: 0,
+    externalRowsAccepted: 0,
+    validatedExternalRows: 0,
+    validatedMerchantCount: 0,
+    rejectedDiscoveryRows: 0,
     fusedRows: products.length,
     timedOut: false,
+    timeoutTriggered: false,
     source: status === "disabled_missing_key" ? "disabled_missing_key" : "disabled",
+    unknownCategoryMode: false,
+    identityGatePassed: 0,
+    exactMatchPassed: 0,
+    discoveryLatency: 0,
+    fusionConfidence: 0,
+    maxDiscoveryRows: 0,
+    maxDiscoveryMerchants: 0,
+    timeoutMs: 0,
+    discoveryHealthScore: 0,
+    upstreamReliabilityScore: 0,
+    successfulQueries: 0,
+    failedQueries: 0,
+    retriesAttempted: 0,
+    fallbackQueriesAttempted: 0,
+    partialRecovery: false,
+    recoveredFromFallback: false,
+    upstreamFailures: [],
+    merchantReliability: [],
     ...(error
       ? { error: error instanceof Error ? error.message : "Live discovery failed." }
       : {}),
@@ -84,7 +112,7 @@ async function runSearchPipeline(query: string): Promise<{
   canonicalQuery: CanonicalQueryContract;
 }> {
   const canonicalQuery = buildCanonicalQuery(query);
-  const result = await fetchShoppingProductsDeduped(query, canonicalQuery);
+  const result = await fetchShoppingProductsWithFallback(query, canonicalQuery);
   if (!result.ok) {
     const status =
       result.status >= 400 && result.status < 600 ? result.status : 502;
@@ -94,6 +122,9 @@ async function runSearchPipeline(query: string): Promise<{
   }
   const liveDiscovery = await runSafeLiveCommerceDiscovery(query, result.products, canonicalQuery);
   let products = enrichProductsWithIntelligence(liveDiscovery.products, query, canonicalQuery);
+  if (products.length === 0 && liveDiscovery.products.length > 0) {
+    products = liveDiscovery.products.slice(0, 24).map((p, i) => ({ ...p, qiRank: i }));
+  }
   const layered = await attachCommerceAiLayer(products, query);
   products = layered.products;
   const dealClusters = buildDealClusters(products);
@@ -108,10 +139,37 @@ async function runSearchPipeline(query: string): Promise<{
   };
 }
 
+async function fetchShoppingProductsWithFallback(
+  query: string,
+  canonicalQuery: CanonicalQueryContract
+) {
+  const primary = await fetchShoppingProductsDeduped(query, canonicalQuery);
+  if (primary.ok) return primary;
+
+  const fallbackQueries = [
+    [canonicalQuery.brand, canonicalQuery.model, canonicalQuery.variant, canonicalQuery.productType !== "unknown" ? canonicalQuery.productType : ""]
+      .filter(Boolean)
+      .join(" "),
+    canonicalQuery.upstreamQuery,
+    canonicalQuery.normalizedQuery,
+    query,
+  ];
+  const seen = new Set<string>();
+  for (const fallbackQuery of fallbackQueries) {
+    const q = fallbackQuery.replace(/\s+/g, " ").trim();
+    const key = q.toLowerCase();
+    if (!q || seen.has(key) || key === canonicalQuery.upstreamQuery.toLowerCase()) continue;
+    seen.add(key);
+    const recovered = await fetchShoppingProducts(q);
+    if (recovered.ok) return recovered;
+  }
+  return primary;
+}
+
 /** Cross-request tray cache — normalized key improves hit rate; short TTL keeps prices fresh. */
 const getCachedSearchPipeline = unstable_cache(
   async (pipelineQuery: string) => runSearchPipeline(pipelineQuery),
-  ["quantai-search-pipeline-v5-live-discovery"],
+  ["quantai-search-pipeline-v22-semantic-empty-guard"],
   { revalidate: 120 }
 );
 
@@ -144,6 +202,29 @@ function searchDebugMeta(args: {
     errorState,
     liveDiscoveryStatus: liveDiscovery?.status ?? null,
     liveDiscoverySource: liveDiscovery?.source ?? null,
+    discoveryEnabled: liveDiscovery?.discoveryEnabled ?? false,
+    discoveryMode: liveDiscovery?.discoveryMode ?? "disabled",
+    discoveryStatus: liveDiscovery?.discoveryStatus ?? liveDiscovery?.status ?? null,
+    discoveryCandidates: liveDiscovery?.discoveryCandidates ?? liveDiscovery?.candidateCount ?? 0,
+    validatedMerchantCount: liveDiscovery?.validatedMerchantCount ?? 0,
+    rejectedDiscoveryRows: liveDiscovery?.rejectedDiscoveryRows ?? 0,
+    timeoutTriggered: liveDiscovery?.timeoutTriggered ?? liveDiscovery?.timedOut ?? false,
+    externalRowsAccepted: liveDiscovery?.externalRowsAccepted ?? liveDiscovery?.validatedExternalRows ?? 0,
+    unknownCategoryMode: liveDiscovery?.unknownCategoryMode ?? false,
+    identityGatePassed: liveDiscovery?.identityGatePassed ?? 0,
+    exactMatchPassed: liveDiscovery?.exactMatchPassed ?? 0,
+    discoveryLatency: liveDiscovery?.discoveryLatency ?? 0,
+    fusionConfidence: liveDiscovery?.fusionConfidence ?? 0,
+    discoveryHealthScore: liveDiscovery?.discoveryHealthScore ?? 0,
+    upstreamReliabilityScore: liveDiscovery?.upstreamReliabilityScore ?? 0,
+    successfulQueries: liveDiscovery?.successfulQueries ?? 0,
+    failedQueries: liveDiscovery?.failedQueries ?? 0,
+    retriesAttempted: liveDiscovery?.retriesAttempted ?? 0,
+    fallbackQueriesAttempted: liveDiscovery?.fallbackQueriesAttempted ?? 0,
+    partialRecovery: liveDiscovery?.partialRecovery ?? false,
+    recoveredFromFallback: liveDiscovery?.recoveredFromFallback ?? false,
+    upstreamFailures: liveDiscovery?.upstreamFailures ?? [],
+    merchantReliability: liveDiscovery?.merchantReliability ?? [],
     canonicalQuery: canonicalQuery ? canonicalQueryForDebug(canonicalQuery) : null,
     identityDebug,
   };
@@ -307,8 +388,16 @@ async function handleSearch(
     );
     products = applyPersonaRanking(products, shopperPersona, commerceSessionMemory);
     products = applyMarketAwarenessRanking(products, query);
+    const preIdentityGateProducts = products;
     products = applyHardIdentityGate(products, canonicalQuery);
+    if (products.length === 0 && preIdentityGateProducts.length > 0) {
+      products = recoverSafeIdentityBreadth(preIdentityGateProducts, canonicalQuery);
+    }
+    const preSemanticProducts = products;
     products = semanticRerankSearchResults(products, query, canonicalQuery);
+    if (products.length === 0 && preSemanticProducts.length > 0) {
+      products = preSemanticProducts.map((p, i) => ({ ...p, qiRank: i }));
+    }
     dealClusters = buildDealClusters(products);
     searchIntelligence = buildSearchIntelligence(query, products, dealClusters);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
@@ -348,6 +437,29 @@ async function handleSearch(
         identityDebug: debugMeta.identityDebug,
         liveDiscovery,
         liveDiscoveryStatus: liveDiscovery.status,
+        discoveryEnabled: debugMeta.discoveryEnabled,
+        discoveryMode: debugMeta.discoveryMode,
+        discoveryStatus: debugMeta.discoveryStatus,
+        discoveryCandidates: debugMeta.discoveryCandidates,
+        validatedMerchantCount: debugMeta.validatedMerchantCount,
+        rejectedDiscoveryRows: debugMeta.rejectedDiscoveryRows,
+        timeoutTriggered: debugMeta.timeoutTriggered,
+        externalRowsAccepted: debugMeta.externalRowsAccepted,
+        unknownCategoryMode: debugMeta.unknownCategoryMode,
+        identityGatePassed: debugMeta.identityGatePassed,
+        exactMatchPassed: debugMeta.exactMatchPassed,
+        discoveryLatency: debugMeta.discoveryLatency,
+        fusionConfidence: debugMeta.fusionConfidence,
+        discoveryHealthScore: debugMeta.discoveryHealthScore,
+        upstreamReliabilityScore: debugMeta.upstreamReliabilityScore,
+        successfulQueries: debugMeta.successfulQueries,
+        failedQueries: debugMeta.failedQueries,
+        retriesAttempted: debugMeta.retriesAttempted,
+        fallbackQueriesAttempted: debugMeta.fallbackQueriesAttempted,
+        partialRecovery: debugMeta.partialRecovery,
+        recoveredFromFallback: debugMeta.recoveredFromFallback,
+        upstreamFailures: debugMeta.upstreamFailures,
+        merchantReliability: debugMeta.merchantReliability,
         searchDebug: debugMeta,
         productCount: debugMeta.productCount,
         productsCount: debugMeta.productsCount,

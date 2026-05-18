@@ -9,17 +9,52 @@ import { buildExternalMerchantCandidates, type ExternalMerchantCandidate } from 
 import { refreshLiveMarketProducts } from "./liveMarketRefresh";
 import { mergeExternalAndInternalOffersWithoutEarlyCollapse } from "./productFeedFusion";
 import { rankLiveDeals } from "./liveDealRanking";
+import { assessUniversalListingIdentity } from "./universalListingIdentity";
+import { assessIdentityGateDecision } from "./productIdentity";
+import {
+  discoveryReliabilitySnapshot,
+  recordDiscoveryReliability,
+  reliabilityPenaltyForMerchant,
+  type MerchantReliabilitySnapshot,
+} from "./discoveryReliability";
 
 export type LiveCommerceDiscoveryMeta = {
   version: 1;
   status: "enabled" | "disabled" | "disabled_missing_key" | "failed";
+  discoveryEnabled: boolean;
+  discoveryMode: "universal" | "conservative" | "disabled";
+  discoveryStatus: "enabled" | "disabled" | "disabled_missing_key" | "failed";
+  discoveryCandidates: number;
   candidateCount: number;
   candidateMerchants: string[];
   attemptedQueries: string[];
   externalRows: number;
+  externalRowsAccepted: number;
+  validatedExternalRows: number;
+  validatedMerchantCount: number;
+  rejectedDiscoveryRows: number;
   fusedRows: number;
   timedOut: boolean;
+  timeoutTriggered: boolean;
   source: "serpapi" | "disabled" | "disabled_missing_key" | "empty";
+  unknownCategoryMode: boolean;
+  identityGatePassed: number;
+  exactMatchPassed: number;
+  discoveryLatency: number;
+  fusionConfidence: number;
+  maxDiscoveryRows: number;
+  maxDiscoveryMerchants: number;
+  timeoutMs: number;
+  discoveryHealthScore: number;
+  upstreamReliabilityScore: number;
+  successfulQueries: number;
+  failedQueries: number;
+  retriesAttempted: number;
+  fallbackQueriesAttempted: number;
+  partialRecovery: boolean;
+  recoveredFromFallback: boolean;
+  upstreamFailures: { query: string; status: number; error: string; attempt: number }[];
+  merchantReliability: MerchantReliabilitySnapshot[];
   error?: string;
 };
 
@@ -29,50 +64,269 @@ export type LiveCommerceDiscoveryResult = {
   meta: LiveCommerceDiscoveryMeta;
 };
 
+function avg(nums: number[]): number {
+  const clean = nums.filter((n) => Number.isFinite(n));
+  if (!clean.length) return 0;
+  return clean.reduce((sum, n) => sum + n, 0) / clean.length;
+}
+
+function discoveryModeFor(canonicalQuery?: CanonicalQueryContract): LiveCommerceDiscoveryMeta["discoveryMode"] {
+  const configured = process.env.DISCOVERY_MODE?.trim().toLowerCase();
+  if (configured === "universal" && canonicalQuery?.category !== "unknown") return "universal";
+  return "conservative";
+}
+
+function envFlagEnabled(name: string, defaultValue: boolean): boolean {
+  const value = process.env[name]?.trim().toLowerCase();
+  if (!value) return defaultValue;
+  return !["0", "false", "off", "no"].includes(value);
+}
+
+function boundedEnvInt(name: string, fallback: number, min: number, max: number): number {
+  const raw = Number(process.env[name]);
+  if (!Number.isFinite(raw)) return fallback;
+  return Math.min(max, Math.max(min, Math.round(raw)));
+}
+
+function rolloutControls(): { enabled: boolean; maxRows: number; maxMerchants: number; timeoutMs: number; maxAttemptedQueries: number } {
+  const maxMerchants = boundedEnvInt("MAX_DISCOVERY_MERCHANTS", 18, 8, 80);
+  const maxRows = boundedEnvInt("MAX_DISCOVERY_ROWS", 12, 4, 40);
+  const timeoutMs = boundedEnvInt("DISCOVERY_TIMEOUT_MS", 4_500, 2_500, 9_000);
+  return {
+    enabled: envFlagEnabled("ENABLE_WIDE_DISCOVERY", true),
+    maxRows,
+    maxMerchants,
+    timeoutMs,
+    maxAttemptedQueries: 2,
+  };
+}
+
+function validateExternalRows(
+  products: QuantProduct[],
+  query: string,
+  canonicalQuery: CanonicalQueryContract | undefined,
+  mode: LiveCommerceDiscoveryMeta["discoveryMode"],
+  maxRows: number
+): { products: QuantProduct[]; rejected: number; identityGatePassed: number; exactMatchPassed: number; fusionConfidence: number } {
+  const unknownCategoryMode = !canonicalQuery || canonicalQuery.category === "unknown";
+  const accepted: QuantProduct[] = [];
+  let identityGatePassed = 0;
+  let exactMatchPassed = 0;
+  const confidences: number[] = [];
+
+  for (const raw of products) {
+    const product = raw.qiListingIdentity ? raw : { ...raw, qiListingIdentity: assessUniversalListingIdentity(raw, query) };
+    const decision = assessIdentityGateDecision(product, canonicalQuery, {
+      strictExternalDiscovery: true,
+      unknownCategoryMode,
+    });
+    const withGate = { ...product, qiIdentityGate: decision };
+    if (!decision.identityGatePassed) continue;
+    if (!decision.exactMatchPassed) continue;
+    if (mode === "conservative" && decision.fusionConfidence < (unknownCategoryMode ? 0.74 : 0.68)) continue;
+    identityGatePassed += 1;
+    if (decision.exactMatchPassed) exactMatchPassed += 1;
+    confidences.push(decision.fusionConfidence);
+    accepted.push(withGate);
+    if (accepted.length >= maxRows) break;
+  }
+
+  return {
+    products: accepted,
+    rejected: Math.max(0, products.length - accepted.length),
+    identityGatePassed,
+    exactMatchPassed,
+    fusionConfidence: Number(avg(confidences).toFixed(2)),
+  };
+}
+
+function isExternalDiscoveryRow(p: QuantProduct): boolean {
+  return Array.isArray(p.extensions) && p.extensions.includes("Live market refresh");
+}
+
+function protectInternalTopResults(
+  products: QuantProduct[],
+  mode: LiveCommerceDiscoveryMeta["discoveryMode"]
+): QuantProduct[] {
+  if (mode !== "conservative" || products.length <= 1) return products;
+  const maxExternalTop12 = 4;
+  const head: QuantProduct[] = [];
+  const delayed: QuantProduct[] = [];
+  let externalInHead = 0;
+
+  for (const product of products) {
+    const external = isExternalDiscoveryRow(product);
+    if (head.length < 12 && (!external || externalInHead < maxExternalTop12)) {
+      head.push(product);
+      if (external) externalInHead += 1;
+    } else {
+      delayed.push(product);
+    }
+  }
+  return [...head, ...delayed].map((p, i) => ({ ...p, id: i + 1, qiRank: i }));
+}
+
+function selectCandidateFanout(candidates: ExternalMerchantCandidate[], maxMerchants: number): ExternalMerchantCandidate[] {
+  const selected = new Map<string, ExternalMerchantCandidate>();
+  const reliabilityRanked = [...candidates]
+    .map((candidate) => ({
+      candidate,
+      adjustedQuality: (candidate.routeQuality ?? candidate.priority) - reliabilityPenaltyForMerchant(candidate.merchantKey),
+    }))
+    .sort((a, b) => b.adjustedQuality - a.adjustedQuality || a.candidate.label.localeCompare(b.candidate.label));
+  for (const { candidate } of reliabilityRanked) {
+    const prev = selected.get(candidate.merchantKey);
+    if (
+      !prev ||
+      (candidate.directRoute && !prev.directRoute) ||
+      (candidate.routeQuality ?? 0) > (prev.routeQuality ?? 0)
+    ) {
+      selected.set(candidate.merchantKey, candidate);
+    }
+    if (selected.size >= maxMerchants) break;
+  }
+  return Array.from(selected.values());
+}
+
+function discoveryHealthScore(args: {
+  refreshSource: string;
+  upstreamReliabilityScore: number;
+  validatedRows: number;
+  rejectedRows: number;
+  timedOut: boolean;
+  recoveredFromFallback: boolean;
+}): number {
+  if (args.refreshSource === "disabled" || args.refreshSource === "disabled_missing_key") return 0;
+  const validationRatio = args.validatedRows / Math.max(1, args.validatedRows + args.rejectedRows);
+  const score =
+    args.upstreamReliabilityScore * 0.56 +
+    validationRatio * 28 +
+    (args.validatedRows > 0 ? 10 : 0) +
+    (args.recoveredFromFallback ? 4 : 0) -
+    (args.timedOut ? 18 : 0);
+  return Math.round(Math.min(100, Math.max(0, score)));
+}
+
 export async function runLiveCommerceDiscovery(
   query: string,
   internalProducts: QuantProduct[],
   canonicalQuery?: CanonicalQueryContract
 ): Promise<LiveCommerceDiscoveryResult> {
-  if (process.env.ENABLE_WIDE_DISCOVERY !== "true") {
+  const started = Date.now();
+  const mode = discoveryModeFor(canonicalQuery);
+  const unknownCategoryMode = !canonicalQuery || canonicalQuery.category === "unknown";
+  const controls = rolloutControls();
+  if (!controls.enabled) {
     return {
       products: internalProducts,
       candidates: [],
       meta: {
         version: 1,
         status: "disabled",
+        discoveryEnabled: false,
+        discoveryMode: "disabled",
+        discoveryStatus: "disabled",
+        discoveryCandidates: 0,
         candidateCount: 0,
         candidateMerchants: [],
         attemptedQueries: [],
         externalRows: 0,
+        externalRowsAccepted: 0,
+        validatedExternalRows: 0,
+        validatedMerchantCount: 0,
+        rejectedDiscoveryRows: 0,
         fusedRows: internalProducts.length,
         timedOut: false,
+        timeoutTriggered: false,
         source: "disabled",
+        unknownCategoryMode,
+        identityGatePassed: 0,
+        exactMatchPassed: 0,
+        discoveryLatency: Date.now() - started,
+        fusionConfidence: 0,
+        maxDiscoveryRows: controls.maxRows,
+        maxDiscoveryMerchants: controls.maxMerchants,
+        timeoutMs: controls.timeoutMs,
+        discoveryHealthScore: 0,
+        upstreamReliabilityScore: 0,
+        successfulQueries: 0,
+        failedQueries: 0,
+        retriesAttempted: 0,
+        fallbackQueriesAttempted: 0,
+        partialRecovery: false,
+        recoveredFromFallback: false,
+        upstreamFailures: [],
+        merchantReliability: discoveryReliabilitySnapshot([]),
       },
     };
   }
-  const candidates = buildExternalMerchantCandidates(query, canonicalQuery);
-  const refresh = await refreshLiveMarketProducts(query, candidates, canonicalQuery);
+  const candidates = selectCandidateFanout(buildExternalMerchantCandidates(query, canonicalQuery), controls.maxMerchants);
+  const refresh = await refreshLiveMarketProducts(query, candidates, canonicalQuery, {
+    maxAttemptedQueries: controls.maxAttemptedQueries,
+    timeoutMs: controls.timeoutMs,
+  });
+  const validated = validateExternalRows(refresh.products, query, canonicalQuery, mode, controls.maxRows);
+  const merchantReliability = recordDiscoveryReliability({
+    candidates,
+    success: refresh.successfulQueries > 0,
+    timedOut: refresh.timedOut,
+  });
   const fused = mergeExternalAndInternalOffersWithoutEarlyCollapse({
     internal: internalProducts,
-    external: refresh.products,
+    external: validated.products,
     query,
     canonicalQuery,
   });
-  const products = rankLiveDeals(fused, query);
+  const products = protectInternalTopResults(rankLiveDeals(fused, query), mode);
+  const status = refresh.source === "disabled_missing_key" ? "disabled_missing_key" : refresh.source === "disabled" ? "disabled" : "enabled";
+  const health = discoveryHealthScore({
+    refreshSource: refresh.source,
+    upstreamReliabilityScore: refresh.upstreamReliabilityScore,
+    validatedRows: validated.products.length,
+    rejectedRows: validated.rejected,
+    timedOut: refresh.timedOut,
+    recoveredFromFallback: refresh.recoveredFromFallback,
+  });
   return {
     products,
     candidates,
     meta: {
       version: 1,
-      status: refresh.source === "disabled_missing_key" ? "disabled_missing_key" : refresh.source === "disabled" ? "disabled" : "enabled",
+      status,
+      discoveryEnabled: status === "enabled",
+      discoveryMode: status === "enabled" ? mode : "disabled",
+      discoveryStatus: status,
+      discoveryCandidates: candidates.length,
       candidateCount: candidates.length,
       candidateMerchants: candidates.map((c) => c.label).slice(0, 80),
       attemptedQueries: refresh.attemptedQueries,
       externalRows: refresh.products.length,
+      externalRowsAccepted: validated.products.length,
+      validatedExternalRows: validated.products.length,
+      validatedMerchantCount: new Set(validated.products.map((p) => p.store.trim().toLowerCase()).filter(Boolean)).size,
+      rejectedDiscoveryRows: validated.rejected,
       fusedRows: products.length,
       timedOut: refresh.timedOut,
+      timeoutTriggered: refresh.timedOut || Date.now() - started >= controls.timeoutMs + 750,
       source: refresh.source,
+      unknownCategoryMode,
+      identityGatePassed: validated.identityGatePassed,
+      exactMatchPassed: validated.exactMatchPassed,
+      discoveryLatency: Date.now() - started,
+      fusionConfidence: validated.fusionConfidence,
+      maxDiscoveryRows: controls.maxRows,
+      maxDiscoveryMerchants: controls.maxMerchants,
+      timeoutMs: controls.timeoutMs,
+      discoveryHealthScore: health,
+      upstreamReliabilityScore: refresh.upstreamReliabilityScore,
+      successfulQueries: refresh.successfulQueries,
+      failedQueries: refresh.failedQueries,
+      retriesAttempted: refresh.retriesAttempted,
+      fallbackQueriesAttempted: refresh.fallbackQueriesAttempted,
+      partialRecovery: refresh.partialRecovery,
+      recoveredFromFallback: refresh.recoveredFromFallback,
+      upstreamFailures: refresh.upstreamFailures,
+      merchantReliability,
     },
   };
 }

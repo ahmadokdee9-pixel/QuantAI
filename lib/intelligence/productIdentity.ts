@@ -52,10 +52,19 @@ export type StructuredProductIdentity = {
 
 export type IdentityGateDecision = {
   identityGatePassed: boolean;
+  exactMatchPassed: boolean;
   exclusionReason: string | null;
   identityConfidence: number;
+  fusionConfidence: number;
   relation: StructuredIdentityRelation;
   reasons: string[];
+};
+
+export type IdentityGateOptions = {
+  /** External/live rows must be clean even for broad or unknown categories. */
+  strictExternalDiscovery?: boolean;
+  /** Unknown categories may enter discovery, but need stronger title identity evidence. */
+  unknownCategoryMode?: boolean;
 };
 
 /** Collapse brand + primary model tokens for identity keys. */
@@ -118,8 +127,13 @@ function queryAllowsAccessory(canonicalQuery?: CanonicalQueryContract): boolean 
 function exactCoreProductIntent(canonicalQuery?: CanonicalQueryContract): boolean {
   if (!canonicalQuery || queryAllowsAccessory(canonicalQuery)) return false;
   const q = canonicalQuery.originalQuery.toLowerCase();
+  const broadCoreCategory =
+    (canonicalQuery.category === "electronics" || canonicalQuery.category === "furniture") &&
+    !canonicalQuery.brand &&
+    !canonicalQuery.model;
+  if (broadCoreCategory) return false;
   const protectedExact =
-    /(iphone|ايفون|آيفون|airpods?|ايربودز|adidas\s+samba|samba|gaming\s+monitor|monitor|sofa|couch|كنبة)/i.test(q);
+    /(iphone|ايفون|آيفون|airpods?|ايربودز|adidas\s+samba|samba)/i.test(q);
   return (
     protectedExact ||
     canonicalQuery.intent.primary === "exact_product" ||
@@ -143,6 +157,27 @@ function explicitVariantEvidence(identity: StructuredProductIdentity): boolean {
     .split("|")
     .filter((part) => part && part !== "cond:unknown" && part !== "cond:new");
   return hasModel && variantParts.length > 0;
+}
+
+function tokenSet(s: string): string[] {
+  return Array.from(new Set(s.toLowerCase().match(/[\p{L}\p{N}]{3,}/gu) ?? []));
+}
+
+function productEvidenceScore(product: QuantProduct, canonicalQuery?: CanonicalQueryContract): number {
+  if (!canonicalQuery) return 0.5;
+  const text = listingBlob(product);
+  const identityTerms = [
+    canonicalQuery.brand,
+    canonicalQuery.model,
+    canonicalQuery.variant,
+    canonicalQuery.productType,
+    canonicalQuery.category !== "unknown" ? canonicalQuery.category : "",
+    ...canonicalQuery.semantic.semanticKeywords.slice(0, 8),
+  ].filter((x): x is string => Boolean(x && x.trim()));
+  const terms = Array.from(new Set(identityTerms.flatMap(tokenSet))).filter((t) => !/^(best|cheap|deal|trusted|safe|buy|voor)$/.test(t));
+  if (!terms.length) return 0.45;
+  const hits = terms.filter((term) => text.includes(term)).length;
+  return clamp01(hits / Math.min(5, terms.length));
 }
 
 function relationFromCommercialText(blob: string): { relation: StructuredIdentityRelation | null; reasons: string[] } {
@@ -190,11 +225,14 @@ function categoryEvidence(p: QuantProduct, canonicalQuery?: CanonicalQueryContra
   const category = canonicalQuery?.category;
   if (!category || category === "unknown") return true;
   const blob = listingBlob(p);
-  if (category === "phone") return /\b(phone|iphone|galaxy|pixel|smartphone|mobile)\b/i.test(blob);
-  if (category === "audio") return /\b(airpods?|earbuds?|headphones?|wireless audio|noise cancelling)\b/i.test(blob);
+  if (category === "phone") return /\b(phone|iphone|galaxy|pixel|smartphone|mobile|telefoon|mobiel)\b/i.test(blob);
+  if (category === "audio") return /\b(airpods?|earbuds?|headphones?|wireless audio|noise cancelling|koptelefoon|oordopjes|oortjes)\b/i.test(blob);
   if (category === "shoes") return /\b(shoe|sneaker|trainer|samba|gazelle|air force|adidas|nike)\b/i.test(blob);
-  if (category === "furniture") return /\b(sofa|couch|corner sofa|chair|table|furniture|كنبة)\b/i.test(blob);
-  if (category === "electronics") return /\b(monitor|display|gpu|camera|tablet|console|tv|electronics?)\b/i.test(blob);
+  if (category === "furniture") return /\b(sofa|couch|corner sofa|hoekbank|bankstel|loungebank|chair|stoel|table|tafel|tuinset|furniture|meubel|meubels|كنبة|طاولة)\b/i.test(blob);
+  if (category === "electronics") return /\b(monitor|display|beeldscherm|scherm|gpu|camera|tablet|console|tv|electronics?)\b/i.test(blob);
+  if (category === "fragrance") return /\b(perfume|fragrance|parfum|cologne|eau de parfum|eau de toilette|عطر)\b/i.test(blob);
+  if (category === "fashion") return /\b(jacket|jas|coat|hoodie|shirt|dress|fashion|kleding)\b/i.test(blob);
+  if (category === "home") return /\b(home|kitchen|coffee|machine|appliance|huis|keuken|apparaat)\b/i.test(blob);
   return true;
 }
 
@@ -327,8 +365,10 @@ export function buildIdentityDebugSummary(
       relation: id.relation,
       confidence01: Number(id.confidence01.toFixed(2)),
       identityGatePassed: product.qiIdentityGate?.identityGatePassed ?? null,
+      exactMatchPassed: product.qiIdentityGate?.exactMatchPassed ?? null,
       exclusionReason: product.qiIdentityGate?.exclusionReason ?? null,
       identityConfidence: product.qiIdentityGate?.identityConfidence ?? Number(id.confidence01.toFixed(2)),
+      fusionConfidence: product.qiIdentityGate?.fusionConfidence ?? null,
       isMainProduct: id.isMainProduct,
       isSafeSameFamilyCandidate: id.isSafeSameFamilyCandidate,
       reasons: id.reasons,
@@ -342,6 +382,82 @@ export function buildIdentityDebugSummary(
   return { counts, topRows: rows };
 }
 
+export function assessIdentityGateDecision(
+  product: QuantProduct,
+  canonicalQuery?: CanonicalQueryContract,
+  options: IdentityGateOptions = {}
+): IdentityGateDecision {
+  if (
+    product.qiIdentityGate?.identityGatePassed &&
+    product.qiIdentityGate.exactMatchPassed &&
+    product.qiIdentityGate.fusionConfidence >= 0.68
+  ) {
+    return product.qiIdentityGate;
+  }
+  const exactIntent = exactCoreProductIntent(canonicalQuery);
+  const identity = assessStructuredProductIdentity({
+    product,
+    canonicalQuery,
+    listingIdentity: product.qiListingIdentity ?? null,
+  });
+  const title = listingBlob(product);
+  const evidence01 = productEvidenceScore(product, canonicalQuery);
+  const variantOk = identity.relation === "variant" && identity.confidence01 >= 0.78 && explicitVariantEvidence(identity);
+  const exactMatchPassed = Boolean(
+    identity.relation === "exact_product" ||
+    identity.isSafeSameFamilyCandidate ||
+    variantOk ||
+    (options.unknownCategoryMode && identity.isMainProduct && evidence01 >= 0.64 && identity.confidence01 >= 0.68)
+  );
+  const fusionConfidence = clamp01(identity.confidence01 * 0.68 + evidence01 * 0.32);
+  let exclusionReason: string | null = null;
+
+  if (weakTitleJunk(product)) exclusionReason = "weak_title_junk";
+  if (!exclusionReason && identity.relation === "fake_placeholder") exclusionReason = "fake_placeholder";
+  if (!exclusionReason && identity.relation === "wrong_product") exclusionReason = "wrong_product";
+
+  if (!exclusionReason && (exactIntent || options.strictExternalDiscovery)) {
+    if (identity.relation === "accessory") exclusionReason = "accessory_for_exact_product";
+    else if (identity.relation === "compatible_item") exclusionReason = "compatible_item_for_exact_product";
+    else if (identity.relation === "replacement_part") exclusionReason = "replacement_part_for_exact_product";
+    else if (identity.relation === "bundle") exclusionReason = "bundle_not_exact_product";
+    else if (identity.relation === "refurbished_used" && canonicalQuery?.condition === "any") exclusionReason = "used_or_refurbished_noise";
+    else if (
+      canonicalQuery?.category === "phone" &&
+      /\biphone\b/i.test(title) &&
+      !/\bapple\b/i.test(title) &&
+      !/\b(64|128|256|512)\s?gb\b/i.test(title)
+    ) {
+      exclusionReason = "phone_exact_missing_device_evidence";
+    } else if (canonicalQuery?.category === "shoes" && /\b(cap|hat|socks|hoodie|shirt|shorts|bag|backpack)\b/i.test(title)) {
+      exclusionReason = "shoe_query_apparel_or_accessory";
+    } else if (/\b(case|cover|replacement|for iphone|used parts|bundle|sim tray|charger|cable)\b/i.test(title)) {
+      exclusionReason = "exact_product_protected_term";
+    } else if (identity.relation === "same_product_family" && (exactIntent || fusionConfidence < 0.72)) {
+      exclusionReason = "same_family_not_exact_product";
+    } else if (identity.relation === "variant" && !variantOk) {
+      exclusionReason = "weak_variant_identity";
+    }
+  }
+
+  if (!exclusionReason && options.strictExternalDiscovery && !exactMatchPassed) {
+    exclusionReason = "external_identity_not_strong_enough";
+  }
+  if (!exclusionReason && options.unknownCategoryMode && fusionConfidence < 0.72) {
+    exclusionReason = "unknown_category_weak_identity";
+  }
+
+  return {
+    identityGatePassed: !exclusionReason,
+    exactMatchPassed,
+    exclusionReason,
+    identityConfidence: Number(identity.confidence01.toFixed(2)),
+    fusionConfidence: Number(fusionConfidence.toFixed(2)),
+    relation: identity.relation,
+    reasons: identity.reasons,
+  };
+}
+
 export function applyHardIdentityGate(
   products: QuantProduct[],
   canonicalQuery?: CanonicalQueryContract
@@ -350,61 +466,21 @@ export function applyHardIdentityGate(
   const exactIntent = exactCoreProductIntent(canonicalQuery);
   const passed: QuantProduct[] = [];
   const delayed: QuantProduct[] = [];
+  const breadthSafeReasons = new Set([
+    "same_family_not_exact_product",
+    "weak_variant_identity",
+    "used_or_refurbished_noise",
+  ]);
 
   for (const product of products) {
-    const identity = assessStructuredProductIdentity({
-      product,
-      canonicalQuery,
-      listingIdentity: product.qiListingIdentity ?? null,
-    });
-    let exclusionReason: string | null = null;
-    let gatePassed = true;
-    const title = listingBlob(product);
-
-    if (weakTitleJunk(product)) exclusionReason = "weak_title_junk";
-    if (!exclusionReason && identity.relation === "fake_placeholder") exclusionReason = "fake_placeholder";
-    if (!exclusionReason && identity.relation === "wrong_product") exclusionReason = "wrong_product";
-
-    if (!exclusionReason && exactIntent) {
-      if (identity.relation === "accessory") exclusionReason = "accessory_for_exact_product";
-      else if (identity.relation === "compatible_item") exclusionReason = "compatible_item_for_exact_product";
-      else if (identity.relation === "replacement_part") exclusionReason = "replacement_part_for_exact_product";
-      else if (identity.relation === "bundle") exclusionReason = "bundle_not_exact_product";
-      else if (identity.relation === "refurbished_used" && canonicalQuery?.condition === "any") exclusionReason = "used_or_refurbished_noise";
-      else if (
-        canonicalQuery?.category === "phone" &&
-        /\biphone\b/i.test(title) &&
-        !/\bapple\b/i.test(title) &&
-        !/\b(64|128|256|512)\s?gb\b/i.test(title)
-      ) {
-        exclusionReason = "phone_exact_missing_device_evidence";
-      }
-      else if (canonicalQuery?.category === "shoes" && /\b(cap|hat|socks|hoodie|shirt|shorts|bag|backpack)\b/i.test(title)) {
-        exclusionReason = "shoe_query_apparel_or_accessory";
-      }
-      else if (/\b(case|cover|compatible|replacement|for iphone|used parts|bundle|sim tray|charger|cable)\b/i.test(title)) {
-        exclusionReason = "exact_product_protected_term";
-      } else if (identity.relation === "same_product_family") {
-        exclusionReason = "same_family_not_exact_product";
-      } else if (identity.relation === "variant" && (identity.confidence01 < 0.78 || !explicitVariantEvidence(identity))) {
-        exclusionReason = "weak_variant_identity";
-      }
-    }
-
-    if (exclusionReason) gatePassed = false;
+    const decision = assessIdentityGateDecision(product, canonicalQuery);
     const withGate: QuantProduct = {
       ...product,
-      qiIdentityGate: {
-        identityGatePassed: gatePassed,
-        exclusionReason,
-        identityConfidence: Number(identity.confidence01.toFixed(2)),
-        relation: identity.relation,
-        reasons: identity.reasons,
-      },
+      qiIdentityGate: decision,
     };
 
-    if (gatePassed) passed.push(withGate);
-    else if (exclusionReason === "fake_placeholder" || exclusionReason === "weak_title_junk" || exclusionReason === "wrong_product") {
+    if (decision.identityGatePassed) passed.push(withGate);
+    else if (decision.exclusionReason === "fake_placeholder" || decision.exclusionReason === "weak_title_junk" || decision.exclusionReason === "wrong_product") {
       continue;
     } else {
       delayed.push(withGate);
@@ -412,7 +488,52 @@ export function applyHardIdentityGate(
   }
 
   if (!exactIntent) return [...passed, ...delayed].map((p, i) => ({ ...p, qiRank: i }));
-  return passed.map((p, i) => ({ ...p, qiRank: i }));
+  const safeBreadth = delayed.filter((p) => {
+    const gate = p.qiIdentityGate;
+    if (!gate?.exclusionReason || !breadthSafeReasons.has(gate.exclusionReason) || gate.fusionConfidence < 0.64) return false;
+    if (canonicalQuery?.model && !gate.reasons.includes("model_or_identifier_evidence") && gate.fusionConfidence < 0.72) return false;
+    return true;
+  });
+  if (passed.length > 0) return [...passed, ...safeBreadth].map((p, i) => ({ ...p, qiRank: i }));
+  const recoveryBreadth = delayed.filter((p) => {
+    const gate = p.qiIdentityGate;
+    if (!gate || gate.fusionConfidence < 0.64) return false;
+    if (canonicalQuery?.model && !gate.reasons.includes("model_or_identifier_evidence") && gate.fusionConfidence < 0.72) return false;
+    return ![
+      "accessory",
+      "compatible_item",
+      "replacement_part",
+      "bundle",
+      "fake_placeholder",
+      "wrong_product",
+    ].includes(gate.relation);
+  });
+  return recoveryBreadth.map((p, i) => ({ ...p, qiRank: i }));
+}
+
+export function recoverSafeIdentityBreadth(
+  products: QuantProduct[],
+  canonicalQuery?: CanonicalQueryContract,
+  limit = 12
+): QuantProduct[] {
+  const recovered: QuantProduct[] = [];
+  for (const product of products) {
+    const decision = assessIdentityGateDecision(product, canonicalQuery);
+    if (decision.exclusionReason === "fake_placeholder" || decision.exclusionReason === "weak_title_junk") continue;
+    if (["accessory", "compatible_item", "replacement_part", "bundle", "fake_placeholder", "wrong_product"].includes(decision.relation)) continue;
+    const minRecoveryConfidence = canonicalQuery?.model ? 0.64 : 0.52;
+    if (decision.fusionConfidence < minRecoveryConfidence) continue;
+    if (canonicalQuery?.model && !decision.reasons.includes("model_or_identifier_evidence") && decision.fusionConfidence < 0.72) continue;
+    recovered.push({
+      ...product,
+      qiIdentityGate: {
+        ...decision,
+        exclusionReason: decision.exclusionReason === "wrong_product" ? "safe_breadth_recovery" : decision.exclusionReason,
+      },
+    });
+    if (recovered.length >= limit) break;
+  }
+  return recovered.map((p, i) => ({ ...p, qiRank: i }));
 }
 
 /** 0–1 confidence two rows are the same product (uses deals identity + price sanity). */

@@ -43,8 +43,15 @@ export function buildExternalExpansionQueries(
   const exact = candidates.find((c) => c.queryKind === "exact")?.identityQuery ?? query.trim();
   const specs = candidates.find((c) => c.queryKind === "specs")?.identityQuery ?? identity;
   const chunks = [candidates.slice(0, 20), candidates.slice(20, 40), candidates.slice(40, 60), candidates.slice(60, 80)].filter((xs) => xs.length > 0);
+  const productContext = [
+    canonicalQuery?.productType !== "general" ? canonicalQuery?.productType : "",
+    canonicalQuery?.brand,
+    canonicalQuery?.model,
+    canonicalQuery?.variant,
+  ].filter(Boolean).join(" ");
   const vertical =
-    q.productCategory === "shoes"
+    productContext ||
+    (q.productCategory === "shoes"
       ? "official sneakers shoes"
       : q.productCategory === "furniture"
         ? "trusted furniture sofa"
@@ -52,11 +59,16 @@ export function buildExternalExpansionQueries(
           ? "authentic perfume fragrance"
           : q.productCategory === "laptop" || q.productCategory === "phone" || q.productCategory === "audio"
             ? "trusted electronics official"
-            : "trusted stores";
+            : "trusted stores");
   return chunks
     .map((chunk, index) => {
       const base = index === 0 ? exact : index === 1 ? identity : specs;
-      return `${base} ${chunk.map((c) => c.label.replace(/\.com$/i, "")).join(" ")} ${vertical}`.replace(/\s+/g, " ").trim();
+      const merchantHints = chunk
+        .slice(0, 4)
+        .map((c) => c.label.replace(/\.com$/i, ""))
+        .join(" ");
+      if (index === 0) return base.replace(/\s+/g, " ").trim();
+      return `${base} ${merchantHints} ${vertical}`.replace(/\s+/g, " ").trim();
     })
     .filter(Boolean)
     .slice(0, 4);

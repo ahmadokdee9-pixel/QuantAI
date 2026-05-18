@@ -72,6 +72,12 @@ export function normalizeMerchantName(store: string): string {
     [/\bsamsung\b/i, "samsung"],
     [/dyson/i, "dyson"],
     [/philips/i, "philips"],
+    [/de\s*bijenkorf|bijenkorf/i, "debijenkorf"],
+    [/\bexpert\b/i, "expert"],
+    [/koffiewarenhuis/i, "koffiewarenhuis"],
+    [/tuinmeubelland/i, "tuinmeubelland"],
+    [/babypark/i, "babypark"],
+    [/pr.natal|prenatal/i, "prenatal"],
     [/\baction\b/i, "action"],
     [/aliexpress/i, "aliexpress"],
     [/\btemu\b/i, "temu"],
@@ -208,6 +214,18 @@ export function buildMerchantSearchUrl(merchantKey: string, searchTerms: string,
       return `https://www.dyson.nl/search?q=${qEnc(q)}`;
     case "philips":
       return `https://www.philips.nl/c-w/search/search#q=${qEnc(q)}`;
+    case "debijenkorf":
+      return `https://www.debijenkorf.nl/zoeken?query=${qEnc(q)}`;
+    case "expert":
+      return `https://www.expert.nl/zoeken?keyword=${qEnc(q)}`;
+    case "koffiewarenhuis":
+      return `https://www.koffiewarenhuis.nl/search?q=${qEnc(q)}`;
+    case "tuinmeubelland":
+      return `https://www.tuinmeubelland.nl/search?search=${qEnc(q)}`;
+    case "babypark":
+      return `https://www.babypark.nl/zoeken?q=${qEnc(q)}`;
+    case "prenatal":
+      return `https://www.prenatal.nl/zoeken/?q=${qEnc(q)}`;
     case "action":
       return `https://www.action.com/nl-nl/search/?q=${qEnc(q)}`;
     case "aliexpress":

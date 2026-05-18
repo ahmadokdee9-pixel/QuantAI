@@ -184,7 +184,7 @@ export function buildUnifiedMarketGroups(products: QuantProduct[], searchQuery =
       const junkPair = junkCommercialRole(li) || junkCommercialRole(lj);
 
       let confMin = accHeavy ? 0.9 : 0.74;
-      confMin = Math.max(confMin, 0.82);
+      confMin = Math.max(confMin, 0.78);
       if (contamHeavy) confMin = Math.max(confMin, 0.87);
       if (mismatchHeavy) confMin = Math.max(confMin, 0.9);
       if (completenessMismatch) confMin = Math.max(confMin, 0.93);

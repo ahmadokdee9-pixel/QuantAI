@@ -74,6 +74,12 @@ const WIDE_MERCHANTS: WideMerchant[] = [
   { key: "jysk", label: "JYSK", region: "nl", priority: 76, cats: ["furniture", "home"] },
   { key: "beterbed", label: "Beter Bed", region: "nl", priority: 74, cats: ["furniture", "home"] },
   { key: "otto", label: "OTTO", region: "eu", priority: 78, cats: ["fashion", "home", "furniture", "electronics"] },
+  { key: "debijenkorf", label: "de Bijenkorf", region: "nl", priority: 79, cats: ["fashion", "beauty", "home", "fragrance"] },
+  { key: "expert", label: "Expert", region: "nl", priority: 78, cats: ["electronics", "home", "audio", "phone"] },
+  { key: "koffiewarenhuis", label: "Koffiewarenhuis", region: "nl", priority: 77, cats: ["home", "electronics"] },
+  { key: "tuinmeubelland", label: "Tuinmeubelland", region: "nl", priority: 76, cats: ["home", "furniture"] },
+  { key: "babypark", label: "Babypark", region: "nl", priority: 78 },
+  { key: "prenatal", label: "Prenatal", region: "nl", priority: 75 },
   { key: "aliexpress", label: "AliExpress", region: "global", priority: 48, lowTrustFallback: true },
   { key: "temu", label: "Temu", region: "global", priority: 40, lowTrustFallback: true },
 ];
@@ -90,13 +96,36 @@ function eanTokens(query: string): string[] {
   return Array.from(query.matchAll(/\b\d{8,14}\b/g), (m) => m[0]!).slice(0, 2);
 }
 
-function queryVariants(query: string, intent: SemanticQueryUnderstanding): { kind: WideMerchantQueryKind; value: string }[] {
+function compactIdentityQuery(parts: Array<string | null | undefined>): string {
+  return cleanQuery(parts.filter(Boolean).join(" "));
+}
+
+function queryVariants(
+  query: string,
+  intent: SemanticQueryUnderstanding,
+  canonicalQuery?: CanonicalQueryContract
+): { kind: WideMerchantQueryKind; value: string }[] {
   const semantic = cleanQuery(intent.semanticKeywords.slice(0, 10).join(" "));
   const category = intent.productCategory !== "unknown" ? intent.productCategory.replace("_", " ") : "";
   const anchor = cleanQuery(intent.alternativeIntent.anchor);
   const exact = query.trim();
-  const identity = cleanQuery([semantic, anchor].filter(Boolean).join(" ")) || intent.rewritten || exact;
-  const specs = cleanQuery([identity, category, ...intent.productPurpose, ...intent.usageContext].join(" "));
+  const canonicalIdentity = compactIdentityQuery([
+    canonicalQuery?.brand,
+    canonicalQuery?.model,
+    canonicalQuery?.variant,
+    canonicalQuery?.productType !== "general" ? canonicalQuery?.productType : "",
+  ]);
+  const identity = canonicalIdentity || cleanQuery([semantic, anchor].filter(Boolean).join(" ")) || intent.rewritten || exact;
+  const budget = canonicalQuery?.budget.active && canonicalQuery.budget.maxPrice ? `under ${canonicalQuery.budget.maxPrice}` : "";
+  const specs = cleanQuery([
+    identity,
+    canonicalQuery?.productType,
+    category,
+    canonicalQuery?.condition !== "any" ? canonicalQuery?.condition : "",
+    budget,
+    ...intent.productPurpose,
+    ...intent.usageContext,
+  ].join(" "));
   const eans = eanTokens(query).map((value) => ({ kind: "ean" as const, value }));
   const variants: { kind: WideMerchantQueryKind; value: string }[] = [
     { kind: "exact", value: exact },
@@ -133,12 +162,14 @@ export function scoreMerchantRouteQuality(args: {
 export function generateMerchantSearchRoutes(
   query: string,
   merchant: WideMerchant,
-  parsedIntent = buildSearchQueryUnderstanding(query)
+  parsedIntent: SemanticQueryUnderstanding | CanonicalQueryContract = buildSearchQueryUnderstanding(query)
 ): WideMerchantCandidate[] {
-  return queryVariants(query, parsedIntent).map(({ kind, value }) => {
+  const semanticIntent = "semantic" in parsedIntent ? parsedIntent.semantic : parsedIntent;
+  const canonicalQuery = "semantic" in parsedIntent ? parsedIntent : undefined;
+  return queryVariants(query, semanticIntent, canonicalQuery).map(({ kind, value }) => {
     const directUrl = buildMerchantSearchUrl(merchant.key, value, merchant.key === "amazon_de" ? "de" : "nl");
     const directRoute = Boolean(directUrl);
-    const routeQuality = scoreMerchantRouteQuality({ merchant, queryKind: kind, directRoute, parsedIntent });
+    const routeQuality = scoreMerchantRouteQuality({ merchant, queryKind: kind, directRoute, parsedIntent: semanticIntent });
     return {
       merchantKey: merchant.key,
       label: merchant.label,
@@ -158,8 +189,10 @@ export function buildWideMerchantCandidates(
   parsedIntent: SemanticQueryUnderstanding | CanonicalQueryContract = buildSearchQueryUnderstanding(query)
 ): WideMerchantCandidate[] {
   const semanticIntent = "semantic" in parsedIntent ? parsedIntent.semantic : parsedIntent;
-  const candidates = WIDE_MERCHANTS.flatMap((merchant) => generateMerchantSearchRoutes(query, merchant, semanticIntent))
-    .filter((c) => c.routeQuality >= 50 || c.queryKind === "ean")
+  const canonicalQuery = "semantic" in parsedIntent ? parsedIntent : undefined;
+  const conservativeUnknown = semanticIntent.productCategory === "unknown";
+  const candidates = WIDE_MERCHANTS.flatMap((merchant) => generateMerchantSearchRoutes(query, merchant, canonicalQuery ?? semanticIntent))
+    .filter((c) => c.routeQuality >= (conservativeUnknown ? 58 : 50) || c.queryKind === "ean")
     .sort((a, b) => b.routeQuality - a.routeQuality || a.label.localeCompare(b.label));
   const keyed = new Map<string, WideMerchantCandidate>();
   for (const c of candidates) {

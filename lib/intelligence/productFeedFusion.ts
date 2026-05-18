@@ -16,6 +16,9 @@ import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 import { assessUniversalListingIdentity } from "./universalListingIdentity";
 
 function rowKey(p: QuantProduct): string {
+  if (p.qiIdentityGate?.identityGatePassed === true) {
+    return `${p.store}:${p.title}:${p.price}`.toLowerCase();
+  }
   try {
     const u = new URL(p.offerOutboundUrl || p.link);
     return `${u.hostname.replace(/^www\./, "")}${u.pathname}`.toLowerCase();
@@ -75,7 +78,8 @@ export function fuseProductFeeds(args: {
   const merged: QuantProduct[] = [];
   const byKey = new Map<string, QuantProduct>();
   for (const raw of [...internal, ...external]) {
-    if (isWeakRow(raw, query)) continue;
+    const validatedDiscoveryRow = raw.qiIdentityGate?.identityGatePassed === true && raw.qiIdentityGate?.exactMatchPassed === true;
+    if (!validatedDiscoveryRow && isWeakRow(raw, query)) continue;
     const p = raw.qiListingIdentity ? raw : { ...raw, qiListingIdentity: assessUniversalListingIdentity(raw, query) };
     const key = rowKey(p);
     const prev = byKey.get(key);
