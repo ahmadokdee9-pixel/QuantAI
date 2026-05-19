@@ -8,6 +8,24 @@ import { saveValidationRun, loadPreviousRun, compareValidationRuns, deployId } f
 const BASE_URL = process.env.SEARCH_BASE_URL || "http://localhost:3000";
 const queue = new ValidationRequestQueue({ minIntervalMs: 2000 });
 
+/** Consumer fitness / band lane — must not dominate luxury watch trays. */
+const FITNESS_WATCH_RX =
+  /\b(galaxy\s+fit|fitbit|mi\s+band|smart\s+band|fitness\s+tracker|activity\s+tracker|amazfit\s+band|whoop)\b|galaxy\s+fit\d+/i;
+
+const LUXURY_WATCH_TITLE_RX =
+  /watch|horloge|wristwatch|timepiece|chronograph|automatic|mechanical|swiss|dress|ساعة/i;
+
+function luxuryWatchCase(query, extra = {}) {
+  return {
+    query,
+    minProducts: 2,
+    category: "watch",
+    luxuryWatchLane: true,
+    titleMustMatch: LUXURY_WATCH_TITLE_RX,
+    ...extra,
+  };
+}
+
 const CASES = [
   {
     query: "best premium headphones for focus",
@@ -46,12 +64,14 @@ const CASES = [
     category: "furniture",
     titleMustMatch: /chair|stoel|office|desk|kantoor/i,
   },
-  {
-    query: "luxury ساعة under 300",
-    minProducts: 2,
-    category: "watch",
-    titleMustMatch: /watch|smartwatch|horloge|ساعة/i,
-  },
+  luxuryWatchCase("luxury ساعة under 300"),
+  luxuryWatchCase("luxury watch under 3000"),
+  luxuryWatchCase("elegant swiss watch"),
+  luxuryWatchCase("luxury men's watch"),
+  luxuryWatchCase("rolex alternative watch"),
+  luxuryWatchCase("omega vs tag heuer watch"),
+  luxuryWatchCase("premium mechanical watch"),
+  luxuryWatchCase("ساعة شكلها luxury بس سعرها معقول"),
   {
     query: "جزمة مثل nike vomero بس ارخص",
     minProducts: 2,
@@ -84,7 +104,6 @@ const CASES = [
   },
 ];
 
-
 function topTitles(products, n = 8) {
   return products.slice(0, n).map((p) => p.title ?? "");
 }
@@ -99,6 +118,7 @@ for (const spec of CASES) {
     row.count = products.length;
     row.category = meta?.canonicalQuery?.category ?? meta?.canonicalQuery?.semantic?.productCategory ?? null;
     row.titles = topTitles(products);
+    row.latencyMs = result.latencyMs ?? null;
 
     if (isInfrastructureFailure(result)) {
       row.issues.push(`infrastructure_${result.infrastructure?.kind ?? "unknown"}`);
@@ -119,6 +139,16 @@ for (const spec of CASES) {
     if (spec.titleMustNotMatch) {
       const bad = top.filter((p) => spec.titleMustNotMatch.test(p.title ?? ""));
       if (bad.length >= 2) row.issues.push("contamination_in_top5");
+    }
+    if (spec.luxuryWatchLane && top.length >= 2) {
+      const fitnessInTop = top.filter((p) => FITNESS_WATCH_RX.test(p.title ?? "")).length;
+      if (fitnessInTop >= 2) row.issues.push("fitness_pollution_top5");
+      const luxuryEvidence = top.filter(
+        (p) =>
+          LUXURY_WATCH_TITLE_RX.test(p.title ?? "") &&
+          !FITNESS_WATCH_RX.test(p.title ?? "")
+      ).length;
+      if (luxuryEvidence < Math.min(2, top.length)) row.issues.push("weak_luxury_watch_alignment");
     }
   } catch (e) {
     row.ok = false;
@@ -149,11 +179,20 @@ const evalReport = {
     total: results.length,
     passed: results.length - failed.length,
     passRatePct: Math.round(((results.length - failed.length) / results.length) * 100),
+    luxuryWatchCases: results.filter((r) => CASES.find((c) => c.query === r.query)?.luxuryWatchLane),
   },
 };
 const previous = loadPreviousRun("search-eval");
 evalReport.regression = compareValidationRuns(
-  { queries: results.map((r) => ({ query: r.query, pass: r.ok, productCount: r.count ?? 0, canonicalCategory: r.category, scores: { ranking: r.ok ? 100 : 40 } })) },
+  {
+    queries: results.map((r) => ({
+      query: r.query,
+      pass: r.ok,
+      productCount: r.count ?? 0,
+      canonicalCategory: r.category,
+      scores: { ranking: r.ok ? 100 : 40 },
+    })),
+  },
   previous
 );
 saveValidationRun(evalReport, "search-eval");

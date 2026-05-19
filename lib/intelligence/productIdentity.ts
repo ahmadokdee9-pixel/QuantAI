@@ -6,6 +6,11 @@ import type { QuantProduct } from "@/lib/shoppingScore";
 import { extractProductIdentity, type ProductIdentity } from "@/lib/deals/productIdentity";
 import { identityMatchScore } from "@/lib/deals/identityMatchScore";
 import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
+import {
+  hasLuxuryWatchIntent,
+  isConsumerFitnessWatchListing,
+  isLuxuryWatchListingEvidence,
+} from "@/lib/search/luxuryWatchIntent";
 import { isProtectedExactSkuQuery, isRelaxedIdentityLane } from "@/lib/search/searchIntentModes";
 import type { QiListingIdentity } from "@/lib/intelligence/listingIdentityTypes";
 import { normalizeCommercialRoles } from "@/lib/intelligence/normalizeIntelligenceSignals";
@@ -285,6 +290,15 @@ function categoryEvidence(p: QuantProduct, canonicalQuery?: CanonicalQueryContra
       return /\b(air fryer|airfryer|fryer|friteuse|heteluchtfriteuse|ninja|philips|tefal|cosori)\b/i.test(blob);
     }
     return /\b(home|kitchen|coffee|machine|espresso|koffie|air fryer|airfryer|fryer|heteluchtfriteuse|friteuse|appliance|robot vacuum|robotstofzuiger|stofzuiger|roomba|roborock|irobot|stroller|pram|buggy|kinderwagen|babypark|prenatal|huis|keuken|apparaat|عربة)\b/i.test(blob);
+  }
+  if (category === "watch") {
+    const watchCue = /\b(watch|horloge|wristwatch|timepiece|chronograph)\b/i.test(blob);
+    if (!watchCue) return false;
+    if (hasLuxuryWatchIntent(query)) {
+      if (isConsumerFitnessWatchListing(blob) && !isLuxuryWatchListingEvidence(blob)) return false;
+      return true;
+    }
+    return /\b(watch|smartwatch|horloge|wearable|wrist)\b/i.test(blob);
   }
   return true;
 }

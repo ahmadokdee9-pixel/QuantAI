@@ -229,7 +229,7 @@ async function fetchShoppingProductsWithFallback(
 /** Cross-request tray cache — normalized key improves hit rate; short TTL keeps prices fresh. */
 const getCachedSearchPipeline = unstable_cache(
   async (pipelineQuery: string) => runSearchPipeline(pipelineQuery),
-  ["quantai-search-pipeline-v47-phase1-trust-latency"],
+  ["quantai-search-pipeline-v48-luxury-watch-integrity"],
   { revalidate: 120 }
 );
 

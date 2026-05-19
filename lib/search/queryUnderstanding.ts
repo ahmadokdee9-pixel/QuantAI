@@ -10,6 +10,7 @@ import {
   latinSkeletonForMatching,
   normalizeEasternDigitsInString,
 } from "@/lib/search/queryScriptNormalize";
+import { hasLuxuryWatchIntent, luxuryWatchIntent01 } from "@/lib/search/luxuryWatchIntent";
 
 export type SemanticProductCategory =
   | "shoes"
@@ -142,7 +143,7 @@ function detectCategory(s: string): SemanticProductCategory {
   if (hasAny(s, /\b(clean desk|minimal desk|desk setup|workspace\s+setup)\b/i) && !/(?:كرسي|chair|stoel)/i.test(s)) return "desk_setup";
   if (hasAny(s, /\b(sofa|sofa bed|sectional|loveseat|settee|couch|corner sofa|recliner|chaise|hoekbank|bankstel|loungebank|fauteuil|eetkamerstoel|chair|stoel|desk|bureau|table|tafel|garden table|tuin tafel|tuinmeubel|loungeset|furniture|meubel|meubels|كنبة|اريكة|أريكة|ركنة|زاوية|طاولة|اثاث|أثاث)\b/i)) return "furniture";
   if (hasAny(s, /\b(perfume|fragrance|parfum|cologne|eau de parfum|eau de toilette|aftershave|niche fragrance|designer fragrance|libre|edp|edt|ysl|yves saint laurent|عطر|عطور|برفان)\b/i)) return "fragrance";
-  if (hasAny(s, /\b(watch|smartwatch|ساعة)\b/i)) return "watch";
+  if (hasAny(s, /\b(watch|watches|horloge|horloges|wristwatch|timepiece|chronograph|ساعة)\b/i)) return "watch";
   if (hasAny(s, /\b(makeup|skincare|beauty|serum|retinol|vitamin c|moisturizer|cleanser|sunscreen|cream|cosmetic|verzorging|huidverzorging|gezichtscreme|zonnebrand|مكياج|سيروم|كريم|عناية)\b/i)) return "beauty";
   if (hasAny(s, /\b(jacket|winter jacket|puffer|jas|winterjas|coat|dress|hoodie|shirt|jeans|sneaker outfit|fashion|outfit|kleding|dames|heren|ملابس|جاكيت|فستان|هودي)\b/i)) return "fashion";
   if (hasAny(s, /\b(coffee machine|espresso machine|koffiezetapparaat|koffiemachine|air fryer|airfryer|fryer|heteluchtfriteuse|friteuse|vacuum|stofzuiger|robot vacuum|robotstofzuiger|roomba|dreame|roborock|dyson|blender|microwave|dishwasher|wasmachine|droger|baby stroller|stroller|pram|buggy|kinderwagen|home|kitchen|bedroom|living room|decor|appliance|apparaat|keuken|قلاية\s+هوائية|ماكينة\s+قهوة|مكنسة|عربة\s+اطفال|عربة\s+أطفال)\b/i)) return "home";
@@ -163,6 +164,7 @@ function detectStyles(s: string, aesthetic: SemanticAestheticDirection): string[
   const styles: string[] = [];
   if (aesthetic !== "neutral") styles.push(aesthetic);
   if (hasAny(s, /\b(premium looking|luxury feel|expensive look|designer|quiet luxury|high end|luxe|فخم|فاخر|ماركة)\b/i)) styles.push("premium_look");
+  if (hasLuxuryWatchIntent(s)) styles.push("luxury_watch_collector");
   if (hasAny(s, /\b(clean|minimal|minimalist|desk setup)\b/i)) styles.push("clean_minimal");
   if (hasAny(s, /\b(streetwear|yeezy|jordan|sneakerhead)\b/i)) styles.push("streetwear");
   if (hasAny(s, /\b(ثابت|long lasting|lasts long|projection|sillage)\b/i)) styles.push("long_lasting");
@@ -273,11 +275,13 @@ export function buildSearchQueryUnderstanding(rawQuery: string): SemanticQueryUn
       (alternativeIntent.cheaper ? 0.26 : 0) +
       (hasAny(envelope, /\b(cheap but good|worth the money|value|safe buy)\b/i) ? 0.16 : 0)
   );
+  const luxuryWatch01 = category === "watch" ? luxuryWatchIntent01(envelope) : 0;
   const premiumIntent01 = clamp01(
     (hasAny(envelope, /\b(premium|luxury|pro|max|ultra|designer|فخم|فاخر)\b/i) ? 0.58 : 0.1) +
       (aesthetic === "premium_luxury" ? 0.22 : 0) +
       (hasAny(envelope, /\b(premium looking|luxury feel|luxury looking|expensive look|quiet luxury)\b/i) ? 0.2 : 0) +
-      (hasAny(envelope, /\b(aesthetic|style intent|for focus|headphones for focus)\b/i) ? 0.12 : 0)
+      (hasAny(envelope, /\b(aesthetic|style intent|for focus|headphones for focus)\b/i) ? 0.12 : 0) +
+      luxuryWatch01 * 0.35
   );
   const urgency01 = clamp01(hasAny(envelope, /\b(now|today|asap|urgent|fast|quick|اليوم|سريع)\b/i) ? 0.72 : 0.08);
   const emotionalIntent01 = clamp01(

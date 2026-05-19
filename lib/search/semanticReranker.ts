@@ -17,6 +17,12 @@ import {
 import { assessModelGenerationConflict } from "@/lib/intelligence/modelGenerationGuard";
 import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 import { bilingualMatchTokens } from "@/lib/search/bilingualMatchTokens";
+import {
+  hasLuxuryWatchIntent,
+  isConsumerFitnessWatchListing,
+  isLuxuryWatchListingEvidence,
+  luxuryWatchIntent01,
+} from "@/lib/search/luxuryWatchIntent";
 
 const memo = new Map<string, SemanticQueryUnderstanding>();
 
@@ -72,8 +78,16 @@ function categoryFit(q: SemanticQueryUnderstanding, text: string): number {
       return /\b(sofa|couch|chair|desk|table|furniture|sectional)\b/i.test(text) ? 1 : 0.18;
     case "fragrance":
       return /\b(perfume|fragrance|parfum|cologne|eau de|edp|edt)\b/i.test(text) ? 1 : 0.18;
-    case "watch":
-      return /\b(watch|smartwatch|wearable|wrist)\b/i.test(text) ? 1 : 0.18;
+    case "watch": {
+      const watchCue = /\b(watch|horloge|wristwatch|timepiece|chronograph)\b/i.test(text);
+      if (!watchCue) return 0.16;
+      if (hasLuxuryWatchIntent(q.envelope) || q.styleIntent.includes("luxury_watch_collector")) {
+        if (isConsumerFitnessWatchListing(text) && !isLuxuryWatchListingEvidence(text)) return 0.12;
+        if (isLuxuryWatchListingEvidence(text)) return 1;
+        return 0.42;
+      }
+      return watchCue ? 1 : 0.18;
+    }
     case "desk_setup":
       return /\b(desk|workspace|monitor|keyboard|mouse|lamp|stand|organizer)\b/i.test(text) ? 1 : 0.22;
     case "beauty":
@@ -228,10 +242,23 @@ function semanticScore(
     score -= 6 + id.accessoryLikelihood01 * 8;
   }
 
-  if (q.productCategory === "watch" && (q.premiumIntent01 >= 0.45 || q.aestheticDirection === "premium_luxury")) {
-    if (/\b(fitness tracker|fitbit|mi band|smart band|activity tracker)\b/i.test(text) && !/\b(luxury|designer|swiss|automatic|chronograph)\b/i.test(text)) {
-      score -= 14;
+  const luxuryWatchLane =
+    q.productCategory === "watch" &&
+    (luxuryWatchIntent01(q.envelope) >= 0.42 ||
+      q.styleIntent.includes("luxury_watch_collector") ||
+      (q.premiumIntent01 >= 0.52 && /\bluxury\b/i.test(q.raw)));
+
+  if (luxuryWatchLane) {
+    if (isConsumerFitnessWatchListing(text) && !isLuxuryWatchListingEvidence(text)) {
+      score -= 22;
+    } else if (isLuxuryWatchListingEvidence(text)) {
+      score += 8;
     }
+    if (/\b(dress watch|automatic|mechanical|swiss|chronograph|sapphire|prestige|timepiece)\b/i.test(text)) {
+      score += 5;
+    }
+  } else if (q.productCategory === "watch" && (q.premiumIntent01 >= 0.45 || q.aestheticDirection === "premium_luxury")) {
+    if (isConsumerFitnessWatchListing(text) && !isLuxuryWatchListingEvidence(text)) score -= 12;
   }
   const structured = assessStructuredProductIdentity({ product: p, canonicalQuery, listingIdentity: id });
   if (structured.relation === "exact_product") score += 5;

@@ -47,6 +47,10 @@ const SUITE = [
 const ACCESSORY_RX = /\b(case|cover|hoesje|protector|strap|band|charger|cable|adapter|screen protector|tempered glass)\b/i;
 const WRONG_GEN_RX = /\biphone\s*1[0-4]\b/i;
 const FAKE_RX = /\b(replica|fake|dummy|box only|prop)\b/i;
+const FITNESS_WATCH_RX =
+  /\b(galaxy\s+fit|fitbit|mi\s+band|smart\s+band|fitness\s+tracker|activity\s+tracker|amazfit\s+band)\b|galaxy\s+fit\d+/i;
+const LUXURY_WATCH_QUERY_RX =
+  /\b(luxury|elegant|swiss|mechanical|prestige|rolex|omega|tag heuer|فخم|فاخر|شكلها\s*luxury)\b/i;
 
 function pct(n, d) {
   return d > 0 ? Math.round((n / d) * 100) : 0;
@@ -117,6 +121,20 @@ function classifyFailures(spec, products, meta) {
 
   const topRelevance = top5.filter((p) => (p.qiListingIdentity?.semanticMismatchPenalty01 ?? 0) >= 0.55).length;
   if (topRelevance >= 3) failures.push({ code: "irrelevant_ranking", severity: "high", detail: "semantic mismatch in top5" });
+
+  if (
+    (spec.bucket === "luxury" || spec.category === "watch") &&
+    LUXURY_WATCH_QUERY_RX.test(spec.query)
+  ) {
+    const fitnessInTop = top5.filter((p) => FITNESS_WATCH_RX.test(p.title ?? "")).length;
+    if (fitnessInTop >= 2) {
+      failures.push({
+        code: "luxury_watch_fitness_pollution",
+        severity: "high",
+        detail: `${fitnessInTop}/5 top are fitness/smart-band listings`,
+      });
+    }
+  }
 
   return failures;
 }

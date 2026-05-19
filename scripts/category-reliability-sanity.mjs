@@ -7,6 +7,9 @@ import { buildCanonicalQuery } from "../lib/search/canonicalQuery.ts";
 const CASES = [
   ["yves saint laurent libre edp 90ml", "fragrance"],
   ["luxury ساعة under 300", "watch"],
+  ["luxury watch under 3000", "watch"],
+  ["elegant swiss watch", "watch"],
+  ["premium mechanical watch", "watch"],
   ["minimal desk setup", "desk_setup"],
   ["كرسي office minimal", "furniture"],
   ["جزمة مثل nike vomero بس ارخص", "shoes"],

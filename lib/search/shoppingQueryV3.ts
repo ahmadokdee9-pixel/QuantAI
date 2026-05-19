@@ -67,6 +67,18 @@ const FAMILY_SUFFIX: { test: RegExp; add: string }[] = [
   { test: /\bcar\s+accessories?\b/i, add: "automotive interior" },
   { test: /\b(power\s+tools?|drill|wrench\s+set)\b/i, add: "hardware tools" },
   { test: /\b(kids?|children|toddler)\b/i, add: "family" },
+  {
+    test: /\b(luxury|elegant|dress|swiss|automatic|mechanical|prestige|collector)\b.*\b(watch|horloge|wristwatch|timepiece)\b/i,
+    add: " men's dress watch automatic mechanical swiss luxury",
+  },
+  {
+    test: /\b(watch|horloge|wristwatch|timepiece|chronograph)\b.*\b(luxury|elegant|swiss|automatic|mechanical|فخم|فاخر)\b/i,
+    add: " dress watch automatic mechanical chronograph prestige",
+  },
+  {
+    test: /(?:ساعة).*(?:فخم|فاخر|راقية|luxury)|(?:فخم|فاخر).*(?:ساعة)/i,
+    add: " luxury men's dress watch automatic swiss horloge",
+  },
 ];
 
 /** When query contains anchor term but not hint, append hint once. */

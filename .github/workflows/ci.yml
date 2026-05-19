@@ -17,6 +17,7 @@ jobs:
       - run: npm ci
       - run: npm run test:p0-canonical
       - run: npm run test:category-reliability
+      - run: npm run test:luxury-watch
 
   validate:
     runs-on: ubuntu-latest
