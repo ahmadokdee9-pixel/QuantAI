@@ -130,7 +130,10 @@ function detectBrand(envelope: string): string | null {
   }
   if (/\bairpods?\b/i.test(envelope)) return "apple";
   if (/\biphone\b/i.test(envelope)) return "apple";
-  if (/(ايفون|آيفون)/i.test(envelope)) return "apple";
+  if (/(ايفون|آيفون|ابل|أبل|آبل)/i.test(envelope)) return "apple";
+  if (/(سامسونج|سامسونغ)/i.test(envelope)) return "samsung";
+  if (/(نايك|نايكي)/i.test(envelope)) return "nike";
+  if (/(اديداس|أديداس)/i.test(envelope)) return "adidas";
   return null;
 }
 
@@ -172,13 +175,16 @@ function detectVariant(envelope: string): string | null {
 }
 
 function detectBudget(envelope: string, semantic: SemanticQueryUnderstanding): CanonicalQueryContract["budget"] {
-  const priceMatch = envelope.match(/(?:under|below|less than|max|tot|onder|below)\s*(?:€|eur|usd|\$|£|gbp)?\s*(\d{2,5})/i);
+  const priceMatch =
+    envelope.match(/(?:under|below|less than|max|tot|onder|below|up to)\s*(?:€|eur|usd|\$|£|gbp)?\s*(\d{2,5})/i) ??
+    envelope.match(/(?:تحت|أقل\s*من|اقل\s*من|حتى)\s*(?:€|eur|usd|\$|£|gbp)?\s*(\d{2,5})/i);
   const looseCurrency = envelope.match(/(€|eur|usd|\$|£|gbp)/i)?.[1]?.toLowerCase();
   const currency = looseCurrency === "$" || looseCurrency === "usd" ? "USD" : looseCurrency === "£" || looseCurrency === "gbp" ? "GBP" : looseCurrency === "€" || looseCurrency === "eur" ? "EUR" : "unknown";
+  const maxFromSemantic = semantic.constraints.maxPrice;
   return {
-    active: semantic.budgetIntent01 >= 0.45 || Boolean(priceMatch),
+    active: semantic.budgetIntent01 >= 0.45 || Boolean(priceMatch) || maxFromSemantic != null,
     intent01: clamp01(semantic.budgetIntent01),
-    maxPrice: priceMatch ? Number.parseInt(priceMatch[1]!, 10) : null,
+    maxPrice: priceMatch ? Number.parseInt(priceMatch[1]!, 10) : maxFromSemantic,
     currency,
   };
 }
@@ -260,7 +266,7 @@ function primaryIntent(semantic: SemanticQueryUnderstanding, commerce: CommerceS
   if (semantic.alternativeIntent.active || commerce.alternativeSeeking) return "alternative";
   if (commerce.cheapestTrusted) return "cheapest_trusted";
   if (commerce.explicitBestValue || semantic.qualityExpectation === "value") return "best_value";
-  if (commerce.comparisonIntent || commerce.storeDealHunter) return "market_compare";
+  if (semantic.comparisonIntent || commerce.comparisonIntent || commerce.storeDealHunter) return "market_compare";
   if (semantic.premiumIntent01 >= 0.56 || commerce.premium || commerce.luxury) return "premium";
   if (semantic.productCategory !== "unknown") return "exact_product";
   return "general_search";

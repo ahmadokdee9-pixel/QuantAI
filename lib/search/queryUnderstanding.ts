@@ -4,6 +4,7 @@
  */
 
 import { fixCommonCommerceTypos } from "@/lib/search/conversationalQueryLayer";
+import { expandQueryForListingMatch } from "@/lib/search/bilingualMatchTokens";
 import {
   arabicIntentGlossTokens,
   latinSkeletonForMatching,
@@ -54,6 +55,15 @@ export type SemanticQueryUnderstanding = {
   };
   qualityExpectation: "cheap" | "value" | "premium" | "luxury" | "balanced";
   semanticKeywords: string[];
+  /** Natural-language constraints extracted from the query */
+  constraints: {
+    maxPrice: number | null;
+    platform: string | null;
+    useCase: string | null;
+    styleReference: string | null;
+  };
+  comparisonIntent: boolean;
+  matchExpansion: string;
 };
 
 function clamp01(x: number): number {
@@ -81,14 +91,36 @@ function detectLanguages(raw: string): ("arabic" | "english")[] {
 }
 
 function buildEnvelope(raw: string): string {
-  const fixed = fixCommonCommerceTypos(normalizeEasternDigitsInString(raw));
-  const gloss = arabicIntentGlossTokens(fixed);
-  const latin = latinSkeletonForMatching(fixed);
-  return `${fixed} ${latin} ${gloss}`
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}€$£\s+-]/gu, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return expandQueryForListingMatch(fixCommonCommerceTypos(normalizeEasternDigitsInString(raw)));
+}
+
+function detectConstraints(envelope: string): SemanticQueryUnderstanding["constraints"] {
+  const priceMatch =
+    envelope.match(/(?:under|below|less than|max|tot|onder|below|up to)\s*(?:€|eur|usd|\$|£|gbp)?\s*(\d{2,5})/i) ??
+    envelope.match(/(?:تحت|أقل\s*من|اقل\s*من|حتى)\s*(\d{2,5})/i);
+  const platform =
+    envelope.match(/\b(?:for|with)\s+(ps5|playstation\s*5|xbox|switch|mac|windows|iphone|android)\b/i)?.[1]?.toLowerCase() ??
+    envelope.match(/\b(ps5|playstation\s*5|xbox\s*series|nintendo\s*switch)\b/i)?.[0]?.toLowerCase() ??
+    null;
+  const useCase =
+    envelope.match(/\bfor\s+(focus|work|gaming|travel|study|office|gym|running|commute|ps5|playstation)\b/i)?.[1]?.toLowerCase() ??
+    (/\b(focus|concentration|noise cancelling|anc)\b/i.test(envelope) ? "focus" : null) ??
+    (/\b(gaming|gamer|esports|144hz|240hz)\b/i.test(envelope) ? "gaming" : null) ??
+    (/\b(office|work from home|wfh|productivity)\b/i.test(envelope) ? "work" : null);
+  const styleReference =
+    envelope.match(/\b(?:like|similar to|alternative to)\s+([a-z0-9][a-z0-9\s+-]{2,40})\b/i)?.[1]?.trim() ??
+    envelope.match(/\b(?:مثل|شبيه|بديل)\s+([a-z0-9\u0600-\u06FF][a-z0-9\u0600-\u06FF\s+-]{2,40})\b/i)?.[1]?.trim() ??
+    null;
+  return {
+    maxPrice: priceMatch ? Number.parseInt(priceMatch[1]!, 10) : null,
+    platform,
+    useCase,
+    styleReference: styleReference || null,
+  };
+}
+
+function detectComparisonIntent(envelope: string): boolean {
+  return /\b(compare|vs|versus|difference|which is better|مقارنة|فرق\s*بين|أيهما|ايهما)\b/i.test(envelope);
 }
 
 function hasAny(s: string, rx: RegExp): boolean {
@@ -102,7 +134,8 @@ function detectCategory(s: string): SemanticProductCategory {
   if (hasAny(s, /\b(yeezy|jordan|dunk|air force|samba|gazelle|adidas|nike|sneakers?|trainers?|shoes?|boots?|بوط|حذاء)\b/i)) return "shoes";
   if (hasAny(s, /(iphone|ايفون|آيفون|\bgalaxy\b|\bpixel\b|\bphone\b|\bsmartphone\b|هاتف|جوال|موبايل)/i)) return "phone";
   if (hasAny(s, /\b(gaming laptop|laptop|notebook|macbook|thinkpad|chromebook|ultrabook|لابتوب|لاب\s*توب)\b/i)) return "laptop";
-  if (hasAny(s, /\b(headphones?|earbuds?|airpods?|bose|sony wh|noise cancelling|bluetooth speaker|soundbar|سماعات?|ايربودز)\b/i)) return "audio";
+  if (hasAny(s, /\b(headphones?|earbuds?|airpods?|bose|sony wh|noise cancelling|bluetooth speaker|soundbar|سماعات?|ايربودز|headset)\b/i)) return "audio";
+  if (hasAny(s, /\b(best\s+premium\s+headphones?|headphones?\s+for\s+focus)\b/i)) return "audio";
   if (hasAny(s, /\b(clean desk|minimal desk|desk setup|workspace)\b/i)) return "desk_setup";
   if (hasAny(s, /\b(sofa|sofa bed|sectional|loveseat|settee|couch|corner sofa|recliner|chaise|hoekbank|bankstel|loungebank|fauteuil|eetkamerstoel|chair|stoel|desk|bureau|table|tafel|garden table|tuin tafel|tuinmeubel|loungeset|furniture|meubel|meubels|كنبة|اريكة|أريكة|ركنة|زاوية|طاولة|اثاث|أثاث)\b/i)) return "furniture";
   if (hasAny(s, /\b(perfume|fragrance|parfum|cologne|eau de parfum|eau de toilette|aftershave|niche fragrance|designer fragrance|عطر|عطور|برفان)\b/i)) return "fragrance";
@@ -136,7 +169,8 @@ function detectStyles(s: string, aesthetic: SemanticAestheticDirection): string[
 
 function detectUsageContext(s: string): string[] {
   const ctx: string[] = [];
-  if (hasAny(s, /\b(gaming|gamer|rtx|fps|hz|refresh rate|playstation|xbox|ps5|قيمنق|جيمنق|ألعاب)\b/i)) ctx.push("gaming");
+  if (hasAny(s, /\b(gaming|gamer|rtx|fps|hz|refresh rate|playstation|xbox|ps5|144hz|240hz|قيمنق|جيمنق|ألعاب)\b/i)) ctx.push("gaming");
+  if (hasAny(s, /\b(focus|concentration|study|deep work|noise cancelling|anc)\b/i)) ctx.push("focus");
   if (hasAny(s, /\b(work|office|productivity|business|wfh)\b/i)) ctx.push("work");
   if (hasAny(s, /\b(student|school|college|university|جامعة|مدرسة)\b/i)) ctx.push("student");
   if (hasAny(s, /\b(travel|commute|portable|not heavy|lightweight|خفيف)\b/i)) ctx.push("travel");
@@ -159,8 +193,9 @@ function detectAlternative(s: string): SemanticQueryUnderstanding["alternativeIn
   const active = hasAny(s, /\b(like|similar to|alternative|dupe|يشبه|شبيه|بديل)\b/i);
   const cheaper = hasAny(s, /\b(cheaper|less expensive|budget|affordable|ارخص|أرخص)\b/i);
   const anchor =
-    s.match(/\b(?:like|similar to|alternative to)\s+([a-z0-9\s+-]{2,32})\b/i)?.[1]?.trim() ??
-    s.match(/\b(?:يشبه|شبيه|بديل)\s+([a-z0-9\s+-]{2,32})\b/i)?.[1]?.trim() ??
+    s.match(/\b(?:like|similar to|alternative to)\s+([a-z0-9][a-z0-9\s+-]{2,40})\b/i)?.[1]?.trim() ??
+    s.match(/\b(?:مثل|شبيه|بديل)\s+([a-z0-9][a-z0-9\s+-]{2,40})\b/i)?.[1]?.trim() ??
+    s.match(/\b(?:مثل)\s+([a-z0-9\u0600-\u06FF][\w\s+-]{2,40})\b/i)?.[1]?.trim() ??
     "";
   return { active, cheaper, anchor };
 }
@@ -173,6 +208,7 @@ function semanticKeywordsFor(q: {
   alternative: SemanticQueryUnderstanding["alternativeIntent"];
   envelope: string;
 }): string[] {
+  const usage = q.usage;
   const words: string[] = [];
   if (q.category === "shoes") words.push("shoe", "sneaker", "trainer", "footwear", "boot");
   if (q.category === "phone") words.push("phone", "smartphone", "iphone", "galaxy", "pixel");
@@ -192,9 +228,11 @@ function semanticKeywordsFor(q: {
   if (q.styles.includes("budget_premium_balance")) words.push("premium", "value", "affordable", "quality");
   if (q.usage.includes("gaming")) words.push("gaming", "rtx", "refresh", "performance");
   if (q.usage.includes("travel")) words.push("lightweight", "portable", "compact", "thin");
-  if (q.alternative.anchor) words.push(...q.alternative.anchor.split(/\s+/));
-  words.push(...q.envelope.split(/\s+/).filter((x) => x.length >= 4).slice(0, 12));
-  return uniq(words).slice(0, 32);
+  if (q.alternative.anchor) words.push(...q.alternative.anchor.split(/\s+/).filter((x) => x.length >= 2));
+  if (q.usage.includes("focus")) words.push("noise cancelling", "anc", "wireless", "over ear");
+  if (q.usage.includes("gaming")) words.push("gaming", "144hz", "240hz", "low latency", "hdmi", "displayport");
+  words.push(...q.envelope.split(/\s+/).filter((x) => x.length >= 3).slice(0, 16));
+  return uniq(words).slice(0, 36);
 }
 
 export function buildSearchQueryUnderstanding(rawQuery: string): SemanticQueryUnderstanding {
@@ -232,6 +270,8 @@ export function buildSearchQueryUnderstanding(rawQuery: string): SemanticQueryUn
             ? "cheap"
             : "balanced";
   const productPurpose = detectProductPurpose(category, envelope, usageContext);
+  const constraints = detectConstraints(envelope);
+  const comparisonIntent = detectComparisonIntent(envelope);
   const semanticKeywords = semanticKeywordsFor({
     category,
     aesthetic,
@@ -240,6 +280,11 @@ export function buildSearchQueryUnderstanding(rawQuery: string): SemanticQueryUn
     alternative: alternativeIntent,
     envelope,
   });
+  if (constraints.styleReference) {
+    semanticKeywords.push(...constraints.styleReference.split(/\s+/).filter((x) => x.length >= 2));
+  }
+  if (constraints.platform) semanticKeywords.push(constraints.platform);
+  if (constraints.useCase) semanticKeywords.push(constraints.useCase);
 
   return {
     raw,
@@ -257,6 +302,9 @@ export function buildSearchQueryUnderstanding(rawQuery: string): SemanticQueryUn
     usageContext,
     alternativeIntent,
     qualityExpectation,
-    semanticKeywords,
+    semanticKeywords: uniq(semanticKeywords).slice(0, 36),
+    constraints,
+    comparisonIntent,
+    matchExpansion: envelope,
   };
 }

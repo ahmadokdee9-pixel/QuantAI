@@ -1,10 +1,11 @@
 import type { QuantProduct } from "@/lib/shoppingScore";
+import { expandQueryForListingMatch } from "@/lib/search/bilingualMatchTokens";
 import { normalizeProductTitle, titleTokens } from "./normalizeTitle";
 
 /** Known retail brands for lightweight extraction (not exhaustive). */
 const BRAND_PATTERNS: { re: RegExp; name: string }[] = [
-  { re: /\bapple\b|\biphone\b|\bipad\b|\bmacbook\b|\bairpods?\b/i, name: "apple" },
-  { re: /\bsamsung\b|\bgalaxy\b/i, name: "samsung" },
+  { re: /\bapple\b|\biphone\b|\bipad\b|\bmacbook\b|\bairpods?\b|(?:ايفون|آيفون|ابل|أبل|آبل)/i, name: "apple" },
+  { re: /\bsamsung\b|\bgalaxy\b|(?:سامسونج|سامسونغ)/i, name: "samsung" },
   { re: /\bsony\b|\bplaystation\b|\bps5\b|\bps4\b/i, name: "sony" },
   { re: /\blg\b/i, name: "lg" },
   { re: /\bdell\b|\balienware\b/i, name: "dell" },
@@ -24,8 +25,8 @@ const BRAND_PATTERNS: { re: RegExp; name: string }[] = [
   { re: /\bbeats\b/i, name: "beats" },
   { re: /\bsennheiser\b/i, name: "sennheiser" },
   { re: /\bdyson\b|\bphilips\b|\bbosch\b|\bmiele\b|\bsiemens\b/i, name: "appliance-brand" },
-  { re: /\bnike\b/i, name: "nike" },
-  { re: /\badidas\b/i, name: "adidas" },
+  { re: /\bnike\b|(?:نايك|نايكي)/i, name: "nike" },
+  { re: /\badidas\b|(?:اديداس|أديداس)/i, name: "adidas" },
   { re: /\bpuma\b/i, name: "puma" },
   { re: /\breebok\b/i, name: "reebok" },
   { re: /\buniqlo\b/i, name: "uniqlo" },
@@ -176,9 +177,10 @@ export type QueryCommerceHints = {
 export function extractQueryCommerceHints(query: string): QueryCommerceHints {
   const blob = query.trim();
   if (!blob) return { brands: [], models: [], identifiers: [] };
+  const expanded = expandQueryForListingMatch(blob);
   return {
-    brands: extractBrands(blob),
-    models: extractModels(blob),
-    identifiers: extractIdentifiers(blob),
+    brands: uniqLower([...extractBrands(blob), ...extractBrands(expanded)]),
+    models: uniqLower([...extractModels(blob), ...extractModels(expanded)]),
+    identifiers: uniqUpperIds([...extractIdentifiers(blob), ...extractIdentifiers(expanded)]),
   };
 }

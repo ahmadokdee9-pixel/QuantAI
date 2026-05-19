@@ -14,7 +14,9 @@ import {
   buildSearchQueryUnderstanding,
   type SemanticQueryUnderstanding,
 } from "@/lib/search/queryUnderstanding";
+import { assessModelGenerationConflict } from "@/lib/intelligence/modelGenerationGuard";
 import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
+import { bilingualMatchTokens } from "@/lib/search/bilingualMatchTokens";
 
 const memo = new Map<string, SemanticQueryUnderstanding>();
 
@@ -103,14 +105,31 @@ function aestheticFit(q: SemanticQueryUnderstanding, text: string): number {
 }
 
 function purposeFit(q: SemanticQueryUnderstanding, text: string): number {
-  if (!q.usageContext.length && !q.productPurpose.length) return 0.5;
+  if (!q.usageContext.length && !q.productPurpose.length && !q.constraints.useCase) return 0.5;
   let score = 0.35;
-  if (q.usageContext.includes("gaming") && /\b(gaming|rtx|geforce|hz|performance|esports)\b/i.test(text)) score += 0.32;
+  if (q.usageContext.includes("gaming") && /\b(gaming|rtx|geforce|hz|performance|esports|144hz|240hz|hdmi|displayport)\b/i.test(text)) score += 0.32;
+  if (q.usageContext.includes("focus") && /\b(noise cancelling|anc|over[-\s]?ear|wireless|headphone|wh-1000|quietcomfort)\b/i.test(text)) score += 0.34;
   if (q.usageContext.includes("travel") && /\b(lightweight|portable|compact|thin|slim|air)\b/i.test(text)) score += 0.3;
   if (q.usageContext.includes("student") && /\b(student|school|budget|portable|backpack|laptop)\b/i.test(text)) score += 0.2;
   if (q.productPurpose.includes("home_aesthetic") && /\b(sofa|couch|living room|modern|premium|comfortable)\b/i.test(text)) score += 0.28;
   if (q.productPurpose.includes("scent_performance") && /\b(edp|parfum|intense|long lasting|eau de parfum)\b/i.test(text)) score += 0.3;
+  if (q.constraints.useCase === "gaming" && /\b(gaming|144hz|240hz|ps5|xbox)\b/i.test(text)) score += 0.28;
+  if (q.constraints.useCase === "focus" && /\b(noise cancelling|anc|wireless)\b/i.test(text)) score += 0.28;
+  if (q.constraints.platform === "ps5" && /\b(ps5|playstation|hdmi\s*2\.1|120hz|vrr)\b/i.test(text)) score += 0.26;
   return clamp(score, 0, 1);
+}
+
+function styleReferenceFit(q: SemanticQueryUnderstanding, text: string): number {
+  const ref = q.constraints.styleReference?.toLowerCase().trim();
+  if (!ref || ref.length < 3) return 0.5;
+  const tokens = ref.split(/\s+/).filter((t) => t.length >= 3);
+  if (!tokens.length) return 0.5;
+  let hits = 0;
+  for (const t of tokens) {
+    if (text.includes(t)) hits += 1;
+    else if (t.replace(/\s/g, "").length >= 5 && text.includes(t.replace(/\s/g, ""))) hits += 0.7;
+  }
+  return clamp(hits / tokens.length, 0, 1);
 }
 
 function budgetPremiumFit(q: SemanticQueryUnderstanding, p: QuantProduct, medianPrice: number, text: string): number {
@@ -140,13 +159,14 @@ function semanticScore(
   const mp = getMarketplaceSellerRiskTier(p.store, p.title);
   const category01 = categoryFit(q, text);
   let keywords01 = keywordCoverage(text, q.semanticKeywords);
-  if (q.languages.includes("arabic") && q.languages.includes("english")) {
-    const mixedTokens = q.envelope.split(/\s+/).filter((t) => t.length >= 2).slice(0, 28);
-    keywords01 = Math.max(keywords01, keywordCoverage(text, mixedTokens) * 0.92);
+  const bilingual = bilingualMatchTokens(q.raw, 32);
+  if (bilingual.length > 0) {
+    keywords01 = Math.max(keywords01, keywordCoverage(text, bilingual) * 0.94);
   }
   const queryRel = queryListingRelevance01(q.rewritten || q.raw, p);
   const aesthetic01 = aestheticFit(q, text);
   const purpose01 = purposeFit(q, text);
+  const styleRef01 = styleReferenceFit(q, text);
   const budget01 = budgetPremiumFit(q, p, medianPrice, text);
   const quality01 = clamp((ratingValue(p.rating) / 5) * 0.45 + trust * 0.38 + ((p.qiProductUnderstanding?.productConfidence ?? 60) / 100) * 0.17, 0, 1);
   const merchant01 = clamp((p.qiMerchantConfidence01 ?? trust) * 0.7 + trust * 0.3, 0, 1);
@@ -155,7 +175,8 @@ function semanticScore(
     keywords01 * 16 +
     queryRel * 16 +
     aesthetic01 * 12 +
-    purpose01 * 10 +
+    purpose01 * 9 +
+    styleRef01 * 6 +
     budget01 * 7 +
     quality01 * 7 +
     merchant01 * 5;
@@ -183,7 +204,22 @@ function semanticScore(
   if (p.qiGlobalCommerce?.identityRelation === "fake_or_replica" || p.qiGlobalCommerce?.identityRelation === "wrong_product") {
     score -= 18;
   }
-  return score;
+
+  const gen = assessModelGenerationConflict(p, canonicalQuery);
+  if (gen.conflict) score -= 8 + gen.severity01 * 14;
+
+  if (canonicalQuery?.budget.maxPrice != null && p.price > 0) {
+    const max = canonicalQuery.budget.maxPrice;
+    if (p.price > max * 1.08) score -= 6 + Math.min(12, ((p.price - max) / max) * 18);
+    else if (p.price <= max * 0.98) score += 3;
+  }
+
+  if (q.alternativeIntent.active && q.alternativeIntent.anchor) {
+    const anchorHits = keywordCoverage(text, q.alternativeIntent.anchor.split(/\s+/).filter((t) => t.length >= 3));
+    if (anchorHits >= 0.45) score += q.alternativeIntent.cheaper ? 4 : 2.5;
+  }
+
+  return Math.round(score * 100) / 100;
 }
 
 function isHardJunk(q: SemanticQueryUnderstanding, p: QuantProduct, score: number, canonicalQuery?: CanonicalQueryContract): boolean {
@@ -196,7 +232,21 @@ function isHardJunk(q: SemanticQueryUnderstanding, p: QuantProduct, score: numbe
   if (id && id.semanticMismatchPenalty01 >= 0.72 && id.contaminationRisk01 >= 0.68) return true;
   if (q.productCategory !== "unknown" && id && id.accessoryLikelihood01 >= 0.82 && id.semanticMismatchPenalty01 >= 0.5) return true;
   if (getMarketplaceSellerRiskTier(p.store, p.title) === "high" && trust < 42 && score < 36) return true;
+  const gen = assessModelGenerationConflict(p, canonicalQuery);
+  if (gen.conflict && gen.severity01 >= 0.85 && q.productCategory === "phone") return true;
   return false;
+}
+
+function dedupeListings(products: QuantProduct[]): QuantProduct[] {
+  const seen = new Set<string>();
+  const out: QuantProduct[] = [];
+  for (const p of products) {
+    const key = `${p.link}::${p.title.toLowerCase().replace(/\s+/g, " ").slice(0, 80)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(p);
+  }
+  return out;
 }
 
 /** Search-only semantic rerank: keeps tray fast, stable, and layout-neutral. */
@@ -206,17 +256,18 @@ export function semanticRerankSearchResults(
   canonicalQuery?: CanonicalQueryContract
 ): QuantProduct[] {
   if (products.length <= 1 || !query.trim()) return products;
+  const deduped = dedupeListings(products);
   const q = canonicalQuery?.semantic ?? queryBrain(query);
   const prices = products.map((p) => p.price).filter((n) => n > 0).sort((a, b) => a - b);
   const medianPrice = prices[Math.floor(prices.length / 2)] ?? 0;
   const scored = products.map((p, index) => ({
     p,
     index,
-    score: semanticScore(q, p, products, medianPrice, canonicalQuery),
+    score: semanticScore(q, p, deduped, medianPrice, canonicalQuery),
   }));
 
   const survivors = scored.filter((x) => !isHardJunk(q, x.p, x.score, canonicalQuery));
-  const pool = survivors.length >= Math.min(5, products.length) ? survivors : scored;
+  const pool = survivors.length >= Math.min(5, deduped.length) ? survivors : scored;
 
   return pool
     .sort((a, b) => {

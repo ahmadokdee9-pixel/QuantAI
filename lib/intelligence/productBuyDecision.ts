@@ -1,6 +1,8 @@
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { listingSignalsRefurbished } from "@/lib/commerce/listingQuality";
+import { calibrateDecisionConfidence } from "@/lib/intelligence/decisionCalibration";
 import type { HumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
+import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 import { getFinalComposite, getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
 
 export type BuyStance = "buy" | "wait" | "compare" | "avoid";
@@ -25,6 +27,7 @@ function median(nums: number[]): number {
 
 export type ProductBuyDecisionOptions = {
   humanSearchIntent?: HumanSearchIntent | null;
+  canonicalQuery?: CanonicalQueryContract | null;
 };
 
 /** Heuristic Buy / Wait / Compare / Avoid — uses only tray-visible signals (no new APIs). */
@@ -35,7 +38,14 @@ export function buildProductBuyDecision(
   options?: ProductBuyDecisionOptions
 ): ProductBuyDecision {
   const human = options?.humanSearchIntent;
+  const canonicalQuery = options?.canonicalQuery ?? undefined;
   const qi = getFinalComposite(product, list);
+  const rawConf = product.qiBuyingDecision?.confidence ?? product.qiBuyingDecision?.decisionScore ?? qi;
+  const calibrated = calibrateDecisionConfidence({
+    product,
+    rawConfidence: rawConf,
+    canonicalQuery,
+  });
   const trust = getStoreTrustScore(product.store);
   const stars = ratingValue(product.rating);
   const reviews = product.reviewsCount ?? 0;
@@ -87,7 +97,12 @@ export function buildProductBuyDecision(
   let stanceDetail = "Tight cluster at the top—pin two finalists in Compare before you commit.";
   let buyerFit = "Strong alternative if you prioritize value and like side-by-side proof.";
 
-  if (trust < 44 || qi < 40 || risk >= 72) {
+  if (calibrated.tier === "low" && calibrated.reasons.includes("identity_mismatch")) {
+    stance = "avoid";
+    stanceLabel = "Avoid for now";
+    stanceDetail = "Listing identity does not align with your query—skip until a clearer match appears.";
+    buyerFit = "Protects against wrong-SKU checkout.";
+  } else if (trust < 44 || qi < 40 || risk >= 72) {
     stance = "avoid";
     stanceLabel = "Avoid for now";
     stanceDetail = "Trust or fulfillment risk dominates—pause until a cleaner row appears.";

@@ -58,6 +58,7 @@ import {
 } from "@/lib/intelligence/dealIntelligenceEngine";
 import { buildCommerceTimingSupportLine } from "@/lib/intelligence/commerceDecisionBrain";
 import { intelligenceMarketPulseLine } from "@/lib/ui/intelligencePresentation";
+import { buildCanonicalQuery } from "@/lib/search/canonicalQuery";
 import { buildCardIntelligenceLayer } from "@/lib/ui/cardIntelligenceLayer";
 import {
   confidenceFootnote,
@@ -372,9 +373,17 @@ function ProductResultCard({
   const ringC = 2 * Math.PI * ringR;
   const ringDash = ringC * (1 - scoreNorm / 100);
 
+  const canonicalQueryMemo = useMemo(
+    () => (searchQuery.trim() ? buildCanonicalQuery(searchQuery) : null),
+    [searchQuery]
+  );
   const buyDecision = useMemo(
-    () => buildProductBuyDecision(p, list, rank, { humanSearchIntent }),
-    [p, list, rank, humanSearchIntent]
+    () =>
+      buildProductBuyDecision(p, list, rank, {
+        humanSearchIntent,
+        canonicalQuery: canonicalQueryMemo,
+      }),
+    [p, list, rank, humanSearchIntent, canonicalQueryMemo]
   );
   const deal = useMemo(
     () => dealIntelProp ?? buildProductDealIntelligence(p, list, undefined, humanSearchIntent, marketMemoryState),

@@ -2,8 +2,8 @@ import type { QuantProduct } from "@/lib/shoppingScore";
 import { ratingValue } from "@/lib/shoppingScore";
 import { extractQueryCommerceHints } from "@/lib/deals/productIdentity";
 import { hardCategoryMismatch } from "@/lib/commerce/queryCategoryGuard";
+import { bilingualMatchTokens, expandQueryForListingMatch } from "@/lib/search/bilingualMatchTokens";
 import { relevanceLexicalExpansion } from "@/lib/search/conversationalQueryLayer";
-import { latinSkeletonForMatching } from "@/lib/search/queryScriptNormalize";
 
 const STOP = new Set([
   "the",
@@ -106,8 +106,8 @@ function consecutiveTokenPhraseBonus(tokens: string[], hay: string): number {
  * 0–1 overlap between query tokens and listing title + store (broad + specific queries).
  */
 export function queryListingRelevance01(query: string, p: QuantProduct): number {
-  const merged = `${query} ${latinSkeletonForMatching(query)}${relevanceLexicalExpansion(query)}`;
-  const tokens = tokenizeQuery(merged);
+  const merged = `${expandQueryForListingMatch(query)}${relevanceLexicalExpansion(query)}`;
+  const tokens = Array.from(new Set([...tokenizeQuery(merged), ...bilingualMatchTokens(query, 28)]));
   const hay = `${p.title} ${p.store}`.toLowerCase();
   let base: number;
   if (tokens.length === 0) {

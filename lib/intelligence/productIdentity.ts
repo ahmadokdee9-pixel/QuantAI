@@ -8,6 +8,7 @@ import { identityMatchScore } from "@/lib/deals/identityMatchScore";
 import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 import type { QiListingIdentity } from "@/lib/intelligence/listingIdentityTypes";
 import { normalizeCommercialRoles } from "@/lib/intelligence/normalizeIntelligenceSignals";
+import { assessModelGenerationConflict } from "@/lib/intelligence/modelGenerationGuard";
 import {
   normalizeColorKey,
   normalizeConditionLabel,
@@ -356,6 +357,13 @@ export function assessStructuredProductIdentity(args: {
   if (isAccessoryLike && !accessoryAllowed) confidence01 -= 0.24;
   if (isBad) confidence01 -= 0.3;
   confidence01 -= contaminationRisk * 0.16 + mismatch * 0.12;
+
+  const gen = assessModelGenerationConflict(product, canonicalQuery);
+  if (gen.conflict) {
+    confidence01 -= gen.severity01 * 0.22;
+    reasons.push(gen.reason ?? "generation_mismatch");
+    if (gen.severity01 >= 0.8 && relation === "exact_product") relation = "same_product_family";
+  }
 
   return {
     relation,

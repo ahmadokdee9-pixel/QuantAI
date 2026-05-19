@@ -62,6 +62,14 @@ const AR_GLOSSES: { rx: RegExp; en: string }[] = [
   { rx: /(?:أثاث|كنبة|طاولة\s*طعام|سرير)/i, en: " furniture sofa dining table bed " },
   { rx: /(?:للسيارة|سيارة|سيارتي)/i, en: " car automotive accessory " },
   { rx: /(?:رياضة|للرياضة|جيم|للجيم)/i, en: " fitness gym workout " },
+  { rx: /(?:مكتب|مكتبي|للمكتب)/i, en: " office desk work " },
+  { rx: /(?:تركيز|للتركيز|للدراسة)/i, en: " focus study concentration " },
+  { rx: /(?:مثل|شبيه|بديل)/i, en: " like similar alternative " },
+  { rx: /(?:جزمة|حذاء|احذية|أحذية)/i, en: " shoe sneakers trainers " },
+  { rx: /(?:كرسي)/i, en: " chair office " },
+  { rx: /(?:ساعة\s*فاخرة|ساعة\s*راقية)/i, en: " luxury watch " },
+  { rx: /(?:تيتانيوم)/i, en: " titanium " },
+  { rx: /(?:برو\s*ماكس|برو\s*مكس)/i, en: " pro max " },
 ];
 
 /** English tokens implied by Arabic shopping vocabulary (for intent + Shopping recall). */

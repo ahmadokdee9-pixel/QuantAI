@@ -48,5 +48,20 @@ export function relevanceLexicalExpansion(query: string): string {
   if (/\b(watch|smartwatch)\b/i.test(t)) {
     bits.push("wearable wrist");
   }
+  if (/\b(focus|concentration|study|deep work)\b/i.test(t)) {
+    bits.push("noise cancelling anc wireless over ear");
+  }
+  if (/\b(common projects|minimal white sneakers?)\b/i.test(t)) {
+    bits.push("minimal leather sneaker achilles low");
+  }
+  if (/\b(vomero|pegasus|ultraboost)\b/i.test(t)) {
+    bits.push("running shoe trainer nike");
+  }
+  if (/\b(ps5|playstation\s*5)\b/i.test(t)) {
+    bits.push("gaming monitor hdmi 2.1 120hz vrr");
+  }
+  if (/\b(premium looking|luxury feel|cheap but luxury)\b/i.test(t)) {
+    bits.push("premium designer quality aesthetic");
+  }
   return bits.length ? ` ${bits.join(" ")}` : "";
 }
