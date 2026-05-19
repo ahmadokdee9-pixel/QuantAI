@@ -1,6 +1,6 @@
 import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
 import { getStripe } from "@/lib/stripe/client";
-import { stripeWebhookSecret } from "@/lib/stripe/config";
+import { stripeWebhookSecret, tierFromStripePriceId } from "@/lib/stripe/config";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 /**
@@ -56,6 +56,14 @@ export async function POST(req: Request) {
         const customerId = typeof object.customer === "string" ? object.customer : "";
         const subscriptionId = typeof object.id === "string" ? object.id : "";
         const status = typeof object.status === "string" ? object.status : "unknown";
+        const metadata =
+          object.metadata && typeof object.metadata === "object"
+            ? (object.metadata as Record<string, unknown>)
+            : {};
+        const metaPlan = metadata.plan === "premium" ? "premium" : metadata.plan === "pro" ? "pro" : null;
+        const items = object.items as { data?: Array<{ price?: { id?: string } }> } | undefined;
+        const priceId = items?.data?.[0]?.price?.id ?? null;
+        const tierFromPrice = tierFromStripePriceId(priceId);
         const currentPeriodEnd =
           typeof object.current_period_end === "number"
             ? new Date(object.current_period_end * 1000).toISOString()
@@ -67,15 +75,20 @@ export async function POST(req: Request) {
             .eq("stripe_customer_id", customerId)
             .maybeSingle();
           if (data?.user_id) {
+            const canceled =
+              event.type === "customer.subscription.deleted" ||
+              status === "canceled" ||
+              status === "unpaid" ||
+              status === "incomplete_expired";
+            const nextTier = canceled
+              ? "free"
+              : metaPlan ?? (tierFromPrice !== "free" ? tierFromPrice : data.subscription_tier ?? "free");
             await supabaseAdmin
               .from("user_billing_state")
               .update({
                 stripe_subscription_id: subscriptionId || null,
                 status,
-                subscription_tier:
-                  event.type === "customer.subscription.deleted" || status === "canceled"
-                    ? "free"
-                    : data.subscription_tier ?? "free",
+                subscription_tier: nextTier,
                 current_period_end: currentPeriodEnd,
                 updated_at: new Date().toISOString(),
               })

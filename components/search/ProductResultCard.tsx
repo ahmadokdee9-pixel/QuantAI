@@ -59,6 +59,12 @@ import {
 import { buildCommerceTimingSupportLine } from "@/lib/intelligence/commerceDecisionBrain";
 import { intelligenceMarketPulseLine } from "@/lib/ui/intelligencePresentation";
 import { buildCardIntelligenceLayer } from "@/lib/ui/cardIntelligenceLayer";
+import {
+  confidenceFootnote,
+  DECISION_DISCLAIMER,
+  DECISION_READ_OVERLINE,
+  formatVerdictHeadline,
+} from "@/lib/ui/trustFraming";
 
 function clip(s: string, max: number): string {
   const t = s.trim();
@@ -661,33 +667,23 @@ function ProductResultCard({
             <div
               className={`qi-decision-surface qi-decision-surface--canvas qi-analyst-verdict mt-4 ${cardIntel.decisionSurfaceClass}`}
             >
-              <p className="qi-silent-overline">AI read</p>
-              <p className="qi-decision-headline mt-1.5">{cardIntel.primaryLabel}</p>
+              <p className="qi-silent-overline">{DECISION_READ_OVERLINE}</p>
+              <p className="qi-decision-headline mt-1.5">
+                {formatVerdictHeadline(cardIntel.primaryLabel)}
+              </p>
               <div
                 className="qi-confidence-pulse mt-2.5"
-                title={`Confidence ${decisionConfidence}%`}
+                title={`Alignment ${decisionConfidence}%`}
                 aria-hidden
               >
                 <span style={{ width: `${Math.min(100, Math.max(8, decisionConfidence))}%` }} />
               </div>
+              <p className="mt-2 text-[10px] leading-snug text-slate-500/90">
+                {confidenceFootnote(decisionConfidence)}
+              </p>
             </div>
 
-            {cardIntel.pills.length > 0 ? (
-              <motion.div className="qi-signal-cluster mt-3" role="list" aria-label="Live intelligence signals">
-                {cardIntel.pills.map((pill) => (
-                  <span
-                    key={pill.label}
-                    role="listitem"
-                    className={`truncate ${pill.cls} ${pill.primary ? "qi-signal-pill--primary" : ""}`}
-                    title={pill.label}
-                  >
-                    {pill.label}
-                  </span>
-                ))}
-              </motion.div>
-            ) : null}
-
-            <div className="qi-posture-grid">
+            <div className="qi-posture-grid qi-posture-grid--compact mt-3">
               <div className="qi-posture-cell qi-posture-dimension qi-posture-dimension--trust">
                 <p className="qi-posture-label">Trust</p>
                 <p className="qi-posture-value">{cardIntel.posture.trust}</p>
@@ -695,14 +691,6 @@ function ProductResultCard({
               <div className="qi-posture-cell qi-posture-dimension qi-posture-dimension--price">
                 <p className="qi-posture-label">Price</p>
                 <p className="qi-posture-value">{cardIntel.posture.price}</p>
-              </div>
-              <div className="qi-posture-cell qi-posture-dimension qi-posture-dimension--market">
-                <p className="qi-posture-label">Market</p>
-                <p className="qi-posture-value">{cardIntel.posture.market}</p>
-              </div>
-              <div className="qi-posture-cell qi-posture-dimension qi-posture-dimension--risk">
-                <p className="qi-posture-label">Risk</p>
-                <p className="qi-posture-value">{cardIntel.posture.risk}</p>
               </div>
             </div>
 
@@ -756,6 +744,30 @@ function ProductResultCard({
                         {mergedBuyDecision.stanceLabel}
                       </span>
                     </div>
+                    {cardIntel.pills.length > 0 ? (
+                      <div className="qi-signal-cluster mt-3" role="list" aria-label="Supporting signals">
+                        {cardIntel.pills.map((pill) => (
+                          <span
+                            key={pill.label}
+                            role="listitem"
+                            className={`truncate ${pill.cls} ${pill.primary ? "qi-signal-pill--primary" : ""}`}
+                            title={pill.label}
+                          >
+                            {pill.label}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                    <div className="qi-posture-grid mt-3">
+                      <div className="qi-posture-cell qi-posture-dimension qi-posture-dimension--market">
+                        <p className="qi-posture-label">Market</p>
+                        <p className="qi-posture-value">{cardIntel.posture.market}</p>
+                      </div>
+                      <div className="qi-posture-cell qi-posture-dimension qi-posture-dimension--risk">
+                        <p className="qi-posture-label">Risk</p>
+                        <p className="qi-posture-value">{cardIntel.posture.risk}</p>
+                      </div>
+                    </div>
                     {cardIntel.reasonLines.length > 0 ? (
                       <ul className="qi-card-reason mt-2">
                         {cardIntel.reasonLines.map((line) => (
@@ -763,6 +775,7 @@ function ProductResultCard({
                         ))}
                       </ul>
                     ) : null}
+                    <p className="mt-3 text-[9px] leading-snug text-slate-500/85">{DECISION_DISCLAIMER}</p>
                     <div className="mt-3 grid grid-cols-2 gap-3">
                       <div>
                         <p className="text-[9px] uppercase tracking-wider text-slate-500">Market fit</p>

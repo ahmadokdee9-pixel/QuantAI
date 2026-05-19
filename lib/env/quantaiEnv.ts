@@ -193,4 +193,14 @@ export function assertQuantaiEnvOnBoot(): void {
   if (process.env.NODE_ENV === "development") {
     console.info(message);
   }
+
+  if (process.env.NODE_ENV === "production") {
+    const hasUpstash =
+      Boolean(envValue("UPSTASH_REDIS_REST_URL")) && Boolean(envValue("UPSTASH_REDIS_REST_TOKEN"));
+    if (!hasUpstash) {
+      console.warn(
+        "[QuantAI env] UPSTASH_REDIS_REST_URL/TOKEN not set — guest search rate limits use in-memory fallback (not shared across instances)."
+      );
+    }
+  }
 }

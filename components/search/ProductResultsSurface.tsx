@@ -446,9 +446,27 @@ export default function ProductResultsSurface({
   if (searchError && !loading && products.length === 0) {
     const state = resolveInstitutionalState(searchError);
     if (!state) return null;
+    const trayExpl = searchMeta?.trayExplanation as
+      | { headline?: string; supporting?: string; hints?: string[] }
+      | null
+      | undefined;
+    const mergedState = {
+      ...state,
+      supporting:
+        typeof trayExpl?.supporting === "string" && trayExpl.supporting.trim()
+          ? trayExpl.supporting.trim()
+          : state.supporting,
+      recoveryHints:
+        Array.isArray(trayExpl?.hints) && trayExpl.hints.length > 0
+          ? trayExpl.hints
+          : state.recoveryHints,
+    };
     return (
       <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-16" aria-live="polite">
-        <InstitutionalStatePanel state={state} onAction={onRetrySearch} />
+        <InstitutionalStatePanel state={mergedState} onAction={onRetrySearch} />
+        <p className="qi-silent-whisper mx-auto mt-4 max-w-lg text-center text-[11px] text-slate-500/85">
+          QuantAI provides decision intelligence from retailer listings in this tray — not financial advice.
+        </p>
       </section>
     );
   }

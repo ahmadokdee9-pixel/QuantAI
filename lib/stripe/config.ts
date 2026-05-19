@@ -22,6 +22,16 @@ export function stripeWebhookSecret(): string | null {
   return process.env.STRIPE_WEBHOOK_SECRET?.trim() || null;
 }
 
+/** Map Stripe price id → QuantAI tier for webhook entitlement sync. */
+export function tierFromStripePriceId(priceId: string | null | undefined): "free" | "pro" | "premium" {
+  if (!priceId) return "free";
+  const pro = stripePriceId("pro");
+  const premium = stripePriceId("premium");
+  if (premium && priceId === premium) return "premium";
+  if (pro && priceId === pro) return "pro";
+  return "free";
+}
+
 export function appUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "");
   if (fromEnv) return fromEnv;

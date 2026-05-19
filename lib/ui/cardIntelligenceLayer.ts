@@ -178,7 +178,7 @@ export function buildCardIntelligenceLayer(args: {
   ];
 
   for (const chip of resolved.secondaryChips) {
-    if (pills.length >= 3) break;
+    if (pills.length >= 2) break;
     if (pillConflictsVerdict(code, chip.label)) continue;
     if (pills.some((p) => p.label === chip.label.toUpperCase())) continue;
     pills.push({

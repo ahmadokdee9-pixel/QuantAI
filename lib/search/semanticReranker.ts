@@ -139,7 +139,11 @@ function semanticScore(
   const id = p.qiListingIdentity ? normalizeQiListingIdentity(p.qiListingIdentity) : null;
   const mp = getMarketplaceSellerRiskTier(p.store, p.title);
   const category01 = categoryFit(q, text);
-  const keywords01 = keywordCoverage(text, q.semanticKeywords);
+  let keywords01 = keywordCoverage(text, q.semanticKeywords);
+  if (q.languages.includes("arabic") && q.languages.includes("english")) {
+    const mixedTokens = q.envelope.split(/\s+/).filter((t) => t.length >= 2).slice(0, 28);
+    keywords01 = Math.max(keywords01, keywordCoverage(text, mixedTokens) * 0.92);
+  }
   const queryRel = queryListingRelevance01(q.rewritten || q.raw, p);
   const aesthetic01 = aestheticFit(q, text);
   const purpose01 = purposeFit(q, text);

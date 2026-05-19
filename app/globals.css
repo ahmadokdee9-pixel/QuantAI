@@ -1854,9 +1854,13 @@ textarea:focus-visible {
 }
 
 @media (min-width: 400px) {
-  .qi-posture-grid {
+  .qi-posture-grid:not(.qi-posture-grid--compact) {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+}
+
+.qi-posture-grid--compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .qi-posture-cell {

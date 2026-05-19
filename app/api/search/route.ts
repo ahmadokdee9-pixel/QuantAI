@@ -33,6 +33,8 @@ import { buildUniversalCommerceContext, tasteTagListForApi } from "@/lib/commerc
 import { buildCanonicalQuery, canonicalQueryForDebug, type CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import { semanticRerankSearchResults } from "@/lib/search/semanticReranker";
+import { buildEmptyTrayExplanation } from "@/lib/search/trayDiagnostics";
+import { logSearchEvent } from "@/lib/log/productionLog";
 import type { DealClusterDTO } from "@/lib/deals/types";
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
 import type { SearchEntitlementsDTO } from "@/lib/subscription/entitlements";
@@ -400,7 +402,9 @@ async function handleSearch(
     const plan = planDefinition(tier);
 
     if (!userId) {
-      const limited = await enforceLimit(searchRatelimit, `guest:${requestIdentifier(opts?.headers)}`);
+      const limited = await enforceLimit(searchRatelimit, `guest:${requestIdentifier(opts?.headers)}`, {
+        memoryPrefix: "quantai:search:guest",
+      });
       if (!limited.ok) {
         return jsonSearch(
           {
@@ -432,7 +436,7 @@ async function handleSearch(
         );
       }
 
-      const limited = await enforceLimit(searchRatelimit, userId);
+      const limited = await enforceLimit(searchRatelimit, userId, { memoryPrefix: "quantai:search" });
       if (!limited.ok) {
         return jsonSearch(
           {
@@ -484,6 +488,7 @@ async function handleSearch(
         const status = Number.parseInt(statusRaw, 10);
         const message = colon >= 0 ? rest.slice(colon + 1) : "Search upstream failed.";
         const httpStatus = Number.isFinite(status) && status >= 400 && status < 600 ? status : 502;
+        logSearchEvent("upstream_fail", { status: httpStatus, message: message.slice(0, 120) });
         return fail(httpStatus, "SEARCH_FAILED", message || "Search upstream failed.", {
           data: emptySearchData(
             searchDebugMeta({
@@ -665,8 +670,27 @@ async function handleSearch(
         },
         shopperPersonaSummary: `${shopperPersona.labels.join(" · ")} · session memory v${commerceSessionMemory.version} · interactions ${commerceSessionMemory.interactionCount}`,
         bundleSuggestions,
+        trayExplanation:
+          products.length === 0
+            ? buildEmptyTrayExplanation({
+                query,
+                productCount: 0,
+                stageSuppression,
+                fallbackReason: debugMeta.fallbackReason as string | null,
+                identityGatePassed: debugMeta.identityGatePassed as number | null,
+                discoveryCandidates: debugMeta.discoveryCandidates as number | null,
+                upstreamReliabilityScore: debugMeta.upstreamReliabilityScore as number | null,
+              })
+            : null,
       },
     };
+
+    logSearchEvent(products.length > 0 ? "success" : "empty", {
+      queryLength: query.length,
+      products: products.length,
+      latencyMs: debugMeta.searchLatencyMs,
+      suppressionStages: stageSuppression.length,
+    });
 
     return jsonSearch(
       { success: true, data },

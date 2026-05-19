@@ -7,7 +7,7 @@ import { CreditCard, ExternalLink, Loader2 } from "lucide-react";
 import TrustRibbon from "@/components/trust/TrustRibbon";
 import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
 import { readApiJson } from "@/lib/api/readJson";
-import { QUANT_PLANS, type QuantPlanTier } from "@/lib/subscription/plans";
+import { PLAN_ACCESS_PRESENTATION, QUANT_PLANS, type QuantPlanTier } from "@/lib/subscription/plans";
 
 type SubPayload = {
   tier?: string;
@@ -17,7 +17,6 @@ type SubPayload = {
 function BillingInner() {
   const searchParams = useSearchParams();
   const planParam = searchParams.get("plan");
-  const focus = searchParams.get("focus");
   const checkout = searchParams.get("checkout");
 
   const [data, setData] = useState<SubPayload | null>(null);
@@ -55,6 +54,7 @@ function BillingInner() {
   }, [planParam]);
 
   const tier = (data?.tier as QuantPlanTier) ?? "free";
+  const access = PLAN_ACCESS_PRESENTATION[tier];
 
   return (
     <div className="space-y-8">
@@ -62,22 +62,19 @@ function BillingInner() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-300/80">
-              Billing &amp; subscription
+              Access &amp; billing
             </p>
-            <h1 className="cockpit-display mt-2 text-2xl text-white sm:text-3xl">Billing constellation</h1>
+            <h1 className="cockpit-display mt-2 text-2xl text-white sm:text-3xl">{access.accessName}</h1>
             <p className="cockpit-body mt-3 max-w-2xl text-sm text-slate-400">
-              Live tier reads from Clerk{" "}
-              <code className="rounded bg-white/[0.06] px-1.5 py-0.5 text-cyan-200/90">publicMetadata.subscriptionTier</code>{" "}
-              (<span className="text-slate-300">free</span>, <span className="text-slate-300">pro</span>,{" "}
-              <span className="text-slate-300">premium</span>). Stripe Checkout and Customer Portal routes are wired—add
-              keys to go live.
+              {access.invitation} Your clearance tier is synchronized after checkout and reflected across search
+              throughput and synthesis depth.
             </p>
           </div>
           <Link
             href="/pricing"
             className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/12 bg-white/[0.06] px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/[0.1]"
           >
-            Compare plans
+            Compare access layers
             <ExternalLink className="size-3.5 opacity-70" aria-hidden />
           </Link>
         </div>
@@ -90,27 +87,23 @@ function BillingInner() {
 
         {checkout === "success" && (
           <p className="mt-4 rounded-xl border border-emerald-400/25 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-            Checkout completed in Stripe. Finalize webhooks to sync tier into Clerk—until then, set metadata manually to
-            test premium surfaces.
+            Payment received. Your access layer may take a moment to update — refresh if synthesis depth has not
+            changed yet.
           </p>
         )}
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <div className="rounded-2xl border border-white/[0.08] bg-black/30 p-5">
-            <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Current tier</p>
-            <p className="mt-2 text-2xl font-semibold capitalize text-white">{tier}</p>
-            {focus === "manage" && (
-              <p className="mt-2 text-xs text-slate-500">
-                Manage flows will open Stripe Customer Portal when configured.
-              </p>
-            )}
+            <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Current clearance</p>
+            <p className="mt-2 text-2xl font-semibold text-white">{access.accessName}</p>
+            <p className="mt-2 text-xs text-slate-500">{access.clearance}</p>
           </div>
           <div className="rounded-2xl border border-white/[0.08] bg-black/30 p-5">
-            <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Checkout intent</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Plan reference</p>
             <p className="mt-2 text-sm text-slate-300">
               {highlighted
-                ? `You opened billing with interest in ${QUANT_PLANS[highlighted].name}.`
-                : "Pick a plan on the pricing page to see upgrade paths here."}
+                ? `Checkout interest: ${QUANT_PLANS[highlighted].name} — ${PLAN_ACCESS_PRESENTATION[highlighted].accessName}`
+                : `Active tier: ${QUANT_PLANS[tier].name}`}
             </p>
           </div>
         </div>
@@ -145,7 +138,7 @@ function BillingInner() {
             className="cockpit-cta inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-5 py-2.5 text-sm text-slate-950 transition hover:brightness-105 disabled:opacity-60"
           >
             {checkoutBusy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <CreditCard className="size-4" aria-hidden />}
-            {highlighted ? `Checkout · ${QUANT_PLANS[highlighted].name}` : "Start Stripe checkout"}
+            {highlighted ? `Upgrade · ${PLAN_ACCESS_PRESENTATION[highlighted].accessName}` : "Upgrade access"}
           </button>
           <button
             type="button"
@@ -172,22 +165,15 @@ function BillingInner() {
             }}
             className="rounded-full border border-white/12 px-5 py-2.5 text-sm font-medium text-slate-200 transition hover:bg-white/[0.06] disabled:opacity-50"
           >
-            {portalBusy ? "Opening…" : "Customer portal"}
+            {portalBusy ? "Opening…" : "Manage subscription"}
           </button>
           <Link
             href="/pricing"
             className="inline-flex items-center rounded-full border border-white/10 px-5 py-2.5 text-sm font-medium text-slate-400 transition hover:text-white"
           >
-            All plans
+            All access layers
           </Link>
         </div>
-        <p className="cockpit-body mt-4 text-xs text-slate-500">
-          Required env: <code className="text-slate-400">STRIPE_SECRET_KEY</code>,{" "}
-          <code className="text-slate-400">STRIPE_PRICE_ID_PRO</code>,{" "}
-          <code className="text-slate-400">STRIPE_PRICE_ID_PREMIUM</code>, optional{" "}
-          <code className="text-slate-400">STRIPE_WEBHOOK_SECRET</code>,{" "}
-          <code className="text-slate-400">NEXT_PUBLIC_APP_URL</code>. Portal needs a stored Stripe customer id per user.
-        </p>
         <div className="mt-8">
           <TrustRibbon />
         </div>

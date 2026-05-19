@@ -387,8 +387,18 @@ export default function Home() {
       setProducts([]);
       setDealClusters([]);
       setSearchIntelligence(null);
-      setSearchMeta(null);
-      setSearchError(INSTITUTIONAL.insufficientClarity);
+      const metaEmpty =
+        searchData?.meta && typeof searchData.meta === "object" ? searchData.meta : null;
+      setSearchMeta(metaEmpty);
+      const trayExpl = metaEmpty?.trayExplanation as
+        | { headline?: string; supporting?: string; hints?: string[] }
+        | null
+        | undefined;
+      setSearchError(
+        typeof trayExpl?.headline === "string" && trayExpl.headline.trim()
+          ? trayExpl.headline.trim()
+          : INSTITUTIONAL.insufficientClarity
+      );
       trackEvent(QuantAnalyticsEvents.SEARCH_ERROR, { code: "empty" });
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") return;
@@ -586,7 +596,7 @@ export default function Home() {
           <div className="qi-hero-aura" aria-hidden />
           <div className="mx-auto max-w-4xl text-center">
             <p className="qi-hero-manifest motion-safe:animate-[fadeIn_0.5s_ease-out]">
-              QuantAI آ· Commerce intelligence
+              QuantAI · Commerce intelligence
             </p>
 
             <h1 className="qi-hero-headline mt-10 motion-safe:animate-[fadeIn_0.6s_ease-out]">
@@ -595,10 +605,10 @@ export default function Home() {
             </h1>
 
             <p className="qi-hero-lead mx-auto mt-6 max-w-xl motion-safe:animate-[fadeIn_0.65s_ease-out]">
-              Consequential purchases deserve one decisive read â€” context, not noise.
+              Consequential purchases deserve one decisive read — context, not noise.
             </p>
 
-            <HeroIntelMicroStrip />
+            <HeroIntelMicroStrip className="max-sm:hidden" />
 
             <div className="qi-hero-command-stage mx-auto mt-8 max-w-[54rem] sm:mt-10 motion-safe:animate-[fadeIn_0.7s_ease-out]">
                 <HeroSearchCommand
@@ -614,7 +624,10 @@ export default function Home() {
                   mobilePerf={mobilePerf}
                 />
 
-                {searchError && !loading && resolveInstitutionalState(searchError) ? (
+                {searchError &&
+                !loading &&
+                products.length === 0 &&
+                resolveInstitutionalState(searchError) ? (
                   <SearchSignalCapsule
                     state={resolveInstitutionalState(searchError)!}
                     onAction={() => void search()}
@@ -716,7 +729,7 @@ export default function Home() {
             dealClusters={dealClusters}
             searchIntelligence={searchIntelligence}
             intelligenceLevel={
-              searchEntitlements?.intelligenceLevel ?? (isSignedIn ? "summary" : "full")
+              searchEntitlements?.intelligenceLevel ?? (isSignedIn ? "full" : "summary")
             }
             loading={loading}
             sort={sort}

@@ -1,15 +1,21 @@
+/**
+ * Golden-query smoke — ranking consistency and tray health.
+ * Usage: SEARCH_BASE_URL=https://quant-ai-app.vercel.app npm run test:golden-search
+ */
 const BASE_URL = process.env.SEARCH_BASE_URL || "http://localhost:3000";
+const MIN_PRODUCTS_DEFAULT = Number(process.env.GOLDEN_MIN_PRODUCTS || "3");
+
+/** Queries that must return a populated tray in production-like environments. */
 const QUERIES = [
-  "iphone 16",
-  "iphone 16 case",
-  "airpods",
-  "airpods case",
-  "adidas samba",
-  "gaming monitor",
-  "sofa",
-  "كنبة زاوية",
-  "ايفون 16 رخيص",
-  "سماعات ايربودز مستعملة",
+  { query: "iphone 16", minProducts: 5 },
+  { query: "airpods", minProducts: 5 },
+  { query: "gaming monitor", minProducts: 3 },
+  { query: "adidas samba", minProducts: 3 },
+  { query: "sofa", minProducts: 3 },
+  { query: "iphone 16 case", minProducts: 3 },
+  { query: "كنبة زاوية", minProducts: 2 },
+  { query: "ايفون 16 رخيص", minProducts: 2 },
+  { query: "سماعات ايربودز", minProducts: 2 },
 ];
 
 async function postSearch(query) {
@@ -40,22 +46,38 @@ async function postSearch(query) {
     canonicalCategory: meta.canonicalQuery?.category ?? null,
     canonicalLanguage: meta.canonicalQuery?.language ?? null,
     fallbackReason: meta.fallbackReason ?? null,
+    trayExplanation: meta.trayExplanation ?? null,
     errorState: meta.errorState ?? json?.error ?? null,
   };
 }
 
 const rows = [];
-for (const query of QUERIES) {
-  rows.push(await postSearch(query));
+for (const spec of QUERIES) {
+  rows.push({ ...(await postSearch(spec.query)), minProducts: spec.minProducts ?? MIN_PRODUCTS_DEFAULT });
 }
 
 for (const row of rows) {
   console.log(
-    `${row.query}: status=${row.status} success=${row.success} products=${row.products} sources=${row.sourceCount} category=${row.canonicalCategory ?? "unknown"} language=${row.canonicalLanguage ?? "unknown"} fallback=${row.fallbackReason ?? "none"} error=${row.errorState ?? "none"}`
+    `${row.query}: status=${row.status} success=${row.success} products=${row.products} (min ${row.minProducts}) sources=${row.sourceCount} category=${row.canonicalCategory ?? "unknown"} language=${row.canonicalLanguage ?? "unknown"} fallback=${row.fallbackReason ?? "none"} error=${row.errorState ?? "none"}`
   );
+  if (row.trayExplanation && row.products === 0) {
+    console.log(`  tray: ${row.trayExplanation}`);
+  }
 }
 
-const failures = rows.filter((row) => !row.canonicalCategory);
+const failures = rows.filter((row) => {
+  if (!row.success || row.status !== 200) return true;
+  if (!row.canonicalCategory) return true;
+  if (row.products < row.minProducts) return true;
+  return false;
+});
+
 if (failures.length > 0) {
+  console.error(`\n${failures.length} golden query failure(s):`);
+  for (const f of failures) {
+    console.error(`  - ${f.query}: products=${f.products}, category=${f.canonicalCategory ?? "missing"}`);
+  }
   process.exitCode = 1;
+} else {
+  console.log(`\nAll ${rows.length} golden queries passed.`);
 }

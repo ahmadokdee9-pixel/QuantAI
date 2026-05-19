@@ -9,12 +9,14 @@ const PIPELINE = [
   { title: "Decision engine", body: "Evidence becomes BUY · WAIT · AVOID." },
 ] as const;
 
-export default function HeroIntelMicroStrip() {
+type Props = { className?: string };
+
+export default function HeroIntelMicroStrip({ className = "" }: Props) {
   const reduceMotion = useReducedMotion();
 
   return (
     <motion.div
-      className="qi-micro-intel-strip qi-micro-intel-pipeline"
+      className={`qi-micro-intel-strip qi-micro-intel-pipeline ${className}`.trim()}
       initial={reduceMotion ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: reduceMotion ? 0 : 0.55, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}

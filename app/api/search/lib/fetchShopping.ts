@@ -14,6 +14,7 @@ import { combinedTitleSimilarity } from "@/lib/deals/normalizeTitle";
 import { buildUpstreamShoppingQuery } from "@/lib/search/shoppingQueryV3";
 import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 import { getStoreTrustScore } from "@/lib/retailTrust";
+import { fetchWithRetry } from "@/lib/commerce/fetchWithRetry";
 import { resolveBestOutboundUrl } from "@/lib/search/directMerchantRouter";
 import { resolveShoppingListingLink } from "./resolveOfferUrl";
 
@@ -143,7 +144,11 @@ export async function fetchShoppingProducts(
 
     let response: Response;
     try {
-      response = await fetch(url, { cache: "no-store", signal: controller.signal });
+      response = await fetchWithRetry(
+        url,
+        { cache: "no-store", signal: controller.signal },
+        { retries: 2, baseDelayMs: 500, signal: controller.signal, label: "serpapi_shopping" }
+      );
     } catch {
       return { ok: false, error: "Search request timed out", status: 504 };
     } finally {
