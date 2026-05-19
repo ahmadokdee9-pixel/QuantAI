@@ -260,7 +260,16 @@ function categoryEvidence(p: QuantProduct, canonicalQuery?: CanonicalQueryContra
     return /\b(sofa|sofa bed|sectional|loveseat|settee|couch|corner sofa|recliner|chaise|hoekbank|bankstel|loungebank|fauteuil|chair|stoel|table|tafel|tuinset|tuinmeubel|loungeset|furniture|meubel|meubels|كنبة|طاولة)\b/i.test(blob);
   }
   if (category === "electronics") return /\b(monitor|display|beeldscherm|scherm|gpu|camera|tablet|console|tv|electronics?)\b/i.test(blob);
-  if (category === "fragrance") return /\b(perfume|fragrance|parfum|cologne|eau de parfum|eau de toilette|عطر)\b/i.test(blob);
+  if (category === "fragrance") {
+    const perfumeCue = /\b(perfume|fragrance|parfum|cologne|eau de parfum|eau de toilette|عطر)\b/i.test(blob);
+    if (/\b(libre)\b/i.test(query)) {
+      return perfumeCue && /\b(libre|yves|saint\s+laurent|ysl)\b/i.test(blob);
+    }
+    if (/\b(ysl|yves\s+saint\s+laurent)\b/i.test(query)) {
+      return perfumeCue && /\b(yves|saint\s+laurent|ysl|libre)\b/i.test(blob);
+    }
+    return perfumeCue;
+  }
   if (category === "fashion") return /\b(jacket|jas|coat|hoodie|shirt|dress|fashion|kleding)\b/i.test(blob);
   if (category === "home") {
     if (/\b(robot vacuum|robotstofzuiger|stofzuiger robot|roomba|roborock|irobot)\b/i.test(query)) {

@@ -33,7 +33,7 @@ import { buildUniversalCommerceContext, tasteTagListForApi } from "@/lib/commerc
 import { buildCanonicalQuery, canonicalQueryForDebug, type CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import { semanticRerankSearchResults } from "@/lib/search/semanticReranker";
-import { buildEmptyTrayExplanation } from "@/lib/search/trayDiagnostics";
+import { buildDegradedTrayNotice, buildEmptyTrayExplanation } from "@/lib/search/trayDiagnostics";
 import { logSearchEvent } from "@/lib/log/productionLog";
 import type { DealClusterDTO } from "@/lib/deals/types";
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
@@ -172,15 +172,17 @@ async function fetchShoppingProductsWithFallback(
   const categoryFallback =
     canonicalQuery.category === "furniture"
       ? "corner sofa hoekbank couch living room"
-      : canonicalQuery.category === "beauty"
-        ? "skincare serum beauty"
-        : canonicalQuery.category === "home"
-          ? "home appliance household"
-          : canonicalQuery.category === "electronics"
-            ? "electronics device"
-            : canonicalQuery.productType !== "unknown"
-              ? canonicalQuery.productType
-              : "";
+      : canonicalQuery.category === "fragrance"
+        ? "designer perfume eau de parfum yves saint laurent libre"
+        : canonicalQuery.category === "beauty"
+          ? "skincare serum beauty"
+          : canonicalQuery.category === "home"
+            ? "home appliance household"
+            : canonicalQuery.category === "electronics"
+              ? "electronics device"
+              : canonicalQuery.productType !== "unknown"
+                ? canonicalQuery.productType
+                : "";
   const fallbackQueries = [
     [canonicalQuery.brand, canonicalQuery.model, canonicalQuery.variant, canonicalQuery.productType !== "unknown" ? canonicalQuery.productType : ""]
       .filter(Boolean)
@@ -257,8 +259,18 @@ function searchDebugMeta(args: {
   errorState?: string | null;
   stageSuppression?: StageSuppressionTrace[];
   searchLatencyMs?: number;
+  operationalState?: Record<string, unknown> | null;
 }): Record<string, unknown> {
-  const { products, liveDiscovery = null, canonicalQuery = null, fallbackReason = null, errorState = null, stageSuppression = [], searchLatencyMs = 0 } = args;
+  const {
+    products,
+    liveDiscovery = null,
+    canonicalQuery = null,
+    fallbackReason = null,
+    errorState = null,
+    stageSuppression = [],
+    searchLatencyMs = 0,
+    operationalState = null,
+  } = args;
   const identityDebug = canonicalQuery ? buildIdentityDebugSummary(products, canonicalQuery) : null;
   const commerceQualityDebug = buildCommerceQualityDebug(products);
   const buyingDecisionDebug = buildBuyingDecisionDebug(products);
@@ -396,29 +408,55 @@ async function handleSearch(
       return fail(400, "BAD_REQUEST", "Missing query");
     }
     const requestCanonicalQuery = buildCanonicalQuery(query);
+    const pipelineKey = normalizeSearchCacheKey(requestCanonicalQuery.normalizedQuery || query);
 
     const { userId, user } = await optionalClerkSearchUser();
     const tier = await resolveServerSubscriptionTier(userId, user);
     const plan = planDefinition(tier);
+
+    let guestOperationalDegraded: Record<string, unknown> | null = null;
 
     if (!userId) {
       const limited = await enforceLimit(searchRatelimit, `guest:${requestIdentifier(opts?.headers)}`, {
         memoryPrefix: "quantai:search:guest",
       });
       if (!limited.ok) {
-        return jsonSearch(
-          {
-            success: false,
-            error: "RATE_LIMIT",
-            message: "Guest search is cooling down. Sign in for a larger intelligence window.",
-            data: emptySearchData(),
-            retryAfter: limited.retryAfter,
-          },
-          {
-            status: 429,
-            headers: { "Retry-After": String(limited.retryAfter) },
+        try {
+          const cachedTray = await getCachedSearchPipeline(pipelineKey);
+          if (cachedTray.products.length > 0) {
+            guestOperationalDegraded = {
+              degraded: true,
+              reason: "guest_rate_limit_cached_tray",
+              retryAfter: limited.retryAfter,
+            };
           }
-        );
+        } catch {
+          // no cached tray — fall through to rate-limit response
+        }
+        if (!guestOperationalDegraded) {
+          return jsonSearch(
+            {
+              success: false,
+              error: "RATE_LIMIT",
+              message:
+                "Guest search is cooling down. Sign in for a larger intelligence window — or retry shortly for a cached tray if available.",
+              data: emptySearchData(
+                searchDebugMeta({
+                  products: [],
+                  canonicalQuery: requestCanonicalQuery,
+                  fallbackReason: "RATE_LIMIT",
+                  errorState: "RATE_LIMIT",
+                  operationalState: { degraded: true, reason: "guest_rate_limit", retryAfter: limited.retryAfter },
+                })
+              ),
+              retryAfter: limited.retryAfter,
+            },
+            {
+              status: 429,
+              headers: { "Retry-After": String(limited.retryAfter) },
+            }
+          );
+        }
       }
     }
 
@@ -454,13 +492,11 @@ async function handleSearch(
       }
     }
 
-    const pipelineKey = normalizeSearchCacheKey(requestCanonicalQuery.normalizedQuery || query);
-
-    let products: QuantProduct[];
-    let dealClusters: DealClusterDTO[];
-    let searchIntelligence: SearchIntelligenceDTO | null;
-    let commerceMeta: SearchCommerceAIMeta;
-    let liveDiscovery: LiveCommerceDiscoveryMeta;
+    let products!: QuantProduct[];
+    let dealClusters!: DealClusterDTO[];
+    let searchIntelligence!: SearchIntelligenceDTO | null;
+    let commerceMeta!: SearchCommerceAIMeta;
+    let liveDiscovery!: LiveCommerceDiscoveryMeta;
     const canonicalQuery: CanonicalQueryContract = requestCanonicalQuery;
     const stageSuppression: StageSuppressionTrace[] = [];
     const traceStage = (stage: string, before: number, after: number) => {
@@ -471,7 +507,7 @@ async function handleSearch(
         suppressed: Math.max(0, before - after),
       });
     };
-    try {
+    const loadPipelineTray = async () => {
       const tray = await getCachedSearchPipeline(pipelineKey);
       products = tray.products;
       dealClusters = tray.dealClusters;
@@ -479,6 +515,10 @@ async function handleSearch(
       commerceMeta = tray.commerceMeta;
       liveDiscovery = tray.liveDiscovery;
       traceStage("pipeline_enrichment_and_ai", liveDiscovery.fusedRows, products.length);
+    };
+
+    try {
+      await loadPipelineTray();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
       if (msg.startsWith(SEARCH_UPSTREAM_PREFIX)) {
@@ -489,32 +529,56 @@ async function handleSearch(
         const message = colon >= 0 ? rest.slice(colon + 1) : "Search upstream failed.";
         const httpStatus = Number.isFinite(status) && status >= 400 && status < 600 ? status : 502;
         logSearchEvent("upstream_fail", { status: httpStatus, message: message.slice(0, 120) });
-        return fail(httpStatus, "SEARCH_FAILED", message || "Search upstream failed.", {
-          data: emptySearchData(
-            searchDebugMeta({
-              products: [],
-              canonicalQuery: requestCanonicalQuery,
-              fallbackReason: "SEARCH_FAILED",
-              errorState: "SEARCH_FAILED",
-            })
-          ),
-        });
-      }
-      return fail(
-        500,
-        "SEARCH_FAILED",
-        e instanceof Error ? e.message : "Search could not complete.",
-        {
-          data: emptySearchData(
-            searchDebugMeta({
-              products: [],
-              canonicalQuery: requestCanonicalQuery,
-              fallbackReason: "SEARCH_FAILED",
-              errorState: "SEARCH_FAILED",
-            })
-          ),
+        let recovered = false;
+        try {
+          const cachedTray = await getCachedSearchPipeline(pipelineKey);
+          if (cachedTray.products.length > 0) {
+            products = cachedTray.products;
+            dealClusters = cachedTray.dealClusters;
+            searchIntelligence = cachedTray.searchIntelligence;
+            commerceMeta = cachedTray.commerceMeta;
+            liveDiscovery = cachedTray.liveDiscovery;
+            guestOperationalDegraded = {
+              degraded: true,
+              reason: "upstream_fail_cached_tray",
+              upstreamStatus: httpStatus,
+            };
+            traceStage("upstream_fail_cached_recovery", 0, products.length);
+            recovered = true;
+          }
+        } catch {
+          recovered = false;
         }
-      );
+        if (!recovered) {
+          return fail(httpStatus, "SEARCH_FAILED", message || "Search upstream failed.", {
+            data: emptySearchData(
+              searchDebugMeta({
+                products: [],
+                canonicalQuery: requestCanonicalQuery,
+                fallbackReason: "SEARCH_FAILED",
+                errorState: "SEARCH_FAILED",
+                operationalState: { degraded: true, reason: "upstream_fail_empty" },
+              })
+            ),
+          });
+        }
+      } else {
+        return fail(
+          500,
+          "SEARCH_FAILED",
+          e instanceof Error ? e.message : "Search could not complete.",
+          {
+            data: emptySearchData(
+              searchDebugMeta({
+                products: [],
+                canonicalQuery: requestCanonicalQuery,
+                fallbackReason: "SEARCH_FAILED",
+                errorState: "SEARCH_FAILED",
+              })
+            ),
+          }
+        );
+      }
     }
 
     const intents = canonicalQuery.commerceIntents;
@@ -572,8 +636,11 @@ async function handleSearch(
     }
 
     const marketAwareness = computeMarketAwarenessForTray(query, products);
-    const fallbackReason =
-      liveDiscovery.status === "enabled" ? null : liveDiscovery.error || liveDiscovery.status;
+    const fallbackReason = guestOperationalDegraded
+      ? String(guestOperationalDegraded.reason ?? "operational_degraded")
+      : liveDiscovery.status === "enabled"
+        ? null
+        : liveDiscovery.error || liveDiscovery.status;
     const debugMeta = searchDebugMeta({
       products,
       liveDiscovery,
@@ -582,6 +649,7 @@ async function handleSearch(
       errorState: null,
       stageSuppression,
       searchLatencyMs: Date.now() - searchStarted,
+      operationalState: guestOperationalDegraded,
     });
 
     const data: SearchDataPayload = {
@@ -681,7 +749,10 @@ async function handleSearch(
                 discoveryCandidates: debugMeta.discoveryCandidates as number | null,
                 upstreamReliabilityScore: debugMeta.upstreamReliabilityScore as number | null,
               })
-            : null,
+            : guestOperationalDegraded
+              ? buildDegradedTrayNotice(String(guestOperationalDegraded.reason ?? ""))
+              : null,
+        operationalState: guestOperationalDegraded,
       },
     };
 

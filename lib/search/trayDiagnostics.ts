@@ -90,6 +90,32 @@ export function buildEmptyTrayExplanation(input: TrayDiagnosticsInput): {
   };
 }
 
+/** Honest copy when serving a cached tray under guest/upstream pressure. */
+export function buildDegradedTrayNotice(reason: string | null | undefined): {
+  headline: string;
+  supporting: string;
+} {
+  const r = (reason ?? "").toLowerCase();
+  if (r.includes("rate_limit")) {
+    return {
+      headline: "Showing a recent intelligence read while guest capacity recovers.",
+      supporting:
+        "Live market refresh is paused briefly. Tray data may be slightly stale — sign in for uninterrupted refresh.",
+    };
+  }
+  if (r.includes("upstream")) {
+    return {
+      headline: "Showing the last successful market read for this query.",
+      supporting:
+        "Upstream commerce feeds were temporarily unavailable. Results are cached — retry for a fresh tray.",
+    };
+  }
+  return {
+    headline: "Operating in degraded refresh mode.",
+    supporting: "Tray may be cached while systems recover. Verify price and availability before checkout.",
+  };
+}
+
 export function trayDiagnosticsFromMeta(
   meta: Record<string, unknown> | null | undefined,
   query: string,

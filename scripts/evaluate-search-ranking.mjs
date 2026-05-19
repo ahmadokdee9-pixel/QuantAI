@@ -2,7 +2,11 @@
  * Ranking quality evaluation — golden queries with intent/category assertions.
  * Usage: SEARCH_BASE_URL=https://quant-ai-app.vercel.app npm run test:search-eval
  */
+import { ValidationRequestQueue, validationSearch, isInfrastructureFailure } from "./lib/validationQueue.mjs";
+import { saveValidationRun, loadPreviousRun, compareValidationRuns, deployId } from "./lib/validationHistory.mjs";
+
 const BASE_URL = process.env.SEARCH_BASE_URL || "http://localhost:3000";
+const queue = new ValidationRequestQueue({ minIntervalMs: 2000 });
 
 const CASES = [
   {
@@ -80,17 +84,6 @@ const CASES = [
   },
 ];
 
-async function search(query) {
-  const res = await fetch(`${BASE_URL}/api/search`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query }),
-  });
-  const json = await res.json();
-  const products = Array.isArray(json?.data?.products) ? json.data.products : [];
-  const meta = json?.data?.meta ?? {};
-  return { status: res.status, success: json?.success === true, products, meta };
-}
 
 function topTitles(products, n = 8) {
   return products.slice(0, n).map((p) => p.title ?? "");
@@ -100,12 +93,19 @@ const results = [];
 for (const spec of CASES) {
   const row = { query: spec.query, ok: true, issues: [] };
   try {
-    const { status, success, products, meta } = await search(spec.query);
+    const result = await validationSearch(BASE_URL, spec.query, queue);
+    const { status, success, products, meta } = result;
     row.status = status;
     row.count = products.length;
     row.category = meta?.canonicalQuery?.category ?? meta?.canonicalQuery?.semantic?.productCategory ?? null;
     row.titles = topTitles(products);
 
+    if (isInfrastructureFailure(result)) {
+      row.issues.push(`infrastructure_${result.infrastructure?.kind ?? "unknown"}`);
+      row.ok = false;
+      results.push(row);
+      continue;
+    }
     if (!success || status !== 200) row.issues.push("api_failure");
     if (products.length < spec.minProducts) row.issues.push(`low_tray_count_${products.length}`);
     if (spec.category && row.category && row.category !== spec.category) {
@@ -139,4 +139,23 @@ for (const r of results) {
 
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} passed`);
+
+const evalReport = {
+  generatedAt: new Date().toISOString(),
+  baseUrl: BASE_URL,
+  deployId: deployId(),
+  queries: results,
+  summary: {
+    total: results.length,
+    passed: results.length - failed.length,
+    passRatePct: Math.round(((results.length - failed.length) / results.length) * 100),
+  },
+};
+const previous = loadPreviousRun("search-eval");
+evalReport.regression = compareValidationRuns(
+  { queries: results.map((r) => ({ query: r.query, pass: r.ok, productCount: r.count ?? 0, canonicalCategory: r.category, scores: { ranking: r.ok ? 100 : 40 } })) },
+  previous
+);
+saveValidationRun(evalReport, "search-eval");
+
 if (failed.length) process.exitCode = 1;

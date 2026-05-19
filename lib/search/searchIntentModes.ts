@@ -7,6 +7,14 @@ import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 /** Alternative, comparison, category browse, taste/budget — prefer tray over empty. */
 export function isRelaxedIdentityLane(canonicalQuery?: CanonicalQueryContract): boolean {
   if (!canonicalQuery) return false;
+  if (
+    canonicalQuery.category === "fragrance" &&
+    canonicalQuery.brand &&
+    canonicalQuery.model &&
+    !canonicalQuery.semantic.alternativeIntent.active
+  ) {
+    return true;
+  }
   const sem = canonicalQuery.semantic;
   if (sem.alternativeIntent.active) return true;
   const primary = canonicalQuery.intent.primary;

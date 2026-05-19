@@ -235,7 +235,11 @@ function semanticKeywordsFor(q: {
   if (q.category === "laptop") words.push("laptop", "notebook", "ultrabook", "portable", "computer");
   if (q.category === "audio") words.push("headphone", "earbud", "wireless", "audio", "noise cancelling");
   if (q.category === "furniture") words.push("sofa", "couch", "chair", "furniture", "living room", "hoekbank", "corner sofa");
-  if (q.category === "fragrance") words.push("perfume", "fragrance", "parfum", "cologne", "eau", "designer", "niche");
+  if (q.category === "fragrance") {
+    words.push("perfume", "fragrance", "parfum", "cologne", "eau", "designer", "niche");
+    const named = q.envelope.match(/\b(libre|ysl|yves\s+saint\s+laurent|mon\s+paris|black\s+opium|la\s+vie\s+est\s+belle)\b/gi);
+    if (named) words.push(...named.map((t) => t.toLowerCase()));
+  }
   if (q.category === "watch") words.push("watch", "smartwatch", "wearable", "wrist");
   if (q.category === "desk_setup") words.push("desk", "workspace", "monitor", "keyboard", "minimal");
   if (q.category === "home") words.push("home", "kitchen", "appliance", "coffee", "machine", "stroller", "baby", "air fryer", "airfryer", "vacuum", "robot vacuum", "roomba", "roborock");
@@ -272,7 +276,8 @@ export function buildSearchQueryUnderstanding(rawQuery: string): SemanticQueryUn
   const premiumIntent01 = clamp01(
     (hasAny(envelope, /\b(premium|luxury|pro|max|ultra|designer|فخم|فاخر)\b/i) ? 0.58 : 0.1) +
       (aesthetic === "premium_luxury" ? 0.22 : 0) +
-      (hasAny(envelope, /\b(premium looking|luxury feel|expensive look)\b/i) ? 0.2 : 0)
+      (hasAny(envelope, /\b(premium looking|luxury feel|luxury looking|expensive look|quiet luxury)\b/i) ? 0.2 : 0) +
+      (hasAny(envelope, /\b(aesthetic|style intent|for focus|headphones for focus)\b/i) ? 0.12 : 0)
   );
   const urgency01 = clamp01(hasAny(envelope, /\b(now|today|asap|urgent|fast|quick|اليوم|سريع)\b/i) ? 0.72 : 0.08);
   const emotionalIntent01 = clamp01(

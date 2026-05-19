@@ -20,6 +20,9 @@
 # production
 /build
 
+# validation artifacts (local deploy history)
+.validation/
+
 # misc
 .DS_Store
 *.pem

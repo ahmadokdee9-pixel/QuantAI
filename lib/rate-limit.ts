@@ -50,7 +50,7 @@ const memoryBuckets = new Map<string, { count: number; resetAt: number }>();
 
 const MEMORY_LIMITS: Record<string, { max: number; windowMs: number }> = {
   "quantai:search": { max: 45, windowMs: 60 * 60 * 1000 },
-  "quantai:search:guest": { max: 25, windowMs: 60 * 60 * 1000 },
+  "quantai:search:guest": { max: 32, windowMs: 60 * 60 * 1000 },
   "quantai:ai-chat": { max: 35, windowMs: 60 * 60 * 1000 },
   "quantai:compare-verdict": { max: 25, windowMs: 60 * 60 * 1000 },
   "quantai:copilot": { max: 40, windowMs: 60 * 60 * 1000 },

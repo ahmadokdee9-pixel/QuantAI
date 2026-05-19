@@ -1,9 +1,16 @@
 /**
- * Real-world search validation — measures tray quality, failure modes, decision signals.
- * Usage: SEARCH_BASE_URL=https://quant-ai-app.vercel.app node scripts/realworld-search-validation.mjs
+ * Real-world search validation — tray quality, failure modes, deploy regression deltas.
+ * Usage: SEARCH_BASE_URL=https://quant-ai-app.vercel.app npm run test:realworld
  */
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import {
+  ValidationRequestQueue,
+  validationSearch,
+  isInfrastructureFailure,
+  infrastructureLabel,
+} from "./lib/validationQueue.mjs";
+import { saveValidationRun, loadPreviousRun, compareValidationRuns, deployId } from "./lib/validationHistory.mjs";
 
 const BASE_URL = process.env.SEARCH_BASE_URL || "http://localhost:3000";
 const OUT_JSON = process.env.VALIDATION_OUT || resolve(import.meta.dirname, "../.validation/realworld-report.json");
@@ -39,7 +46,6 @@ const SUITE = [
 
 const ACCESSORY_RX = /\b(case|cover|hoesje|protector|strap|band|charger|cable|adapter|screen protector|tempered glass)\b/i;
 const WRONG_GEN_RX = /\biphone\s*1[0-4]\b/i;
-const BUNDLE_RX = /\b(bundle|set|kit|with case)\b/i;
 const FAKE_RX = /\b(replica|fake|dummy|box only|prop)\b/i;
 
 function pct(n, d) {
@@ -56,7 +62,6 @@ function median(nums) {
 function classifyFailures(spec, products, meta) {
   const failures = [];
   const top5 = products.slice(0, 5);
-  const top10 = products.slice(0, 10);
   const cat = meta?.canonicalQuery?.category ?? meta?.canonicalQuery?.semantic?.productCategory ?? null;
 
   if (!products.length) failures.push({ code: "empty_tray", severity: "critical" });
@@ -83,7 +88,6 @@ function classifyFailures(spec, products, meta) {
     if (over >= 3) failures.push({ code: "budget_mismatch", severity: "medium", detail: `${over}/5 above €${maxPrice}` });
   }
 
-  const titles = top5.map((p) => (p.title ?? "").toLowerCase());
   const dupLinks = new Set();
   let dupCount = 0;
   for (const p of products) {
@@ -93,9 +97,8 @@ function classifyFailures(spec, products, meta) {
   }
   if (dupCount >= 3) failures.push({ code: "duplicate_flooding", severity: "medium", detail: `${dupCount} duplicate links` });
 
-  if (FAKE_RX.test(titles.join(" "))) failures.push({ code: "trust_risk_listing", severity: "high" });
+  if (FAKE_RX.test(top5.map((p) => p.title ?? "").join(" "))) failures.push({ code: "trust_risk_listing", severity: "high" });
 
-  const avgQi = top5.map((p) => p.qiComposite ?? p.qiBuyingDecision?.confidence ?? 0).filter((n) => n > 0);
   const highConfLowTrust = top5.filter((p) => {
     const conf = p.qiBuyingDecision?.confidence ?? p.qiComposite ?? 0;
     const trust = p.qiRealityTrust?.sellerTrustScore ?? 65;
@@ -118,7 +121,7 @@ function classifyFailures(spec, products, meta) {
   return failures;
 }
 
-function scoreTray(spec, products, meta, failures) {
+function scoreTray(spec, products, failures) {
   let ranking = 100;
   let decision = 100;
   let trust = 100;
@@ -148,27 +151,11 @@ function scoreTray(spec, products, meta, failures) {
   };
 }
 
-async function search(query) {
-  const res = await fetch(`${BASE_URL}/api/search`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query }),
-  });
-  const text = await res.text();
-  let json;
-  try {
-    json = JSON.parse(text);
-  } catch {
-    throw new Error(`non-json ${res.status}`);
-  }
-  const products = Array.isArray(json?.data?.products) ? json.data.products : [];
-  const meta = json?.data?.meta ?? {};
-  return { status: res.status, success: json?.success === true, products, meta };
-}
-
+const queue = new ValidationRequestQueue();
 const report = {
   generatedAt: new Date().toISOString(),
   baseUrl: BASE_URL,
+  deployId: deployId(),
   queries: [],
   summary: {},
 };
@@ -176,17 +163,28 @@ const report = {
 for (const spec of SUITE) {
   const row = { ...spec, failures: [], scores: {}, topTitles: [], productCount: 0 };
   try {
-    const { status, success, products, meta } = await search(spec.query);
-    row.status = status;
-    row.success = success;
-    if (status === 429) {
-      row.failures.push({ code: "rate_limited", severity: "skip", detail: "429 — retry later" });
-      row.pass = true;
+    const result = await validationSearch(BASE_URL, spec.query, queue);
+    row.status = result.status;
+    row.success = result.success;
+    row.latencyMs = result.latencyMs;
+    row.degraded = Boolean(result.degraded);
+
+    if (isInfrastructureFailure(result)) {
+      row.infrastructureFailure = true;
+      row.infrastructure = result.infrastructure;
+      row.failures.push({
+        code: "infrastructure",
+        severity: "infrastructure",
+        detail: infrastructureLabel(result),
+      });
+      row.pass = null;
       row.skipped = true;
+      row.scores = { ranking: null, decision: null, trust: null };
       report.queries.push(row);
-      await new Promise((r) => setTimeout(r, 2000));
       continue;
     }
+
+    const { products, meta } = result;
     row.productCount = products.length;
     row.canonicalCategory = meta?.canonicalQuery?.category ?? null;
     row.marketMode = meta?.canonicalQuery?.marketMode ?? null;
@@ -198,22 +196,29 @@ for (const spec of SUITE) {
       qi: p.qiComposite ?? null,
     }));
     row.failures = classifyFailures(spec, products, meta);
-    row.scores = scoreTray(spec, products, meta, row.failures);
-    row.pass = row.failures.filter((f) => f.severity === "critical" || f.severity === "high").length === 0 && row.productCount >= 2;
+    row.scores = scoreTray(spec, products, row.failures);
+    row.pass =
+      row.failures.filter((f) => f.severity === "critical" || f.severity === "high").length === 0 &&
+      row.productCount >= 2;
   } catch (e) {
     row.error = e instanceof Error ? e.message : "unknown";
     row.pass = false;
+    row.infrastructureFailure = true;
     row.scores = { ranking: 0, decision: 0, trust: 0 };
   }
   report.queries.push(row);
-  await new Promise((r) => setTimeout(r, 900));
 }
 
+const rankable = report.queries.filter((q) => !q.infrastructureFailure && q.pass !== null);
 const n = report.queries.length;
-const passed = report.queries.filter((q) => q.pass).length;
-const avgRanking = report.queries.reduce((s, q) => s + (q.scores?.ranking ?? 0), 0) / n;
-const avgDecision = report.queries.reduce((s, q) => s + (q.scores?.decision ?? 0), 0) / n;
-const avgTrust = report.queries.reduce((s, q) => s + (q.scores?.trust ?? 0), 0) / n;
+const passed = rankable.filter((q) => q.pass).length;
+const infraSkips = report.queries.filter((q) => q.infrastructureFailure).length;
+
+const avgRanking =
+  rankable.reduce((s, q) => s + (q.scores?.ranking ?? 0), 0) / Math.max(1, rankable.length);
+const avgDecision =
+  rankable.reduce((s, q) => s + (q.scores?.decision ?? 0), 0) / Math.max(1, rankable.length);
+const avgTrust = rankable.reduce((s, q) => s + (q.scores?.trust ?? 0), 0) / Math.max(1, rankable.length);
 
 const failureCounts = {};
 for (const q of report.queries) {
@@ -224,8 +229,10 @@ for (const q of report.queries) {
 
 report.summary = {
   total: n,
+  rankable: rankable.length,
   passed,
-  passRatePct: pct(passed, n),
+  passRatePct: pct(passed, rankable.length),
+  infrastructureSkips: infraSkips,
   avgRanking: Math.round(avgRanking),
   avgDecision: Math.round(avgDecision),
   avgTrust: Math.round(avgTrust),
@@ -234,13 +241,19 @@ report.summary = {
 };
 
 for (const bucket of [...new Set(SUITE.map((s) => s.bucket))]) {
-  const rows = report.queries.filter((q) => q.bucket === bucket);
+  const rows = report.queries.filter((q) => q.bucket === bucket && !q.infrastructureFailure);
   report.summary.byBucket[bucket] = {
     count: rows.length,
     passRatePct: pct(rows.filter((q) => q.pass).length, rows.length),
-    avgRanking: Math.round(rows.reduce((s, q) => s + (q.scores?.ranking ?? 0), 0) / rows.length),
+    avgRanking: Math.round(rows.reduce((s, q) => s + (q.scores?.ranking ?? 0), 0) / Math.max(1, rows.length)),
   };
 }
+
+const previous = loadPreviousRun("realworld");
+const comparison = compareValidationRuns(report, previous);
+report.regression = comparison;
+
+const saved = saveValidationRun(report, "realworld");
 
 try {
   writeFileSync(OUT_JSON, JSON.stringify(report, null, 2), "utf8");
@@ -249,12 +262,27 @@ try {
 }
 
 console.log(JSON.stringify(report.summary, null, 2));
+if (comparison.hasBaseline) {
+  console.log("\n--- DEPLOY COMPARISON ---");
+  console.log(JSON.stringify(comparison.summary, null, 2));
+  if (comparison.regressions.length) {
+    console.log("\nRegressions:");
+    for (const r of comparison.regressions.slice(0, 12)) {
+      console.log(`  · [${r.severity}] ${r.query}: ${r.kind} — ${r.detail}`);
+    }
+  }
+}
+
 console.log("\n--- FAILURES BY QUERY ---");
-for (const q of report.queries.filter((q) => !q.pass || (q.failures?.length ?? 0) > 0)) {
-  console.log(`\n[${q.pass ? "WARN" : "FAIL"}] ${q.query}`);
+for (const q of report.queries.filter((q) => q.infrastructureFailure || !q.pass || (q.failures?.length ?? 0) > 0)) {
+  const tag = q.infrastructureFailure ? "INFRA" : q.pass ? "WARN" : "FAIL";
+  console.log(`\n[${tag}] ${q.query}`);
   console.log(`  products=${q.productCount} cat=${q.canonicalCategory} scores=${JSON.stringify(q.scores)}`);
   for (const f of q.failures ?? []) console.log(`  · ${f.code} (${f.severity}): ${f.detail ?? ""}`);
   for (const t of q.topTitles?.slice(0, 3) ?? []) console.log(`  → ${t.title} | €${t.price} | ${t.store}`);
 }
 
-console.log(`\nReport written: ${OUT_JSON}`);
+console.log(`\nReport: ${OUT_JSON}`);
+console.log(`History: ${saved.file}`);
+
+process.exitCode = infraSkips > 0 || (rankable.length && passed < rankable.length * 0.85) ? 1 : 0;

@@ -89,18 +89,33 @@ function categoryFit(q: SemanticQueryUnderstanding, text: string): number {
   }
 }
 
+function hasExplicitAestheticIntent(q: SemanticQueryUnderstanding): boolean {
+  if (q.aestheticDirection !== "neutral") return true;
+  if (q.premiumIntent01 >= 0.52 || q.usageContext.includes("focus")) return true;
+  if (q.styleIntent.some((s) => /premium|minimal|clean|luxury|aesthetic/i.test(s))) return true;
+  return /\b(aesthetic|style|looking|minimal|premium|luxury|focus|clean|designer|quiet luxury)\b/i.test(q.raw);
+}
+
 function aestheticFit(q: SemanticQueryUnderstanding, text: string): number {
-  if (q.aestheticDirection === "neutral" && q.styleIntent.length === 0) return 0.5;
+  if (q.aestheticDirection === "neutral" && q.styleIntent.length === 0 && !hasExplicitAestheticIntent(q)) return 0.5;
   let score = 0.36;
-  if (q.aestheticDirection === "minimal_clean" && /\b(clean|minimal|simple|white|black|matte|wood|slim)\b/i.test(text)) {
-    score += 0.35;
+  if (q.aestheticDirection === "minimal_clean" && /\b(clean|minimal|simple|white|black|matte|wood|slim|scandi|monochrome)\b/i.test(text)) {
+    score += 0.38;
   }
-  if (q.aestheticDirection === "premium_luxury" && /\b(premium|luxury|pro|leather|metal|designer|gold|parfum|edp)\b/i.test(text)) {
-    score += 0.36;
+  if (q.aestheticDirection === "premium_luxury" && /\b(premium|luxury|pro|leather|metal|designer|gold|parfum|edp|high end|luxe)\b/i.test(text)) {
+    score += 0.4;
+  }
+  if (q.premiumIntent01 >= 0.52 && /\b(premium|luxury|designer|leather|metal|parfum|edp|high end)\b/i.test(text)) {
+    score += 0.12;
+  }
+  if (q.usageContext.includes("focus") && /\b(noise cancelling|anc|over[-\s]?ear|quiet|focus|wireless headphone)\b/i.test(text)) {
+    score += 0.14;
   }
   if (q.aestheticDirection === "sporty" && /\b(sport|running|gym|athletic|training|streetwear)\b/i.test(text)) score += 0.32;
   if (q.aestheticDirection === "cozy_home" && /\b(soft|cozy|comfortable|fabric|velvet|living room)\b/i.test(text)) score += 0.32;
   if (q.styleIntent.includes("long_lasting") && /\b(intense|parfum|edp|long lasting|performance)\b/i.test(text)) score += 0.24;
+  if (q.styleIntent.includes("clean_minimal") && /\b(minimal|clean|simple|matte|wood)\b/i.test(text)) score += 0.1;
+  if (q.styleIntent.includes("premium_look") && /\b(premium|luxury|designer|leather|velvet)\b/i.test(text)) score += 0.1;
   return clamp(score, 0, 1);
 }
 
@@ -177,17 +192,20 @@ function semanticScore(
   }
   const queryRel = queryListingRelevance01(q.rewritten || q.raw, p);
   const aesthetic01 = aestheticFit(q, text);
+  const aestheticIntent = hasExplicitAestheticIntent(q);
   const purpose01 = purposeFit(q, text);
   const styleRef01 = styleReferenceFit(q, text);
   const budget01 = budgetPremiumFit(q, p, medianPrice, text);
   const quality01 = clamp((ratingValue(p.rating) / 5) * 0.45 + trust * 0.38 + ((p.qiProductUnderstanding?.productConfidence ?? 60) / 100) * 0.17, 0, 1);
   const merchant01 = clamp((p.qiMerchantConfidence01 ?? trust) * 0.7 + trust * 0.3, 0, 1);
+  const aestheticWeight = aestheticIntent ? 18 : 12;
+  const purposeWeight = q.usageContext.includes("focus") || q.constraints.useCase === "focus" ? 12 : 9;
   let score =
     category01 * 27 +
     keywords01 * 16 +
     queryRel * 16 +
-    aesthetic01 * 12 +
-    purpose01 * 9 +
+    aesthetic01 * aestheticWeight +
+    purpose01 * purposeWeight +
     styleRef01 * 6 +
     budget01 * 7 +
     quality01 * 7 +
@@ -201,8 +219,19 @@ function semanticScore(
   if (id) {
     score -= id.semanticMismatchPenalty01 * 22;
     score -= id.contaminationRisk01 * 18;
-    score -= id.accessoryLikelihood01 * (q.productCategory === "unknown" ? 4 : 13);
+    const accessoryPenalty = q.productCategory === "unknown" ? 4 : aestheticIntent ? 17 : 13;
+    score -= id.accessoryLikelihood01 * accessoryPenalty;
     score += id.bundleIntegrity01 * 5;
+  }
+
+  if (aestheticIntent && q.productCategory !== "unknown" && id && id.accessoryLikelihood01 >= 0.42 && !canonicalQuery?.originalQuery.match(/\b(case|cover|organizer only)\b/i)) {
+    score -= 6 + id.accessoryLikelihood01 * 8;
+  }
+
+  if (q.productCategory === "watch" && (q.premiumIntent01 >= 0.45 || q.aestheticDirection === "premium_luxury")) {
+    if (/\b(fitness tracker|fitbit|mi band|smart band|activity tracker)\b/i.test(text) && !/\b(luxury|designer|swiss|automatic|chronograph)\b/i.test(text)) {
+      score -= 14;
+    }
   }
   const structured = assessStructuredProductIdentity({ product: p, canonicalQuery, listingIdentity: id });
   if (structured.relation === "exact_product") score += 5;
