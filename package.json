@@ -20,7 +20,8 @@
     "test:category-reliability": "npx --yes tsx scripts/category-reliability-sanity.mjs",
     "test:luxury-watch": "npx --yes tsx scripts/luxury-watch-canonical-sanity.mjs",
     "test:fragrance-diagnosis": "npx --yes tsx scripts/diagnose-fragrance-recall.mjs",
-    "test:phase1-exit": "node scripts/phase1-exit-check.mjs"
+    "test:phase1-exit": "node scripts/phase1-exit-check.mjs",
+    "test:production-gate": "node scripts/production-validation-gate.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.3.1",

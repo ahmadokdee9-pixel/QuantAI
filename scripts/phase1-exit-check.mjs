@@ -33,10 +33,19 @@ const emptyCritical = rankable.filter(
   (q) => q.productCount === 0 && ["exact_sku", "alternative"].includes(q.intent)
 ).length;
 
+const luxuryPollution = (report.queries ?? []).filter((q) =>
+  (q.failures ?? []).some((f) => f.code === "luxury_watch_fitness_pollution" && f.severity === "high")
+).length;
+
 const checks = [
   { name: "pass_rate", ok: passPct >= MIN_PASS_PCT, detail: `${passPct}% (min ${MIN_PASS_PCT}%)` },
   { name: "infrastructure_skips", ok: infra === 0, detail: `${infra} skips` },
   { name: "critical_empty_trays", ok: emptyCritical === 0, detail: `${emptyCritical} empty` },
+  {
+    name: "luxury_watch_fitness_pollution",
+    ok: luxuryPollution === 0,
+    detail: `${luxuryPollution} high-severity luxury pollution queries`,
+  },
   {
     name: "regression_delta",
     ok: !report.regression?.hasBaseline || (report.regression?.summary?.regressionCount ?? 0) <= 2,

@@ -1,0 +1,67 @@
+# Institutional production validation — weekly + post-deploy + manual.
+# Requires repository secret: SEARCH_BASE_URL (e.g. https://quant-ai-app.vercel.app)
+
+name: Production Validation
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: production-validation
+  cancel-in-progress: false
+
+jobs:
+  production-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Wait for Vercel deploy propagation
+        if: github.event_name == 'push'
+        run: sleep 180
+
+      - name: Offline sanity (routing)
+        run: |
+          npm run test:p0-canonical
+          npm run test:category-reliability
+          npm run test:luxury-watch
+
+      - name: Production search-eval
+        env:
+          SEARCH_BASE_URL: ${{ secrets.SEARCH_BASE_URL }}
+          VALIDATION_MIN_INTERVAL_MS: 2200
+        run: npm run test:search-eval
+
+      - name: Production realworld validation
+        env:
+          SEARCH_BASE_URL: ${{ secrets.SEARCH_BASE_URL }}
+          VALIDATION_MIN_INTERVAL_MS: 2200
+        run: npm run test:realworld
+
+      - name: Phase 1 exit + production gate
+        run: |
+          npm run test:phase1-exit
+          node scripts/production-validation-gate.mjs
+        env:
+          PHASE1_MIN_PASS_PCT: 90
+          PHASE1_MAX_LATENCY_MS: 22000
+
+      - name: Upload validation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-history
+          path: .validation/
+          retention-days: 30
