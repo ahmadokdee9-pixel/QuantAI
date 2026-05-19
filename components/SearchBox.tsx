@@ -8,6 +8,8 @@ import {
   readCommerceSessionMemoryFromBrowser,
   writeCommerceSessionMemoryToBrowser,
 } from "@/lib/intelligence/commerceSessionStorage";
+import SearchSignalCapsule from "@/components/system/SearchSignalCapsule";
+import { resolveInstitutionalState } from "@/lib/ui/systemStateLanguage";
 
 type ShoppingHit = {
   title: string;
@@ -123,14 +125,13 @@ export default function SearchBox() {
         </button>
       </div>
 
-      {error && (
-        <p
-          role="alert"
-          className="text-sm font-medium text-amber-100/95 rounded-2xl border border-amber-400/25 bg-amber-500/[0.08] px-3 py-2.5"
-        >
-          {error}
-        </p>
-      )}
+      {error && resolveInstitutionalState(error) ? (
+        <SearchSignalCapsule
+          state={resolveInstitutionalState(error)!}
+          onAction={handleSearch}
+          className="!mx-0 !mt-3 !max-w-none rounded-xl"
+        />
+      ) : null}
 
       <div className="space-y-2">
         {results.map((item, index) => (

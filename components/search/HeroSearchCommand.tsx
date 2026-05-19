@@ -135,6 +135,7 @@ export default function HeroSearchCommand({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: lite ? 0 : 0.65, ease: [0.22, 1, 0.36, 1] }}
     >
+      <motion.div className="qi-command-ambient-breath" aria-hidden />
       <motion.div
         className="qi-command-halo"
         aria-hidden
@@ -153,7 +154,7 @@ export default function HeroSearchCommand({
       <motion.div
         className={`qi-command-deck ${active ? "qi-command-deck--active" : ""} ${submitPulse ? "qi-command-deck--pulse" : ""}`}
         data-loading={loading ? "true" : "false"}
-        animate={lite ? undefined : { y: active ? -3 : 0 }}
+        animate={lite ? undefined : { y: active ? -2 : 0 }}
         transition={{ type: "spring", stiffness: 380, damping: 32 }}
       >
         <motion.div className="qi-command-plinth" aria-hidden />
@@ -177,13 +178,13 @@ export default function HeroSearchCommand({
           }
         />
 
-        <div className="relative z-[2] flex flex-col gap-4 p-5 sm:p-6">
-          <motion.div className="flex flex-col gap-3.5 sm:flex-row sm:items-stretch sm:gap-4">
+        <div className="relative z-[2] flex flex-col gap-3.5 p-4 sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
             <label className="sr-only" htmlFor={`${baseId}-q`}>
               Query the market
             </label>
             <div
-              className={`qi-command-field qa-search-field relative flex min-h-[68px] flex-1 items-stretch overflow-hidden sm:min-h-[72px] ${
+              className={`qi-command-field qa-search-field relative flex min-h-[60px] flex-1 items-stretch overflow-hidden rounded-[1.15rem] ${
                 focused ? "qi-command-field--focus" : ""
               }`}
             >
@@ -212,7 +213,7 @@ export default function HeroSearchCommand({
               type="button"
               onClick={runSubmit}
               disabled={loading}
-              className="qi-command-execute group relative flex min-h-[68px] w-full shrink-0 items-center justify-center gap-2 px-8 sm:min-h-[72px] sm:min-w-[11.5rem] sm:w-auto"
+              className="qi-command-execute group relative flex min-h-[60px] w-full shrink-0 items-center justify-center gap-2 rounded-[1.15rem] px-8 sm:min-w-[10.5rem] sm:w-auto"
             >
               <span className="qi-command-execute-shine" aria-hidden />
               <span className="relative z-[1] flex items-center gap-2 text-[15px] font-semibold tracking-[-0.02em]">
@@ -232,7 +233,7 @@ export default function HeroSearchCommand({
                 )}
               </span>
             </button>
-          </motion.div>
+          </div>
 
           {history.length > 0 ? (
             <div className="flex flex-wrap gap-2 border-t border-white/[0.04] pt-2.5">

@@ -7,6 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "env:check": "node scripts/validate-env.mjs",
+    "env:status": "node scripts/env-status.mjs",
+    "env:pull": "node scripts/pull-env-safe.mjs",
+    "env:sync": "node scripts/pull-env-safe.mjs",
+    "predev": "node scripts/validate-env.mjs",
+    "prebuild": "node scripts/validate-env.mjs",
     "test:golden-search": "node scripts/golden-search-smoke.mjs"
   },
   "dependencies": {

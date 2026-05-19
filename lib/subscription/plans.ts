@@ -15,22 +15,28 @@ export type PlanAccessPresentation = {
 export const PLAN_ACCESS_PRESENTATION: Record<QuantPlanTier, PlanAccessPresentation> = {
   free: {
     layerLabel: "01",
-    accessName: "Access Layer",
-    clearance: "Field read · standard synthesis depth",
-    invitation: "Enter the intelligence field.",
+    accessName: "Entry Intelligence Access",
+    clearance: "Standard field reads · summary synthesis depth",
+    invitation: "Baseline clearance into the commerce intelligence field.",
   },
   pro: {
     layerLabel: "02",
-    accessName: "Intelligence Layer",
-    clearance: "Advanced synthesis · elevated throughput",
-    invitation: "Deeper reads for consequential carts.",
+    accessName: "Analyst-Grade Synthesis Layer",
+    clearance: "Elevated throughput · advanced synthesis architecture",
+    invitation: "Analyst-grade reads for consequential purchase decisions.",
   },
   premium: {
     layerLabel: "03",
-    accessName: "Private Buyer Layer",
-    clearance: "Full synthesis · maximum field depth",
-    invitation: "Reserved for high-intent purchase decisions.",
+    accessName: "Private Institutional Access",
+    clearance: "Maximum throughput · full synthesis architecture",
+    invitation: "Reserved institutional clearance for private buyers.",
   },
+};
+
+export const PLAN_SYNTHESIS_LABEL: Record<QuantPlanTier, string> = {
+  free: "Summary synthesis",
+  pro: "Advanced synthesis",
+  premium: "Full synthesis architecture",
 };
 
 export type PlanDefinition = {
@@ -66,9 +72,9 @@ export const QUANT_PLANS: Record<QuantPlanTier, PlanDefinition> = {
     globalDealIntelligence: "summary",
     advancedAdvisor: false,
     highlights: [
-      "Live market tray with QI ranking",
-      "Three-way compare intelligence",
-      "Private saved intelligence shelf",
+      "Entry field reads with QI-ranked tray synthesis",
+      "Three-route compare intelligence",
+      "Private intelligence shelf · standard depth",
     ],
   },
   pro: {
@@ -85,9 +91,9 @@ export const QUANT_PLANS: Record<QuantPlanTier, PlanDefinition> = {
     globalDealIntelligence: "advanced",
     advancedAdvisor: true,
     highlights: [
-      "Advanced commerce synthesis layer",
+      "Analyst-grade commerce synthesis architecture",
       "Elevated daily intelligence throughput",
-      "Unlimited intelligence shelf",
+      "Unlimited intelligence shelf · advanced depth",
     ],
   },
   premium: {
@@ -104,9 +110,9 @@ export const QUANT_PLANS: Record<QuantPlanTier, PlanDefinition> = {
     globalDealIntelligence: "full",
     advancedAdvisor: true,
     highlights: [
-      "Full market synthesis architecture",
-      "Maximum intelligence throughput",
-      "Unlimited watch intelligence",
+      "Private institutional synthesis architecture",
+      "Maximum intelligence throughput clearance",
+      "Unlimited watch intelligence · full depth",
     ],
   },
 };

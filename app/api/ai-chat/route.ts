@@ -7,9 +7,10 @@ import { parseJsonObject } from "@/lib/openai/safeJson";
 import { logDevError } from "@/lib/log/devLog";
 import { aiChatRatelimit, enforceLimit } from "@/lib/rate-limit";
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function openAiClient(): OpenAI | null {
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  return apiKey ? new OpenAI({ apiKey }) : null;
+}
 
 const ChatStructuredSchema = z.object({
   reply: z.string(),
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
 
     const { question, products } = await req.json();
 
-    const response = await client.responses.create({
+    const response = await openAiClient()!.responses.create({
       model: "gpt-4.1-mini",
       input: `You are QuantAI, a disciplined shopping analyst. Be concise and practical.
 

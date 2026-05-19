@@ -6,7 +6,9 @@ Use this before pointing a custom domain at production traffic. It covers enviro
 
 ## 1. Required environment variables
 
-Copy `env.example` to `.env.local` locally. In Vercel: **Project → Settings → Environment Variables** (set for Production; mirror Preview if needed).
+Copy `.env.example` to `.env.local` locally. In Vercel: **Project → Settings → Environment Variables** (set for Production; mirror Preview if needed).
+
+**Local recovery:** Vercel Development env may be empty — run `npm run env:sync` to pull Production keys into `.env.local`. See `docs/ENVIRONMENT.md`.
 
 | Area | Variable | Notes |
 |------|-----------|--------|

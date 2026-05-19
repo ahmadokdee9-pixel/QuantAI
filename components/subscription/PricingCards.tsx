@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowRight, Loader2, Lock } from "lucide-react";
 import {
   PLAN_ACCESS_PRESENTATION,
+  PLAN_SYNTHESIS_LABEL,
   QUANT_PLANS,
   type QuantPlanTier,
 } from "@/lib/subscription/plans";
@@ -55,6 +56,7 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
         const plan = QUANT_PLANS[id];
         const access = PLAN_ACCESS_PRESENTATION[id];
         const isCurrent = resolvedTier !== null && resolvedTier === id;
+        const isEntry = id === "free";
         const isIntelligence = id === "pro";
         const isPrivate = id === "premium";
 
@@ -62,7 +64,9 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
           <article
             key={id}
             className={`qi-access-layer qi-access-layer--${id} ${
-              isIntelligence ? "qi-access-layer--featured" : ""
+              isEntry ? "qi-access-layer--entry" : ""
+            } ${isIntelligence ? "qi-access-layer--featured" : ""} ${
+              isPrivate ? "qi-access-layer--institutional" : ""
             } ${isCurrent ? "qi-access-layer--active" : ""}`}
             style={{ "--qi-access-index": index } as CSSProperties}
           >
@@ -78,8 +82,10 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
                     <h3 className="qi-access-name mt-2">{access.accessName}</h3>
                     <p className="qi-access-clearance mt-2">{access.clearance}</p>
                   </div>
-                  {isIntelligence ? (
-                    <span className="qi-access-badge">Priority clearance</span>
+                  {isEntry ? (
+                    <span className="qi-access-badge qi-access-badge--entry">Entry clearance</span>
+                  ) : isIntelligence ? (
+                    <span className="qi-access-badge qi-access-badge--analyst">Analyst clearance</span>
                   ) : isPrivate ? (
                     <span className="qi-access-private-seal">
                       <Lock className="size-3 shrink-0 opacity-80" strokeWidth={1.5} aria-hidden />
@@ -106,7 +112,7 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
                     )}
                   </p>
                   <p className="qi-access-footnote">
-                    {plan.searchesPerDay} field reads · {plan.globalDealIntelligence} synthesis
+                    {plan.searchesPerDay} reads/day throughput · {PLAN_SYNTHESIS_LABEL[id]}
                   </p>
                 </div>
 

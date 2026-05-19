@@ -255,7 +255,7 @@ function CardProductImage({
   if (err) {
     return (
       <div
-        className="flex aspect-[4/3] max-h-[9.25rem] min-h-[7.1rem] w-full flex-col items-center justify-center gap-2 rounded-[1.05rem] border border-dashed border-white/[0.12] bg-gradient-to-br from-slate-900/80 via-[#0a1220]/95 to-slate-900/90 text-center"
+        className="flex aspect-[4/3] max-h-[11rem] min-h-[8.5rem] w-full flex-col items-center justify-center gap-2 rounded-[1.05rem] border border-dashed border-white/[0.12] bg-gradient-to-br from-slate-900/80 via-[#0a1220]/95 to-slate-900/90 text-center"
         aria-hidden
       >
         <ImageIcon className="size-8 text-slate-600" strokeWidth={1.25} />
@@ -264,7 +264,7 @@ function CardProductImage({
     );
   }
   return (
-    <motion.div className="qi-museum-frame qi-product-object-frame relative aspect-[4/3] max-h-[11rem] min-h-[7.75rem] w-full">
+    <motion.div className="qi-museum-frame qi-product-object-frame relative aspect-[4/3] max-h-[13.25rem] min-h-[9.25rem] w-full">
       <div className="qi-museum-spotlight" aria-hidden />
       {!loaded && (
         <div className="qi-image-shimmer absolute inset-0 z-[1] rounded-[inherit]" aria-hidden />
@@ -277,7 +277,7 @@ function CardProductImage({
         fetchPriority={fetchPriority}
         onLoad={() => setLoaded(true)}
         onError={() => setErr(true)}
-        className="relative z-[2] mx-auto h-full w-full max-h-[9.75rem] object-contain object-center p-5 drop-shadow-[0_28px_56px_rgba(0,0,0,0.62)]"
+        className="relative z-[2] mx-auto h-full w-full max-h-[11.5rem] object-contain object-center p-3 sm:p-4 drop-shadow-[0_28px_56px_rgba(0,0,0,0.62)]"
         initial={false}
         animate={{ opacity: loaded ? 1 : 0 }}
         transition={{ duration: reduceMotion ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
@@ -564,7 +564,7 @@ function ProductResultCard({
               />
             ) : (
               <div
-                className="flex aspect-[4/3] max-h-[9.25rem] min-h-[7.1rem] w-full flex-col items-center justify-center gap-2 rounded-[1.05rem] border border-dashed border-white/[0.12] bg-gradient-to-br from-slate-900/80 via-[#0a1220]/95 to-slate-900/90 text-center"
+                className="flex aspect-[4/3] max-h-[11rem] min-h-[8.5rem] w-full flex-col items-center justify-center gap-2 rounded-[1.05rem] border border-dashed border-white/[0.12] bg-gradient-to-br from-slate-900/80 via-[#0a1220]/95 to-slate-900/90 text-center"
                 aria-hidden
               >
                 <ImageIcon className="size-8 text-slate-600" strokeWidth={1.25} />

@@ -2,7 +2,6 @@ import {
   ArrowRight,
   BarChart3,
   BellRing,
-  Brain,
   Check,
   GitCompare,
   MessageSquare,
@@ -14,26 +13,23 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-const testimonials = [
+const validationNotes = [
   {
-    quote:
-      "Finally something that explains why the cheapest listing is not always the one to click. The clarity alone paid for my time.",
-    name: "Elena V.",
-    role: "Product designer · Amsterdam",
+    signal: "Discount integrity",
+    note: "Detected fake discount inflation before checkout.",
+    marker: "QI · Price intelligence",
   },
   {
-    quote:
-      "I run searches before every big purchase now. QuantAI feels like having a calm analyst next to me while I shop.",
-    name: "Marcus T.",
-    role: "Engineering lead · Berlin",
+    signal: "Retail trust",
+    note: "Retail trust scoring exposed weak seller quality.",
+    marker: "QI · Trust layer",
   },
   {
-    quote:
-      "The score + store signal stopped me from buying from a sketchy marketplace twice. That is real money saved.",
-    name: "Priya S.",
-    role: "Operations · London",
+    signal: "Purchase signal",
+    note: "Signal layer prevented overpriced purchase.",
+    marker: "QI · Decision engine",
   },
-];
+] as const;
 
 export default function MarketingSections() {
   return (
@@ -177,34 +173,25 @@ export default function MarketingSections() {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Intelligence validation */}
       <section
-        id="testimonials"
+        id="validation"
         className="mx-auto max-w-6xl px-4 sm:px-6 py-20 sm:py-28 scroll-mt-24"
       >
-        <div className="text-center max-w-2xl mx-auto mb-14">
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-cyan-300/80 mb-4">
-            Trusted by sharp buyers
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white/95">
-            Calm decisions. Fewer regrets.
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <p className="qi-validation-overline mb-3">Intelligence validation layer</p>
+          <h2 className="qi-editorial-display text-2xl sm:text-3xl text-white/95">
+            Commerce signals under field review
           </h2>
         </div>
-        <div className="grid gap-5 md:grid-cols-3">
-          {testimonials.map((t) => (
-            <blockquote
-              key={t.name}
-              className="flex flex-col rounded-3xl border border-white/[0.08] bg-white/[0.03] p-7 text-left shadow-[0_20px_60px_-28px_rgba(0,0,0,0.75)] backdrop-blur-xl transition duration-500 hover:border-white/14 hover:-translate-y-0.5"
-            >
-              <Brain className="size-7 text-violet-300/70 mb-4" strokeWidth={1.25} aria-hidden />
-              <p className="text-sm leading-relaxed text-white/70 font-normal flex-1">
-                &ldquo;{t.quote}&rdquo;
-              </p>
-              <footer className="mt-6 pt-5 border-t border-white/[0.06]">
-                <p className="text-sm font-medium text-white/90">{t.name}</p>
-                <p className="text-xs text-white/45 mt-0.5">{t.role}</p>
-              </footer>
-            </blockquote>
+        <div className="qi-validation-grid">
+          {validationNotes.map((v) => (
+            <figure key={v.signal} className="qi-validation-card">
+              <span className="qi-validation-card-glow" aria-hidden />
+              <figcaption className="qi-validation-signal">{v.signal}</figcaption>
+              <blockquote className="qi-validation-quote">&ldquo;{v.note}&rdquo;</blockquote>
+              <p className="qi-validation-marker">{v.marker}</p>
+            </figure>
           ))}
         </div>
       </section>

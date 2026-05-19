@@ -11,9 +11,10 @@ import { logDevError } from "@/lib/log/devLog";
 import { recordCompareSession } from "@/lib/intelligence/persistence";
 import { getStoreTrustScore } from "@/lib/retailTrust";
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function openAiClient(): OpenAI | null {
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  return apiKey ? new OpenAI({ apiKey }) : null;
+}
 
 const VerdictSchema = z.object({
   winnerTitle: z.string(),
@@ -94,7 +95,7 @@ export async function POST(req: Request) {
         : null,
     }));
 
-    const response = await client.responses.create({
+    const response = await openAiClient()!.responses.create({
       model: "gpt-4.1-mini",
       input: `You are QuantAI Compare Intelligence — senior retail analyst. Tone: concise, professional, non-promotional, decisive.
 

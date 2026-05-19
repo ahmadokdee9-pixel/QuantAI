@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
@@ -18,6 +18,9 @@ import { calculateAIScore } from "./api/search/lib/aiScoring";
 import ProductResultsSurface from "../components/search/ProductResultsSurface";
 import HeroSearchCommand from "../components/search/HeroSearchCommand";
 import HeroIntelMicroStrip from "../components/search/HeroIntelMicroStrip";
+import EnterpriseFooter from "../components/layout/EnterpriseFooter";
+import SearchSignalCapsule from "../components/system/SearchSignalCapsule";
+import { INSTITUTIONAL, resolveInstitutionalState } from "../lib/ui/systemStateLanguage";
 import {
   applyResultsFilters,
   countActiveFilters,
@@ -49,6 +52,7 @@ import {
 import { QuantAnalyticsEvents } from "@/lib/analytics/events";
 import { trackEvent } from "@/lib/analytics/track";
 import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
+import { parseSearchResponse } from "@/lib/api/parseSearchResponse";
 import { readApiJson } from "@/lib/api/readJson";
 import {
   readCommerceSessionMemoryFromBrowser,
@@ -63,7 +67,7 @@ import { useMobilePerf } from "@/lib/hooks/useMobilePerf";
 import { useReducedMotion, motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 
-/** Deterministic SSR + first client paint — no localStorage; must match hydration. */
+/** Deterministic SSR + first client paint â€” no localStorage; must match hydration. */
 const SSR_HERO_HINT_SEED: readonly string[] = HERO_SEARCH_PROMPTS;
 
 function mergeHeroTrayHints(): string[] {
@@ -95,6 +99,8 @@ export default function Home() {
   const [filters, setFilters] = useState(defaultResultsFilters());
   const [saved, setSaved] = useState<QuantProduct[]>([]);
   const [searchError, setSearchError] = useState<string | null>(null);
+  /** Save/watchlist notices — must not reuse searchError (hero capsule treats that as search failure). */
+  const [, setActionNotice] = useState<string | null>(null);
   const [resultsKey, setResultsKey] = useState(0);
   const [marketMemoryTick, setMarketMemoryTick] = useState(0);
   const [subscriptionTier, setSubscriptionTier] = useState<QuantPlanTier | null>(null);
@@ -316,32 +322,15 @@ export default function Home() {
         signal: ac.signal,
         body: JSON.stringify({ query: q, commerceMemory }),
       });
-      type SearchRoot = {
-        success?: boolean;
-        data?: {
-          products?: QuantProduct[];
-          dealClusters?: DealClusterDTO[];
-          searchIntelligence?: SearchIntelligenceDTO | null;
-          entitlements?: SearchEntitlementsDTO;
-          meta?: Record<string, unknown>;
-        };
-        message?: string;
-        error?: string;
-        retryAfter?: number;
-        code?: string;
-        entitlements?: SearchEntitlementsDTO;
-      };
-      const parsed = await readApiJson<SearchRoot>(res);
-      const root = parsed.data;
-      const searchData =
-        root && typeof root === "object" && root.data && typeof root.data === "object"
-          ? root.data
-          : null;
+      const parsed = await readApiJson(res);
+      const { envelope: root, payload: searchData, products: trayProducts } =
+        parseSearchResponse<QuantProduct>(parsed);
 
       if (searchAbortRef.current !== ac) return;
 
       if (res.status === 401) {
-        setSearchError(apiErrorText(parsed, "Please sign in to search."));
+        setProducts([]);
+        setSearchError(apiErrorText(parsed, "Sign in required for field access."));
         trackEvent(QuantAnalyticsEvents.SEARCH_ERROR, { code: "unauthorized" });
         return;
       }
@@ -351,55 +340,63 @@ export default function Home() {
           root && typeof root.retryAfter === "number"
             ? ` Retry in ~${root.retryAfter}s.`
             : "";
+        setProducts([]);
         setSearchError(apiErrorText(parsed, "Too many searches.") + wait);
         const ent429 = root?.entitlements;
-        if (ent429) setSearchEntitlements(ent429);
+        if (ent429) setSearchEntitlements(ent429 as SearchEntitlementsDTO);
         trackEvent(QuantAnalyticsEvents.SEARCH_ERROR, { code: "rate_limit" });
         return;
       }
 
-      if (!res.ok || isApiFailure(parsed)) {
-        setSearchError(apiErrorText(parsed, "Search failed. Try again."));
-        trackEvent(QuantAnalyticsEvents.SEARCH_ERROR, { code: "http", status: res.status });
-        return;
-      }
-
-      if (searchData?.products && searchData.products.length > 0) {
-        setProducts(searchData.products);
+      if (trayProducts.length > 0 && searchData) {
+        setProducts(trayProducts);
+        setSearchError(null);
         setSearchMeta(searchData.meta && typeof searchData.meta === "object" ? searchData.meta : null);
         const mem = searchData.meta?.commerceSessionMemory;
         if (mem != null && typeof mem === "object") {
           writeCommerceSessionMemoryToBrowser(mem);
         }
-        setDealClusters(
-          Array.isArray(searchData.dealClusters) ? searchData.dealClusters : []
-        );
+        setDealClusters(Array.isArray(searchData.dealClusters) ? (searchData.dealClusters as DealClusterDTO[]) : []);
         setSearchIntelligence(
           searchData.searchIntelligence && typeof searchData.searchIntelligence === "object"
-            ? searchData.searchIntelligence
+            ? (searchData.searchIntelligence as SearchIntelligenceDTO)
             : null
         );
-        if (searchData.entitlements) {
-          setSearchEntitlements(searchData.entitlements);
-          if (searchData.entitlements.tier) setSubscriptionTier(searchData.entitlements.tier);
+        if (searchData.entitlements && typeof searchData.entitlements === "object") {
+          const ent = searchData.entitlements as SearchEntitlementsDTO;
+          setSearchEntitlements(ent);
+          if (ent.tier) setSubscriptionTier(ent.tier);
         }
         appendLocalRecentSearch(q);
         void refreshSavedFromServer();
         setHeroHintOptions(mergeHeroTrayHints());
-        trackEvent(QuantAnalyticsEvents.SEARCH_SUCCESS, {
-          resultCount: searchData.products.length,
-        });
-      } else {
+        trackEvent(QuantAnalyticsEvents.SEARCH_SUCCESS, { resultCount: trayProducts.length });
+        return;
+      }
+
+      if (!res.ok || isApiFailure(parsed)) {
         setProducts([]);
         setDealClusters([]);
         setSearchIntelligence(null);
         setSearchMeta(null);
-        setSearchError("No products found for this query.");
-        trackEvent(QuantAnalyticsEvents.SEARCH_ERROR, { code: "empty" });
+        setSearchError(apiErrorText(parsed, INSTITUTIONAL.signalInstability));
+        trackEvent(QuantAnalyticsEvents.SEARCH_ERROR, { code: "http", status: res.status });
+        return;
       }
+
+      setProducts([]);
+      setDealClusters([]);
+      setSearchIntelligence(null);
+      setSearchMeta(null);
+      setSearchError(INSTITUTIONAL.insufficientClarity);
+      trackEvent(QuantAnalyticsEvents.SEARCH_ERROR, { code: "empty" });
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") return;
-      setSearchError("Search failed. Check your connection and try again.");
+      setProducts([]);
+      setDealClusters([]);
+      setSearchIntelligence(null);
+      setSearchMeta(null);
+      setSearchError(INSTITUTIONAL.retailerInterruption);
       logDevError("search", e);
       trackEvent(QuantAnalyticsEvents.SEARCH_ERROR, { code: "exception" });
     } finally {
@@ -434,7 +431,7 @@ export default function Home() {
 
   async function saveProduct(product: QuantProduct) {
     if (!isSignedIn) {
-      setSearchError("Sign in to save products to your account.");
+      setActionNotice("Sign in to save products to your account.");
       return;
     }
 
@@ -473,18 +470,19 @@ export default function Home() {
           data?.code === "PLAN_SAVED_LIMIT"
             ? `${apiErrorText(parsed, "Saved limit reached.")} Upgrade on the pricing page.`
             : apiErrorText(parsed, "Could not save this product.");
-        setSearchError(msg);
+        setActionNotice(msg);
         setSaved(saved.filter((p) => p.link !== product.link));
         trackEvent(QuantAnalyticsEvents.PRODUCT_SAVE_FAIL, {
           code: data?.code ?? "unknown",
         });
       } else {
+        setActionNotice(null);
         trackEvent(QuantAnalyticsEvents.PRODUCT_SAVE, { link: product.link });
         recordInterestTag("saved");
       }
     } catch (e) {
       logDevError("saveProduct", e);
-      setSearchError("Could not save this product.");
+      setActionNotice("Could not save this product.");
       setSaved(saved.filter((p) => p.link !== product.link));
       trackEvent(QuantAnalyticsEvents.PRODUCT_SAVE_FAIL, { code: "exception" });
     }
@@ -510,7 +508,7 @@ export default function Home() {
 
   async function addToWatchlist(product: QuantProduct) {
     if (!isSignedIn) {
-      setSearchError("Sign in to track price drops and market timing.");
+      setActionNotice("Sign in to track price drops and market timing.");
       return;
     }
     const targetPrice =
@@ -559,13 +557,13 @@ export default function Home() {
         return;
       }
       if (data?.duplicate) {
-        setSearchError(null);
+        setActionNotice(null);
         return;
       }
-      setSearchError(null);
+      setActionNotice(null);
       trackEvent(QuantAnalyticsEvents.WATCHLIST_ADD, { link: product.link });
     } catch {
-      setSearchError("Could not add to watchlist.");
+      setActionNotice("Could not add to watchlist.");
       trackEvent(QuantAnalyticsEvents.WATCHLIST_ADD_FAIL, { code: "exception" });
     }
   }
@@ -588,7 +586,7 @@ export default function Home() {
           <div className="qi-hero-aura" aria-hidden />
           <div className="mx-auto max-w-4xl text-center">
             <p className="qi-hero-manifest motion-safe:animate-[fadeIn_0.5s_ease-out]">
-              QuantAI · Commerce intelligence
+              QuantAI آ· Commerce intelligence
             </p>
 
             <h1 className="qi-hero-headline mt-10 motion-safe:animate-[fadeIn_0.6s_ease-out]">
@@ -597,7 +595,7 @@ export default function Home() {
             </h1>
 
             <p className="qi-hero-lead mx-auto mt-6 max-w-xl motion-safe:animate-[fadeIn_0.65s_ease-out]">
-              Consequential purchases deserve one decisive read — context, not noise.
+              Consequential purchases deserve one decisive read â€” context, not noise.
             </p>
 
             <HeroIntelMicroStrip />
@@ -616,6 +614,13 @@ export default function Home() {
                   mobilePerf={mobilePerf}
                 />
 
+                {searchError && !loading && resolveInstitutionalState(searchError) ? (
+                  <SearchSignalCapsule
+                    state={resolveInstitutionalState(searchError)!}
+                    onAction={() => void search()}
+                  />
+                ) : null}
+
                 {loading ? (
                   <div className="relative z-[1] mt-6 max-w-2xl text-left">
                     <SearchStreamRibbon active={loading} />
@@ -623,14 +628,6 @@ export default function Home() {
                 ) : null}
             </div>
 
-            {searchError && !loading && (
-              <p
-                role="alert"
-                className="mx-auto mt-8 max-w-lg rounded-2xl border border-amber-400/25 bg-amber-500/[0.08] px-4 py-3 text-center text-sm font-medium text-amber-100/95 backdrop-blur-md"
-              >
-                {searchError}
-              </p>
-            )}
 
             {!isSignedIn && (
               <div className="mx-auto mt-8 flex max-w-md flex-col items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-5 py-4 backdrop-blur-md sm:flex-row sm:justify-center">
@@ -682,7 +679,7 @@ export default function Home() {
                       <div className="min-w-0 flex-1 text-center sm:text-left">
                         <p className="font-medium text-white/90 line-clamp-2">{item.title}</p>
                         <p className="mt-1 text-lg font-semibold text-emerald-300/90">
-                          €{item.price}
+                          â‚¬{item.price}
                         </p>
                         <p className="text-xs text-slate-500">{item.store}</p>
                       </div>
@@ -748,7 +745,7 @@ export default function Home() {
           {/* Pricing */}
           <section
             id="pricing"
-            className="mx-auto max-w-6xl px-4 sm:px-6 py-24 sm:py-32 scroll-mt-24 border-t border-white/[0.05]"
+            className="qi-access-vault-stage mx-auto max-w-6xl px-4 sm:px-6 py-24 sm:py-32 scroll-mt-24 border-t border-white/[0.05]"
           >
           <div className="text-center max-w-xl mx-auto mb-14 sm:mb-16">
             <p className="qi-silent-overline mb-4">Private access architecture</p>
@@ -777,29 +774,7 @@ export default function Home() {
         </div>
         </DeferredBelowFold>
 
-        <footer className="border-t border-white/[0.06] py-10 text-center">
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-slate-500">
-            <Link href="/pricing" className="hover:text-cyan-300">
-              Pricing
-            </Link>
-            <Link href="/dashboard" className="hover:text-cyan-300">
-              Dashboard
-            </Link>
-            <Link href="/#how-it-works" className="hover:text-cyan-300">
-              How it works
-            </Link>
-            <Link href="/billing" className="hover:text-cyan-300">
-              Billing
-            </Link>
-          </div>
-          <p className="mt-6 text-xs font-medium text-slate-600">
-            © {new Date().getFullYear()} QuantAI · Shopping intelligence, not financial advice.
-          </p>
-          <p className="cockpit-body mx-auto mt-2 w-full min-w-0 max-w-xl px-4 text-[11px] leading-relaxed text-slate-600/85 [overflow-wrap:anywhere]">
-            Outputs are probabilistic—treat every score as decision support, not a guarantee. Verify listings before
-            you pay.
-          </p>
-        </footer>
+        <EnterpriseFooter />
       </div>
     </main>
   );

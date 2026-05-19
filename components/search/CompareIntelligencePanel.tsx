@@ -18,6 +18,7 @@ import { buildCompareTrayInsights } from "@/lib/intelligence/compareTrayInsights
 import { currencySymbolFromListing, formatListingPrice } from "@/lib/commerce/cues";
 import { getFinalComposite, getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
 import type { QuantProduct } from "@/lib/shoppingScore";
+import InlineSystemNotice from "@/components/system/InlineSystemNotice";
 
 type Props = {
   compareProducts: QuantProduct[];
@@ -266,11 +267,7 @@ export default function CompareIntelligencePanel({
                   })}
                 </div>
 
-                {verdictError ? (
-                  <p className="text-xs text-rose-200/90" role="alert">
-                    {verdictError}
-                  </p>
-                ) : null}
+                {verdictError ? <InlineSystemNotice message={verdictError} /> : null}
 
                 <details className="group rounded-2xl border border-white/[0.07] bg-black/25 open:border-cyan-400/20">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-3 text-[11px] font-semibold text-slate-200 transition hover:bg-white/[0.03] sm:px-4 [&::-webkit-details-marker]:hidden">

@@ -1,10 +1,14 @@
-"use client";
+﻿"use client";
 
 import type { Dispatch, SetStateAction } from "react";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { AlertCircle, Loader2, Sparkles } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import InstitutionalStatePanel from "@/components/system/InstitutionalStatePanel";
+import InstitutionalFilteredPanel from "@/components/system/InstitutionalFilteredPanel";
+import InlineSystemNotice from "@/components/system/InlineSystemNotice";
+import { resolveInstitutionalState } from "@/lib/ui/systemStateLanguage";
 import { QuantAnalyticsEvents } from "@/lib/analytics/events";
 import { trackEvent } from "@/lib/analytics/track";
 import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
@@ -71,7 +75,7 @@ type Props = {
   onRetrySearch?: () => void;
   /** Reports compare tray link selection for copilot / analytics context. */
   onCompareTrayChange?: (links: string[]) => void;
-  /** Precomputed tray deal map (optional — avoids duplicate work from home). */
+  /** Precomputed tray deal map (optional â€” avoids duplicate work from home). */
   dealIntelByLink?: Map<string, ProductDealIntelligence>;
   /** Sparse-tray follow-up scans (hero prompts / token match). */
   onRunRelatedQuery?: (q: string) => void;
@@ -300,7 +304,7 @@ export default function ProductResultsSurface({
       exportIntelligenceSummary: async () => {
         const { sortedProducts: list, searchQuery: q } = trayCtxRef.current;
         if (list.length === 0) return;
-        await copyText(buildTraySummary(q.trim() || "—", list));
+        await copyText(buildTraySummary(q.trim() || "â€”", list));
       },
       saveLeadingPick: () => {
         const top = trayCtxRef.current.compositeRanked[0];
@@ -398,7 +402,7 @@ export default function ProductResultsSurface({
         count: compareProducts.length,
       });
     } catch {
-      setVerdictError("Could not load AI verdict.");
+      setVerdictError("Comparison tray recalibrating â€” synthesis alignment incomplete.");
       trackEvent(QuantAnalyticsEvents.COMPARE_VERDICT_FAIL, { reason: "network" });
     } finally {
       setVerdictLoading(false);
@@ -427,9 +431,12 @@ export default function ProductResultsSurface({
           <div className="h-12 max-w-2xl rounded-2xl border border-white/[0.06] bg-gradient-to-r from-white/[0.07] via-white/[0.04] to-white/[0.07] animate-pulse" />
         </div>
         <div className="mb-8 max-w-2xl">
-          <p className="text-[12px] font-medium text-slate-500/90" aria-live="polite">
-            Assembling your tray…
+          <p className="qi-sys-results-loading" aria-live="polite">
+            Stabilizing synthesis tray
           </p>
+          <div className="qi-sys-results-loading-bar" aria-hidden>
+            <div className="qi-sys-results-loading-fill" />
+          </div>
         </div>
         <ResultSkeleton />
       </section>
@@ -437,33 +444,11 @@ export default function ProductResultsSurface({
   }
 
   if (searchError && !loading && products.length === 0) {
+    const state = resolveInstitutionalState(searchError);
+    if (!state) return null;
     return (
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-16" aria-live="assertive">
-        <motion.div
-          initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={transition}
-          className="mx-auto max-w-lg rounded-[1.75rem] border border-rose-400/25 bg-gradient-to-b from-rose-500/[0.12] to-white/[0.03] px-8 py-10 text-center backdrop-blur-2xl"
-        >
-          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl border border-rose-400/30 bg-rose-500/15">
-            <AlertCircle className="size-6 text-rose-200" strokeWidth={1.5} aria-hidden />
-          </div>
-          <h2 className="cockpit-display text-lg text-white/95">Field paused</h2>
-          <p className="cockpit-body mt-2 text-sm text-slate-300/95">
-            The listing feed didn’t return a clean tray. Try a shorter query, a different retailer hint, or run again—nothing
-            on-device was lost.
-          </p>
-          <p className="cockpit-body mt-3 text-xs leading-relaxed text-slate-500">{searchError}</p>
-          {onRetrySearch && (
-            <button
-              type="button"
-              onClick={onRetrySearch}
-              className="cockpit-cta mt-6 w-full rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 py-2.5 text-sm text-slate-950 transition hover:brightness-105"
-            >
-              Run again
-            </button>
-          )}
-        </motion.div>
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-16" aria-live="polite">
+        <InstitutionalStatePanel state={state} onAction={onRetrySearch} />
       </section>
     );
   }
@@ -490,29 +475,7 @@ export default function ProductResultsSurface({
           activeFilterCount={activeFilterCount}
           onClearFilters={onClearFilters}
         />
-        <motion.div
-          initial={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={transition}
-          className="mx-auto max-w-md rounded-[1.75rem] border border-white/[0.1] bg-gradient-to-b from-white/[0.07] to-white/[0.02] px-8 py-12 text-center backdrop-blur-2xl"
-        >
-          <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-2xl border border-cyan-400/25 bg-cyan-400/10">
-            <Sparkles className="size-7 text-cyan-200" strokeWidth={1.25} aria-hidden />
-          </div>
-          <h2 className="text-lg font-semibold text-white/95">Filters cleared the visible field</h2>
-          <p className="cockpit-body mt-2 text-sm text-slate-400">
-            This scan still holds{" "}
-            <span className="tabular-nums font-medium text-slate-300">{products.length}</span> listings—widen a
-            constraint or reset filters to bring them back into view.
-          </p>
-          <button
-            type="button"
-            onClick={onClearFilters}
-            className="mt-6 rounded-full border border-white/15 bg-white/[0.08] px-6 py-2.5 text-sm font-semibold text-white/90 transition hover:bg-white/[0.14]"
-          >
-            Show all results
-          </button>
-        </motion.div>
+        <InstitutionalFilteredPanel visibleCount={products.length} onClearFilters={onClearFilters} />
       </section>
     );
   }
@@ -571,7 +534,7 @@ export default function ProductResultsSurface({
           aria-live="polite"
         >
           <Loader2 className="size-3.5 shrink-0 animate-spin text-cyan-200/90" aria-hidden />
-          Updating tray…
+          Updating trayâ€¦
         </div>
       ) : null}
 

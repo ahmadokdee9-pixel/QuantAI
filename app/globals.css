@@ -831,6 +831,12 @@ textarea:focus-visible {
   opacity: 0.85;
 }
 
+.qi-product-object-frame .qi-museum-spotlight {
+  top: 6%;
+  width: 78%;
+  height: 48%;
+}
+
 .qi-museum-spotlight {
   position: absolute;
   left: 50%;
