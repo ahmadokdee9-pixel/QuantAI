@@ -156,8 +156,19 @@ function detectModel(envelope: string, brand: string | null): string | null {
     return match[0].replace(/\s+/g, " ").trim();
   }
   if (brand) {
+    if (/\b(like|similar|alternative|cheaper|dupe|مثل|شبيه|بديل|ارخص|أرخص)\b/i.test(envelope)) {
+      const anchor =
+        envelope.match(/\b(?:like|similar to|alternative to)\s+([a-z0-9][a-z0-9\s+-]{2,28})\b/i)?.[1]?.trim() ??
+        envelope.match(/\b(?:مثل)\s+([a-z0-9][a-z0-9\s+-]{2,28})\b/i)?.[1]?.trim();
+      if (anchor && !/\b(cheaper|but|budget|like)\b/i.test(anchor)) return anchor.replace(/\s+/g, " ").trim();
+      const named = envelope.match(/\b(vomero|pegasus|ultraboost|samba|gazelle|air\s+force|dunk|jordan)\b/i)?.[0];
+      if (named) return named.replace(/\s+/g, " ").trim();
+      return null;
+    }
     const afterBrand = envelope.match(new RegExp(`\\b${brand.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s+([a-z0-9][a-z0-9\\s+-]{1,32})`, "i"))?.[1];
-    return afterBrand?.replace(/\s+/g, " ").trim() ?? null;
+    const model = afterBrand?.replace(/\s+/g, " ").trim() ?? null;
+    if (model && /\b(like|similar|cheaper|but|alternative)\b/i.test(model)) return null;
+    return model;
   }
   return null;
 }
@@ -292,6 +303,11 @@ function inferMarketMode(args: {
   primary: CanonicalQueryIntent;
 }): CanonicalMarketIntentMode {
   const { envelope, semantic, commerce, brand, model, variant, primary } = args;
+  if (primary === "alternative") {
+    if (brand && model) return "hybrid_compare";
+    if (semantic.productCategory !== "unknown") return "category_shopping";
+    return "broad_discovery";
+  }
   const hasExactIdentity =
     Boolean(brand && model) ||
     Boolean(variant && (brand || model)) ||

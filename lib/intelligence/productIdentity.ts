@@ -129,6 +129,7 @@ function queryAllowsAccessory(canonicalQuery?: CanonicalQueryContract): boolean 
 
 function exactCoreProductIntent(canonicalQuery?: CanonicalQueryContract): boolean {
   if (!canonicalQuery || queryAllowsAccessory(canonicalQuery)) return false;
+  if (canonicalQuery.intent.primary === "alternative") return false;
   const q = canonicalQuery.originalQuery.toLowerCase();
   const protectedExact =
     /(iphone|ايفون|آيفون|airpods?|ايربودز|adidas\s+samba|samba)/i.test(q);
@@ -244,6 +245,9 @@ function categoryEvidence(p: QuantProduct, canonicalQuery?: CanonicalQueryContra
   if (category === "audio") return /\b(airpods?|earbuds?|headphones?|wireless audio|noise cancelling|koptelefoon|oordopjes|oortjes)\b/i.test(blob);
   if (category === "shoes") return /\b(shoe|sneaker|trainer|samba|gazelle|air force|adidas|nike)\b/i.test(blob);
   if (category === "furniture") {
+    if (/(?:كرسي|كراسي|كرسي\s*مكتب)/i.test(query)) {
+      return /(?:كرسي|chair|stoel|office|desk|kantoor|ergonomic|gaming\s+chair)/i.test(blob);
+    }
     if (/\b(sofa|couch|sectional|loveseat|settee|hoekbank|bankstel|loungebank)\b|كنبة/i.test(query)) {
       return /\b(sofa|sofa bed|sectional|loveseat|settee|couch|corner sofa|recliner|chaise|hoekbank|bankstel|loungebank|fauteuil|bank)\b|كنبة/i.test(blob);
     }
@@ -577,9 +581,17 @@ export function recoverSafeIdentityBreadth(
     const decision = assessIdentityGateDecision(product, canonicalQuery);
     if (decision.exclusionReason === "fake_placeholder" || decision.exclusionReason === "weak_title_junk") continue;
     if (["accessory", "compatible_item", "replacement_part", "bundle", "fake_placeholder", "wrong_product"].includes(decision.relation)) continue;
-    const minRecoveryConfidence = canonicalQuery?.model ? 0.64 : 0.52;
+    const alternativeLane = canonicalQuery?.intent.primary === "alternative";
+    const minRecoveryConfidence = alternativeLane ? 0.48 : canonicalQuery?.model ? 0.64 : 0.52;
     if (decision.fusionConfidence < minRecoveryConfidence) continue;
-    if (canonicalQuery?.model && !decision.reasons.includes("model_or_identifier_evidence") && decision.fusionConfidence < 0.72) continue;
+    if (
+      canonicalQuery?.model &&
+      !alternativeLane &&
+      !decision.reasons.includes("model_or_identifier_evidence") &&
+      decision.fusionConfidence < 0.72
+    ) {
+      continue;
+    }
     recovered.push({
       ...product,
       qiIdentityGate: {

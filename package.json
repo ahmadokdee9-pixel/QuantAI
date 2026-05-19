@@ -14,7 +14,8 @@
     "predev": "node scripts/validate-env.mjs",
     "prebuild": "node scripts/validate-env.mjs",
     "test:golden-search": "node scripts/golden-search-smoke.mjs",
-    "test:search-eval": "node scripts/evaluate-search-ranking.mjs"
+    "test:search-eval": "node scripts/evaluate-search-ranking.mjs",
+    "test:realworld": "node scripts/realworld-search-validation.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.3.1",

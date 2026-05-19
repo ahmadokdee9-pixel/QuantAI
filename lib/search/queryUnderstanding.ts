@@ -137,8 +137,9 @@ function detectCategory(s: string): SemanticProductCategory {
   if (hasAny(s, /\b(headphones?|earbuds?|airpods?|bose|sony wh|noise cancelling|bluetooth speaker|soundbar|سماعات?|ايربودز|headset)\b/i)) return "audio";
   if (hasAny(s, /\b(best\s+premium\s+headphones?|headphones?\s+for\s+focus)\b/i)) return "audio";
   if (hasAny(s, /\b(clean desk|minimal desk|desk setup|workspace)\b/i)) return "desk_setup";
+  if (hasAny(s, /(?:كرسي|كراسي|كرسي\s*مكتب|كرسي\s*office)/i)) return "furniture";
   if (hasAny(s, /\b(sofa|sofa bed|sectional|loveseat|settee|couch|corner sofa|recliner|chaise|hoekbank|bankstel|loungebank|fauteuil|eetkamerstoel|chair|stoel|desk|bureau|table|tafel|garden table|tuin tafel|tuinmeubel|loungeset|furniture|meubel|meubels|كنبة|اريكة|أريكة|ركنة|زاوية|طاولة|اثاث|أثاث)\b/i)) return "furniture";
-  if (hasAny(s, /\b(perfume|fragrance|parfum|cologne|eau de parfum|eau de toilette|aftershave|niche fragrance|designer fragrance|عطر|عطور|برفان)\b/i)) return "fragrance";
+  if (hasAny(s, /\b(perfume|fragrance|parfum|cologne|eau de parfum|eau de toilette|aftershave|niche fragrance|designer fragrance|libre|edp|edt|ysl|yves saint laurent|عطر|عطور|برفان)\b/i)) return "fragrance";
   if (hasAny(s, /\b(watch|smartwatch|ساعة)\b/i)) return "watch";
   if (hasAny(s, /\b(makeup|skincare|beauty|serum|retinol|vitamin c|moisturizer|cleanser|sunscreen|cream|cosmetic|verzorging|huidverzorging|gezichtscreme|zonnebrand|مكياج|سيروم|كريم|عناية)\b/i)) return "beauty";
   if (hasAny(s, /\b(jacket|winter jacket|puffer|jas|winterjas|coat|dress|hoodie|shirt|jeans|sneaker outfit|fashion|outfit|kleding|dames|heren|ملابس|جاكيت|فستان|هودي)\b/i)) return "fashion";
