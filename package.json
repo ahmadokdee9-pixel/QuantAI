@@ -17,7 +17,9 @@
     "test:search-eval": "node scripts/evaluate-search-ranking.mjs",
     "test:realworld": "node scripts/realworld-search-validation.mjs",
     "test:p0-canonical": "npx --yes tsx scripts/p0-canonical-sanity.mjs",
-    "test:fragrance-diagnosis": "npx --yes tsx scripts/diagnose-fragrance-recall.mjs"
+    "test:category-reliability": "npx --yes tsx scripts/category-reliability-sanity.mjs",
+    "test:fragrance-diagnosis": "npx --yes tsx scripts/diagnose-fragrance-recall.mjs",
+    "test:phase1-exit": "node scripts/phase1-exit-check.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.3.1",

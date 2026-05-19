@@ -117,12 +117,19 @@ export function buildProductBuyDecision(
         product.qiPredictive.predictiveTimingLabel?.trim() || product.qiPredictive.timingVerdictLabel;
       stanceDetail = product.qiPredictive.narrative.slice(0, 280);
     }
-  } else if (rank <= 1 && qi >= 64 && trust >= 58 && gapToTop <= 6) {
+  } else if (
+    rank <= 1 &&
+    qi >= 64 &&
+    trust >= 58 &&
+    gapToTop <= 6 &&
+    calibrated.tier !== "low" &&
+    calibrated.score >= 58
+  ) {
     stance = "buy";
     stanceLabel = "Buy-ready";
     stanceDetail = "Top of this tray on balance—confirm returns and exact configuration.";
     buyerFit = "Primary pick when you want the calm default.";
-  } else if (rank <= 2 && qi >= 68 && trust >= 62) {
+  } else if (rank <= 2 && qi >= 68 && trust >= 62 && calibrated.tier === "high" && calibrated.score >= 62) {
     stance = "buy";
     stanceLabel = "Buy-ready";
     stanceDetail = "High QI with tiered trust—execute once specs line up.";
@@ -132,7 +139,7 @@ export function buildProductBuyDecision(
     stanceLabel = "Compare";
     stanceDetail = "Neck-and-neck with the leader—small deltas in trust or delivery decide it.";
     buyerFit = "Strong alternative if you prioritize value.";
-  } else if (priceVsMed <= 0.88 && trust >= 58 && qi >= 55) {
+  } else if (priceVsMed <= 0.88 && trust >= 58 && qi >= 55 && calibrated.score >= 56 && calibrated.tier !== "low") {
     stance = "buy";
     stanceLabel = "Value buy";
     stanceDetail = "Under median with workable trust—value-forward if the build matches.";

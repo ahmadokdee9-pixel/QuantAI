@@ -645,7 +645,7 @@ export default function Home() {
             {!isSignedIn && (
               <div className="mx-auto mt-8 flex max-w-md flex-col items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-5 py-4 backdrop-blur-md sm:flex-row sm:justify-center">
                 <p className="qi-silent-whisper text-center">
-                  Sign in to search, save, and sync.
+                  Guest search available with limits — sign in for higher throughput, save, and sync.
                 </p>
                 <SignInButton mode="modal" forceRedirectUrl="/dashboard">
                   <button

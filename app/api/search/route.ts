@@ -33,6 +33,7 @@ import { buildUniversalCommerceContext, tasteTagListForApi } from "@/lib/commerc
 import { buildCanonicalQuery, canonicalQueryForDebug, type CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import { semanticRerankSearchResults } from "@/lib/search/semanticReranker";
+import { buildLatencyBudgetReport } from "@/lib/search/latencyBudget";
 import { buildDegradedTrayNotice, buildEmptyTrayExplanation } from "@/lib/search/trayDiagnostics";
 import { logSearchEvent } from "@/lib/log/productionLog";
 import type { DealClusterDTO } from "@/lib/deals/types";
@@ -228,7 +229,7 @@ async function fetchShoppingProductsWithFallback(
 /** Cross-request tray cache — normalized key improves hit rate; short TTL keeps prices fresh. */
 const getCachedSearchPipeline = unstable_cache(
   async (pipelineQuery: string) => runSearchPipeline(pipelineQuery),
-  ["quantai-search-pipeline-v46-home-category-evidence"],
+  ["quantai-search-pipeline-v47-phase1-trust-latency"],
   { revalidate: 120 }
 );
 
@@ -260,6 +261,7 @@ function searchDebugMeta(args: {
   stageSuppression?: StageSuppressionTrace[];
   searchLatencyMs?: number;
   operationalState?: Record<string, unknown> | null;
+  latencyBudget?: Record<string, unknown> | null;
 }): Record<string, unknown> {
   const {
     products,
@@ -270,6 +272,7 @@ function searchDebugMeta(args: {
     stageSuppression = [],
     searchLatencyMs = 0,
     operationalState = null,
+    latencyBudget = null,
   } = args;
   const identityDebug = canonicalQuery ? buildIdentityDebugSummary(products, canonicalQuery) : null;
   const commerceQualityDebug = buildCommerceQualityDebug(products);
@@ -281,6 +284,9 @@ function searchDebugMeta(args: {
     sourceCount: sourceCount(products),
     fallbackReason,
     errorState,
+    operationalState,
+    guestDegraded: operationalState?.degraded === true,
+    latencyBudget,
     liveDiscoveryStatus: liveDiscovery?.status ?? null,
     liveDiscoverySource: liveDiscovery?.source ?? null,
     discoveryEnabled: liveDiscovery?.discoveryEnabled ?? false,
@@ -601,9 +607,6 @@ async function handleSearch(
     stageBefore = products.length;
     products = applyMarketAwarenessRanking(products, query);
     traceStage("market_awareness_ranking", stageBefore, products.length);
-    stageBefore = products.length;
-    products = buildCommerceQualityLayer(products, query, canonicalQuery);
-    traceStage("commerce_quality_ranking", stageBefore, products.length);
     const preIdentityGateProducts = products;
     products = applyHardIdentityGate(products, canonicalQuery);
     traceStage("hard_identity_gate", preIdentityGateProducts.length, products.length);

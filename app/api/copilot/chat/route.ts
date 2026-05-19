@@ -7,6 +7,7 @@ import type { CopilotSessionPayload } from "@/lib/copilot/sessionTypes";
 import { defaultCopilotSession } from "@/lib/copilot/sessionTypes";
 import { CopilotStructuredSchema } from "@/lib/copilot/structuredResponse";
 import { copilotRatelimit, enforceLimit } from "@/lib/rate-limit";
+import { enforcePlanAiDailyLimit } from "@/lib/subscription/planAiUsage";
 import { logDevError } from "@/lib/log/devLog";
 
 const TurnSchema = z.object({
@@ -86,6 +87,17 @@ export async function POST(req: Request) {
     }
 
     const { userId } = await auth();
+    if (userId) {
+      const planLimited = await enforcePlanAiDailyLimit(userId);
+      if (!planLimited.ok) {
+        return jsonErr(
+          429,
+          `Daily AI intelligence limit reached (${planLimited.limit}). Upgrade for more.`,
+          { retryAfter: planLimited.retryAfter, code: "PLAN_AI_LIMIT" },
+          { headers: { "Retry-After": String(planLimited.retryAfter) } }
+        );
+      }
+    }
     const rateId = userId ?? guestKey(req);
     const limited = await enforceLimit(copilotRatelimit, rateId);
     if (!limited.ok) {

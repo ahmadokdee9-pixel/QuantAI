@@ -6,6 +6,7 @@ import { extractResponsesApiText } from "@/lib/openai-response-text";
 import { parseJsonObject } from "@/lib/openai/safeJson";
 import { logDevError } from "@/lib/log/devLog";
 import { aiChatRatelimit, enforceLimit } from "@/lib/rate-limit";
+import { enforcePlanAiDailyLimit } from "@/lib/subscription/planAiUsage";
 
 function openAiClient(): OpenAI | null {
   const apiKey = process.env.OPENAI_API_KEY?.trim();
@@ -24,6 +25,16 @@ export async function POST(req: Request) {
     const { userId } = await auth();
     if (!userId) {
       return jsonErr(401, "Sign in to use the AI assistant.", { reply: "" });
+    }
+
+    const planLimited = await enforcePlanAiDailyLimit(userId);
+    if (!planLimited.ok) {
+      return jsonErr(
+        429,
+        `Daily AI intelligence limit reached (${planLimited.limit}). Upgrade for more.`,
+        { reply: "", retryAfter: planLimited.retryAfter, code: "PLAN_AI_LIMIT" },
+        { headers: { "Retry-After": String(planLimited.retryAfter) } }
+      );
     }
 
     const limited = await enforceLimit(aiChatRatelimit, userId);

@@ -57,6 +57,30 @@ export function calibrateDecisionConfidence(args: {
     score = Math.min(score, 58);
     reasons.push("weak_seller_trust");
   }
+  if (trust < 42) {
+    score = Math.min(score, 48);
+    reasons.push("very_weak_seller_trust");
+  }
+
+  const gate = product.qiIdentityGate;
+  if (gate && gate.identityGatePassed === false) {
+    score = Math.min(score, 46);
+    reasons.push("identity_gate_failed");
+  }
+  if (gate && gate.exactMatchPassed === false && canonicalQuery?.marketMode === "exact_sku") {
+    score = Math.min(score, 54);
+    reasons.push("exact_match_not_passed");
+  }
+
+  const mismatch = product.qiListingIdentity?.semanticMismatchPenalty01 ?? 0;
+  if (mismatch >= 0.55) {
+    score = Math.min(score, Math.round(50 - mismatch * 12));
+    reasons.push("semantic_mismatch");
+  }
+  if (mismatch >= 0.72) {
+    score = Math.min(score, 38);
+    reasons.push("high_semantic_mismatch");
+  }
 
   const honestCapApplied = score < rawConfidence - 4;
   const tier: CalibratedDecisionConfidence["tier"] =

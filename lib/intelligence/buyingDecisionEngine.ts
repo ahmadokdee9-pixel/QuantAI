@@ -1,4 +1,5 @@
 import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
+import { calibrateDecisionConfidence } from "@/lib/intelligence/decisionCalibration";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getMarketplaceSellerRiskTier, getStoreTrustScore } from "@/lib/retailTrust";
 
@@ -337,20 +338,41 @@ function buildDecision(
   if (bestValue) reasons.push("strongest value score in tray");
   if (betterRegionalOfferLikely) reasons.push("better regional offer may exist in this tray");
   if (scamRisk !== "low") reasons.push(`${scamRisk} seller/listing risk`);
+  let actionOut = action;
+  const rawConfidence = Math.round(
+    clamp(38 + decisionScore * 0.48 + (products.length >= 12 ? 10 : 0) + (sellerTrustworthy ? 8 : 0), 0, 100)
+  );
+  const calibrated = calibrateDecisionConfidence({
+    product,
+    rawConfidence,
+    canonicalQuery,
+  });
+  if (
+    calibrated.tier === "low" &&
+    (actionOut === "BUY_NOW" || actionOut === "SAFE_TRUSTED_OFFER" || actionOut === "HIDDEN_VALUE")
+  ) {
+    actionOut = scamRisk === "high" ? "RISKY_SELLER" : "COMPARE";
+  }
+  if (calibrated.score < 52 && actionOut === "BUY_NOW") {
+    actionOut = "COMPARE";
+  }
+
   const analystLine =
-    action === "BUY_NOW" || action === "SAFE_TRUSTED_OFFER" || action === "BEST_REGIONAL_DEAL"
-      ? `${actionLabel(action)}: value, seller trust, and price position are aligned.`
-      : action === "WAIT_FOR_DROP" || action === "DISCOUNT_LIKELY_SOON"
-        ? `${actionLabel(action)}: volatility and price position suggest patience may improve the offer.`
-        : action === "RISKY_SELLER"
+    actionOut === "BUY_NOW" || actionOut === "SAFE_TRUSTED_OFFER" || actionOut === "BEST_REGIONAL_DEAL"
+      ? `${actionLabel(actionOut)}: value, seller trust, and price position are aligned.`
+      : actionOut === "WAIT_FOR_DROP" || actionOut === "DISCOUNT_LIKELY_SOON"
+        ? `${actionLabel(actionOut)}: volatility and price position suggest patience may improve the offer.`
+        : actionOut === "RISKY_SELLER"
           ? "Risky seller: marketplace or listing signals need extra verification before purchase."
-          : `${actionLabel(action)}: compare against safer or better-priced alternatives before buying.`;
+          : calibrated.honestCapApplied
+            ? `${actionLabel(actionOut)}: signals are mixed — verify listing identity and seller before checkout.`
+            : `${actionLabel(actionOut)}: compare against safer or better-priced alternatives before buying.`;
   return {
     version: 1,
-    action,
-    confidence: Math.round(clamp(38 + decisionScore * 0.48 + (products.length >= 12 ? 10 : 0) + (sellerTrustworthy ? 8 : 0), 0, 100)),
+    action: actionOut,
+    confidence: calibrated.score,
     decisionScore,
-    decisionLabel: actionLabel(action),
+    decisionLabel: actionLabel(actionOut),
     analystLine,
     primaryReasons: reasons.slice(0, 5),
     priceIntelligence: {

@@ -55,7 +55,7 @@ export default function GlobalIntelligencePanel({
 }: Props) {
   const reduceMotion = useReducedMotion();
   const showDeepLayers = displayLevel !== "summary";
-  const [deepOpen, setDeepOpen] = useState(false);
+  const [deepOpen, setDeepOpen] = useState(displayLevel === "full");
   const confPct = Math.max(8, 100 - intel.buyerUncertaintyScore);
   const radarVals = useMemo(() => {
     const clarity = Math.max(10, 100 - intel.buyerUncertaintyScore);
