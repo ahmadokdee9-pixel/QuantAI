@@ -15,7 +15,8 @@
     "prebuild": "node scripts/validate-env.mjs",
     "test:golden-search": "node scripts/golden-search-smoke.mjs",
     "test:search-eval": "node scripts/evaluate-search-ranking.mjs",
-    "test:realworld": "node scripts/realworld-search-validation.mjs"
+    "test:realworld": "node scripts/realworld-search-validation.mjs",
+    "test:p0-canonical": "npx --yes tsx scripts/p0-canonical-sanity.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.3.1",

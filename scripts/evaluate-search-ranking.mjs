@@ -66,6 +66,18 @@ const CASES = [
     category: "audio",
     titleMustMatch: /airpods?/i,
   },
+  {
+    query: "yves saint laurent libre edp 90ml",
+    minProducts: 2,
+    category: "fragrance",
+    titleMustMatch: /libre|yves|saint\s+laurent|parfum|edp/i,
+  },
+  {
+    query: "nike shoes like vomero but cheaper",
+    minProducts: 3,
+    category: "shoes",
+    titleMustMatch: /nike|vomero|shoe|sneaker|trainer/i,
+  },
 ];
 
 async function search(query) {

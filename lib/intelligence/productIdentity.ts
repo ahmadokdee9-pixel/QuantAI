@@ -6,6 +6,7 @@ import type { QuantProduct } from "@/lib/shoppingScore";
 import { extractProductIdentity, type ProductIdentity } from "@/lib/deals/productIdentity";
 import { identityMatchScore } from "@/lib/deals/identityMatchScore";
 import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
+import { isProtectedExactSkuQuery, isRelaxedIdentityLane } from "@/lib/search/searchIntentModes";
 import type { QiListingIdentity } from "@/lib/intelligence/listingIdentityTypes";
 import { normalizeCommercialRoles } from "@/lib/intelligence/normalizeIntelligenceSignals";
 import { assessModelGenerationConflict } from "@/lib/intelligence/modelGenerationGuard";
@@ -129,13 +130,15 @@ function queryAllowsAccessory(canonicalQuery?: CanonicalQueryContract): boolean 
 
 function exactCoreProductIntent(canonicalQuery?: CanonicalQueryContract): boolean {
   if (!canonicalQuery || queryAllowsAccessory(canonicalQuery)) return false;
-  if (canonicalQuery.intent.primary === "alternative") return false;
+  if (isRelaxedIdentityLane(canonicalQuery)) return false;
   const q = canonicalQuery.originalQuery.toLowerCase();
-  const protectedExact =
-    /(iphone|ايفون|آيفون|airpods?|ايربودز|adidas\s+samba|samba)/i.test(q);
+  const protectedExact = isProtectedExactSkuQuery(canonicalQuery) || /(iphone|ايفون|آيفون|airpods?|ايربودز|adidas\s+samba|samba)/i.test(q);
   if (canonicalQuery.marketMode === "category_shopping" || canonicalQuery.marketMode === "broad_discovery") return false;
-  if (canonicalQuery.marketMode === "hybrid_compare") return Boolean((canonicalQuery.brand && canonicalQuery.model) || protectedExact);
-  if (canonicalQuery.marketMode === "exact_sku") return true;
+  if (canonicalQuery.marketMode === "hybrid_compare") {
+    if (canonicalQuery.intent.primary === "alternative") return false;
+    return protectedExact;
+  }
+  if (canonicalQuery.marketMode === "exact_sku") return protectedExact || Boolean(canonicalQuery.brand && canonicalQuery.model && !canonicalQuery.semantic.alternativeIntent.active);
   const broadCoreCategory =
     (canonicalQuery.category === "electronics" || canonicalQuery.category === "furniture") &&
     !canonicalQuery.brand &&
@@ -523,6 +526,28 @@ export function applyHardIdentityGate(
   canonicalQuery?: CanonicalQueryContract
 ): QuantProduct[] {
   if (!products.length) return products;
+
+  if (isRelaxedIdentityLane(canonicalQuery)) {
+    const allowAccessory = queryAllowsAccessory(canonicalQuery);
+    const out: QuantProduct[] = [];
+    for (const product of products) {
+      const decision = assessIdentityGateDecision(product, canonicalQuery);
+      if (decision.relation === "fake_placeholder" || decision.relation === "wrong_product") continue;
+      if (weakTitleJunk(product)) continue;
+      if (
+        !allowAccessory &&
+        (decision.relation === "accessory" ||
+          decision.relation === "compatible_item" ||
+          decision.relation === "replacement_part")
+      ) {
+        const cat = canonicalQuery?.category;
+        if (cat === "shoes" || cat === "phone" || cat === "audio" || cat === "watch") continue;
+      }
+      out.push({ ...product, qiIdentityGate: { ...decision, identityGatePassed: true } });
+    }
+    return out.map((p, i) => ({ ...p, qiRank: i }));
+  }
+
   const exactIntent = exactCoreProductIntent(canonicalQuery);
   const passed: QuantProduct[] = [];
   const delayed: QuantProduct[] = [];

@@ -104,6 +104,18 @@ function aestheticFit(q: SemanticQueryUnderstanding, text: string): number {
   return clamp(score, 0, 1);
 }
 
+function isDeskSetupAccessoryPart(text: string): boolean {
+  return /\b(monitor\s+stand|desk\s+organizer|desk\s+shelf|desk\s+pad|mouse\s+pad|pen\s+holder|cable\s+tray|monitor\s+riser|organizer|desk\s+mat|keyboard\s+tray)\b/i.test(
+    text
+  );
+}
+
+function isDeskSetupMainProduct(text: string): boolean {
+  return /\b(desk|bureau|standing\s+desk|gaming\s+desk|office\s+desk|workstation|sit[-\s]?stand|monitor\b|keyboard\b|office\s+chair)\b/i.test(
+    text
+  );
+}
+
 function purposeFit(q: SemanticQueryUnderstanding, text: string): number {
   if (!q.usageContext.length && !q.productPurpose.length && !q.constraints.useCase) return 0.5;
   let score = 0.35;
@@ -219,6 +231,16 @@ function semanticScore(
     if (anchorHits >= 0.45) score += q.alternativeIntent.cheaper ? 4 : 2.5;
   }
 
+  if (q.productCategory === "desk_setup" && !canonicalQuery?.originalQuery.match(/\b(case|cover|organizer only|stand only)\b/i)) {
+    if (isDeskSetupAccessoryPart(text) && !isDeskSetupMainProduct(text)) score -= 14;
+    else if (isDeskSetupMainProduct(text)) score += 5;
+  }
+
+  if (canonicalQuery?.intent.primary === "alternative" || q.alternativeIntent.active) {
+    if (structured.relation === "same_product_family" || structured.relation === "variant") score += 3;
+    if (structured.relation === "exact_product") score += 1.5;
+  }
+
   return Math.round(score * 100) / 100;
 }
 
@@ -228,7 +250,14 @@ function isHardJunk(q: SemanticQueryUnderstanding, p: QuantProduct, score: numbe
   if (id?.commercialRoles.includes("replica_risk") || id?.commercialRoles.includes("packaging_only")) return true;
   const structured = assessStructuredProductIdentity({ product: p, canonicalQuery, listingIdentity: id });
   if (structured.relation === "fake_placeholder" || structured.relation === "wrong_product") return true;
-  if ((structured.relation === "compatible_item" || structured.relation === "replacement_part") && q.productCategory !== "unknown") return true;
+  if (
+    (structured.relation === "compatible_item" || structured.relation === "replacement_part") &&
+    q.productCategory !== "unknown" &&
+    !q.alternativeIntent.active &&
+    canonicalQuery?.intent.primary !== "alternative"
+  ) {
+    return true;
+  }
   if (id && id.semanticMismatchPenalty01 >= 0.72 && id.contaminationRisk01 >= 0.68) return true;
   if (q.productCategory !== "unknown" && id && id.accessoryLikelihood01 >= 0.82 && id.semanticMismatchPenalty01 >= 0.5) return true;
   if (getMarketplaceSellerRiskTier(p.store, p.title) === "high" && trust < 42 && score < 36) return true;

@@ -136,8 +136,10 @@ function detectCategory(s: string): SemanticProductCategory {
   if (hasAny(s, /\b(gaming laptop|laptop|notebook|macbook|thinkpad|chromebook|ultrabook|لابتوب|لاب\s*توب)\b/i)) return "laptop";
   if (hasAny(s, /\b(headphones?|earbuds?|airpods?|bose|sony wh|noise cancelling|bluetooth speaker|soundbar|سماعات?|ايربودز|headset)\b/i)) return "audio";
   if (hasAny(s, /\b(best\s+premium\s+headphones?|headphones?\s+for\s+focus)\b/i)) return "audio";
-  if (hasAny(s, /\b(clean desk|minimal desk|desk setup|workspace)\b/i)) return "desk_setup";
-  if (hasAny(s, /(?:كرسي|كراسي|كرسي\s*مكتب|كرسي\s*office)/i)) return "furniture";
+  if (hasAny(s, /(?:كرسي|كراسي|كرسي\s*مكتب|مكتب\s*مريح|مكتبي)/i)) return "furniture";
+  if (hasAny(s, /(?:كنبة|كنبه|اريكة|أريكة|ركنة|طاولة\s*طعام|طاوله)/i)) return "furniture";
+  if (hasAny(s, /\b(office\s+chair|desk\s+chair|ergonomic\s+chair|gaming\s+chair)\b/i)) return "furniture";
+  if (hasAny(s, /\b(clean desk|minimal desk|desk setup|workspace\s+setup)\b/i) && !/(?:كرسي|chair|stoel)/i.test(s)) return "desk_setup";
   if (hasAny(s, /\b(sofa|sofa bed|sectional|loveseat|settee|couch|corner sofa|recliner|chaise|hoekbank|bankstel|loungebank|fauteuil|eetkamerstoel|chair|stoel|desk|bureau|table|tafel|garden table|tuin tafel|tuinmeubel|loungeset|furniture|meubel|meubels|كنبة|اريكة|أريكة|ركنة|زاوية|طاولة|اثاث|أثاث)\b/i)) return "furniture";
   if (hasAny(s, /\b(perfume|fragrance|parfum|cologne|eau de parfum|eau de toilette|aftershave|niche fragrance|designer fragrance|libre|edp|edt|ysl|yves saint laurent|عطر|عطور|برفان)\b/i)) return "fragrance";
   if (hasAny(s, /\b(watch|smartwatch|ساعة)\b/i)) return "watch";
@@ -191,13 +193,30 @@ function detectProductPurpose(category: SemanticProductCategory, s: string, usag
 }
 
 function detectAlternative(s: string): SemanticQueryUnderstanding["alternativeIntent"] {
-  const active = hasAny(s, /\b(like|similar to|alternative|dupe|يشبه|شبيه|بديل)\b/i);
-  const cheaper = hasAny(s, /\b(cheaper|less expensive|budget|affordable|ارخص|أرخص)\b/i);
-  const anchor =
-    s.match(/\b(?:like|similar to|alternative to)\s+([a-z0-9][a-z0-9\s+-]{2,40})\b/i)?.[1]?.trim() ??
-    s.match(/\b(?:مثل|شبيه|بديل)\s+([a-z0-9][a-z0-9\s+-]{2,40})\b/i)?.[1]?.trim() ??
-    s.match(/\b(?:مثل)\s+([a-z0-9\u0600-\u06FF][\w\s+-]{2,40})\b/i)?.[1]?.trim() ??
+  const active =
+    hasAny(s, /\b(like|similar to|alternative|dupe|يشبه|شبيه|بديل|زي|شبه)\b/i) ||
+    /\bأرخص\s*من\b/i.test(s) ||
+    /\blike\s+.{2,50}\s+but\s+cheaper\b/i.test(s) ||
+    /\bمثل\s+.{2,50}\s+(?:بس|لكن)\s+ارخص\b/i.test(s);
+  const cheaper =
+    hasAny(s, /\b(cheaper|less expensive|budget|affordable|ارخص|أرخص|رخيص|بس\s+ارخص|بس\s+أرخص)\b/i) ||
+    /\bأرخص\s*من\b/i.test(s);
+  let anchor =
+    s.match(/\b(?:like|similar to|alternative to)\s+([a-z0-9][a-z0-9\s+-]{2,40}?)(?:\s+but|\s+cheaper|\s+under|$)/i)?.[1]?.trim() ??
+    s.match(/\b(?:مثل|شبيه|بديل|زي|شبه)\s+([a-z0-9\u0600-\u06FF][\w\s+-]{2,40}?)(?:\s+بس|\s+لكن|\s+ارخص|$)/i)?.[1]?.trim() ??
     "";
+  if (!anchor || /\b(cheaper|but|budget|like|shoes|sneakers)\b/i.test(anchor)) {
+    const named = s.match(
+      /\b(vomero|pegasus|ultraboost|samba|gazelle|air\s+force|dunk|jordan|common\s+projects|achilles|libre|airpods?\s*pro)\b/i
+    )?.[0];
+    if (named) anchor = named.replace(/\s+/g, " ").trim();
+  }
+  if (anchor) {
+    anchor = anchor
+      .replace(/\b(but|cheaper|budget|under|like|shoes|sneakers|trainers)\b/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
   return { active, cheaper, anchor };
 }
 

@@ -69,6 +69,9 @@ const BRAND_ALIASES = [
   "dyson",
   "ysl",
   "yves saint laurent",
+  "chanel",
+  "dior",
+  "tom ford",
   "ikea",
   "lg",
   "asus",
@@ -145,6 +148,9 @@ function detectModel(envelope: string, brand: string | null): string | null {
     /\badidas\s+(samba|gazelle|superstar|campus)\b/i,
     /\bnike\s+(air\s+force\s+1|dunk|air\s+max|jordan\s*\d*)\b/i,
     /\b(gaming\s+monitor|monitor)\s*(\d{2,3}\s?hz|4k|qhd|oled)?\b/i,
+    /\b(?:ysl|yves\s+saint\s+laurent)\s+libre\b/i,
+    /\blibre\s+(?:edp|eau\s+de\s+parfum)\b/i,
+    /\b(vomero|pegasus|ultraboost)\b/i,
   ];
   for (const rx of patterns) {
     const match = envelope.match(rx);
@@ -156,12 +162,16 @@ function detectModel(envelope: string, brand: string | null): string | null {
     return match[0].replace(/\s+/g, " ").trim();
   }
   if (brand) {
-    if (/\b(like|similar|alternative|cheaper|dupe|مثل|شبيه|بديل|ارخص|أرخص)\b/i.test(envelope)) {
+    if (/\b(like|similar|alternative|cheaper|dupe|مثل|شبيه|بديل|زي|شبه|ارخص|أرخص)\b/i.test(envelope)) {
       const anchor =
-        envelope.match(/\b(?:like|similar to|alternative to)\s+([a-z0-9][a-z0-9\s+-]{2,28})\b/i)?.[1]?.trim() ??
-        envelope.match(/\b(?:مثل)\s+([a-z0-9][a-z0-9\s+-]{2,28})\b/i)?.[1]?.trim();
-      if (anchor && !/\b(cheaper|but|budget|like)\b/i.test(anchor)) return anchor.replace(/\s+/g, " ").trim();
-      const named = envelope.match(/\b(vomero|pegasus|ultraboost|samba|gazelle|air\s+force|dunk|jordan)\b/i)?.[0];
+        envelope.match(/\b(?:like|similar to|alternative to)\s+([a-z0-9][a-z0-9\s+-]{2,28}?)(?:\s+but|\s+cheaper|$)/i)?.[1]?.trim() ??
+        envelope.match(/\b(?:مثل|زي|شبه)\s+([a-z0-9][a-z0-9\s+-]{2,28}?)(?:\s+بس|\s+ارخص|$)/i)?.[1]?.trim();
+      if (anchor && !/\b(cheaper|but|budget|like|shoes|sneakers)\b/i.test(anchor)) {
+        return anchor.replace(/\s+/g, " ").trim();
+      }
+      const named = envelope.match(
+        /\b(vomero|pegasus|ultraboost|samba|gazelle|air\s+force|dunk|jordan|libre|common\s+projects)\b/i
+      )?.[0];
       if (named) return named.replace(/\s+/g, " ").trim();
       return null;
     }
@@ -342,6 +352,11 @@ export function buildCanonicalQuery(rawQuery: string): CanonicalQueryContract {
   const primary = primaryIntent(semantic, commerceIntents, condition);
   const marketMode = inferMarketMode({ envelope, semantic, commerce: commerceIntents, brand, model, variant, primary });
   const market = detectMarket(envelope, budget.currency);
+  let category = semantic.productCategory;
+  if (category === "unknown") {
+    if (/(?:كرسي|office\s+chair|desk\s+chair|كنبة|كنبه|sofa|couch|chair|stoel)/i.test(envelope)) category = "furniture";
+    else if (/(?:libre|edp|edt|parfum|perfume|fragrance|ysl|yves\s+saint\s+laurent|عطر)/i.test(envelope)) category = "fragrance";
+  }
   return {
     version: 1,
     originalQuery,
@@ -349,8 +364,8 @@ export function buildCanonicalQuery(rawQuery: string): CanonicalQueryContract {
     upstreamQuery: buildUpstreamShoppingQuery(normalizedQuery || originalQuery),
     language: languageFrom(semantic.languages),
     languages: semantic.languages,
-    category: semantic.productCategory,
-    productType: semantic.productCategory === "unknown" ? "unknown" : semantic.productCategory.replace("_", " "),
+    category,
+    productType: category === "unknown" ? "unknown" : category.replace("_", " "),
     brand,
     model,
     variant,

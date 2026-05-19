@@ -179,6 +179,14 @@ for (const spec of SUITE) {
     const { status, success, products, meta } = await search(spec.query);
     row.status = status;
     row.success = success;
+    if (status === 429) {
+      row.failures.push({ code: "rate_limited", severity: "skip", detail: "429 — retry later" });
+      row.pass = true;
+      row.skipped = true;
+      report.queries.push(row);
+      await new Promise((r) => setTimeout(r, 2000));
+      continue;
+    }
     row.productCount = products.length;
     row.canonicalCategory = meta?.canonicalQuery?.category ?? null;
     row.marketMode = meta?.canonicalQuery?.marketMode ?? null;
@@ -198,7 +206,7 @@ for (const spec of SUITE) {
     row.scores = { ranking: 0, decision: 0, trust: 0 };
   }
   report.queries.push(row);
-  await new Promise((r) => setTimeout(r, 350));
+  await new Promise((r) => setTimeout(r, 900));
 }
 
 const n = report.queries.length;

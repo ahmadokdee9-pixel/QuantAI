@@ -79,6 +79,8 @@ export function parseCommerceSearchIntents(q: string): CommerceSearchIntents {
       s
     ) ||
     /\blike\s+.{3,55}\s+but\s+cheaper\b/i.test(s) ||
+    /\b(مثل|زي|شبه)\s+.{2,55}\s+(?:بس|لكن)\s+ارخص\b/i.test(s) ||
+    /\bأرخص\s*من\b/i.test(s) ||
     /\balternative\s+to\s+\S/i.test(s) ||
     /\b(airpods?|dyson|rolex|galaxy|iphone|ipad|macbook|bose|sony)\s+alternative\b/i.test(s) ||
     /\bsimilar\s+to\s+.{3,}/i.test(s);
