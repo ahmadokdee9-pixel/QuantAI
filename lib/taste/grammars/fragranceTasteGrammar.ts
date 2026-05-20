@@ -24,7 +24,7 @@ function envelopeOf(query: string, canonicalQuery?: CanonicalQueryContract): str
   return canonicalQuery?.semantic.envelope ?? query;
 }
 
-function fragranceIntent01(text: string, canonicalQuery?: CanonicalQueryContract): number {
+export function fragranceIntent01(text: string, canonicalQuery?: CanonicalQueryContract): number {
   let score = 0.15;
   const s = text.toLowerCase();
   const sem = canonicalQuery?.semantic;

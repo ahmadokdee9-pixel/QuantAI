@@ -23,6 +23,8 @@ jobs:
       - run: npm run test:taste-pollution
       - run: npm run test:watch-taste-canary
       - run: npm run test:watch-taste-apply-parity
+      - run: npm run test:fragrance-taste-canary
+      - run: npm run test:fragrance-taste-apply-parity
       - run: npm run test:taste-institutional-gate
       - run: npm run test:taste-deploy-reports
 

@@ -33,6 +33,7 @@ function loadLatest(suiteName) {
 const shadow = loadLatest("vertical-taste-shadow");
 const pollution = loadLatest("taste-pollution");
 const watchCanary = loadLatest("watch-taste-canary");
+const fragranceCanary = loadLatest("fragrance-taste-canary");
 
 if (!shadow) {
   console.error("Missing vertical-taste-shadow history. Run: npm run test:vertical-taste-shadow");
@@ -88,20 +89,27 @@ const checks = [
     detail: `${s.maxShadowLatencyMs}ms (max ${THRESHOLDS.shadow_cpu_max_ms}ms)`,
   },
   {
-    name: "apply_disabled_or_watch_only",
+    name: "apply_disabled_by_default",
+    ok: s.applyEnabled !== true && p.trust_cap_respected_pct === 100,
+    detail: `shadow.apply=${s.applyEnabled} (watch/fragrance flags off in gate process)`,
+  },
+  {
+    name: "watch_canary_history",
+    ok: !watchCanary || ((watchCanary.report.pollution_top5 ?? 0) === 0 && (watchCanary.report.max_apply_delta ?? 99) <= 12),
+    detail: watchCanary
+      ? `watch pollution=${watchCanary.report.pollution_top5} maxDelta=${watchCanary.report.max_apply_delta}`
+      : "no watch canary history",
+  },
+  {
+    name: "fragrance_canary_history",
     ok:
-      process.env.TASTE_GRAMMAR_ENABLED !== "true"
-        ? s.applyEnabled !== true && p.trust_cap_respected_pct === 100
-        : watchCanary
-          ? (watchCanary.report.pollution_top5 ?? 0) === 0 &&
-            (watchCanary.report.max_apply_delta ?? 99) <= 12
-          : false,
-    detail:
-      process.env.TASTE_GRAMMAR_ENABLED === "true"
-        ? watchCanary
-          ? `canary pollution=${watchCanary.report.pollution_top5} maxDelta=${watchCanary.report.max_apply_delta}`
-          : "TASTE_GRAMMAR_ENABLED but no watch-taste-canary history"
-        : `shadow.apply=${s.applyEnabled}`,
+      !fragranceCanary ||
+      ((fragranceCanary.report.pollution_top5 ?? 0) === 0 &&
+        (fragranceCanary.report.max_apply_delta ?? 99) <= 12 &&
+        (fragranceCanary.report.trust_cap_respected_pct ?? 0) >= 100),
+    detail: fragranceCanary
+      ? `fragrance maxDelta=${fragranceCanary.report.max_apply_delta} trust=${fragranceCanary.report.trust_cap_respected_pct}%`
+      : "no fragrance canary history (run test:fragrance-taste-canary)",
   },
   {
     name: "snapshot_regression",

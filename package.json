@@ -26,6 +26,8 @@
     "test:taste-deploy-reports": "node scripts/taste-deploy-reports.mjs",
     "test:watch-taste-apply-parity": "npx --yes tsx scripts/watch-taste-apply-parity.mjs",
     "test:watch-taste-canary": "npx --yes tsx scripts/watch-taste-canary-eval.mjs",
+    "test:fragrance-taste-canary": "npx --yes tsx scripts/fragrance-taste-canary-eval.mjs",
+    "test:fragrance-taste-apply-parity": "npx --yes tsx scripts/fragrance-taste-apply-parity.mjs",
     "test:fragrance-diagnosis": "npx --yes tsx scripts/diagnose-fragrance-recall.mjs",
     "test:phase1-exit": "node scripts/phase1-exit-check.mjs",
     "test:production-gate": "node scripts/production-validation-gate.mjs"

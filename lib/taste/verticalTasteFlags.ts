@@ -5,10 +5,16 @@
 import type { SemanticProductCategory } from "@/lib/search/queryUnderstanding";
 
 /** Bump when grammar rules change (rollback-safe cache invalidation). */
-export const TASTE_GRAMMAR_PIPELINE_CACHE_KEY = "quantai-search-pipeline-v51-watch-taste-apply-canary-v1";
+export const TASTE_GRAMMAR_PIPELINE_CACHE_KEY = "quantai-search-pipeline-v52-fragrance-taste-apply-canary-v1";
 
-/** Max bounded taste score delta (watches canary only). */
+/** Max bounded taste score delta (watches canary). */
 export const TASTE_WATCH_APPLY_MAX_DELTA = 12;
+
+/** Max bounded taste score delta (fragrance canary). */
+export const TASTE_FRAGRANCE_APPLY_MAX_DELTA = 12;
+
+/** Fragrance apply intent threshold. */
+export const TASTE_FRAGRANCE_APPLY_INTENT_THRESHOLD = 0.32;
 
 export const TASTE_GRAMMAR_SHADOW_META_VERSION = "vertical-taste-shadow-v2";
 
@@ -37,13 +43,16 @@ export function getShadowIntentThreshold(category: SemanticProductCategory): num
 /**
  * When true, WATCHES-ONLY taste apply is active (Phase 2.4 canary).
  * Rollback: set TASTE_GRAMMAR_ENABLED=false.
- * Electronics, furniture, fragrance never apply.
  */
 export function isTasteGrammarApplyEnabled(): boolean {
   return process.env.TASTE_GRAMMAR_ENABLED === "true";
 }
 
-/** Alias — documents watches-only scope. */
+/** When true, FRAGRANCE-ONLY taste apply is active (Phase 2.5 canary). */
+export function isFragranceTasteApplyEnabled(): boolean {
+  return process.env.TASTE_FRAGRANCE_GRAMMAR_ENABLED === "true";
+}
+
 export function isWatchOnlyTasteApplyEnabled(): boolean {
   return isTasteGrammarApplyEnabled();
 }
