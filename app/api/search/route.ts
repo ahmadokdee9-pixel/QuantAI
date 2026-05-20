@@ -37,6 +37,8 @@ import { buildLatencyBudgetReport } from "@/lib/search/latencyBudget";
 import { buildVerticalTasteShadowMeta } from "@/lib/taste/verticalTasteShadow";
 import { buildFragranceTasteCanaryMeta } from "@/lib/taste/fragranceTasteApply";
 import { buildFurnitureTasteCanaryMeta } from "@/lib/taste/furnitureTasteApply";
+import { buildUnifiedTasteMeta } from "@/lib/taste/unifiedTasteIdentity";
+import { isUnifiedTasteMetaEnabled } from "@/lib/taste/unifiedTasteFlags";
 import { buildWatchTasteCanaryMeta } from "@/lib/taste/watchTasteApply";
 import { TASTE_GRAMMAR_PIPELINE_CACHE_KEY } from "@/lib/taste/verticalTasteFlags";
 import { buildDegradedTrayNotice, buildEmptyTrayExplanation } from "@/lib/search/trayDiagnostics";
@@ -674,6 +676,28 @@ async function handleSearch(
           ? preTasteTrayLinks
           : [],
     });
+    const unifiedTaste = isUnifiedTasteMetaEnabled()
+      ? buildUnifiedTasteMeta({
+          query,
+          canonicalQuery,
+          products,
+          tasteGrammarShadow,
+        })
+      : {
+          version: "unified-taste-v1" as const,
+          active: false,
+          applyEnabled: false,
+          identity: null,
+          confidence: 0,
+          coherenceScore: 0,
+          crossVerticalAlignment: 0,
+          prestigeIntegrity: 1,
+          boundedInfluenceMax: 4,
+          verticalLane: null,
+          verticalLanes: {},
+          latencyMs: 0,
+          skippedReason: "unified_meta_disabled",
+        };
     const fallbackReason = guestOperationalDegraded
       ? String(guestOperationalDegraded.reason ?? "operational_degraded")
       : liveDiscovery.status === "enabled"
@@ -795,6 +819,7 @@ async function handleSearch(
         tasteWatchCanary,
         tasteFragranceCanary,
         tasteFurnitureCanary,
+        unifiedTaste,
       },
     };
 

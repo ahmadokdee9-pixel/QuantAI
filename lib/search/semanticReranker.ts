@@ -25,9 +25,12 @@ import {
 } from "@/lib/search/luxuryWatchIntent";
 import { computeFragranceTasteApplyDelta, isFragranceTasteApplyEnabled } from "@/lib/taste/fragranceTasteApply";
 import { computeFurnitureTasteApplyDelta, isFurnitureCanaryQuery, isFurnitureTasteApplyEnabled } from "@/lib/taste/furnitureTasteApply";
+import { buildUnifiedTasteMeta, computeUnifiedListingApplyDelta } from "@/lib/taste/unifiedTasteIdentity";
+import { isUnifiedTasteApplyEnabled } from "@/lib/taste/unifiedTasteFlags";
 import { computeWatchTasteApplyDelta, isWatchTasteApplyEnabled } from "@/lib/taste/watchTasteApply";
 
 const memo = new Map<string, SemanticQueryUnderstanding>();
+const unifiedMetaMemo = new Map<string, ReturnType<typeof buildUnifiedTasteMeta>>();
 
 function queryBrain(query: string): SemanticQueryUnderstanding {
   const key = query.trim().toLowerCase().slice(0, 180);
@@ -310,6 +313,16 @@ function semanticScore(
 
   if (isFurnitureTasteApplyEnabled() && canonicalQuery && isFurnitureCanaryQuery(canonicalQuery, canonicalQuery.originalQuery)) {
     score += computeFurnitureTasteApplyDelta(canonicalQuery.originalQuery, p, canonicalQuery);
+  }
+
+  if (isUnifiedTasteApplyEnabled() && canonicalQuery) {
+    const uKey = canonicalQuery.originalQuery.trim().toLowerCase().slice(0, 180);
+    let uMeta = unifiedMetaMemo.get(uKey);
+    if (!uMeta) {
+      uMeta = buildUnifiedTasteMeta({ query: canonicalQuery.originalQuery, canonicalQuery, products: [] });
+      unifiedMetaMemo.set(uKey, uMeta);
+    }
+    score += computeUnifiedListingApplyDelta(canonicalQuery.originalQuery, p, canonicalQuery, uMeta);
   }
 
   return Math.round(score * 100) / 100;

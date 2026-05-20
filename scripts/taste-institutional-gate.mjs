@@ -35,6 +35,8 @@ const pollution = loadLatest("taste-pollution");
 const watchCanary = loadLatest("watch-taste-canary");
 const fragranceCanary = loadLatest("fragrance-taste-canary");
 const furnitureCanary = loadLatest("furniture-taste-canary");
+const unifiedTaste = loadLatest("unified-taste-institutional");
+const unifiedSoak = loadLatest("unified-taste-meta-soak");
 
 if (!shadow) {
   console.error("Missing vertical-taste-shadow history. Run: npm run test:vertical-taste-shadow");
@@ -124,6 +126,31 @@ const checks = [
     detail: furnitureCanary
       ? `furniture maxDelta=${furnitureCanary.report.max_apply_delta} trust=${furnitureCanary.report.trust_cap_respected_pct}% gaming=${furnitureCanary.report.gaming_pollution_top5 ?? 0}`
       : "no furniture canary history (run test:furniture-taste-canary)",
+  },
+  {
+    name: "unified_taste_institutional",
+    ok:
+      !unifiedTaste ||
+      ((unifiedTaste.report.pass_rate_pct ?? 0) >= 85 &&
+        (unifiedTaste.report.prestige_integrity_min ?? 0) >= 0.68 &&
+        (unifiedTaste.report.max_unified_influence ?? 99) <= 4 &&
+        unifiedTaste.report.apply_enabled !== true),
+    detail: unifiedTaste
+      ? `unified pass=${unifiedTaste.report.pass_rate_pct}% prestige=${unifiedTaste.report.prestige_integrity_min} apply=${unifiedTaste.report.apply_enabled}`
+      : "no unified taste history (run test:unified-taste-institutional)",
+  },
+  {
+    name: "unified_meta_soak_p31a",
+    ok:
+      !unifiedSoak ||
+      ((unifiedSoak.report.pass_rate_pct ?? 0) >= 90 &&
+        (unifiedSoak.report.ranking_unchanged_pct ?? 0) === 100 &&
+        (unifiedSoak.report.pollution_leakage_cases ?? 99) === 0 &&
+        unifiedSoak.report.apply_enabled !== true &&
+        unifiedSoak.report.telemetry_post_cache === true),
+    detail: unifiedSoak
+      ? `soak pass=${unifiedSoak.report.pass_rate_pct}% ranking_stable=${unifiedSoak.report.ranking_unchanged_pct}% pollution=${unifiedSoak.report.pollution_leakage_cases}`
+      : "no unified soak history (run test:unified-taste-meta-soak)",
   },
   {
     name: "snapshot_regression",
