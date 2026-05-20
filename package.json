@@ -19,6 +19,7 @@
     "test:p0-canonical": "npx --yes tsx scripts/p0-canonical-sanity.mjs",
     "test:category-reliability": "npx --yes tsx scripts/category-reliability-sanity.mjs",
     "test:luxury-watch": "npx --yes tsx scripts/luxury-watch-canonical-sanity.mjs",
+    "test:vertical-taste-grammar": "npx --yes tsx scripts/evaluate-vertical-taste-grammar.mjs",
     "test:fragrance-diagnosis": "npx --yes tsx scripts/diagnose-fragrance-recall.mjs",
     "test:phase1-exit": "node scripts/phase1-exit-check.mjs",
     "test:production-gate": "node scripts/production-validation-gate.mjs"

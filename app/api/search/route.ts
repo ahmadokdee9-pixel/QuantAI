@@ -34,6 +34,8 @@ import { buildCanonicalQuery, canonicalQueryForDebug, type CanonicalQueryContrac
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import { semanticRerankSearchResults } from "@/lib/search/semanticReranker";
 import { buildLatencyBudgetReport } from "@/lib/search/latencyBudget";
+import { buildVerticalTasteShadowMeta } from "@/lib/taste/verticalTasteShadow";
+import { TASTE_GRAMMAR_PIPELINE_CACHE_KEY } from "@/lib/taste/verticalTasteFlags";
 import { buildDegradedTrayNotice, buildEmptyTrayExplanation } from "@/lib/search/trayDiagnostics";
 import { logSearchEvent } from "@/lib/log/productionLog";
 import type { DealClusterDTO } from "@/lib/deals/types";
@@ -229,7 +231,7 @@ async function fetchShoppingProductsWithFallback(
 /** Cross-request tray cache — normalized key improves hit rate; short TTL keeps prices fresh. */
 const getCachedSearchPipeline = unstable_cache(
   async (pipelineQuery: string) => runSearchPipeline(pipelineQuery),
-  ["quantai-search-pipeline-v48-luxury-watch-integrity"],
+  [TASTE_GRAMMAR_PIPELINE_CACHE_KEY],
   { revalidate: 120 }
 );
 
@@ -639,6 +641,11 @@ async function handleSearch(
     }
 
     const marketAwareness = computeMarketAwarenessForTray(query, products);
+    const tasteGrammarShadow = buildVerticalTasteShadowMeta({
+      query,
+      canonicalQuery,
+      products,
+    });
     const fallbackReason = guestOperationalDegraded
       ? String(guestOperationalDegraded.reason ?? "operational_degraded")
       : liveDiscovery.status === "enabled"
@@ -756,6 +763,7 @@ async function handleSearch(
               ? buildDegradedTrayNotice(String(guestOperationalDegraded.reason ?? ""))
               : null,
         operationalState: guestOperationalDegraded,
+        tasteGrammarShadow,
       },
     };
 
