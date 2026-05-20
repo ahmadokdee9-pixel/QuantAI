@@ -21,6 +21,8 @@ jobs:
       - run: npm run test:vertical-taste-grammar
       - run: npm run test:vertical-taste-shadow
       - run: npm run test:taste-pollution
+      - run: npm run test:taste-institutional-gate
+      - run: npm run test:taste-deploy-reports
 
   validate:
     runs-on: ubuntu-latest

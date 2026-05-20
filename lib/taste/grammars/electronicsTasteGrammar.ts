@@ -33,8 +33,10 @@ function electronicsIntent01(text: string, canonicalQuery?: CanonicalQueryContra
   if (sem?.usageContext.includes("focus") || /\b(focus|deep work|concentration|study|anc)\b/i.test(s)) score += 0.32;
   if (/\b(headphone|earbud|airpod|koptelefoon|monitor|keyboard|dock|workstation)\b/i.test(s)) score += 0.18;
   if (sem?.aestheticDirection === "minimal_clean" || /\b(minimal|clean|quiet)\b/i.test(s)) score += 0.14;
-  if (/\b(studio|reference|neutral tuning|wired dac)\b/i.test(s)) score += 0.28;
+  if (/\b(studio|reference|neutral tuning|wired dac|neutral studio)\b/i.test(s)) score += 0.36;
   if (/\b(gaming monitor|ps5 monitor|ultrawide workstation|thunderbolt dock)\b/i.test(s)) score += 0.24;
+  if (/\b(ultrawide|workstation setup|monitor for work)\b/i.test(s)) score += 0.22;
+  if (/\b(earbud|earbuds|airpod|wireless)\b/i.test(s) && /\b(premium|luxury)\b/i.test(s)) score += 0.2;
   if (sem?.premiumIntent01 && sem.premiumIntent01 >= 0.5) score += 0.1;
   if (/\b(gaming headset|rgb keyboard party)\b/i.test(s) && !/\b(focus|workstation|studio)\b/i.test(s)) score *= 0.7;
 

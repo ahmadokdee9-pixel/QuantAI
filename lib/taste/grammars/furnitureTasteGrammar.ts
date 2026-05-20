@@ -33,14 +33,17 @@ function furnitureIntent01(text: string, canonicalQuery?: CanonicalQueryContract
   if (/\b(desk setup|standing desk|office chair|work from home|bureau)\b/i.test(s)) score += 0.28;
   if (/\b(sofa|couch|hoekbank)\b/i.test(s) && /\b(luxury|premium|minimal)\b/i.test(s)) score += 0.22;
   if (/\b(ergonomic|lumbar|sit[-\s]?stand)\b/i.test(s)) score += 0.26;
+  if (/\b(مكتب|كرسي|مريح|فخم|office chair|desk chair)\b/i.test(s)) score += 0.28;
   if (sem?.premiumIntent01 && sem.premiumIntent01 >= 0.48) score += 0.1;
+  if (canonicalQuery?.intent?.primary === "premium") score += 0.18;
+  if (/\b(office|desk|chair|كرسي|مكتب)\b/i.test(s)) score += 0.14;
 
   return clamp01(score);
 }
 
 function resolveLane(text: string, canonicalQuery?: CanonicalQueryContract): VerticalTasteGrammarLaneId | null {
   if (furnitureIntent01(text, canonicalQuery) < 0.3) return null;
-  if (/\b(ergonomic|lumbar|office chair|sit[-\s]?stand)\b/i.test(text)) {
+  if (/\b(ergonomic|lumbar|office chair|sit[-\s]?stand|مريح|مكتب|كرسي)\b/i.test(text)) {
     return "furniture_ergonomic_work_setup";
   }
   if (canonicalQuery?.category === "desk_setup" || /\b(desk setup|minimal desk)\b/i.test(text)) {

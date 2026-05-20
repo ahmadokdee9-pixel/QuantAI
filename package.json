@@ -22,6 +22,8 @@
     "test:vertical-taste-grammar": "npx --yes tsx scripts/evaluate-vertical-taste-grammar.mjs",
     "test:vertical-taste-shadow": "npx --yes tsx scripts/evaluate-vertical-taste-shadow.mjs",
     "test:taste-pollution": "npx --yes tsx scripts/taste-pollution.mjs",
+    "test:taste-institutional-gate": "node scripts/taste-institutional-gate.mjs",
+    "test:taste-deploy-reports": "node scripts/taste-deploy-reports.mjs",
     "test:fragrance-diagnosis": "npx --yes tsx scripts/diagnose-fragrance-recall.mjs",
     "test:phase1-exit": "node scripts/phase1-exit-check.mjs",
     "test:production-gate": "node scripts/production-validation-gate.mjs"

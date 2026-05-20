@@ -124,7 +124,7 @@ const checks = [
   {
     name: "false_aesthetic_promoted",
     ok: tastePollution ? falseAesthetic === 0 : true,
-    detail: tastePollution ? `${falseAesthetic} promoted` : "no taste-pollution history (run test:taste-pollution)",
+    detail: tastePollution ? `${falseAesthetic} promoted (alias)` : "no taste-pollution history (run test:taste-pollution)",
   },
   {
     name: "trust_cap_respected",
@@ -142,6 +142,34 @@ const checks = [
     detail: tasteShadow
       ? `maxShadow=${tasteShadow.report.maxShadowLatencyMs}ms`
       : "no shadow history (run test:vertical-taste-shadow)",
+  },
+  {
+    name: "aesthetic_intent_integrity",
+    ok: !tasteShadow || (tasteShadow.report.aesthetic_intent_integrity_pct ?? 0) >= 88,
+    detail: tasteShadow
+      ? `${tasteShadow.report.aesthetic_intent_integrity_pct}%`
+      : "no shadow history",
+  },
+  {
+    name: "semantic_lane_confidence",
+    ok: !tasteShadow || (tasteShadow.report.semantic_lane_confidence_pct ?? 0) >= 85,
+    detail: tasteShadow
+      ? `${tasteShadow.report.semantic_lane_confidence_pct}%`
+      : "no shadow history",
+  },
+  {
+    name: "gaming_pollution_in_minimal",
+    ok: !tastePollution || (tastePollution.report.gaming_pollution_in_minimal ?? 0) === 0,
+    detail: tastePollution
+      ? `${tastePollution.report.gaming_pollution_in_minimal} in minimal lanes`
+      : "no taste-pollution history",
+  },
+  {
+    name: "false_luxury_promoted",
+    ok: tastePollution ? (tastePollution.report.false_luxury_promoted ?? 0) === 0 : true,
+    detail: tastePollution
+      ? `${tastePollution.report.false_luxury_promoted ?? 0} promoted`
+      : "no taste-pollution history",
   },
   {
     name: "regression_delta",
