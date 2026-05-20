@@ -140,6 +140,15 @@ function detectCategory(s: string): SemanticProductCategory {
   if (hasAny(s, /(?:كرسي|كراسي|كرسي\s*مكتب|مكتب\s*مريح|مكتبي)/i)) return "furniture";
   if (hasAny(s, /(?:كنبة|كنبه|اريكة|أريكة|ركنة|طاولة\s*طعام|طاوله)/i)) return "furniture";
   if (hasAny(s, /\b(office\s+chair|desk\s+chair|ergonomic\s+chair|gaming\s+chair)\b/i)) return "furniture";
+  if (
+    hasAny(
+      s,
+      /\b(executive workspace|ergonomic workspace|walnut workspace|architectural office|studio desk|minimal office|premium workspace|oak desk|clean desk|minimal oak desk|workspace setup|standing desk setup|minimal desk setup)\b/i
+    ) &&
+    !/(?:sofa|couch|كنبة|كنبه)/i.test(s)
+  ) {
+    return "desk_setup";
+  }
   if (hasAny(s, /\b(clean desk|minimal desk|desk setup|workspace\s+setup)\b/i) && !/(?:كرسي|chair|stoel)/i.test(s)) return "desk_setup";
   if (hasAny(s, /\b(sofa|sofa bed|sectional|loveseat|settee|couch|corner sofa|recliner|chaise|hoekbank|bankstel|loungebank|fauteuil|eetkamerstoel|chair|stoel|desk|bureau|table|tafel|garden table|tuin tafel|tuinmeubel|loungeset|furniture|meubel|meubels|كنبة|اريكة|أريكة|ركنة|زاوية|طاولة|اثاث|أثاث)\b/i)) return "furniture";
   if (hasAny(s, /\b(perfume|fragrance|parfum|cologne|eau de parfum|eau de toilette|aftershave|niche fragrance|designer fragrance|libre|edp|edt|ysl|yves saint laurent|عطر|عطور|برفان)\b/i)) return "fragrance";

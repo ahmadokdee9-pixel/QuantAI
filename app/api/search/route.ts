@@ -36,6 +36,7 @@ import { semanticRerankSearchResults } from "@/lib/search/semanticReranker";
 import { buildLatencyBudgetReport } from "@/lib/search/latencyBudget";
 import { buildVerticalTasteShadowMeta } from "@/lib/taste/verticalTasteShadow";
 import { buildFragranceTasteCanaryMeta } from "@/lib/taste/fragranceTasteApply";
+import { buildFurnitureTasteCanaryMeta } from "@/lib/taste/furnitureTasteApply";
 import { buildWatchTasteCanaryMeta } from "@/lib/taste/watchTasteApply";
 import { TASTE_GRAMMAR_PIPELINE_CACHE_KEY } from "@/lib/taste/verticalTasteFlags";
 import { buildDegradedTrayNotice, buildEmptyTrayExplanation } from "@/lib/search/trayDiagnostics";
@@ -664,6 +665,15 @@ async function handleSearch(
       products,
       preOrderLinks: canonicalQuery.category === "fragrance" ? preTasteTrayLinks : [],
     });
+    const tasteFurnitureCanary = buildFurnitureTasteCanaryMeta({
+      query,
+      canonicalQuery,
+      products,
+      preOrderLinks:
+        canonicalQuery.category === "furniture" || canonicalQuery.category === "desk_setup"
+          ? preTasteTrayLinks
+          : [],
+    });
     const fallbackReason = guestOperationalDegraded
       ? String(guestOperationalDegraded.reason ?? "operational_degraded")
       : liveDiscovery.status === "enabled"
@@ -784,6 +794,7 @@ async function handleSearch(
         tasteGrammarShadow,
         tasteWatchCanary,
         tasteFragranceCanary,
+        tasteFurnitureCanary,
       },
     };
 

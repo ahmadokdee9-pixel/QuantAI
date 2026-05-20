@@ -102,7 +102,10 @@ export const TASTE_EVAL_CASES = [
       s.active &&
       s.rows.some(
         (r) =>
-          r.tasteViolations.includes("gaming_rgb_pollution") || r.tasteViolations.includes("aesthetic_mismatch")
+          r.tasteViolations.includes("gaming_pollution") ||
+          r.tasteViolations.includes("gaming_rgb_pollution") ||
+          r.tasteViolations.includes("rgb_overload") ||
+          r.tasteViolations.includes("aesthetic_mismatch")
       ),
   },
   {
@@ -126,7 +129,10 @@ export const TASTE_EVAL_CASES = [
     products: [MOCK("Steelcase Gesture Ergonomic Office Chair"), MOCK("Cheap Racing Style Gamer Chair")],
     expect: (s) =>
       s.active &&
-      (s.grammarLane === "furniture_ergonomic_work_setup" || s.grammarLane === "furniture_premium_minimal_desk"),
+      (s.grammarLane === "furniture_ergonomic_premium" ||
+        s.grammarLane === "furniture_executive_workspace" ||
+        s.grammarLane === "furniture_ergonomic_work_setup" ||
+        s.grammarLane === "furniture_premium_minimal_desk"),
   },
   {
     name: "furniture_premium_vs_fake",

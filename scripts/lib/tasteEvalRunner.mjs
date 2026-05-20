@@ -117,6 +117,17 @@ export function aggregateTasteMetrics(results) {
   };
 }
 
+/** P2.6 lane renames — treat as equivalent for snapshot regression. */
+const LANE_EQUIVALENTS = new Map([
+  ["furniture_ergonomic_work_setup", "furniture_ergonomic_premium"],
+  ["furniture_premium_minimal_desk", "furniture_minimal_office"],
+]);
+
+function lanesEquivalent(a, b) {
+  if (a === b) return true;
+  return LANE_EQUIVALENTS.get(a) === b || LANE_EQUIVALENTS.get(b) === a;
+}
+
 export function compareTasteSnapshots(current, previous) {
   if (!previous?.snapshots) {
     return { hasBaseline: false, regressions: [] };
@@ -128,7 +139,7 @@ export function compareTasteSnapshots(current, previous) {
     const prev = prevMap.get(cur.query);
     if (!prev) continue;
 
-    if (prev.grammarLane && cur.grammarLane && prev.grammarLane !== cur.grammarLane) {
+    if (prev.grammarLane && cur.grammarLane && !lanesEquivalent(prev.grammarLane, cur.grammarLane)) {
       regressions.push({
         query: cur.query,
         kind: "lane_drift",

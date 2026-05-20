@@ -14,6 +14,11 @@ export const TASTE_VIOLATION_CODES = {
   authenticity_risk: "authenticity_risk",
   accessory_not_main: "accessory_not_main",
   party_audio_pollution: "party_audio_pollution",
+  gaming_pollution: "gaming_pollution",
+  rgb_overload: "rgb_overload",
+  fake_ergonomic: "fake_ergonomic",
+  low_material_integrity: "low_material_integrity",
+  false_minimal_posture: "false_minimal_posture",
 } as const;
 
 export type TasteViolationCode = (typeof TASTE_VIOLATION_CODES)[keyof typeof TASTE_VIOLATION_CODES];
@@ -27,6 +32,9 @@ export const TASTE_EVIDENCE_DICTIONARIES = {
   furniture_minimal: /\b(minimal|matte|scandi|walnut|oak|slim|monochrome|cable management|standing desk)\b/i,
   furniture_gamer_pollution: /\b(gaming chair|racer|rgb|led trim|gamer)\b/i,
   furniture_ergonomic: /\b(ergonomic|lumbar|adjustable|sit[-\s]?stand|office chair|herman|steelcase)\b/i,
+  furniture_plastic_luxury: /\b(pu leather|faux leather|gold trim|luxury look|premium look|plastic frame)\b/i,
+  furniture_studio: /\b(studio|white desk|monochrome|clean desk|creator desk)\b/i,
+  furniture_architectural: /\b(architectural|bespoke|designer desk|architect)\b/i,
   fragrance_designer: /\b(eau de parfum|edp|designer|libre|ysl|chanel|dior|tom ford|90ml|100ml)\b/i,
   fragrance_niche: /\b(niche|artisan|indie|perfume house|attar)\b/i,
   fragrance_luxury: /\b(extrait|haute|parfum|luxury|refillable|collection privée)\b/i,

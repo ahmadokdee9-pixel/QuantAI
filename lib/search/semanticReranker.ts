@@ -24,6 +24,7 @@ import {
   luxuryWatchIntent01,
 } from "@/lib/search/luxuryWatchIntent";
 import { computeFragranceTasteApplyDelta, isFragranceTasteApplyEnabled } from "@/lib/taste/fragranceTasteApply";
+import { computeFurnitureTasteApplyDelta, isFurnitureCanaryQuery, isFurnitureTasteApplyEnabled } from "@/lib/taste/furnitureTasteApply";
 import { computeWatchTasteApplyDelta, isWatchTasteApplyEnabled } from "@/lib/taste/watchTasteApply";
 
 const memo = new Map<string, SemanticQueryUnderstanding>();
@@ -305,6 +306,10 @@ function semanticScore(
 
   if (q.productCategory === "fragrance" && isFragranceTasteApplyEnabled() && canonicalQuery) {
     score += computeFragranceTasteApplyDelta(canonicalQuery.originalQuery, p, canonicalQuery);
+  }
+
+  if (isFurnitureTasteApplyEnabled() && canonicalQuery && isFurnitureCanaryQuery(canonicalQuery, canonicalQuery.originalQuery)) {
+    score += computeFurnitureTasteApplyDelta(canonicalQuery.originalQuery, p, canonicalQuery);
   }
 
   return Math.round(score * 100) / 100;

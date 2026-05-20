@@ -18,6 +18,11 @@ export type VerticalTasteGrammarLaneId =
   | "electronics_workstation_pro"
   | "furniture_premium_minimal_desk"
   | "furniture_ergonomic_work_setup"
+  | "furniture_minimal_office"
+  | "furniture_executive_workspace"
+  | "furniture_ergonomic_premium"
+  | "furniture_studio_clean"
+  | "furniture_architectural_minimal"
   | "fragrance_designer_signature"
   | "fragrance_niche_artisan"
   | "fragrance_luxury_haute";

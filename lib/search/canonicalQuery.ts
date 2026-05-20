@@ -355,7 +355,13 @@ export function buildCanonicalQuery(rawQuery: string): CanonicalQueryContract {
   let category = semantic.productCategory;
   if (category === "unknown") {
     if (/(?:كرسي|office\s+chair|desk\s+chair|كنبة|كنبه|sofa|couch|chair|stoel)/i.test(envelope)) category = "furniture";
-    else if (/(?:libre|edp|edt|parfum|perfume|fragrance|ysl|yves\s+saint\s+laurent|عطر)/i.test(envelope)) category = "fragrance";
+    else if (
+      /(?:desk setup|minimal desk|executive workspace|ergonomic workspace|walnut workspace|architectural office|studio desk|oak desk|workspace setup|standing desk|minimal oak desk|clean studio desk)/i.test(
+        envelope
+      )
+    ) {
+      category = "desk_setup";
+    } else if (/(?:libre|edp|edt|parfum|perfume|fragrance|ysl|yves\s+saint\s+laurent|عطر)/i.test(envelope)) category = "fragrance";
   }
   return {
     version: 1,

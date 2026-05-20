@@ -11,6 +11,7 @@ import {
 } from "@/lib/taste/verticalTasteRegistry";
 import type { VerticalTasteShadowMeta, VerticalTasteShadowRow } from "@/lib/taste/verticalTasteContracts";
 import { isFragranceTasteApplyEnabled } from "@/lib/taste/fragranceTasteApply";
+import { isFurnitureTasteApplyEnabled } from "@/lib/taste/furnitureTasteApply";
 import { isWatchTasteApplyEnabled } from "@/lib/taste/watchTasteApply";
 import {
   getShadowIntentThreshold,
@@ -31,7 +32,9 @@ function inactiveShadow(
       ? isWatchTasteApplyEnabled()
       : category === "fragrance"
         ? isFragranceTasteApplyEnabled()
-        : false;
+        : category === "furniture" || category === "desk_setup"
+          ? isFurnitureTasteApplyEnabled()
+          : false;
   return {
     version: TASTE_GRAMMAR_SHADOW_META_VERSION,
     active: false,
@@ -183,7 +186,8 @@ export function buildVerticalTasteShadowMeta(args: {
       evidenceTier: modifiers.evidenceTier !== "none" ? modifiers.evidenceTier : listing.evidenceTier,
       shadowDelta:
         (category === "watch" && isWatchTasteApplyEnabled()) ||
-        (category === "fragrance" && isFragranceTasteApplyEnabled())
+        (category === "fragrance" && isFragranceTasteApplyEnabled()) ||
+        ((category === "furniture" || category === "desk_setup") && isFurnitureTasteApplyEnabled())
           ? modifiers.delta
           : 0,
     });
@@ -205,7 +209,9 @@ export function buildVerticalTasteShadowMeta(args: {
         ? isWatchTasteApplyEnabled()
         : category === "fragrance"
           ? isFragranceTasteApplyEnabled()
-          : false,
+          : category === "furniture" || category === "desk_setup"
+            ? isFurnitureTasteApplyEnabled()
+            : false,
     tasteFit: tasteFit01,
     tasteFit01,
     tasteViolations: violations,

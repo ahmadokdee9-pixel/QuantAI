@@ -34,6 +34,7 @@ const shadow = loadLatest("vertical-taste-shadow");
 const pollution = loadLatest("taste-pollution");
 const watchCanary = loadLatest("watch-taste-canary");
 const fragranceCanary = loadLatest("fragrance-taste-canary");
+const furnitureCanary = loadLatest("furniture-taste-canary");
 
 if (!shadow) {
   console.error("Missing vertical-taste-shadow history. Run: npm run test:vertical-taste-shadow");
@@ -91,7 +92,7 @@ const checks = [
   {
     name: "apply_disabled_by_default",
     ok: s.applyEnabled !== true && p.trust_cap_respected_pct === 100,
-    detail: `shadow.apply=${s.applyEnabled} (watch/fragrance flags off in gate process)`,
+    detail: `shadow.apply=${s.applyEnabled} (watch/fragrance/furniture flags off in gate process)`,
   },
   {
     name: "watch_canary_history",
@@ -110,6 +111,19 @@ const checks = [
     detail: fragranceCanary
       ? `fragrance maxDelta=${fragranceCanary.report.max_apply_delta} trust=${fragranceCanary.report.trust_cap_respected_pct}%`
       : "no fragrance canary history (run test:fragrance-taste-canary)",
+  },
+  {
+    name: "furniture_canary_history",
+    ok:
+      !furnitureCanary ||
+      ((furnitureCanary.report.pollution_top5 ?? 0) === 0 &&
+        (furnitureCanary.report.max_apply_delta ?? 99) <= 12 &&
+        (furnitureCanary.report.trust_cap_respected_pct ?? 0) >= 100 &&
+        (furnitureCanary.report.gaming_pollution_top5 ?? 0) === 0 &&
+        (furnitureCanary.report.gaming_in_top2 ?? 0) === 0),
+    detail: furnitureCanary
+      ? `furniture maxDelta=${furnitureCanary.report.max_apply_delta} trust=${furnitureCanary.report.trust_cap_respected_pct}% gaming=${furnitureCanary.report.gaming_pollution_top5 ?? 0}`
+      : "no furniture canary history (run test:furniture-taste-canary)",
   },
   {
     name: "snapshot_regression",
