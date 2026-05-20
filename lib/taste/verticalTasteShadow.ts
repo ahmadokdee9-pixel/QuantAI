@@ -10,6 +10,7 @@ import {
   getActiveGrammarModulesForCategory,
 } from "@/lib/taste/verticalTasteRegistry";
 import type { VerticalTasteShadowMeta, VerticalTasteShadowRow } from "@/lib/taste/verticalTasteContracts";
+import { isWatchTasteApplyEnabled } from "@/lib/taste/watchTasteApply";
 import {
   getShadowIntentThreshold,
   isTasteGrammarApplyEnabled,
@@ -24,7 +25,8 @@ function inactiveShadow(
   skippedReason: string,
   latencyMs: number
 ): VerticalTasteShadowMeta {
-  const applyEnabled = isTasteGrammarApplyEnabled();
+  const applyEnabled =
+    category === "watch" ? isWatchTasteApplyEnabled() : false;
   return {
     version: TASTE_GRAMMAR_SHADOW_META_VERSION,
     active: false,
@@ -174,7 +176,8 @@ export function buildVerticalTasteShadowMeta(args: {
       tasteFit01: modifiers.tasteFit01,
       tasteViolations: [...new Set([...modifiers.violations, ...listing.violations])],
       evidenceTier: modifiers.evidenceTier !== "none" ? modifiers.evidenceTier : listing.evidenceTier,
-      shadowDelta: isTasteGrammarApplyEnabled() ? modifiers.delta : 0,
+      shadowDelta:
+        category === "watch" && isWatchTasteApplyEnabled() ? modifiers.delta : 0,
     });
   }
 
@@ -189,7 +192,7 @@ export function buildVerticalTasteShadowMeta(args: {
     grammarLane,
     grammarId: activeModule.grammarId,
     intent01: bestIntent01,
-    applyEnabled: isTasteGrammarApplyEnabled(),
+    applyEnabled: category === "watch" ? isWatchTasteApplyEnabled() : false,
     tasteFit: tasteFit01,
     tasteFit01,
     tasteViolations: violations,

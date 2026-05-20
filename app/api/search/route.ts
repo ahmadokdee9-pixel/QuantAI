@@ -35,6 +35,7 @@ import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import { semanticRerankSearchResults } from "@/lib/search/semanticReranker";
 import { buildLatencyBudgetReport } from "@/lib/search/latencyBudget";
 import { buildVerticalTasteShadowMeta } from "@/lib/taste/verticalTasteShadow";
+import { buildWatchTasteCanaryMeta } from "@/lib/taste/watchTasteApply";
 import { TASTE_GRAMMAR_PIPELINE_CACHE_KEY } from "@/lib/taste/verticalTasteFlags";
 import { buildDegradedTrayNotice, buildEmptyTrayExplanation } from "@/lib/search/trayDiagnostics";
 import { logSearchEvent } from "@/lib/log/productionLog";
@@ -617,6 +618,8 @@ async function handleSearch(
       traceStage("safe_identity_breadth_recovery", 0, products.length);
     }
     const preSemanticProducts = products;
+    const preWatchTrayLinks =
+      canonicalQuery.category === "watch" ? products.slice(0, 12).map((p) => p.link || p.title) : [];
     products = semanticRerankSearchResults(products, query, canonicalQuery);
     traceStage("semantic_rerank", preSemanticProducts.length, products.length);
     if (products.length === 0 && preSemanticProducts.length > 0) {
@@ -645,6 +648,12 @@ async function handleSearch(
       query,
       canonicalQuery,
       products,
+    });
+    const tasteWatchCanary = buildWatchTasteCanaryMeta({
+      query,
+      canonicalQuery,
+      products,
+      preOrderLinks: preWatchTrayLinks,
     });
     const fallbackReason = guestOperationalDegraded
       ? String(guestOperationalDegraded.reason ?? "operational_degraded")
@@ -764,6 +773,7 @@ async function handleSearch(
               : null,
         operationalState: guestOperationalDegraded,
         tasteGrammarShadow,
+        tasteWatchCanary,
       },
     };
 

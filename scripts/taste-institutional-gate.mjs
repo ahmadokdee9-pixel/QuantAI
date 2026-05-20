@@ -32,6 +32,7 @@ function loadLatest(suiteName) {
 
 const shadow = loadLatest("vertical-taste-shadow");
 const pollution = loadLatest("taste-pollution");
+const watchCanary = loadLatest("watch-taste-canary");
 
 if (!shadow) {
   console.error("Missing vertical-taste-shadow history. Run: npm run test:vertical-taste-shadow");
@@ -87,9 +88,20 @@ const checks = [
     detail: `${s.maxShadowLatencyMs}ms (max ${THRESHOLDS.shadow_cpu_max_ms}ms)`,
   },
   {
-    name: "apply_disabled",
-    ok: s.applyEnabled !== true && p.trust_cap_respected_pct === 100,
-    detail: `shadow.apply=${s.applyEnabled}`,
+    name: "apply_disabled_or_watch_only",
+    ok:
+      process.env.TASTE_GRAMMAR_ENABLED !== "true"
+        ? s.applyEnabled !== true && p.trust_cap_respected_pct === 100
+        : watchCanary
+          ? (watchCanary.report.pollution_top5 ?? 0) === 0 &&
+            (watchCanary.report.max_apply_delta ?? 99) <= 12
+          : false,
+    detail:
+      process.env.TASTE_GRAMMAR_ENABLED === "true"
+        ? watchCanary
+          ? `canary pollution=${watchCanary.report.pollution_top5} maxDelta=${watchCanary.report.max_apply_delta}`
+          : "TASTE_GRAMMAR_ENABLED but no watch-taste-canary history"
+        : `shadow.apply=${s.applyEnabled}`,
   },
   {
     name: "snapshot_regression",

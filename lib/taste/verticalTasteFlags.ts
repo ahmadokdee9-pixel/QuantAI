@@ -5,7 +5,10 @@
 import type { SemanticProductCategory } from "@/lib/search/queryUnderstanding";
 
 /** Bump when grammar rules change (rollback-safe cache invalidation). */
-export const TASTE_GRAMMAR_PIPELINE_CACHE_KEY = "quantai-search-pipeline-v50-taste-grammar-shadow-v2";
+export const TASTE_GRAMMAR_PIPELINE_CACHE_KEY = "quantai-search-pipeline-v51-watch-taste-apply-canary-v1";
+
+/** Max bounded taste score delta (watches canary only). */
+export const TASTE_WATCH_APPLY_MAX_DELTA = 12;
 
 export const TASTE_GRAMMAR_SHADOW_META_VERSION = "vertical-taste-shadow-v2";
 
@@ -32,11 +35,17 @@ export function getShadowIntentThreshold(category: SemanticProductCategory): num
 }
 
 /**
- * When true, taste modifiers may be applied to ranking (Phase 2.3+).
- * Phase 2.2: must remain false in production.
+ * When true, WATCHES-ONLY taste apply is active (Phase 2.4 canary).
+ * Rollback: set TASTE_GRAMMAR_ENABLED=false.
+ * Electronics, furniture, fragrance never apply.
  */
 export function isTasteGrammarApplyEnabled(): boolean {
   return process.env.TASTE_GRAMMAR_ENABLED === "true";
+}
+
+/** Alias — documents watches-only scope. */
+export function isWatchOnlyTasteApplyEnabled(): boolean {
+  return isTasteGrammarApplyEnabled();
 }
 
 /** Shadow meta emission — default on; set TASTE_GRAMMAR_SHADOW=false to disable. */

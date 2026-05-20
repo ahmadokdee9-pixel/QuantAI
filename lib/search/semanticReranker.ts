@@ -23,6 +23,7 @@ import {
   isLuxuryWatchListingEvidence,
   luxuryWatchIntent01,
 } from "@/lib/search/luxuryWatchIntent";
+import { computeWatchTasteApplyDelta, isWatchTasteApplyEnabled } from "@/lib/taste/watchTasteApply";
 
 const memo = new Map<string, SemanticQueryUnderstanding>();
 
@@ -249,13 +250,17 @@ function semanticScore(
       (q.premiumIntent01 >= 0.52 && /\bluxury\b/i.test(q.raw)));
 
   if (luxuryWatchLane) {
-    if (isConsumerFitnessWatchListing(text) && !isLuxuryWatchListingEvidence(text)) {
-      score -= 22;
-    } else if (isLuxuryWatchListingEvidence(text)) {
-      score += 8;
-    }
-    if (/\b(dress watch|automatic|mechanical|swiss|chronograph|sapphire|prestige|timepiece)\b/i.test(text)) {
-      score += 5;
+    if (isWatchTasteApplyEnabled() && canonicalQuery) {
+      score += computeWatchTasteApplyDelta(canonicalQuery.originalQuery, p, canonicalQuery);
+    } else {
+      if (isConsumerFitnessWatchListing(text) && !isLuxuryWatchListingEvidence(text)) {
+        score -= 22;
+      } else if (isLuxuryWatchListingEvidence(text)) {
+        score += 8;
+      }
+      if (/\b(dress watch|automatic|mechanical|swiss|chronograph|sapphire|prestige|timepiece)\b/i.test(text)) {
+        score += 5;
+      }
     }
   } else if (q.productCategory === "watch" && (q.premiumIntent01 >= 0.45 || q.aestheticDirection === "premium_luxury")) {
     if (isConsumerFitnessWatchListing(text) && !isLuxuryWatchListingEvidence(text)) score -= 12;
