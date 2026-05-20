@@ -1,19 +1,13 @@
 /**
- * Vertical Taste Grammar registry — Phase 2.1 institutional architecture.
- * Maps productCategory + grammarLaneId → grammar modules (shadow-ready).
+ * Vertical Taste Grammar registry — Phase 2.2 shadow-active lanes.
  */
 
+import { audioTasteGrammar, electronicsTasteGrammar } from "@/lib/taste/grammars/electronicsTasteGrammar";
+import { deskSetupTasteGrammar, furnitureTasteGrammar } from "@/lib/taste/grammars/furnitureTasteGrammar";
+import { fragranceTasteGrammar } from "@/lib/taste/grammars/fragranceTasteGrammar";
 import { luxuryWatchGrammar } from "@/lib/taste/grammars/luxuryWatchGrammar";
-import {
-  electronicsAudioGrammar,
-  electronicsFocusGrammar,
-  fragranceDesignerGrammar,
-  furnitureDeskSetupGrammar,
-  furnitureMinimalGrammar,
-} from "@/lib/taste/grammars/stubVerticalGrammars";
-import type {
-  SemanticProductCategory,
-} from "@/lib/search/queryUnderstanding";
+import { TASTE_COMPARE_AXES_BY_VERTICAL } from "@/lib/taste/tasteGrammarEvidence";
+import type { SemanticProductCategory } from "@/lib/search/queryUnderstanding";
 import type {
   VerticalTasteGrammarLaneId,
   VerticalTasteGrammarModule,
@@ -35,20 +29,24 @@ function entry(
   };
 }
 
-/** All registered lanes — stubs remain inactive (intent01=0) until P2.2+. */
+/** Canonical lane registry — compareAxes from module or vertical fallback. */
 export const VERTICAL_TASTE_REGISTRY: VerticalTasteRegistryEntry[] = [
   entry("watch_luxury_quiet", luxuryWatchGrammar),
   entry("watch_mechanical_collector", luxuryWatchGrammar),
   entry("watch_swiss_dress", luxuryWatchGrammar),
-  entry("electronics_focus_deep_work", electronicsFocusGrammar),
-  entry("electronics_audio_reference", electronicsAudioGrammar),
-  entry("electronics_workstation_pro", electronicsFocusGrammar),
-  entry("furniture_premium_minimal_desk", furnitureMinimalGrammar),
-  entry("furniture_ergonomic_work_setup", furnitureDeskSetupGrammar),
-  entry("fragrance_designer_signature", fragranceDesignerGrammar),
-  entry("fragrance_niche_artisan", fragranceDesignerGrammar),
-  entry("fragrance_luxury_haute", fragranceDesignerGrammar),
+  entry("electronics_focus_deep_work", electronicsTasteGrammar),
+  entry("electronics_audio_reference", audioTasteGrammar),
+  entry("electronics_workstation_pro", electronicsTasteGrammar),
+  entry("furniture_premium_minimal_desk", furnitureTasteGrammar),
+  entry("furniture_ergonomic_work_setup", deskSetupTasteGrammar),
+  entry("fragrance_designer_signature", fragranceTasteGrammar),
+  entry("fragrance_niche_artisan", fragranceTasteGrammar),
+  entry("fragrance_luxury_haute", fragranceTasteGrammar),
 ];
+
+export const VERTICAL_COMPARE_AXES_MAP: Record<string, readonly string[]> = {
+  ...TASTE_COMPARE_AXES_BY_VERTICAL,
+};
 
 const CATEGORY_INDEX = new Map<SemanticProductCategory, VerticalTasteRegistryEntry[]>();
 
@@ -65,7 +63,7 @@ export function getRegistryEntriesForCategory(
   return CATEGORY_INDEX.get(category) ?? [];
 }
 
-/** Primary active module for category (deduped by grammarId). */
+/** Active modules for category (deduped by grammarId). */
 export function getActiveGrammarModulesForCategory(
   category: SemanticProductCategory
 ): VerticalTasteGrammarModule[] {
@@ -83,4 +81,11 @@ export function findRegistryEntryByLane(
   lane: VerticalTasteGrammarLaneId
 ): VerticalTasteRegistryEntry | undefined {
   return VERTICAL_TASTE_REGISTRY.find((r) => r.grammarLaneId === lane);
+}
+
+export function compareAxesForCategory(category: SemanticProductCategory): string[] {
+  const modules = getActiveGrammarModulesForCategory(category);
+  if (modules[0]?.compareAxes.length) return [...modules[0].compareAxes];
+  const axes = VERTICAL_COMPARE_AXES_MAP[category];
+  return axes ? [...axes] : [];
 }

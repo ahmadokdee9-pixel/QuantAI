@@ -19,6 +19,8 @@ jobs:
       - run: npm run test:category-reliability
       - run: npm run test:luxury-watch
       - run: npm run test:vertical-taste-grammar
+      - run: npm run test:vertical-taste-shadow
+      - run: npm run test:taste-pollution
 
   validate:
     runs-on: ubuntu-latest

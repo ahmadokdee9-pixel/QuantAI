@@ -95,10 +95,11 @@ const shadowDesk = buildVerticalTasteShadowMeta({
   products: [MOCK_PRODUCT],
 });
 assert(
-  "stub_category_inactive",
-  shadowDesk.active === false || shadowDesk.intent01 < 0.42,
-  JSON.stringify({ active: shadowDesk.active, intent01: shadowDesk.intent01 })
+  "desk_setup_shadow_active",
+  shadowDesk.active === true && shadowDesk.vertical === "desk_setup",
+  JSON.stringify({ active: shadowDesk.active, vertical: shadowDesk.vertical, lane: shadowDesk.grammarLane })
 );
+assert("shadow_telemetry_v2", shadow.vertical === "watch" && Array.isArray(shadow.compareAxes) && shadow.violations !== undefined);
 
 // Optional live shadow meta (requires P2.1 deploy on target)
 const BASE = process.env.SEARCH_BASE_URL;
@@ -115,7 +116,11 @@ if (BASE) {
     } else {
       assert("live_shadow_meta_present", typeof live === "object");
       assert("live_apply_disabled", live.applyEnabled === false);
-      assert("live_version", live.version === "vertical-taste-shadow-v1");
+      if (live.version === "vertical-taste-shadow-v2") {
+        assert("live_telemetry", live.vertical != null && Array.isArray(live.compareAxes));
+      } else {
+        console.log(`SKIP live_telemetry: prod on ${live.version}, need v2 deploy`);
+      }
     }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

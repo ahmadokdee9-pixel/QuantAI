@@ -25,6 +25,10 @@ function loadLatest(suiteName) {
 
 const realworld = loadLatest("realworld");
 const searchEval = loadLatest("search-eval");
+const tastePollution = loadLatest("taste-pollution");
+const tasteShadow = loadLatest("vertical-taste-shadow");
+
+const TASTE_LATENCY_REGRESSION_MS = Number(process.env.TASTE_GATE_LATENCY_REGRESSION_MS || 200);
 
 if (!realworld) {
   console.error("Missing realworld history. Run test:realworld first.");
@@ -64,6 +68,32 @@ if (searchEval) {
   }
 }
 
+let falseAesthetic = 0;
+let trustCapPct = 100;
+let tastePollutionTop5 = 0;
+if (tastePollution) {
+  falseAesthetic = tastePollution.report.false_aesthetic_promoted ?? 0;
+  trustCapPct = tastePollution.report.trust_cap_respected_pct ?? 100;
+  tastePollutionTop5 = tastePollution.report.taste_pollution_top5 ?? 0;
+}
+
+const priorRealworld = existsSync(HISTORY)
+  ? readdirSync(HISTORY)
+      .filter((f) => f.includes("__realworld__") && f.endsWith(".json"))
+      .sort()
+  : [];
+let baselineP95 = null;
+if (priorRealworld.length >= 2) {
+  const prev = JSON.parse(readFileSync(join(HISTORY, priorRealworld[priorRealworld.length - 2]), "utf8"));
+  const lat = (prev.queries ?? [])
+    .filter((q) => !q.infrastructureFailure && typeof q.latencyMs === "number")
+    .map((q) => q.latencyMs);
+  if (lat.length) baselineP95 = [...lat].sort((a, b) => a - b)[Math.floor(lat.length * 0.95)];
+}
+
+const latencyRegressionOk =
+  baselineP95 == null ? true : p95Latency <= baselineP95 + TASTE_LATENCY_REGRESSION_MS;
+
 const checks = [
   { name: "pass_rate", ok: passPct >= MIN_PASS_PCT, detail: `${passPct}% (min ${MIN_PASS_PCT}%)` },
   { name: "infrastructure_skips", ok: infra === 0, detail: `${infra} skips` },
@@ -82,6 +112,36 @@ const checks = [
     name: "latency_p95_budget",
     ok: p95Latency <= MAX_LATENCY_MS,
     detail: `p95=${p95Latency}ms max=${maxLatency}ms (budget ${MAX_LATENCY_MS}ms)`,
+  },
+  {
+    name: "taste_latency_regression",
+    ok: latencyRegressionOk,
+    detail:
+      baselineP95 != null
+        ? `p95=${p95Latency}ms baseline=${baselineP95}ms (+${TASTE_LATENCY_REGRESSION_MS}ms max)`
+        : "no baseline",
+  },
+  {
+    name: "false_aesthetic_promoted",
+    ok: tastePollution ? falseAesthetic === 0 : true,
+    detail: tastePollution ? `${falseAesthetic} promoted` : "no taste-pollution history (run test:taste-pollution)",
+  },
+  {
+    name: "trust_cap_respected",
+    ok: tastePollution ? trustCapPct >= 100 : true,
+    detail: tastePollution ? `${trustCapPct}%` : "no taste-pollution history",
+  },
+  {
+    name: "taste_pollution_top5",
+    ok: tastePollution ? tastePollutionTop5 === 0 : true,
+    detail: tastePollution ? `${tastePollutionTop5} unflagged pollution rows` : "no taste-pollution history",
+  },
+  {
+    name: "vertical_taste_shadow_cpu",
+    ok: !tasteShadow || (tasteShadow.report.maxShadowLatencyMs ?? 0) <= 12,
+    detail: tasteShadow
+      ? `maxShadow=${tasteShadow.report.maxShadowLatencyMs}ms`
+      : "no shadow history (run test:vertical-taste-shadow)",
   },
   {
     name: "regression_delta",
