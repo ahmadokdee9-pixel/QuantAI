@@ -150,8 +150,9 @@ for (const tray of POLLUTION_TRAYS) {
 }
 
 const cacheKeyOk =
-  TASTE_GRAMMAR_PIPELINE_CACHE_KEY.includes("unified-taste") &&
-  TASTE_GRAMMAR_PIPELINE_CACHE_KEY.includes("canary");
+  TASTE_GRAMMAR_PIPELINE_CACHE_KEY.includes("unified-live-soak") ||
+  (TASTE_GRAMMAR_PIPELINE_CACHE_KEY.includes("unified-taste") &&
+    TASTE_GRAMMAR_PIPELINE_CACHE_KEY.includes("canary"));
 if (!cacheKeyOk) {
   failed += 1;
   console.error("FAIL cache key missing unified-taste marker", TASTE_GRAMMAR_PIPELINE_CACHE_KEY);

@@ -34,6 +34,9 @@
     "test:unified-taste-meta-soak": "npx --yes tsx scripts/unified-taste-meta-soak.mjs",
     "test:unified-taste-canary": "npx --yes tsx scripts/unified-taste-canary-eval.mjs",
     "test:unified-taste-apply-parity": "npx --yes tsx scripts/unified-taste-apply-parity.mjs",
+    "test:unified-live-soak": "npx --yes tsx scripts/unified-live-soak.mjs",
+    "test:unified-stability": "npx --yes tsx scripts/unified-stability.mjs",
+    "test:unified-production-guard": "npx --yes tsx scripts/unified-production-guard.mjs",
     "test:fragrance-diagnosis": "npx --yes tsx scripts/diagnose-fragrance-recall.mjs",
     "test:phase1-exit": "node scripts/phase1-exit-check.mjs",
     "test:production-gate": "node scripts/production-validation-gate.mjs"

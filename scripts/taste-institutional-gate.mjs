@@ -38,6 +38,8 @@ const furnitureCanary = loadLatest("furniture-taste-canary");
 const unifiedTaste = loadLatest("unified-taste-institutional");
 const unifiedSoak = loadLatest("unified-taste-meta-soak");
 const unifiedCanary = loadLatest("unified-taste-canary");
+const unifiedLiveSoak = loadLatest("unified-live-soak");
+const unifiedProductionGuard = loadLatest("unified-production-guard");
 
 if (!shadow) {
   console.error("Missing vertical-taste-shadow history. Run: npm run test:vertical-taste-shadow");
@@ -164,6 +166,30 @@ const checks = [
     detail: unifiedCanary
       ? `unified canary maxDelta=${unifiedCanary.report.max_apply_delta} pollution=${unifiedCanary.report.pollution_top2} prestige=${unifiedCanary.report.min_prestige_integrity}`
       : "no unified canary history (run test:unified-taste-canary)",
+  },
+  {
+    name: "unified_live_soak_p33",
+    ok:
+      !unifiedLiveSoak ||
+      ((unifiedLiveSoak.report.pass_rate_pct ?? 0) >= 100 &&
+        (unifiedLiveSoak.report.pollution_top2 ?? 99) === 0 &&
+        (unifiedLiveSoak.report.max_apply_delta ?? 99) <= 4 &&
+        (unifiedLiveSoak.report.min_prestige_integrity ?? 0) >= 0.68 &&
+        unifiedLiveSoak.report.telemetry_wired === true),
+    detail: unifiedLiveSoak
+      ? `live soak pass=${unifiedLiveSoak.report.pass_rate_pct}% pollution=${unifiedLiveSoak.report.pollution_top2} drift=${unifiedLiveSoak.report.max_ranking_drift}`
+      : "no unified live soak history (run test:unified-live-soak)",
+  },
+  {
+    name: "unified_production_guard_p33",
+    ok:
+      !unifiedProductionGuard ||
+      (unifiedProductionGuard.report.production_default_off === true &&
+        unifiedProductionGuard.report.hard_rollback === true &&
+        (unifiedProductionGuard.report.pass_rate_pct ?? 0) >= 100),
+    detail: unifiedProductionGuard
+      ? `prod_off=${unifiedProductionGuard.report.production_default_off} rollback=${unifiedProductionGuard.report.hard_rollback}`
+      : "no production guard history (run test:unified-production-guard)",
   },
   {
     name: "snapshot_regression",

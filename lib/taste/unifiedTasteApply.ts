@@ -8,7 +8,6 @@ import {
   computeUnifiedListingDelta,
   detectUnifiedQueryClass,
   isUnifiedApplyEligible,
-  isUnifiedTasteApplyEnabled,
   unifiedListingHardSuppressed,
 } from "@/lib/taste/unifiedTasteGates";
 import { fragranceTasteGrammar } from "@/lib/taste/grammars/fragranceTasteGrammar";
@@ -16,7 +15,11 @@ import { furnitureGrammarForCategory } from "@/lib/taste/grammars/furnitureTaste
 import { luxuryWatchGrammar } from "@/lib/taste/grammars/luxuryWatchGrammar";
 import type { UnifiedTasteIdentityId } from "@/lib/taste/tasteGraph";
 import { computeUnifiedTasteSignals } from "@/lib/taste/unifiedTasteIdentity";
-import { TASTE_UNIFIED_APPLY_CANARY_VERSION } from "@/lib/taste/unifiedTasteFlags";
+import { TASTE_UNIFIED_APPLY_CANARY_VERSION, TASTE_UNIFIED_LIVE_SOAK_VERSION } from "@/lib/taste/unifiedTasteFlags";
+import {
+  isUnifiedCanaryEnvironmentAllowed,
+  isUnifiedTasteApplyEnabled,
+} from "@/lib/taste/unifiedTasteFlags";
 import type { VerticalTasteShadowMeta } from "@/lib/taste/verticalTasteContracts";
 import type { UnifiedQueryClass } from "@/lib/taste/unifiedTasteGates";
 
@@ -28,6 +31,21 @@ export {
   isUnifiedTasteApplyEnabled,
   unifiedListingHardSuppressed,
 } from "@/lib/taste/unifiedTasteGates";
+
+export type UnifiedLiveSoakCanaryMeta = {
+  version: typeof TASTE_UNIFIED_LIVE_SOAK_VERSION;
+  queryClass: UnifiedQueryClass | null;
+  identity: UnifiedTasteIdentityId | null;
+  coherenceScore: number;
+  prestigeIntegrity: number;
+  pollutionTop2: number;
+  applyDeltaMax: number;
+  rankingDriftCount: number;
+  trayCollapse: boolean;
+  latencyMs: number;
+  applyEnabled: boolean;
+  stagingGuardPass: boolean;
+};
 
 export type UnifiedTasteCanaryMeta = {
   version: typeof TASTE_UNIFIED_APPLY_CANARY_VERSION;
@@ -121,6 +139,31 @@ export function stabilizeUnifiedHardSuppressionOrder(args: {
   }
   if (!suppressed.length) return products;
   return [...clean, ...suppressed].map((p, i) => ({ ...p, qiRank: i }));
+}
+
+/** P3.3 — Slim live staging soak telemetry slice for meta.unifiedTasteCanary. */
+export function buildUnifiedLiveSoakCanaryMeta(args: {
+  query: string;
+  canonicalQuery: CanonicalQueryContract;
+  products: QuantProduct[];
+  tasteGrammarShadow?: VerticalTasteShadowMeta;
+  preOrderLinks?: string[];
+}): UnifiedLiveSoakCanaryMeta {
+  const full = buildUnifiedTasteCanaryMeta(args);
+  return {
+    version: TASTE_UNIFIED_LIVE_SOAK_VERSION,
+    queryClass: full.queryClass,
+    identity: full.identity,
+    coherenceScore: full.coherenceScore,
+    prestigeIntegrity: full.prestigeIntegrity,
+    pollutionTop2: full.pollutionTop2,
+    applyDeltaMax: full.applyDeltaMax,
+    rankingDriftCount: full.rankingDriftCount,
+    trayCollapse: full.trayCollapse,
+    latencyMs: full.latencyMs,
+    applyEnabled: full.applyEnabled,
+    stagingGuardPass: isUnifiedCanaryEnvironmentAllowed(),
+  };
 }
 
 export function buildUnifiedTasteCanaryMeta(args: {

@@ -38,7 +38,7 @@ import { buildVerticalTasteShadowMeta } from "@/lib/taste/verticalTasteShadow";
 import { buildFragranceTasteCanaryMeta } from "@/lib/taste/fragranceTasteApply";
 import { buildFurnitureTasteCanaryMeta } from "@/lib/taste/furnitureTasteApply";
 import { buildUnifiedTasteMeta } from "@/lib/taste/unifiedTasteIdentity";
-import { buildUnifiedTasteCanaryMeta } from "@/lib/taste/unifiedTasteApply";
+import { buildUnifiedTasteCanaryMeta, buildUnifiedLiveSoakCanaryMeta } from "@/lib/taste/unifiedTasteApply";
 import { isUnifiedTasteMetaEnabled } from "@/lib/taste/unifiedTasteFlags";
 import { buildWatchTasteCanaryMeta } from "@/lib/taste/watchTasteApply";
 import { TASTE_GRAMMAR_PIPELINE_CACHE_KEY } from "@/lib/taste/verticalTasteFlags";
@@ -706,6 +706,13 @@ async function handleSearch(
       tasteGrammarShadow,
       preOrderLinks: preTasteTrayLinks,
     });
+    const unifiedTasteCanary = buildUnifiedLiveSoakCanaryMeta({
+      query,
+      canonicalQuery,
+      products,
+      tasteGrammarShadow,
+      preOrderLinks: preTasteTrayLinks,
+    });
     const fallbackReason = guestOperationalDegraded
       ? String(guestOperationalDegraded.reason ?? "operational_degraded")
       : liveDiscovery.status === "enabled"
@@ -829,6 +836,7 @@ async function handleSearch(
         tasteFurnitureCanary,
         unifiedTaste,
         tasteUnifiedCanary,
+        unifiedTasteCanary,
       },
     };
 
