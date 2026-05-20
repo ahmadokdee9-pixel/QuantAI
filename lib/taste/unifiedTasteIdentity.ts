@@ -20,10 +20,9 @@ import type { VerticalTasteGrammarLaneId, VerticalTasteShadowMeta } from "@/lib/
 import {
   isUnifiedTasteApplyEnabled,
   TASTE_UNIFIED_APPLY_MAX_DELTA,
-  TASTE_UNIFIED_CONFIDENCE_THRESHOLD,
   TASTE_UNIFIED_META_VERSION,
-  TASTE_UNIFIED_PRESTIGE_INTEGRITY_MIN,
 } from "@/lib/taste/unifiedTasteFlags";
+import { computeUnifiedListingDelta } from "@/lib/taste/unifiedTasteGates";
 
 export type { UnifiedTasteIdentityId } from "@/lib/taste/tasteGraph";
 
@@ -180,35 +179,6 @@ function pickIdentity(args: {
   return { identity: best, confidence: clamp01(bestScore + laneBoost) };
 }
 
-function listingUnifiedDelta(
-  identity: UnifiedTasteIdentityId,
-  product: QuantProduct,
-  canonicalQuery: CanonicalQueryContract,
-  violations: string[]
-): number {
-  if (!isUnifiedTasteApplyEnabled()) return 0;
-  if (violations.some((v) => /gaming|rgb|fitness|dupe|inspired|false_luxury|false_minimal|fake_ergonomic/i.test(v))) {
-    return -TASTE_UNIFIED_APPLY_MAX_DELTA;
-  }
-
-  const cat = canonicalQuery.category;
-  let fit = 0.5;
-  if (cat === "watch") fit = luxuryWatchGrammar.detectListingEvidence(product, canonicalQuery).fit01;
-  else if (cat === "fragrance") fit = fragranceTasteGrammar.detectListingEvidence(product, canonicalQuery).fit01;
-  else if (cat === "furniture" || cat === "desk_setup") {
-    fit = furnitureGrammarForCategory(cat).detectListingEvidence(product, canonicalQuery).fit01;
-  }
-
-  const alignment = laneIdentityAffinity(
-    resolveVerticalLane(canonicalQuery.originalQuery, canonicalQuery).lane,
-    identity
-  );
-  if (fit >= 0.72 && alignment >= 0.7) {
-    return clamp(TASTE_UNIFIED_APPLY_MAX_DELTA * 0.5, 0, TASTE_UNIFIED_APPLY_MAX_DELTA);
-  }
-  return 0;
-}
-
 /**
  * Primary P3.1 API — unified taste signals for telemetry (+ optional bounded apply).
  */
@@ -291,33 +261,44 @@ export function computeUnifiedTasteSignals(args: {
   const coherenceScore = clamp01(laneCoherence * 0.55 + crossVerticalAlignment * 0.45);
   const prestigeIntegrity = clamp01(laneCoherence * 0.4 + crossVerticalAlignment * 0.35 + restraint * 0.25);
 
+  const draftMeta: UnifiedTasteMeta = {
+    version: TASTE_UNIFIED_META_VERSION,
+    active: true,
+    applyEnabled,
+    identity,
+    confidence: Math.round(confidence * 1000) / 1000,
+    coherenceScore: Math.round(coherenceScore * 1000) / 1000,
+    crossVerticalAlignment: Math.round(crossVerticalAlignment * 1000) / 1000,
+    prestigeIntegrity: Math.round(prestigeIntegrity * 1000) / 1000,
+    boundedInfluenceMax: TASTE_UNIFIED_APPLY_MAX_DELTA,
+    verticalLane,
+    verticalLanes,
+    latencyMs: 0,
+  };
+
   const productSignals: UnifiedTasteProductSignal[] = [];
   for (const p of products.slice(0, 5)) {
-    let listingViolations: string[] = [];
-    if (canonicalQuery.category === "watch") {
-      listingViolations = luxuryWatchGrammar.detectListingEvidence(p, canonicalQuery).violations;
-    } else if (canonicalQuery.category === "fragrance") {
-      listingViolations = fragranceTasteGrammar.detectListingEvidence(p, canonicalQuery).violations;
-    } else if (canonicalQuery.category === "furniture" || canonicalQuery.category === "desk_setup") {
-      listingViolations = furnitureGrammarForCategory(canonicalQuery.category).detectListingEvidence(p, canonicalQuery)
-        .violations;
-    }
-
-    const allViolations = [...new Set([...violations, ...listingViolations])];
-    let unifiedDelta = 0;
-    if (
-      applyEnabled &&
-      confidence >= TASTE_UNIFIED_CONFIDENCE_THRESHOLD &&
-      prestigeIntegrity >= TASTE_UNIFIED_PRESTIGE_INTEGRITY_MIN
-    ) {
-      unifiedDelta = listingUnifiedDelta(identity, p, canonicalQuery, allViolations);
-    }
+    const unifiedDelta = computeUnifiedListingDelta({
+      query,
+      product: p,
+      canonicalQuery,
+      meta: draftMeta,
+      tasteGrammarShadow,
+    });
+    const listingViolations =
+      canonicalQuery.category === "watch"
+        ? luxuryWatchGrammar.detectListingEvidence(p, canonicalQuery).violations
+        : canonicalQuery.category === "fragrance"
+          ? fragranceTasteGrammar.detectListingEvidence(p, canonicalQuery).violations
+          : canonicalQuery.category === "furniture" || canonicalQuery.category === "desk_setup"
+            ? furnitureGrammarForCategory(canonicalQuery.category).detectListingEvidence(p, canonicalQuery).violations
+            : [];
 
     productSignals.push({
       title: p.title.slice(0, 72),
       unifiedDelta,
       listingAlignment: laneIdentityAffinity(verticalLane, identity),
-      violations: allViolations,
+      violations: [...new Set([...violations, ...listingViolations])],
     });
   }
 
@@ -338,45 +319,6 @@ export function computeUnifiedTasteSignals(args: {
     },
     productSignals,
   };
-}
-
-/** Bounded per-listing unified delta when apply flag is on. */
-export function computeUnifiedListingApplyDelta(
-  query: string,
-  product: QuantProduct,
-  canonicalQuery: CanonicalQueryContract,
-  meta: UnifiedTasteMeta
-): number {
-  if (!isUnifiedTasteApplyEnabled() || !meta.active || !meta.identity) return 0;
-  if (meta.confidence < TASTE_UNIFIED_CONFIDENCE_THRESHOLD) return 0;
-  if (meta.prestigeIntegrity < TASTE_UNIFIED_PRESTIGE_INTEGRITY_MIN) return 0;
-
-  let listingViolations: string[] = [];
-  if (canonicalQuery.category === "watch") {
-    listingViolations = luxuryWatchGrammar.detectListingEvidence(product, canonicalQuery).violations;
-  } else if (canonicalQuery.category === "fragrance") {
-    listingViolations = fragranceTasteGrammar.detectListingEvidence(product, canonicalQuery).violations;
-  } else if (canonicalQuery.category === "furniture" || canonicalQuery.category === "desk_setup") {
-    listingViolations = furnitureGrammarForCategory(canonicalQuery.category).detectListingEvidence(product, canonicalQuery)
-      .violations;
-  }
-
-  return listingUnifiedDelta(meta.identity, product, canonicalQuery, listingViolations);
-}
-
-/** Bounded per-product unified delta — only when unified apply flag is on. */
-export function computeUnifiedTasteApplyDelta(
-  query: string,
-  product: QuantProduct,
-  canonicalQuery: CanonicalQueryContract,
-  signals: UnifiedTasteSignals
-): number {
-  if (!isUnifiedTasteApplyEnabled() || !signals.meta.active || !signals.meta.identity) return 0;
-  if (signals.meta.confidence < TASTE_UNIFIED_CONFIDENCE_THRESHOLD) return 0;
-  if (signals.meta.prestigeIntegrity < TASTE_UNIFIED_PRESTIGE_INTEGRITY_MIN) return 0;
-
-  const row = signals.productSignals.find((r) => r.title === product.title.slice(0, 72));
-  return clamp(row?.unifiedDelta ?? 0, -TASTE_UNIFIED_APPLY_MAX_DELTA, TASTE_UNIFIED_APPLY_MAX_DELTA);
 }
 
 export function buildUnifiedTasteMeta(

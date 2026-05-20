@@ -32,6 +32,8 @@
     "test:furniture-taste-apply-parity": "npx --yes tsx scripts/furniture-taste-apply-parity.mjs",
     "test:unified-taste-institutional": "npx --yes tsx scripts/unified-taste-institutional-eval.mjs",
     "test:unified-taste-meta-soak": "npx --yes tsx scripts/unified-taste-meta-soak.mjs",
+    "test:unified-taste-canary": "npx --yes tsx scripts/unified-taste-canary-eval.mjs",
+    "test:unified-taste-apply-parity": "npx --yes tsx scripts/unified-taste-apply-parity.mjs",
     "test:fragrance-diagnosis": "npx --yes tsx scripts/diagnose-fragrance-recall.mjs",
     "test:phase1-exit": "node scripts/phase1-exit-check.mjs",
     "test:production-gate": "node scripts/production-validation-gate.mjs"

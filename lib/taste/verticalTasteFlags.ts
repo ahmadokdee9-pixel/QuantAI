@@ -5,7 +5,7 @@
 import type { SemanticProductCategory } from "@/lib/search/queryUnderstanding";
 
 /** Bump when grammar rules change (rollback-safe cache invalidation). */
-export const TASTE_GRAMMAR_PIPELINE_CACHE_KEY = "quantai-search-pipeline-v54-unified-taste-v1";
+export const TASTE_GRAMMAR_PIPELINE_CACHE_KEY = "quantai-search-pipeline-v55-unified-taste-apply-canary-v1";
 
 /** Max bounded taste score delta (watches canary). */
 export const TASTE_WATCH_APPLY_MAX_DELTA = 12;

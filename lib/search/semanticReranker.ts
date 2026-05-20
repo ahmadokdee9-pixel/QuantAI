@@ -25,12 +25,16 @@ import {
 } from "@/lib/search/luxuryWatchIntent";
 import { computeFragranceTasteApplyDelta, isFragranceTasteApplyEnabled } from "@/lib/taste/fragranceTasteApply";
 import { computeFurnitureTasteApplyDelta, isFurnitureCanaryQuery, isFurnitureTasteApplyEnabled } from "@/lib/taste/furnitureTasteApply";
-import { buildUnifiedTasteMeta, computeUnifiedListingApplyDelta } from "@/lib/taste/unifiedTasteIdentity";
+import {
+  computeUnifiedTasteApplyDelta,
+  stabilizeUnifiedHardSuppressionOrder,
+} from "@/lib/taste/unifiedTasteApply";
+import { computeUnifiedTasteSignals } from "@/lib/taste/unifiedTasteIdentity";
 import { isUnifiedTasteApplyEnabled } from "@/lib/taste/unifiedTasteFlags";
 import { computeWatchTasteApplyDelta, isWatchTasteApplyEnabled } from "@/lib/taste/watchTasteApply";
 
 const memo = new Map<string, SemanticQueryUnderstanding>();
-const unifiedMetaMemo = new Map<string, ReturnType<typeof buildUnifiedTasteMeta>>();
+const unifiedSignalsMemo = new Map<string, ReturnType<typeof computeUnifiedTasteSignals>>();
 
 function queryBrain(query: string): SemanticQueryUnderstanding {
   const key = query.trim().toLowerCase().slice(0, 180);
@@ -317,12 +321,21 @@ function semanticScore(
 
   if (isUnifiedTasteApplyEnabled() && canonicalQuery) {
     const uKey = canonicalQuery.originalQuery.trim().toLowerCase().slice(0, 180);
-    let uMeta = unifiedMetaMemo.get(uKey);
-    if (!uMeta) {
-      uMeta = buildUnifiedTasteMeta({ query: canonicalQuery.originalQuery, canonicalQuery, products: [] });
-      unifiedMetaMemo.set(uKey, uMeta);
+    let signals = unifiedSignalsMemo.get(uKey);
+    if (!signals) {
+      signals = computeUnifiedTasteSignals({
+        query: canonicalQuery.originalQuery,
+        canonicalQuery,
+        products: [],
+      });
+      unifiedSignalsMemo.set(uKey, signals);
     }
-    score += computeUnifiedListingApplyDelta(canonicalQuery.originalQuery, p, canonicalQuery, uMeta);
+    score += computeUnifiedTasteApplyDelta({
+      query: canonicalQuery.originalQuery,
+      product: p,
+      canonicalQuery,
+      signals,
+    });
   }
 
   return Math.round(score * 100) / 100;
@@ -382,11 +395,18 @@ export function semanticRerankSearchResults(
   const survivors = scored.filter((x) => !isHardJunk(q, x.p, x.score, canonicalQuery));
   const pool = survivors.length >= Math.min(5, deduped.length) ? survivors : scored;
 
-  return pool
+  const sorted = pool
     .sort((a, b) => {
       const d = b.score - a.score;
       if (Math.abs(d) > 0.001) return d;
       return a.index - b.index;
     })
-    .map((x, i) => ({ ...x.p, qiRank: i }));
+    .map((x) => x.p);
+
+  const ranked =
+    canonicalQuery && isUnifiedTasteApplyEnabled()
+      ? stabilizeUnifiedHardSuppressionOrder({ query, canonicalQuery, products: sorted })
+      : sorted;
+
+  return ranked.map((p, i) => ({ ...p, qiRank: i }));
 }

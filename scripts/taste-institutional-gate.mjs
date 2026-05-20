@@ -37,6 +37,7 @@ const fragranceCanary = loadLatest("fragrance-taste-canary");
 const furnitureCanary = loadLatest("furniture-taste-canary");
 const unifiedTaste = loadLatest("unified-taste-institutional");
 const unifiedSoak = loadLatest("unified-taste-meta-soak");
+const unifiedCanary = loadLatest("unified-taste-canary");
 
 if (!shadow) {
   console.error("Missing vertical-taste-shadow history. Run: npm run test:vertical-taste-shadow");
@@ -151,6 +152,18 @@ const checks = [
     detail: unifiedSoak
       ? `soak pass=${unifiedSoak.report.pass_rate_pct}% ranking_stable=${unifiedSoak.report.ranking_unchanged_pct}% pollution=${unifiedSoak.report.pollution_leakage_cases}`
       : "no unified soak history (run test:unified-taste-meta-soak)",
+  },
+  {
+    name: "unified_taste_canary_p32",
+    ok:
+      !unifiedCanary ||
+      ((unifiedCanary.report.max_apply_delta ?? 99) <= 4 &&
+        (unifiedCanary.report.pollution_top2 ?? 99) === 0 &&
+        (unifiedCanary.report.min_prestige_integrity ?? 0) >= 0.68 &&
+        unifiedCanary.report.vertical_apply_flags_off === true),
+    detail: unifiedCanary
+      ? `unified canary maxDelta=${unifiedCanary.report.max_apply_delta} pollution=${unifiedCanary.report.pollution_top2} prestige=${unifiedCanary.report.min_prestige_integrity}`
+      : "no unified canary history (run test:unified-taste-canary)",
   },
   {
     name: "snapshot_regression",

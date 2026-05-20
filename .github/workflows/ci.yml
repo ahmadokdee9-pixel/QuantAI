@@ -29,6 +29,8 @@ jobs:
       - run: npm run test:furniture-taste-apply-parity
       - run: npm run test:unified-taste-institutional
       - run: npm run test:unified-taste-meta-soak
+      - run: npm run test:unified-taste-canary
+      - run: npm run test:unified-taste-apply-parity
       - run: npm run test:taste-institutional-gate
       - run: npm run test:taste-deploy-reports
 
