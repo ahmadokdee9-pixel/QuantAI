@@ -43,6 +43,11 @@
     "test:intent-apply-parity": "npx --yes tsx scripts/intent-apply-parity.mjs",
     "test:intent-apply-rollback": "npx --yes tsx scripts/intent-apply-rollback.mjs",
     "test:intent-apply-gate": "node scripts/intent-apply-gate.mjs",
+    "test:intent-apply-staging-soak": "npx --yes tsx scripts/intent-apply-staging-soak.mjs",
+    "test:intent-apply-cross-layer-audit": "npx --yes tsx scripts/intent-apply-cross-layer-audit.mjs",
+    "test:intent-apply-ranking-stability": "npx --yes tsx scripts/intent-apply-ranking-stability.mjs",
+    "test:intent-apply-p42": "npm run test:intent-apply-staging-soak && npm run test:intent-apply-cross-layer-audit && npm run test:intent-apply-ranking-stability && npm run test:intent-apply-rollback",
+    "test:intent-apply-p42-gate": "node scripts/intent-apply-p42-gate.mjs",
     "test:fragrance-diagnosis": "npx --yes tsx scripts/diagnose-fragrance-recall.mjs",
     "test:phase1-exit": "node scripts/phase1-exit-check.mjs",
     "test:production-gate": "node scripts/production-validation-gate.mjs"
