@@ -70,13 +70,7 @@ export function resolveIntentRolloutMode(): IntentRolloutMode {
 }
 
 /**
- * P4.1/P4.3 bounded intent apply — OFF by default.
- * Staging: INTENT_INTELLIGENCE_APPLY_ENABLED=true
- * Production: requires INTENT_INTELLIGENCE_PROD_APPLY=true or INTENT_INTELLIGENCE_CANARY_APPLY=true
- * Rollback: INTENT_INTELLIGENCE_APPLY_ENABLED=false
+ * P4.1/P4.3/P4.5 bounded intent apply — gated via canary controller (session buckets in production).
+ * @see lib/intent/intentCanaryController.ts
  */
-export function isIntentIntelligenceApplyEnabled(): boolean {
-  if (isIntentApplyHardRollback()) return false;
-  if (!isIntentApplyEnvironmentAllowed()) return false;
-  return process.env.INTENT_INTELLIGENCE_APPLY_ENABLED === "true";
-}
+export { isIntentIntelligenceApplyEnabled } from "@/lib/intent/intentCanaryController";

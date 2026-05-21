@@ -76,8 +76,9 @@ const results = [];
 try {
   process.env.NODE_ENV = "production";
   process.env.INTENT_INTELLIGENCE_APPLY_ENABLED = "true";
-  process.env.INTENT_INTELLIGENCE_PROD_APPLY = "true";
-  delete process.env.INTENT_INTELLIGENCE_CANARY_APPLY;
+  process.env.INTENT_INTELLIGENCE_CANARY_APPLY = "true";
+  process.env.INTENT_CANARY_ROLLOUT_STAGE = "100";
+  delete process.env.INTENT_INTELLIGENCE_PROD_APPLY;
   process.env.TASTE_UNIFIED_APPLY_ENABLED = "false";
   process.env.TASTE_GRAMMAR_ENABLED = "false";
   process.env.TASTE_FRAGRANCE_GRAMMAR_ENABLED = "false";

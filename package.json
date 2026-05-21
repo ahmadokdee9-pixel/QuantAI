@@ -58,6 +58,11 @@
     "test:intent-ranking-integrity": "npx --yes tsx scripts/intent-ranking-integrity.mjs",
     "test:intent-instability-check": "npx --yes tsx scripts/intent-instability-check.mjs",
     "test:intent-p44": "npm run test:intent-live-audit && npm run test:intent-drift-monitor && npm run test:intent-ranking-integrity && npm run test:intent-instability-check",
+    "test:intent-canary-health": "npx --yes tsx scripts/intent-canary-health.mjs",
+    "test:intent-rollout-simulation": "npx --yes tsx scripts/intent-rollout-simulation.mjs",
+    "test:intent-auto-rollback": "npx --yes tsx scripts/intent-auto-rollback.mjs",
+    "test:intent-production-buckets": "npx --yes tsx scripts/intent-production-buckets.mjs",
+    "test:intent-p45": "npm run test:intent-production-buckets && npm run test:intent-rollout-simulation && npm run test:intent-auto-rollback && npm run test:intent-canary-health",
     "test:fragrance-diagnosis": "npx --yes tsx scripts/diagnose-fragrance-recall.mjs",
     "test:phase1-exit": "node scripts/phase1-exit-check.mjs",
     "test:production-gate": "node scripts/production-validation-gate.mjs"

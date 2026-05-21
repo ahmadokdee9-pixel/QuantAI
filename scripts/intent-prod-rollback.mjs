@@ -39,8 +39,9 @@ let failed = 0;
 try {
   process.env.NODE_ENV = "production";
   process.env.INTENT_INTELLIGENCE_APPLY_ENABLED = "true";
-  process.env.INTENT_INTELLIGENCE_PROD_APPLY = "true";
-  delete process.env.INTENT_INTELLIGENCE_CANARY_APPLY;
+  process.env.INTENT_INTELLIGENCE_CANARY_APPLY = "true";
+  process.env.INTENT_CANARY_ROLLOUT_STAGE = "100";
+  delete process.env.INTENT_INTELLIGENCE_PROD_APPLY;
 
   const prodOn = semanticRerankSearchResults([...products], query, canonical);
   const prodOnLinks = prodOn.map((p) => p.link).join("|");

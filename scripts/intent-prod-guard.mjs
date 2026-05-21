@@ -74,6 +74,7 @@ try {
   process.env.NODE_ENV = "production";
   process.env.INTENT_INTELLIGENCE_APPLY_ENABLED = "true";
   process.env.INTENT_INTELLIGENCE_CANARY_APPLY = "true";
+  process.env.INTENT_CANARY_ROLLOUT_STAGE = "100";
   delete process.env.INTENT_INTELLIGENCE_PROD_APPLY;
   check(
     "production_canary_opt_in",
@@ -112,6 +113,7 @@ try {
   process.env.NODE_ENV = "production";
   process.env.INTENT_INTELLIGENCE_PROD_APPLY = "true";
   process.env.INTENT_INTELLIGENCE_APPLY_ENABLED = "true";
+  process.env.INTENT_CANARY_ROLLOUT_STAGE = "100";
   const prodOnRanked = semanticRerankSearchResults([...products], query, canonical);
   check(
     "production_bounded_when_opted_in",

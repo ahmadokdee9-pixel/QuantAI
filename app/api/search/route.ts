@@ -45,6 +45,12 @@ import { isIntentIntelligenceMetaEnabled } from "@/lib/intent/intentIntelligence
 import { buildIntentApplyMeta } from "@/lib/intent/intentApply";
 import { buildIntentProductionApplyMeta } from "@/lib/intent/intentProductionApply";
 import { buildIntentObservabilityMeta } from "@/lib/intent/intentObservability";
+import {
+  buildIntentCanaryMeta,
+  getIntentCanarySessionKey,
+  resolveIntentCanarySessionKey,
+  setIntentCanarySessionKey,
+} from "@/lib/intent/intentCanaryController";
 import { buildWatchTasteCanaryMeta } from "@/lib/taste/watchTasteApply";
 import { TASTE_GRAMMAR_PIPELINE_CACHE_KEY } from "@/lib/taste/verticalTasteFlags";
 import { buildDegradedTrayNotice, buildEmptyTrayExplanation } from "@/lib/search/trayDiagnostics";
@@ -426,10 +432,18 @@ async function handleSearch(
     if (!query) {
       return fail(400, "BAD_REQUEST", "Missing query");
     }
+
     const requestCanonicalQuery = buildCanonicalQuery(query);
     const pipelineKey = normalizeSearchCacheKey(requestCanonicalQuery.normalizedQuery || query);
 
     const { userId, user } = await optionalClerkSearchUser();
+    setIntentCanarySessionKey(
+      resolveIntentCanarySessionKey({
+        userId,
+        requestId: requestIdentifier(opts?.headers),
+        query,
+      })
+    );
     const tier = await resolveServerSubscriptionTier(userId, user);
     const plan = planDefinition(tier);
 
@@ -756,6 +770,10 @@ async function handleSearch(
       preOrderLinks: preTasteTrayLinks,
       rankingStable: true,
     });
+    const intentCanary = buildIntentCanaryMeta({
+      sessionKey: getIntentCanarySessionKey() ?? resolveIntentCanarySessionKey({ query }),
+      observability: intentObservability,
+    });
     const fallbackReason = guestOperationalDegraded
       ? String(guestOperationalDegraded.reason ?? "operational_degraded")
       : liveDiscovery.status === "enabled"
@@ -884,6 +902,7 @@ async function handleSearch(
         intentApply,
         intentProductionApply,
         intentObservability,
+        intentCanary,
       },
     };
 
@@ -909,6 +928,8 @@ async function handleSearch(
       "SEARCH_FAILED",
       e instanceof Error ? e.message : "Search could not complete."
     );
+  } finally {
+    setIntentCanarySessionKey(null);
   }
 }
 

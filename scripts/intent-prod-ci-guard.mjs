@@ -44,6 +44,12 @@ check(
 );
 
 check(
+  "intent_canary_telemetry",
+  route.includes("intentCanary") && route.includes("buildIntentCanaryMeta"),
+  "meta.intentCanary wired in search route"
+);
+
+check(
   "no_hardcoded_prod_apply_true",
   !/INTENT_INTELLIGENCE_PROD_APPLY\s*=\s*["']true["']/.test(route),
   "no hardcoded production apply in route"

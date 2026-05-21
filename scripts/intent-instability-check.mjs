@@ -38,6 +38,7 @@ try {
       NODE_ENV: "production",
       INTENT_INTELLIGENCE_APPLY_ENABLED: "true",
       INTENT_INTELLIGENCE_CANARY_APPLY: "true",
+      INTENT_CANARY_ROLLOUT_STAGE: "100",
       TASTE_UNIFIED_APPLY_ENABLED: "false",
     })
   );
