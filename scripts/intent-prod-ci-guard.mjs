@@ -146,6 +146,96 @@ check(
 );
 
 check(
+  "intent_coordination_telemetry",
+  route.includes("intentCoordination") && route.includes("applyControlledIntentCoordination"),
+  "meta.intentCoordination wired in search route"
+);
+
+check(
+  "coordination_default_off_in_example",
+  /INTENT_COORDINATION_ENABLED=false/.test(example) || /#\s*INTENT_COORDINATION_ENABLED=false/.test(example),
+  "INTENT_COORDINATION_ENABLED documented OFF in .env.example"
+);
+
+check(
+  "no_personalization_coordination",
+  !/userProfile|personalizationCoordination|embeddingCoordination|autonomousReasoning/.test(route),
+  "no personalization coordination in search route"
+);
+
+check(
+  "intent_fusion_telemetry",
+  route.includes("intentFusion") && route.includes("applyControlledIntentFusion"),
+  "meta.intentFusion wired in search route"
+);
+
+check(
+  "fusion_default_off_in_example",
+  /INTENT_FUSION_ENABLED=false/.test(example) || /#\s*INTENT_FUSION_ENABLED=false/.test(example),
+  "INTENT_FUSION_ENABLED documented OFF in .env.example"
+);
+
+check(
+  "no_personalization_fusion",
+  !/userProfile|personalizationFusion|embeddingFusion|autonomousFusion/.test(route),
+  "no personalization fusion in search route"
+);
+
+check(
+  "adaptive_reasoning_telemetry",
+  route.includes("adaptiveReasoning") && route.includes("applyControlledAdaptiveReasoning"),
+  "meta.adaptiveReasoning wired in search route"
+);
+
+check(
+  "reasoning_default_off_in_example",
+  /ADAPTIVE_REASONING_ENABLED=false/.test(example) || /#\s*ADAPTIVE_REASONING_ENABLED=false/.test(example),
+  "ADAPTIVE_REASONING_ENABLED documented OFF in .env.example"
+);
+
+check(
+  "no_personalization_reasoning",
+  !/userProfile|personalizationReasoning|embeddingReasoning|autonomousReasoning/.test(route),
+  "no personalization reasoning in search route"
+);
+
+check(
+  "decision_intelligence_telemetry",
+  route.includes("decisionIntelligence") && route.includes("applyControlledDecisionIntelligence"),
+  "meta.decisionIntelligence wired in search route"
+);
+
+check(
+  "decision_default_off_in_example",
+  /DECISION_INTELLIGENCE_ENABLED=false/.test(example) || /#\s*DECISION_INTELLIGENCE_ENABLED=false/.test(example),
+  "DECISION_INTELLIGENCE_ENABLED documented OFF in .env.example"
+);
+
+check(
+  "no_personalization_decision",
+  !/userProfile|personalizationDecision|embeddingDecision|autonomousDecision/.test(route),
+  "no personalization decision in search route"
+);
+
+check(
+  "strategy_intelligence_telemetry",
+  route.includes("strategyIntelligence") && route.includes("applyControlledStrategyIntelligence"),
+  "meta.strategyIntelligence wired in search route"
+);
+
+check(
+  "strategy_default_off_in_example",
+  /STRATEGY_INTELLIGENCE_ENABLED=false/.test(example) || /#\s*STRATEGY_INTELLIGENCE_ENABLED=false/.test(example),
+  "STRATEGY_INTELLIGENCE_ENABLED documented OFF in .env.example"
+);
+
+check(
+  "no_personalization_strategy",
+  !/userProfile|personalizationStrategy|embeddingStrategy|autonomousStrategy/.test(route),
+  "no personalization strategy in search route"
+);
+
+check(
   "no_hardcoded_prod_apply_true",
   !/INTENT_INTELLIGENCE_PROD_APPLY\s*=\s*["']true["']/.test(route),
   "no hardcoded production apply in route"

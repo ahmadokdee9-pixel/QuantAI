@@ -16,6 +16,11 @@ import { buildIntentCalibrationMeta } from "../../lib/intent/intentCalibrationEn
 import { applyControlledIntentRuntime } from "../../lib/intent/intentRuntimeController.ts";
 import { applyControlledIntentOrchestration } from "../../lib/intent/intentOrchestrator.ts";
 import { applyControlledIntentMemory } from "../../lib/intent/intentMemory.ts";
+import { applyControlledIntentCoordination } from "../../lib/intent/intentCoordination.ts";
+import { applyControlledIntentFusion } from "../../lib/intent/intentFusion.ts";
+import { applyControlledAdaptiveReasoning } from "../../lib/reasoning/adaptiveReasoning.ts";
+import { applyControlledDecisionIntelligence } from "../../lib/decision/decisionIntelligence.ts";
+import { applyControlledStrategyIntelligence } from "../../lib/strategy/strategyIntelligence.ts";
 import { INTENT_LIVE_PARTITIONS } from "./intentLiveObservabilityPartitions.mjs";
 
 export { INTENT_LIVE_PARTITIONS };
@@ -145,6 +150,91 @@ export function runIntentEvaluationPartition(part, env = {}) {
   });
   const memoryProducts = memoryResult.products;
   const memory = memoryResult.meta;
+  const preCoordinationLinks = memoryProducts.map((p) => p.link || p.title);
+  const coordinationResult = applyControlledIntentCoordination({
+    products: memoryProducts,
+    query: part.query,
+    canonicalQuery: canonical,
+    governance,
+    calibration,
+    runtime,
+    orchestration,
+    memory,
+    preOrderLinks: preCoordinationLinks,
+    trayId: part.id,
+  });
+  const coordinationProducts = coordinationResult.products;
+  const coordination = coordinationResult.meta;
+  const preFusionLinks = coordinationProducts.map((p) => p.link || p.title);
+  const fusionResult = applyControlledIntentFusion({
+    products: coordinationProducts,
+    query: part.query,
+    canonicalQuery: canonical,
+    governance,
+    calibration,
+    runtime,
+    orchestration,
+    memory,
+    coordination,
+    preOrderLinks: preFusionLinks,
+    trayId: part.id,
+  });
+  const fusionProducts = fusionResult.products;
+  const fusion = fusionResult.meta;
+  const preReasoningLinks = fusionProducts.map((p) => p.link || p.title);
+  const reasoningResult = applyControlledAdaptiveReasoning({
+    products: fusionProducts,
+    query: part.query,
+    canonicalQuery: canonical,
+    governance,
+    calibration,
+    runtime,
+    orchestration,
+    memory,
+    coordination,
+    fusion,
+    preOrderLinks: preReasoningLinks,
+    trayId: part.id,
+  });
+  const reasoningProducts = reasoningResult.products;
+  const adaptiveReasoning = reasoningResult.meta;
+  const preDecisionLinks = reasoningProducts.map((p) => p.link || p.title);
+  const decisionResult = applyControlledDecisionIntelligence({
+    products: reasoningProducts,
+    query: part.query,
+    canonicalQuery: canonical,
+    governance,
+    calibration,
+    runtime,
+    orchestration,
+    memory,
+    coordination,
+    fusion,
+    reasoning: adaptiveReasoning,
+    preOrderLinks: preDecisionLinks,
+    trayId: part.id,
+  });
+  const decisionProducts = decisionResult.products;
+  const decisionIntelligence = decisionResult.meta;
+  const preStrategyLinks = decisionProducts.map((p) => p.link || p.title);
+  const strategyResult = applyControlledStrategyIntelligence({
+    products: decisionProducts,
+    query: part.query,
+    canonicalQuery: canonical,
+    governance,
+    calibration,
+    runtime,
+    orchestration,
+    memory,
+    coordination,
+    fusion,
+    reasoning: adaptiveReasoning,
+    decision: decisionIntelligence,
+    preOrderLinks: preStrategyLinks,
+    trayId: part.id,
+  });
+  const strategyProducts = strategyResult.products;
+  const strategyIntelligence = strategyResult.meta;
 
   let drift = 0;
   const offTop = offRanked.slice(0, 3).map((p) => p.link);
@@ -181,6 +271,16 @@ export function runIntentEvaluationPartition(part, env = {}) {
     orchestrationProducts,
     memory,
     memoryProducts,
+    coordination,
+    coordinationProducts,
+    fusion,
+    fusionProducts,
+    adaptiveReasoning,
+    reasoningProducts,
+    decisionIntelligence,
+    decisionProducts,
+    strategyIntelligence,
+    strategyProducts,
     products: runA,
   };
 }
@@ -198,6 +298,11 @@ export function runIntentEvaluationPartitions(env = EVAL_CANARY_ENV) {
       runtime: row.runtime,
       orchestration: row.orchestration,
       memory: row.memory,
+      coordination: row.coordination,
+      fusion: row.fusion,
+      adaptiveReasoning: row.adaptiveReasoning,
+      decisionIntelligence: row.decisionIntelligence,
+      strategyIntelligence: row.strategyIntelligence,
       row,
     };
   });
@@ -281,6 +386,96 @@ export function runIntentEvaluationPartitions(env = EVAL_CANARY_ENV) {
     r.memory = memoryResult.meta;
     r.row.memory = r.memory;
     r.row.memoryProducts = memoryResult.products;
+    const preCoordLinks = memoryResult.products.map((p) => p.link || p.title);
+    const coordinationResult = applyControlledIntentCoordination({
+      products: memoryResult.products,
+      query: r.row.query,
+      canonicalQuery: buildCanonicalQuery(r.row.query),
+      governance: r.governance,
+      calibration: r.calibration,
+      runtime: r.runtime,
+      orchestration: r.orchestration,
+      memory: r.memory,
+      preOrderLinks: preCoordLinks,
+      trayId: r.trayId,
+    });
+    r.coordination = coordinationResult.meta;
+    r.row.coordination = r.coordination;
+    r.row.coordinationProducts = coordinationResult.products;
+    const preFusionLinks = coordinationResult.products.map((p) => p.link || p.title);
+    const fusionResult = applyControlledIntentFusion({
+      products: coordinationResult.products,
+      query: r.row.query,
+      canonicalQuery: buildCanonicalQuery(r.row.query),
+      governance: r.governance,
+      calibration: r.calibration,
+      runtime: r.runtime,
+      orchestration: r.orchestration,
+      memory: r.memory,
+      coordination: r.coordination,
+      preOrderLinks: preFusionLinks,
+      trayId: r.trayId,
+    });
+    r.fusion = fusionResult.meta;
+    r.row.fusion = r.fusion;
+    r.row.fusionProducts = fusionResult.products;
+    const preReasoningLinks = fusionResult.products.map((p) => p.link || p.title);
+    const reasoningResult = applyControlledAdaptiveReasoning({
+      products: fusionResult.products,
+      query: r.row.query,
+      canonicalQuery: buildCanonicalQuery(r.row.query),
+      governance: r.governance,
+      calibration: r.calibration,
+      runtime: r.runtime,
+      orchestration: r.orchestration,
+      memory: r.memory,
+      coordination: r.coordination,
+      fusion: r.fusion,
+      preOrderLinks: preReasoningLinks,
+      trayId: r.trayId,
+    });
+    r.adaptiveReasoning = reasoningResult.meta;
+    r.row.adaptiveReasoning = r.adaptiveReasoning;
+    r.row.reasoningProducts = reasoningResult.products;
+    const preDecisionLinks = reasoningResult.products.map((p) => p.link || p.title);
+    const decisionResult = applyControlledDecisionIntelligence({
+      products: reasoningResult.products,
+      query: r.row.query,
+      canonicalQuery: buildCanonicalQuery(r.row.query),
+      governance: r.governance,
+      calibration: r.calibration,
+      runtime: r.runtime,
+      orchestration: r.orchestration,
+      memory: r.memory,
+      coordination: r.coordination,
+      fusion: r.fusion,
+      reasoning: r.adaptiveReasoning,
+      preOrderLinks: preDecisionLinks,
+      trayId: r.trayId,
+    });
+    r.decisionIntelligence = decisionResult.meta;
+    r.row.decisionIntelligence = r.decisionIntelligence;
+    r.row.decisionProducts = decisionResult.products;
+    const preStrategyLinks = decisionResult.products.map((p) => p.link || p.title);
+    const strategyResult = applyControlledStrategyIntelligence({
+      products: decisionResult.products,
+      query: r.row.query,
+      canonicalQuery: buildCanonicalQuery(r.row.query),
+      governance: r.governance,
+      calibration: r.calibration,
+      runtime: r.runtime,
+      orchestration: r.orchestration,
+      memory: r.memory,
+      coordination: r.coordination,
+      fusion: r.fusion,
+      reasoning: r.adaptiveReasoning,
+      decision: r.decisionIntelligence,
+      preOrderLinks: preStrategyLinks,
+      trayId: r.trayId,
+    });
+    r.strategyIntelligence = strategyResult.meta;
+    r.row.strategyIntelligence = r.strategyIntelligence;
+    r.row.strategyProducts = strategyResult.products;
     r.row.optimization = r.optimization;
     r.row.governance = r.governance;
     r.row.calibration = r.calibration;

@@ -60,6 +60,11 @@ import {
 } from "@/lib/intent/intentRuntimeController";
 import { applyControlledIntentOrchestration } from "@/lib/intent/intentOrchestrator";
 import { applyControlledIntentMemory } from "@/lib/intent/intentMemory";
+import { applyControlledIntentCoordination } from "@/lib/intent/intentCoordination";
+import { applyControlledIntentFusion } from "@/lib/intent/intentFusion";
+import { applyControlledAdaptiveReasoning } from "@/lib/reasoning/adaptiveReasoning";
+import { applyControlledDecisionIntelligence } from "@/lib/decision/decisionIntelligence";
+import { applyControlledStrategyIntelligence } from "@/lib/strategy/strategyIntelligence";
 import { buildWatchTasteCanaryMeta } from "@/lib/taste/watchTasteApply";
 import { TASTE_GRAMMAR_PIPELINE_CACHE_KEY } from "@/lib/taste/verticalTasteFlags";
 import { buildDegradedTrayNotice, buildEmptyTrayExplanation } from "@/lib/search/trayDiagnostics";
@@ -861,6 +866,86 @@ async function handleSearch(
     });
     products = intentMemoryResult.products;
     const intentMemory = intentMemoryResult.meta;
+    const preCoordinationLinks = products.map((p) => p.link || p.title);
+    const intentCoordinationResult = applyControlledIntentCoordination({
+      products,
+      query,
+      canonicalQuery,
+      governance: intentGovernance,
+      calibration: intentCalibration,
+      runtime: intentRuntime,
+      orchestration: intentOrchestration,
+      memory: intentMemory,
+      preOrderLinks: preCoordinationLinks,
+    });
+    products = intentCoordinationResult.products;
+    const intentCoordination = intentCoordinationResult.meta;
+    const preFusionLinks = products.map((p) => p.link || p.title);
+    const intentFusionResult = applyControlledIntentFusion({
+      products,
+      query,
+      canonicalQuery,
+      governance: intentGovernance,
+      calibration: intentCalibration,
+      runtime: intentRuntime,
+      orchestration: intentOrchestration,
+      memory: intentMemory,
+      coordination: intentCoordination,
+      preOrderLinks: preFusionLinks,
+    });
+    products = intentFusionResult.products;
+    const intentFusion = intentFusionResult.meta;
+    const preReasoningLinks = products.map((p) => p.link || p.title);
+    const adaptiveReasoningResult = applyControlledAdaptiveReasoning({
+      products,
+      query,
+      canonicalQuery,
+      governance: intentGovernance,
+      calibration: intentCalibration,
+      runtime: intentRuntime,
+      orchestration: intentOrchestration,
+      memory: intentMemory,
+      coordination: intentCoordination,
+      fusion: intentFusion,
+      preOrderLinks: preReasoningLinks,
+    });
+    products = adaptiveReasoningResult.products;
+    const adaptiveReasoning = adaptiveReasoningResult.meta;
+    const preDecisionLinks = products.map((p) => p.link || p.title);
+    const decisionIntelligenceResult = applyControlledDecisionIntelligence({
+      products,
+      query,
+      canonicalQuery,
+      governance: intentGovernance,
+      calibration: intentCalibration,
+      runtime: intentRuntime,
+      orchestration: intentOrchestration,
+      memory: intentMemory,
+      coordination: intentCoordination,
+      fusion: intentFusion,
+      reasoning: adaptiveReasoning,
+      preOrderLinks: preDecisionLinks,
+    });
+    products = decisionIntelligenceResult.products;
+    const decisionIntelligence = decisionIntelligenceResult.meta;
+    const preStrategyLinks = products.map((p) => p.link || p.title);
+    const strategyIntelligenceResult = applyControlledStrategyIntelligence({
+      products,
+      query,
+      canonicalQuery,
+      governance: intentGovernance,
+      calibration: intentCalibration,
+      runtime: intentRuntime,
+      orchestration: intentOrchestration,
+      memory: intentMemory,
+      coordination: intentCoordination,
+      fusion: intentFusion,
+      reasoning: adaptiveReasoning,
+      decision: decisionIntelligence,
+      preOrderLinks: preStrategyLinks,
+    });
+    products = strategyIntelligenceResult.products;
+    const strategyIntelligence = strategyIntelligenceResult.meta;
     const fallbackReason = guestOperationalDegraded
       ? String(guestOperationalDegraded.reason ?? "operational_degraded")
       : liveDiscovery.status === "enabled"
@@ -997,6 +1082,11 @@ async function handleSearch(
         intentRuntime,
         intentOrchestration,
         intentMemory,
+        intentCoordination,
+        intentFusion,
+        adaptiveReasoning,
+        decisionIntelligence,
+        strategyIntelligence,
       },
     };
 
