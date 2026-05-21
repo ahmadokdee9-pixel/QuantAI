@@ -55,6 +55,11 @@ import { buildIntentEvaluationMeta } from "@/lib/intent/intentEvaluationEngine";
 import { buildIntentOptimizationMeta } from "@/lib/intent/intentOptimizationEngine";
 import { buildIntentGovernanceMeta } from "@/lib/intent/intentGovernanceEngine";
 import { buildIntentCalibrationMeta } from "@/lib/intent/intentCalibrationEngine";
+import {
+  applyControlledIntentRuntime,
+} from "@/lib/intent/intentRuntimeController";
+import { applyControlledIntentOrchestration } from "@/lib/intent/intentOrchestrator";
+import { applyControlledIntentMemory } from "@/lib/intent/intentMemory";
 import { buildWatchTasteCanaryMeta } from "@/lib/taste/watchTasteApply";
 import { TASTE_GRAMMAR_PIPELINE_CACHE_KEY } from "@/lib/taste/verticalTasteFlags";
 import { buildDegradedTrayNotice, buildEmptyTrayExplanation } from "@/lib/search/trayDiagnostics";
@@ -812,6 +817,50 @@ async function handleSearch(
       products,
       rankingStable: true,
     });
+    const preRuntimeTrayLinks = products.map((p) => p.link || p.title);
+    const intentRuntimeResult = applyControlledIntentRuntime({
+      products,
+      query,
+      canonicalQuery,
+      intentIntelligence,
+      intentApply,
+      intentProductionApply,
+      intentObservability,
+      intentCanary,
+      intentEvaluation,
+      intentOptimization,
+      intentGovernance,
+      intentCalibration,
+      preOrderLinks: preRuntimeTrayLinks,
+      rankingStable: true,
+    });
+    products = intentRuntimeResult.products;
+    const intentRuntime = intentRuntimeResult.meta;
+    const preOrchestrationLinks = products.map((p) => p.link || p.title);
+    const intentOrchestrationResult = applyControlledIntentOrchestration({
+      products,
+      evaluation: intentEvaluation,
+      optimization: intentOptimization,
+      governance: intentGovernance,
+      calibration: intentCalibration,
+      runtime: intentRuntime,
+      preOrderLinks: preOrchestrationLinks,
+    });
+    products = intentOrchestrationResult.products;
+    const intentOrchestration = intentOrchestrationResult.meta;
+    const preMemoryLinks = products.map((p) => p.link || p.title);
+    const intentMemoryResult = applyControlledIntentMemory({
+      products,
+      query,
+      canonicalQuery,
+      governance: intentGovernance,
+      calibration: intentCalibration,
+      runtime: intentRuntime,
+      orchestration: intentOrchestration,
+      preOrderLinks: preMemoryLinks,
+    });
+    products = intentMemoryResult.products;
+    const intentMemory = intentMemoryResult.meta;
     const fallbackReason = guestOperationalDegraded
       ? String(guestOperationalDegraded.reason ?? "operational_degraded")
       : liveDiscovery.status === "enabled"
@@ -945,6 +994,9 @@ async function handleSearch(
         intentOptimization,
         intentGovernance,
         intentCalibration,
+        intentRuntime,
+        intentOrchestration,
+        intentMemory,
       },
     };
 

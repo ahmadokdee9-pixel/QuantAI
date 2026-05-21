@@ -13,6 +13,9 @@ import { aggregateIntentEvaluations, buildIntentEvaluationMeta } from "../../lib
 import { buildIntentOptimizationMeta } from "../../lib/intent/intentOptimizationEngine.ts";
 import { buildIntentGovernanceMeta } from "../../lib/intent/intentGovernanceEngine.ts";
 import { buildIntentCalibrationMeta } from "../../lib/intent/intentCalibrationEngine.ts";
+import { applyControlledIntentRuntime } from "../../lib/intent/intentRuntimeController.ts";
+import { applyControlledIntentOrchestration } from "../../lib/intent/intentOrchestrator.ts";
+import { applyControlledIntentMemory } from "../../lib/intent/intentMemory.ts";
 import { INTENT_LIVE_PARTITIONS } from "./intentLiveObservabilityPartitions.mjs";
 
 export { INTENT_LIVE_PARTITIONS };
@@ -97,6 +100,51 @@ export function runIntentEvaluationPartition(part, env = {}) {
     products: runA,
     rankingStable,
   });
+  const preRuntimeLinks = runA.map((p) => p.link || p.title);
+  const runtimeResult = applyControlledIntentRuntime({
+    products: runA,
+    query: part.query,
+    canonicalQuery: canonical,
+    intentIntelligence: intent,
+    intentApply,
+    intentProductionApply,
+    intentObservability: observability,
+    intentCanary: canary,
+    intentEvaluation: evaluation,
+    intentOptimization: optimization,
+    intentGovernance: governance,
+    intentCalibration: calibration,
+    preOrderLinks: preRuntimeLinks,
+    rankingStable,
+  });
+  const runtimeProducts = runtimeResult.products;
+  const runtime = runtimeResult.meta;
+  const preOrchestrationLinks = runtimeProducts.map((p) => p.link || p.title);
+  const orchestrationResult = applyControlledIntentOrchestration({
+    products: runtimeProducts,
+    evaluation,
+    optimization,
+    governance,
+    calibration,
+    runtime,
+    preOrderLinks: preOrchestrationLinks,
+  });
+  const orchestrationProducts = orchestrationResult.products;
+  const orchestration = orchestrationResult.meta;
+  const preMemoryLinks = orchestrationProducts.map((p) => p.link || p.title);
+  const memoryResult = applyControlledIntentMemory({
+    products: orchestrationProducts,
+    query: part.query,
+    canonicalQuery: canonical,
+    governance,
+    calibration,
+    runtime,
+    orchestration,
+    preOrderLinks: preMemoryLinks,
+    trayId: part.id,
+  });
+  const memoryProducts = memoryResult.products;
+  const memory = memoryResult.meta;
 
   let drift = 0;
   const offTop = offRanked.slice(0, 3).map((p) => p.link);
@@ -127,6 +175,12 @@ export function runIntentEvaluationPartition(part, env = {}) {
     optimization,
     governance,
     calibration,
+    runtime,
+    runtimeProducts,
+    orchestration,
+    orchestrationProducts,
+    memory,
+    memoryProducts,
     products: runA,
   };
 }
@@ -141,11 +195,20 @@ export function runIntentEvaluationPartitions(env = EVAL_CANARY_ENV) {
       optimization: row.optimization,
       governance: row.governance,
       calibration: row.calibration,
+      runtime: row.runtime,
+      orchestration: row.orchestration,
+      memory: row.memory,
       row,
     };
   });
   const aggregateContext = aggregateIntentEvaluations(rows.map((r) => ({ trayId: r.trayId, evaluation: r.evaluation })));
   for (const r of rows) {
+    const prev = { ...process.env };
+    for (const [k, v] of Object.entries(env)) {
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = String(v);
+    }
+
     r.optimization = buildIntentOptimizationMeta({
       trayId: r.trayId,
       evaluation: r.evaluation,
@@ -170,9 +233,62 @@ export function runIntentEvaluationPartitions(env = EVAL_CANARY_ENV) {
       products: r.row.products,
       rankingStable: r.row.rankingStable,
     });
+    const preRuntimeLinks = r.row.products.map((p) => p.link || p.title);
+    const runtimeResult = applyControlledIntentRuntime({
+      products: r.row.products,
+      query: r.row.query,
+      canonicalQuery: buildCanonicalQuery(r.row.query),
+      intentIntelligence: r.row.intent,
+      intentApply: r.row.intentApply,
+      intentProductionApply: r.row.intentProductionApply,
+      intentObservability: r.row.observability,
+      intentCanary: r.row.canary,
+      intentEvaluation: r.evaluation,
+      intentOptimization: r.optimization,
+      intentGovernance: r.governance,
+      intentCalibration: r.calibration,
+      preOrderLinks: preRuntimeLinks,
+      rankingStable: r.row.rankingStable,
+    });
+    r.runtime = runtimeResult.meta;
+    const preOrchLinks = runtimeResult.products.map((p) => p.link || p.title);
+    const orchestrationResult = applyControlledIntentOrchestration({
+      products: runtimeResult.products,
+      evaluation: r.evaluation,
+      optimization: r.optimization,
+      governance: r.governance,
+      calibration: r.calibration,
+      runtime: r.runtime,
+      preOrderLinks: preOrchLinks,
+    });
+    r.orchestration = orchestrationResult.meta;
+    r.row.runtime = r.runtime;
+    r.row.orchestration = r.orchestration;
+    r.row.runtimeProducts = runtimeResult.products;
+    r.row.orchestrationProducts = orchestrationResult.products;
+    const preMemLinks = orchestrationResult.products.map((p) => p.link || p.title);
+    const memoryResult = applyControlledIntentMemory({
+      products: orchestrationResult.products,
+      query: r.row.query,
+      canonicalQuery: buildCanonicalQuery(r.row.query),
+      governance: r.governance,
+      calibration: r.calibration,
+      runtime: r.runtime,
+      orchestration: r.orchestration,
+      preOrderLinks: preMemLinks,
+      trayId: r.trayId,
+    });
+    r.memory = memoryResult.meta;
+    r.row.memory = r.memory;
+    r.row.memoryProducts = memoryResult.products;
     r.row.optimization = r.optimization;
     r.row.governance = r.governance;
     r.row.calibration = r.calibration;
+
+    for (const [k, v] of Object.entries(prev)) {
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = v;
+    }
   }
   return rows;
 }

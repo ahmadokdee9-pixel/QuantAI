@@ -92,6 +92,60 @@ check(
 );
 
 check(
+  "intent_runtime_telemetry",
+  route.includes("intentRuntime") && route.includes("applyControlledIntentRuntime"),
+  "meta.intentRuntime wired in search route"
+);
+
+check(
+  "runtime_default_off_in_example",
+  /INTENT_RUNTIME_ENABLED=false/.test(example) || /#\s*INTENT_RUNTIME_ENABLED=false/.test(example),
+  "INTENT_RUNTIME_ENABLED documented OFF in .env.example"
+);
+
+check(
+  "no_autonomous_runtime_self_modify",
+  !/selfModifyRuntime|autonomousRuntime|uncontrolledRank/.test(route),
+  "no autonomous runtime self-modify in search route"
+);
+
+check(
+  "intent_orchestration_telemetry",
+  route.includes("intentOrchestration") && route.includes("applyControlledIntentOrchestration"),
+  "meta.intentOrchestration wired in search route"
+);
+
+check(
+  "orchestration_default_off_in_example",
+  /INTENT_ORCHESTRATION_ENABLED=false/.test(example) || /#\s*INTENT_ORCHESTRATION_ENABLED=false/.test(example),
+  "INTENT_ORCHESTRATION_ENABLED documented OFF in .env.example"
+);
+
+check(
+  "no_autonomous_orchestration_self_modify",
+  !/selfModifyOrchestr|autonomousOrchestr|uncontrolledAdapt/.test(route),
+  "no autonomous orchestration self-modify in search route"
+);
+
+check(
+  "intent_memory_telemetry",
+  route.includes("intentMemory") && route.includes("applyControlledIntentMemory"),
+  "meta.intentMemory wired in search route"
+);
+
+check(
+  "memory_default_off_in_example",
+  /INTENT_MEMORY_ENABLED=false/.test(example) || /#\s*INTENT_MEMORY_ENABLED=false/.test(example),
+  "INTENT_MEMORY_ENABLED documented OFF in .env.example"
+);
+
+check(
+  "no_personalization_memory",
+  !/userProfile|personalizationMemory|embeddingMemory/.test(route),
+  "no personalization memory in search route"
+);
+
+check(
   "no_hardcoded_prod_apply_true",
   !/INTENT_INTELLIGENCE_PROD_APPLY\s*=\s*["']true["']/.test(route),
   "no hardcoded production apply in route"
