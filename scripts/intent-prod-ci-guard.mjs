@@ -38,6 +38,12 @@ check(
 );
 
 check(
+  "intent_observability_telemetry",
+  route.includes("intentObservability") && route.includes("buildIntentObservabilityMeta"),
+  "meta.intentObservability wired in search route"
+);
+
+check(
   "no_hardcoded_prod_apply_true",
   !/INTENT_INTELLIGENCE_PROD_APPLY\s*=\s*["']true["']/.test(route),
   "no hardcoded production apply in route"

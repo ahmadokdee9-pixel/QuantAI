@@ -44,6 +44,7 @@ import { computeIntentIntelligence } from "@/lib/intent/intentIntelligenceEngine
 import { isIntentIntelligenceMetaEnabled } from "@/lib/intent/intentIntelligenceFlags";
 import { buildIntentApplyMeta } from "@/lib/intent/intentApply";
 import { buildIntentProductionApplyMeta } from "@/lib/intent/intentProductionApply";
+import { buildIntentObservabilityMeta } from "@/lib/intent/intentObservability";
 import { buildWatchTasteCanaryMeta } from "@/lib/taste/watchTasteApply";
 import { TASTE_GRAMMAR_PIPELINE_CACHE_KEY } from "@/lib/taste/verticalTasteFlags";
 import { buildDegradedTrayNotice, buildEmptyTrayExplanation } from "@/lib/search/trayDiagnostics";
@@ -745,6 +746,16 @@ async function handleSearch(
       preOrderLinks: preTasteTrayLinks,
     });
     const intentProductionApply = buildIntentProductionApplyMeta({ intentApply });
+    const intentObservability = buildIntentObservabilityMeta({
+      query,
+      canonicalQuery,
+      intentIntelligence,
+      intentApply,
+      intentProductionApply,
+      products,
+      preOrderLinks: preTasteTrayLinks,
+      rankingStable: true,
+    });
     const fallbackReason = guestOperationalDegraded
       ? String(guestOperationalDegraded.reason ?? "operational_degraded")
       : liveDiscovery.status === "enabled"
@@ -872,6 +883,7 @@ async function handleSearch(
         intentIntelligence,
         intentApply,
         intentProductionApply,
+        intentObservability,
       },
     };
 
