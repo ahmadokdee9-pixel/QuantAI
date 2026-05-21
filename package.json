@@ -63,6 +63,12 @@
     "test:intent-auto-rollback": "npx --yes tsx scripts/intent-auto-rollback.mjs",
     "test:intent-production-buckets": "npx --yes tsx scripts/intent-production-buckets.mjs",
     "test:intent-p45": "npm run test:intent-production-buckets && npm run test:intent-rollout-simulation && npm run test:intent-auto-rollback && npm run test:intent-canary-health",
+    "test:intent-eval-quality": "npx --yes tsx scripts/intent-eval-quality.mjs",
+    "test:intent-eval-drift": "npx --yes tsx scripts/intent-eval-drift.mjs",
+    "test:intent-eval-integrity": "npx --yes tsx scripts/intent-eval-integrity.mjs",
+    "test:intent-eval-explainability": "npx --yes tsx scripts/intent-eval-explainability.mjs",
+    "test:intent-eval-production": "npx --yes tsx scripts/intent-eval-production.mjs",
+    "test:intent-p46": "npm run test:intent-eval-quality && npm run test:intent-eval-drift && npm run test:intent-eval-integrity && npm run test:intent-eval-explainability && npm run test:intent-eval-production",
     "test:fragrance-diagnosis": "npx --yes tsx scripts/diagnose-fragrance-recall.mjs",
     "test:phase1-exit": "node scripts/phase1-exit-check.mjs",
     "test:production-gate": "node scripts/production-validation-gate.mjs"

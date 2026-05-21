@@ -50,6 +50,12 @@ check(
 );
 
 check(
+  "intent_evaluation_telemetry",
+  route.includes("intentEvaluation") && route.includes("buildIntentEvaluationMeta"),
+  "meta.intentEvaluation wired in search route"
+);
+
+check(
   "no_hardcoded_prod_apply_true",
   !/INTENT_INTELLIGENCE_PROD_APPLY\s*=\s*["']true["']/.test(route),
   "no hardcoded production apply in route"
