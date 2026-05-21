@@ -48,6 +48,11 @@
     "test:intent-apply-ranking-stability": "npx --yes tsx scripts/intent-apply-ranking-stability.mjs",
     "test:intent-apply-p42": "npm run test:intent-apply-staging-soak && npm run test:intent-apply-cross-layer-audit && npm run test:intent-apply-ranking-stability && npm run test:intent-apply-rollback",
     "test:intent-apply-p42-gate": "node scripts/intent-apply-p42-gate.mjs",
+    "test:intent-prod-guard": "npx --yes tsx scripts/intent-prod-guard.mjs",
+    "test:intent-prod-rollout": "npx --yes tsx scripts/intent-prod-rollout-check.mjs",
+    "test:intent-prod-rollback": "npx --yes tsx scripts/intent-prod-rollback.mjs",
+    "test:intent-prod-p43": "npm run test:intent-prod-guard && npm run test:intent-prod-rollout && npm run test:intent-prod-rollback",
+    "test:intent-prod-ci-guard": "node scripts/intent-prod-ci-guard.mjs",
     "test:fragrance-diagnosis": "npx --yes tsx scripts/diagnose-fragrance-recall.mjs",
     "test:phase1-exit": "node scripts/phase1-exit-check.mjs",
     "test:production-gate": "node scripts/production-validation-gate.mjs"

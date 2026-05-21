@@ -4,7 +4,10 @@
  */
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { resolve, join } from "node:path";
-import { isIntentIntelligenceApplyEnabled } from "../lib/intent/intentIntelligenceFlags.ts";
+import {
+  isIntentApplyBlockedInProduction,
+  isIntentIntelligenceApplyEnabled,
+} from "../lib/intent/intentIntelligenceFlags.ts";
 
 const HISTORY = resolve(import.meta.dirname, "../.validation/history");
 
@@ -26,15 +29,19 @@ const routeSource = readFileSync(resolve(import.meta.dirname, "../app/api/search
 
 const savedProd = process.env.NODE_ENV;
 const savedApply = process.env.INTENT_INTELLIGENCE_APPLY_ENABLED;
+const savedProdApply = process.env.INTENT_INTELLIGENCE_PROD_APPLY;
 process.env.NODE_ENV = "production";
-delete process.env.INTENT_INTELLIGENCE_APPLY_ENABLED;
-const prodApplyDefaultOff = !isIntentIntelligenceApplyEnabled();
 process.env.INTENT_INTELLIGENCE_APPLY_ENABLED = "true";
-const prodApplyWhenFlagged = isIntentIntelligenceApplyEnabled();
+delete process.env.INTENT_INTELLIGENCE_PROD_APPLY;
+delete process.env.INTENT_INTELLIGENCE_CANARY_APPLY;
+const prodApplyDefaultOff =
+  !isIntentIntelligenceApplyEnabled() && isIntentApplyBlockedInProduction();
 if (savedProd === undefined) delete process.env.NODE_ENV;
 else process.env.NODE_ENV = savedProd;
 if (savedApply === undefined) delete process.env.INTENT_INTELLIGENCE_APPLY_ENABLED;
 else process.env.INTENT_INTELLIGENCE_APPLY_ENABLED = savedApply;
+if (savedProdApply === undefined) delete process.env.INTENT_INTELLIGENCE_PROD_APPLY;
+else process.env.INTENT_INTELLIGENCE_PROD_APPLY = savedProdApply;
 
 const checks = [
   {
@@ -101,17 +108,18 @@ for (const c of checks) {
   console.log(`${c.ok ? "PASS" : "FAIL"} ${c.name}: ${c.detail}`);
 }
 
-console.log("\n--- P4.3 READINESS ---");
+const prodGuard = loadLatest("intent-prod-guard");
+const p43Complete =
+  prodGuard && (prodGuard.report.pass_rate_pct ?? 0) === 100 && prodApplyDefaultOff;
+
+console.log("\n--- P4.3 STATUS ---");
 console.log(
-  p43Safe
-    ? "RECOMMEND: P4.3 may start (production guard for intent apply still advised — flag-only rollback today)."
-    : "HOLD: resolve P4.2 failures before P4.3."
+  p43Complete
+    ? "P4.3 production guard active — run test:intent-prod-p43 for rollout verification."
+    : p43Safe
+      ? "P4.2 complete — run test:intent-prod-p43 to finish P4.3."
+      : "HOLD: resolve P4.2 failures first."
 );
-if (prodApplyWhenFlagged && !prodApplyDefaultOff) {
-  console.log(
-    "NOTE: INTENT_INTELLIGENCE_APPLY_ENABLED=true activates apply in production (no NODE_ENV guard yet)."
-  );
-}
 
 if (!checks.every((c) => c.ok)) process.exit(1);
 console.log("\nIntent apply P4.2 gate: PASS");

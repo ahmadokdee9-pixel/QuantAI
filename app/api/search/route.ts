@@ -43,6 +43,7 @@ import { isUnifiedTasteMetaEnabled } from "@/lib/taste/unifiedTasteFlags";
 import { computeIntentIntelligence } from "@/lib/intent/intentIntelligenceEngine";
 import { isIntentIntelligenceMetaEnabled } from "@/lib/intent/intentIntelligenceFlags";
 import { buildIntentApplyMeta } from "@/lib/intent/intentApply";
+import { buildIntentProductionApplyMeta } from "@/lib/intent/intentProductionApply";
 import { buildWatchTasteCanaryMeta } from "@/lib/taste/watchTasteApply";
 import { TASTE_GRAMMAR_PIPELINE_CACHE_KEY } from "@/lib/taste/verticalTasteFlags";
 import { buildDegradedTrayNotice, buildEmptyTrayExplanation } from "@/lib/search/trayDiagnostics";
@@ -743,6 +744,7 @@ async function handleSearch(
       products,
       preOrderLinks: preTasteTrayLinks,
     });
+    const intentProductionApply = buildIntentProductionApplyMeta({ intentApply });
     const fallbackReason = guestOperationalDegraded
       ? String(guestOperationalDegraded.reason ?? "operational_degraded")
       : liveDiscovery.status === "enabled"
@@ -869,6 +871,7 @@ async function handleSearch(
         unifiedTasteCanary,
         intentIntelligence,
         intentApply,
+        intentProductionApply,
       },
     };
 

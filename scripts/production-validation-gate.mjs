@@ -4,6 +4,7 @@
  */
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { resolve, join } from "node:path";
+import { execSync } from "node:child_process";
 
 const HISTORY = resolve(import.meta.dirname, "../.validation/history");
 const MIN_PASS_PCT = Number(process.env.PHASE1_MIN_PASS_PCT || 90);
@@ -27,6 +28,8 @@ const realworld = loadLatest("realworld");
 const searchEval = loadLatest("search-eval");
 const tastePollution = loadLatest("taste-pollution");
 const tasteShadow = loadLatest("vertical-taste-shadow");
+const intentProdGuard = loadLatest("intent-prod-guard");
+const intentProdRollback = loadLatest("intent-prod-rollback");
 
 const TASTE_LATENCY_REGRESSION_MS = Number(process.env.TASTE_GATE_LATENCY_REGRESSION_MS || 200);
 
@@ -178,6 +181,20 @@ const checks = [
       ? `${report.regression.summary.regressionCount} regressions`
       : "no baseline",
   },
+  {
+    name: "intent_prod_guard",
+    ok: intentProdGuard && (intentProdGuard.report.pass_rate_pct ?? 0) === 100,
+    detail: intentProdGuard
+      ? `${intentProdGuard.report.pass_rate_pct}% (run test:intent-prod-guard)`
+      : "no intent-prod-guard history",
+  },
+  {
+    name: "intent_prod_rollback",
+    ok: intentProdRollback && intentProdRollback.report.pass === true,
+    detail: intentProdRollback
+      ? `pass=${intentProdRollback.report.pass}`
+      : "no intent-prod-rollback history",
+  },
 ];
 
 console.log(`Production validation gate — ${realworld.path}\n`);
@@ -194,6 +211,16 @@ for (const q of luxurySpot) {
   for (const t of top.slice(0, 3)) console.log(`  → ${t.title}`);
 }
 
-const allOk = checks.every((c) => c.ok);
+let ciGuardOk = true;
+try {
+  execSync("node scripts/intent-prod-ci-guard.mjs", {
+    cwd: resolve(import.meta.dirname, ".."),
+    stdio: "inherit",
+  });
+} catch {
+  ciGuardOk = false;
+}
+
+const allOk = checks.every((c) => c.ok) && ciGuardOk;
 if (!allOk) process.exit(1);
 console.log("\nProduction validation gate: PASS");
