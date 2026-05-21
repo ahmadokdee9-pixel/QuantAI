@@ -23,6 +23,7 @@ import { applyControlledDecisionIntelligence } from "../../lib/decision/decision
 import { applyControlledStrategyIntelligence } from "../../lib/strategy/strategyIntelligence.ts";
 import { applyControlledMarketIntelligence } from "../../lib/market/marketIntelligence.ts";
 import { applyControlledBehavioralCommerce } from "../../lib/behavioral/behavioralCommerce.ts";
+import { applyControlledCognitionEngine } from "../../lib/cognition/cognitionIntelligence.ts";
 import { INTENT_LIVE_PARTITIONS } from "./intentLiveObservabilityPartitions.mjs";
 
 export { INTENT_LIVE_PARTITIONS };
@@ -278,6 +279,28 @@ export function runIntentEvaluationPartition(part, env = {}) {
   });
   const behavioralProducts = behavioralResult.products;
   const behavioralCommerce = behavioralResult.meta;
+  const preCognitionLinks = behavioralProducts.map((p) => p.link || p.title);
+  const cognitionResult = applyControlledCognitionEngine({
+    products: behavioralProducts,
+    query: part.query,
+    canonicalQuery: canonical,
+    governance,
+    calibration,
+    runtime,
+    orchestration,
+    memory,
+    coordination,
+    fusion,
+    reasoning: adaptiveReasoning,
+    decision: decisionIntelligence,
+    strategy: strategyIntelligence,
+    market: marketIntelligence,
+    behavioral: behavioralCommerce,
+    preOrderLinks: preCognitionLinks,
+    trayId: part.id,
+  });
+  const cognitionProducts = cognitionResult.products;
+  const cognitionEngine = cognitionResult.meta;
 
   let drift = 0;
   const offTop = offRanked.slice(0, 3).map((p) => p.link);
@@ -328,6 +351,8 @@ export function runIntentEvaluationPartition(part, env = {}) {
     marketProducts,
     behavioralCommerce,
     behavioralProducts,
+    cognitionEngine,
+    cognitionProducts,
     products: runA,
   };
 }
@@ -352,6 +377,7 @@ export function runIntentEvaluationPartitions(env = EVAL_CANARY_ENV) {
       strategyIntelligence: row.strategyIntelligence,
       marketIntelligence: row.marketIntelligence,
       behavioralCommerce: row.behavioralCommerce,
+      cognitionEngine: row.cognitionEngine,
       row,
     };
   });
@@ -568,6 +594,29 @@ export function runIntentEvaluationPartitions(env = EVAL_CANARY_ENV) {
     r.behavioralCommerce = behavioralResult.meta;
     r.row.behavioralCommerce = r.behavioralCommerce;
     r.row.behavioralProducts = behavioralResult.products;
+    const preCognitionLinks = behavioralResult.products.map((p) => p.link || p.title);
+    const cognitionResult = applyControlledCognitionEngine({
+      products: behavioralResult.products,
+      query: r.row.query,
+      canonicalQuery: buildCanonicalQuery(r.row.query),
+      governance: r.governance,
+      calibration: r.calibration,
+      runtime: r.runtime,
+      orchestration: r.orchestration,
+      memory: r.memory,
+      coordination: r.coordination,
+      fusion: r.fusion,
+      reasoning: r.adaptiveReasoning,
+      decision: r.decisionIntelligence,
+      strategy: r.strategyIntelligence,
+      market: r.marketIntelligence,
+      behavioral: r.behavioralCommerce,
+      preOrderLinks: preCognitionLinks,
+      trayId: r.trayId,
+    });
+    r.cognitionEngine = cognitionResult.meta;
+    r.row.cognitionEngine = r.cognitionEngine;
+    r.row.cognitionProducts = cognitionResult.products;
     r.row.optimization = r.optimization;
     r.row.governance = r.governance;
     r.row.calibration = r.calibration;

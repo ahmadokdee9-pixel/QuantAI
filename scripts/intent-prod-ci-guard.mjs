@@ -272,6 +272,24 @@ check(
 );
 
 check(
+  "cognition_engine_telemetry",
+  route.includes("cognitionEngine") && route.includes("applyControlledCognitionEngine"),
+  "meta.cognitionEngine wired in search route"
+);
+
+check(
+  "cognition_default_off_in_example",
+  /COGNITION_ENGINE_ENABLED=false/.test(example) || /#\s*COGNITION_ENGINE_ENABLED=false/.test(example),
+  "COGNITION_ENGINE_ENABLED documented OFF in .env.example"
+);
+
+check(
+  "no_personalization_cognition",
+  !/userProfile|personalizationCognition|embeddingCognition|autonomousCognition/.test(route),
+  "no personalization cognition in search route"
+);
+
+check(
   "no_hardcoded_prod_apply_true",
   !/INTENT_INTELLIGENCE_PROD_APPLY\s*=\s*["']true["']/.test(route),
   "no hardcoded production apply in route"

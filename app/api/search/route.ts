@@ -67,6 +67,7 @@ import { applyControlledDecisionIntelligence } from "@/lib/decision/decisionInte
 import { applyControlledStrategyIntelligence } from "@/lib/strategy/strategyIntelligence";
 import { applyControlledMarketIntelligence } from "@/lib/market/marketIntelligence";
 import { applyControlledBehavioralCommerce } from "@/lib/behavioral/behavioralCommerce";
+import { applyControlledCognitionEngine } from "@/lib/cognition/cognitionIntelligence";
 import { buildWatchTasteCanaryMeta } from "@/lib/taste/watchTasteApply";
 import { TASTE_GRAMMAR_PIPELINE_CACHE_KEY } from "@/lib/taste/verticalTasteFlags";
 import { buildDegradedTrayNotice, buildEmptyTrayExplanation } from "@/lib/search/trayDiagnostics";
@@ -987,6 +988,27 @@ async function handleSearch(
     });
     products = behavioralCommerceResult.products;
     const behavioralCommerce = behavioralCommerceResult.meta;
+    const preCognitionLinks = products.map((p) => p.link || p.title);
+    const cognitionEngineResult = applyControlledCognitionEngine({
+      products,
+      query,
+      canonicalQuery,
+      governance: intentGovernance,
+      calibration: intentCalibration,
+      runtime: intentRuntime,
+      orchestration: intentOrchestration,
+      memory: intentMemory,
+      coordination: intentCoordination,
+      fusion: intentFusion,
+      reasoning: adaptiveReasoning,
+      decision: decisionIntelligence,
+      strategy: strategyIntelligence,
+      market: marketIntelligence,
+      behavioral: behavioralCommerce,
+      preOrderLinks: preCognitionLinks,
+    });
+    products = cognitionEngineResult.products;
+    const cognitionEngine = cognitionEngineResult.meta;
     const fallbackReason = guestOperationalDegraded
       ? String(guestOperationalDegraded.reason ?? "operational_degraded")
       : liveDiscovery.status === "enabled"
@@ -1130,6 +1152,7 @@ async function handleSearch(
         strategyIntelligence,
         marketIntelligence,
         behavioralCommerce,
+        cognitionEngine,
       },
     };
 
