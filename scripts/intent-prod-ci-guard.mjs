@@ -236,6 +236,42 @@ check(
 );
 
 check(
+  "market_intelligence_telemetry",
+  route.includes("marketIntelligence") && route.includes("applyControlledMarketIntelligence"),
+  "meta.marketIntelligence wired in search route"
+);
+
+check(
+  "market_default_off_in_example",
+  /MARKET_INTELLIGENCE_ENABLED=false/.test(example) || /#\s*MARKET_INTELLIGENCE_ENABLED=false/.test(example),
+  "MARKET_INTELLIGENCE_ENABLED documented OFF in .env.example"
+);
+
+check(
+  "no_personalization_market",
+  !/userProfile|personalizationMarket|embeddingMarket|autonomousMarket/.test(route),
+  "no personalization market in search route"
+);
+
+check(
+  "behavioral_commerce_telemetry",
+  route.includes("behavioralCommerce") && route.includes("applyControlledBehavioralCommerce"),
+  "meta.behavioralCommerce wired in search route"
+);
+
+check(
+  "behavioral_default_off_in_example",
+  /BEHAVIORAL_COMMERCE_ENABLED=false/.test(example) || /#\s*BEHAVIORAL_COMMERCE_ENABLED=false/.test(example),
+  "BEHAVIORAL_COMMERCE_ENABLED documented OFF in .env.example"
+);
+
+check(
+  "no_personalization_behavioral",
+  !/userProfile|personalizationBehavioral|embeddingBehavioral|autonomousBehavioral/.test(route),
+  "no personalization behavioral in search route"
+);
+
+check(
   "no_hardcoded_prod_apply_true",
   !/INTENT_INTELLIGENCE_PROD_APPLY\s*=\s*["']true["']/.test(route),
   "no hardcoded production apply in route"

@@ -21,6 +21,8 @@ import { applyControlledIntentFusion } from "../../lib/intent/intentFusion.ts";
 import { applyControlledAdaptiveReasoning } from "../../lib/reasoning/adaptiveReasoning.ts";
 import { applyControlledDecisionIntelligence } from "../../lib/decision/decisionIntelligence.ts";
 import { applyControlledStrategyIntelligence } from "../../lib/strategy/strategyIntelligence.ts";
+import { applyControlledMarketIntelligence } from "../../lib/market/marketIntelligence.ts";
+import { applyControlledBehavioralCommerce } from "../../lib/behavioral/behavioralCommerce.ts";
 import { INTENT_LIVE_PARTITIONS } from "./intentLiveObservabilityPartitions.mjs";
 
 export { INTENT_LIVE_PARTITIONS };
@@ -235,6 +237,47 @@ export function runIntentEvaluationPartition(part, env = {}) {
   });
   const strategyProducts = strategyResult.products;
   const strategyIntelligence = strategyResult.meta;
+  const preMarketLinks = strategyProducts.map((p) => p.link || p.title);
+  const marketResult = applyControlledMarketIntelligence({
+    products: strategyProducts,
+    query: part.query,
+    canonicalQuery: canonical,
+    governance,
+    calibration,
+    runtime,
+    orchestration,
+    memory,
+    coordination,
+    fusion,
+    reasoning: adaptiveReasoning,
+    decision: decisionIntelligence,
+    strategy: strategyIntelligence,
+    preOrderLinks: preMarketLinks,
+    trayId: part.id,
+  });
+  const marketProducts = marketResult.products;
+  const marketIntelligence = marketResult.meta;
+  const preBehavioralLinks = marketProducts.map((p) => p.link || p.title);
+  const behavioralResult = applyControlledBehavioralCommerce({
+    products: marketProducts,
+    query: part.query,
+    canonicalQuery: canonical,
+    governance,
+    calibration,
+    runtime,
+    orchestration,
+    memory,
+    coordination,
+    fusion,
+    reasoning: adaptiveReasoning,
+    decision: decisionIntelligence,
+    strategy: strategyIntelligence,
+    market: marketIntelligence,
+    preOrderLinks: preBehavioralLinks,
+    trayId: part.id,
+  });
+  const behavioralProducts = behavioralResult.products;
+  const behavioralCommerce = behavioralResult.meta;
 
   let drift = 0;
   const offTop = offRanked.slice(0, 3).map((p) => p.link);
@@ -281,6 +324,10 @@ export function runIntentEvaluationPartition(part, env = {}) {
     decisionProducts,
     strategyIntelligence,
     strategyProducts,
+    marketIntelligence,
+    marketProducts,
+    behavioralCommerce,
+    behavioralProducts,
     products: runA,
   };
 }
@@ -303,6 +350,8 @@ export function runIntentEvaluationPartitions(env = EVAL_CANARY_ENV) {
       adaptiveReasoning: row.adaptiveReasoning,
       decisionIntelligence: row.decisionIntelligence,
       strategyIntelligence: row.strategyIntelligence,
+      marketIntelligence: row.marketIntelligence,
+      behavioralCommerce: row.behavioralCommerce,
       row,
     };
   });
@@ -476,6 +525,49 @@ export function runIntentEvaluationPartitions(env = EVAL_CANARY_ENV) {
     r.strategyIntelligence = strategyResult.meta;
     r.row.strategyIntelligence = r.strategyIntelligence;
     r.row.strategyProducts = strategyResult.products;
+    const preMarketLinks = strategyResult.products.map((p) => p.link || p.title);
+    const marketResult = applyControlledMarketIntelligence({
+      products: strategyResult.products,
+      query: r.row.query,
+      canonicalQuery: buildCanonicalQuery(r.row.query),
+      governance: r.governance,
+      calibration: r.calibration,
+      runtime: r.runtime,
+      orchestration: r.orchestration,
+      memory: r.memory,
+      coordination: r.coordination,
+      fusion: r.fusion,
+      reasoning: r.adaptiveReasoning,
+      decision: r.decisionIntelligence,
+      strategy: r.strategyIntelligence,
+      preOrderLinks: preMarketLinks,
+      trayId: r.trayId,
+    });
+    r.marketIntelligence = marketResult.meta;
+    r.row.marketIntelligence = r.marketIntelligence;
+    r.row.marketProducts = marketResult.products;
+    const preBehavioralLinks = marketResult.products.map((p) => p.link || p.title);
+    const behavioralResult = applyControlledBehavioralCommerce({
+      products: marketResult.products,
+      query: r.row.query,
+      canonicalQuery: buildCanonicalQuery(r.row.query),
+      governance: r.governance,
+      calibration: r.calibration,
+      runtime: r.runtime,
+      orchestration: r.orchestration,
+      memory: r.memory,
+      coordination: r.coordination,
+      fusion: r.fusion,
+      reasoning: r.adaptiveReasoning,
+      decision: r.decisionIntelligence,
+      strategy: r.strategyIntelligence,
+      market: r.marketIntelligence,
+      preOrderLinks: preBehavioralLinks,
+      trayId: r.trayId,
+    });
+    r.behavioralCommerce = behavioralResult.meta;
+    r.row.behavioralCommerce = r.behavioralCommerce;
+    r.row.behavioralProducts = behavioralResult.products;
     r.row.optimization = r.optimization;
     r.row.governance = r.governance;
     r.row.calibration = r.calibration;

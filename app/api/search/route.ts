@@ -65,6 +65,8 @@ import { applyControlledIntentFusion } from "@/lib/intent/intentFusion";
 import { applyControlledAdaptiveReasoning } from "@/lib/reasoning/adaptiveReasoning";
 import { applyControlledDecisionIntelligence } from "@/lib/decision/decisionIntelligence";
 import { applyControlledStrategyIntelligence } from "@/lib/strategy/strategyIntelligence";
+import { applyControlledMarketIntelligence } from "@/lib/market/marketIntelligence";
+import { applyControlledBehavioralCommerce } from "@/lib/behavioral/behavioralCommerce";
 import { buildWatchTasteCanaryMeta } from "@/lib/taste/watchTasteApply";
 import { TASTE_GRAMMAR_PIPELINE_CACHE_KEY } from "@/lib/taste/verticalTasteFlags";
 import { buildDegradedTrayNotice, buildEmptyTrayExplanation } from "@/lib/search/trayDiagnostics";
@@ -946,6 +948,45 @@ async function handleSearch(
     });
     products = strategyIntelligenceResult.products;
     const strategyIntelligence = strategyIntelligenceResult.meta;
+    const preMarketLinks = products.map((p) => p.link || p.title);
+    const marketIntelligenceResult = applyControlledMarketIntelligence({
+      products,
+      query,
+      canonicalQuery,
+      governance: intentGovernance,
+      calibration: intentCalibration,
+      runtime: intentRuntime,
+      orchestration: intentOrchestration,
+      memory: intentMemory,
+      coordination: intentCoordination,
+      fusion: intentFusion,
+      reasoning: adaptiveReasoning,
+      decision: decisionIntelligence,
+      strategy: strategyIntelligence,
+      preOrderLinks: preMarketLinks,
+    });
+    products = marketIntelligenceResult.products;
+    const marketIntelligence = marketIntelligenceResult.meta;
+    const preBehavioralLinks = products.map((p) => p.link || p.title);
+    const behavioralCommerceResult = applyControlledBehavioralCommerce({
+      products,
+      query,
+      canonicalQuery,
+      governance: intentGovernance,
+      calibration: intentCalibration,
+      runtime: intentRuntime,
+      orchestration: intentOrchestration,
+      memory: intentMemory,
+      coordination: intentCoordination,
+      fusion: intentFusion,
+      reasoning: adaptiveReasoning,
+      decision: decisionIntelligence,
+      strategy: strategyIntelligence,
+      market: marketIntelligence,
+      preOrderLinks: preBehavioralLinks,
+    });
+    products = behavioralCommerceResult.products;
+    const behavioralCommerce = behavioralCommerceResult.meta;
     const fallbackReason = guestOperationalDegraded
       ? String(guestOperationalDegraded.reason ?? "operational_degraded")
       : liveDiscovery.status === "enabled"
@@ -1087,6 +1128,8 @@ async function handleSearch(
         adaptiveReasoning,
         decisionIntelligence,
         strategyIntelligence,
+        marketIntelligence,
+        behavioralCommerce,
       },
     };
 
