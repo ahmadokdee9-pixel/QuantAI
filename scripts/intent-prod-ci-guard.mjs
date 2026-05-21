@@ -56,6 +56,42 @@ check(
 );
 
 check(
+  "intent_optimization_telemetry",
+  route.includes("intentOptimization") && route.includes("buildIntentOptimizationMeta"),
+  "meta.intentOptimization wired in search route"
+);
+
+check(
+  "no_autonomous_optimization_apply",
+  !/applyOptimization|autonomousOptimize/.test(route),
+  "no autonomous optimization apply in search route"
+);
+
+check(
+  "intent_governance_telemetry",
+  route.includes("intentGovernance") && route.includes("buildIntentGovernanceMeta"),
+  "meta.intentGovernance wired in search route"
+);
+
+check(
+  "no_autonomous_governance_apply",
+  !/applyGovernance|enforceGovernancePolicy|autonomousGovern/.test(route),
+  "no autonomous governance apply in search route"
+);
+
+check(
+  "intent_calibration_telemetry",
+  route.includes("intentCalibration") && route.includes("buildIntentCalibrationMeta"),
+  "meta.intentCalibration wired in search route"
+);
+
+check(
+  "no_autonomous_calibration_apply",
+  !/applyCalibration|enforceCalibration|autonomousCalibrat/.test(route),
+  "no autonomous calibration apply in search route"
+);
+
+check(
   "no_hardcoded_prod_apply_true",
   !/INTENT_INTELLIGENCE_PROD_APPLY\s*=\s*["']true["']/.test(route),
   "no hardcoded production apply in route"

@@ -52,6 +52,9 @@ import {
   setIntentCanarySessionKey,
 } from "@/lib/intent/intentCanaryController";
 import { buildIntentEvaluationMeta } from "@/lib/intent/intentEvaluationEngine";
+import { buildIntentOptimizationMeta } from "@/lib/intent/intentOptimizationEngine";
+import { buildIntentGovernanceMeta } from "@/lib/intent/intentGovernanceEngine";
+import { buildIntentCalibrationMeta } from "@/lib/intent/intentCalibrationEngine";
 import { buildWatchTasteCanaryMeta } from "@/lib/taste/watchTasteApply";
 import { TASTE_GRAMMAR_PIPELINE_CACHE_KEY } from "@/lib/taste/verticalTasteFlags";
 import { buildDegradedTrayNotice, buildEmptyTrayExplanation } from "@/lib/search/trayDiagnostics";
@@ -787,6 +790,28 @@ async function handleSearch(
       preOrderLinks: preTasteTrayLinks,
       rankingStable: true,
     });
+    const intentOptimization = buildIntentOptimizationMeta({
+      evaluation: intentEvaluation,
+    });
+    const intentGovernance = buildIntentGovernanceMeta({
+      evaluation: intentEvaluation,
+      optimization: intentOptimization,
+      observability: intentObservability,
+      intentApply,
+      productionApply: intentProductionApply,
+      canary: intentCanary,
+      products,
+      rankingStable: true,
+    });
+    const intentCalibration = buildIntentCalibrationMeta({
+      evaluation: intentEvaluation,
+      governance: intentGovernance,
+      observability: intentObservability,
+      intentApply,
+      productionApply: intentProductionApply,
+      products,
+      rankingStable: true,
+    });
     const fallbackReason = guestOperationalDegraded
       ? String(guestOperationalDegraded.reason ?? "operational_degraded")
       : liveDiscovery.status === "enabled"
@@ -917,6 +942,9 @@ async function handleSearch(
         intentObservability,
         intentCanary,
         intentEvaluation,
+        intentOptimization,
+        intentGovernance,
+        intentCalibration,
       },
     };
 

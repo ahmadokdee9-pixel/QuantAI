@@ -221,6 +221,16 @@ try {
   ciGuardOk = false;
 }
 
-const allOk = checks.every((c) => c.ok) && ciGuardOk;
+let optimizationGateOk = true;
+try {
+  execSync("npx --yes tsx scripts/intent-optimization-gate.mjs", {
+    cwd: resolve(import.meta.dirname, ".."),
+    stdio: "inherit",
+  });
+} catch {
+  optimizationGateOk = false;
+}
+
+const allOk = checks.every((c) => c.ok) && ciGuardOk && optimizationGateOk;
 if (!allOk) process.exit(1);
 console.log("\nProduction validation gate: PASS");
