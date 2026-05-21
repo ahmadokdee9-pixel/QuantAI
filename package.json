@@ -37,6 +37,12 @@
     "test:unified-live-soak": "npx --yes tsx scripts/unified-live-soak.mjs",
     "test:unified-stability": "npx --yes tsx scripts/unified-stability.mjs",
     "test:unified-production-guard": "npx --yes tsx scripts/unified-production-guard.mjs",
+    "test:intent-intelligence": "npx --yes tsx scripts/intent-intelligence-eval.mjs",
+    "test:intent-intelligence-gate": "node scripts/intent-intelligence-gate.mjs",
+    "test:intent-apply-soak": "npx --yes tsx scripts/intent-apply-soak.mjs",
+    "test:intent-apply-parity": "npx --yes tsx scripts/intent-apply-parity.mjs",
+    "test:intent-apply-rollback": "npx --yes tsx scripts/intent-apply-rollback.mjs",
+    "test:intent-apply-gate": "node scripts/intent-apply-gate.mjs",
     "test:fragrance-diagnosis": "npx --yes tsx scripts/diagnose-fragrance-recall.mjs",
     "test:phase1-exit": "node scripts/phase1-exit-check.mjs",
     "test:production-gate": "node scripts/production-validation-gate.mjs"

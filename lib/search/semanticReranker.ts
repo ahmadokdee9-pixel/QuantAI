@@ -31,10 +31,17 @@ import {
 } from "@/lib/taste/unifiedTasteApply";
 import { computeUnifiedTasteSignals } from "@/lib/taste/unifiedTasteIdentity";
 import { isUnifiedTasteApplyEnabled } from "@/lib/taste/unifiedTasteFlags";
+import {
+  computeIntentApplyDelta,
+  stabilizeIntentHardSuppressionOrder,
+} from "@/lib/intent/intentApply";
+import { computeIntentIntelligence } from "@/lib/intent/intentIntelligenceEngine";
+import { isIntentIntelligenceApplyEnabled } from "@/lib/intent/intentIntelligenceFlags";
 import { computeWatchTasteApplyDelta, isWatchTasteApplyEnabled } from "@/lib/taste/watchTasteApply";
 
 const memo = new Map<string, SemanticQueryUnderstanding>();
 const unifiedSignalsMemo = new Map<string, ReturnType<typeof computeUnifiedTasteSignals>>();
+const intentMemo = new Map<string, ReturnType<typeof computeIntentIntelligence>>();
 
 function queryBrain(query: string): SemanticQueryUnderstanding {
   const key = query.trim().toLowerCase().slice(0, 180);
@@ -338,6 +345,24 @@ function semanticScore(
     });
   }
 
+  if (isIntentIntelligenceApplyEnabled() && canonicalQuery) {
+    const iKey = canonicalQuery.originalQuery.trim().toLowerCase().slice(0, 180);
+    let intent = intentMemo.get(iKey);
+    if (!intent) {
+      intent = computeIntentIntelligence({ query: canonicalQuery.originalQuery, canonicalQuery });
+      intentMemo.set(iKey, intent);
+    }
+    const prices = list.map((x) => x.price).filter((n) => n > 0).sort((a, b) => a - b);
+    const med = prices[Math.floor(prices.length / 2)] ?? medianPrice;
+    score += computeIntentApplyDelta({
+      product: p,
+      canonicalQuery,
+      intent,
+      medianPrice: med,
+      products: list,
+    }).delta;
+  }
+
   return Math.round(score * 100) / 100;
 }
 
@@ -408,5 +433,23 @@ export function semanticRerankSearchResults(
       ? stabilizeUnifiedHardSuppressionOrder({ query, canonicalQuery, products: sorted })
       : sorted;
 
-  return ranked.map((p, i) => ({ ...p, qiRank: i }));
+  const intentRanked =
+    canonicalQuery && isIntentIntelligenceApplyEnabled()
+      ? (() => {
+          const iKey = canonicalQuery.originalQuery.trim().toLowerCase().slice(0, 180);
+          let intent = intentMemo.get(iKey);
+          if (!intent) {
+            intent = computeIntentIntelligence({ query: canonicalQuery.originalQuery, canonicalQuery });
+            intentMemo.set(iKey, intent);
+          }
+          return stabilizeIntentHardSuppressionOrder({
+            query,
+            canonicalQuery,
+            products: ranked,
+            intent,
+          });
+        })()
+      : ranked;
+
+  return intentRanked.map((p, i) => ({ ...p, qiRank: i }));
 }

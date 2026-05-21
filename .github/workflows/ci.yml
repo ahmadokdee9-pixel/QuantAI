@@ -34,6 +34,12 @@ jobs:
       - run: npm run test:unified-live-soak
       - run: npm run test:unified-stability
       - run: npm run test:unified-production-guard
+      - run: npm run test:intent-intelligence
+      - run: npm run test:intent-intelligence-gate
+      - run: npm run test:intent-apply-soak
+      - run: npm run test:intent-apply-parity
+      - run: npm run test:intent-apply-rollback
+      - run: npm run test:intent-apply-gate
       - run: npm run test:taste-institutional-gate
       - run: npm run test:taste-deploy-reports
 

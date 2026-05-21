@@ -40,6 +40,9 @@ import { buildFurnitureTasteCanaryMeta } from "@/lib/taste/furnitureTasteApply";
 import { buildUnifiedTasteMeta } from "@/lib/taste/unifiedTasteIdentity";
 import { buildUnifiedTasteCanaryMeta, buildUnifiedLiveSoakCanaryMeta } from "@/lib/taste/unifiedTasteApply";
 import { isUnifiedTasteMetaEnabled } from "@/lib/taste/unifiedTasteFlags";
+import { computeIntentIntelligence } from "@/lib/intent/intentIntelligenceEngine";
+import { isIntentIntelligenceMetaEnabled } from "@/lib/intent/intentIntelligenceFlags";
+import { buildIntentApplyMeta } from "@/lib/intent/intentApply";
 import { buildWatchTasteCanaryMeta } from "@/lib/taste/watchTasteApply";
 import { TASTE_GRAMMAR_PIPELINE_CACHE_KEY } from "@/lib/taste/verticalTasteFlags";
 import { buildDegradedTrayNotice, buildEmptyTrayExplanation } from "@/lib/search/trayDiagnostics";
@@ -713,6 +716,33 @@ async function handleSearch(
       tasteGrammarShadow,
       preOrderLinks: preTasteTrayLinks,
     });
+    const intentIntelligence = isIntentIntelligenceMetaEnabled()
+      ? computeIntentIntelligence({ query, canonicalQuery })
+      : {
+          version: "intent-intelligence-v1" as const,
+          active: false,
+          confidence: 0,
+          detectedIntents: {
+            product: { active: false, strength: 0, labels: [], productType: null, brand: null, model: null, variant: null },
+            category: { active: false, strength: 0, labels: [], category: "unknown" as const, marketMode: "broad_discovery", primaryIntent: "general_search" },
+            budget: { active: false, strength: 0, labels: [], maxPrice: null, qualityExpectation: "balanced", dealSeeking: false },
+            taste: { active: false, strength: 0, labels: [], aestheticDirection: "neutral", styleIntents: [], unifiedQueryClass: null },
+            trust: { active: false, strength: 0, labels: [], trustedOnly: false, riskAvoidance: false, authenticitySensitive: false, deliveryCare: false },
+            urgencyComparison: { active: false, strength: 0, labels: [], urgency: false, comparison: false, alternativeSeeking: false, storeDealHunter: false },
+            emotional: { active: false, strength: 0, labels: [], giftOriented: false, emotionalLanguage: [], safeBuyLanguage: false },
+          },
+          detectedIntentLabels: [],
+          languageProfile: "unknown" as const,
+          applyEnabled: false,
+          skippedReason: "intent_intelligence_disabled",
+          latencyMs: 0,
+        };
+    const intentApply = buildIntentApplyMeta({
+      query,
+      canonicalQuery,
+      products,
+      preOrderLinks: preTasteTrayLinks,
+    });
     const fallbackReason = guestOperationalDegraded
       ? String(guestOperationalDegraded.reason ?? "operational_degraded")
       : liveDiscovery.status === "enabled"
@@ -837,6 +867,8 @@ async function handleSearch(
         unifiedTaste,
         tasteUnifiedCanary,
         unifiedTasteCanary,
+        intentIntelligence,
+        intentApply,
       },
     };
 
