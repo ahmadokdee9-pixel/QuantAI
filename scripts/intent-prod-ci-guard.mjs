@@ -290,6 +290,24 @@ check(
 );
 
 check(
+  "intent_cognition_telemetry",
+  route.includes("intentCognition") && route.includes("applyControlledIntentCognition"),
+  "meta.intentCognition wired in search route"
+);
+
+check(
+  "intent_cognition_default_off_in_example",
+  /INTENT_COGNITION_ENABLED=false/.test(example) || /#\s*INTENT_COGNITION_ENABLED=false/.test(example),
+  "INTENT_COGNITION_ENABLED documented OFF in .env.example"
+);
+
+check(
+  "no_personalization_intent_cognition",
+  !/personalizationMemory|userTasteProfile|embeddingIntent|autonomousIntent/.test(route),
+  "no personalization intent cognition in search route"
+);
+
+check(
   "no_hardcoded_prod_apply_true",
   !/INTENT_INTELLIGENCE_PROD_APPLY\s*=\s*["']true["']/.test(route),
   "no hardcoded production apply in route"
