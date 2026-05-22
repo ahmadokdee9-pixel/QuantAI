@@ -25,6 +25,12 @@ import { applyControlledMarketIntelligence } from "../../lib/market/marketIntell
 import { applyControlledBehavioralCommerce } from "../../lib/behavioral/behavioralCommerce.ts";
 import { applyControlledCognitionEngine } from "../../lib/cognition/cognitionIntelligence.ts";
 import { applyControlledIntentCognition } from "../../lib/intent/intentIntelligence.ts";
+import { applyControlledMultiObjectiveCommerce } from "../../lib/multiObjective/multiObjectiveIntelligence.ts";
+import { applyControlledAdaptiveStrategicRanking } from "../../lib/strategicRanking/strategicRankingIntelligence.ts";
+import { applyControlledMemorylessCommerceLearning } from "../../lib/memorylessLearning/memorylessLearningIntelligence.ts";
+import { applyControlledMarketRealityIntelligence } from "../../lib/marketReality/marketRealityIntelligence.ts";
+import { applyControlledCommerceDecisionIntelligence } from "../../lib/commerceDecision/commerceDecisionIntelligence.ts";
+import { applyControlledAutonomousCommerceReasoningGraph } from "../../lib/commerceReasoningGraph/commerceReasoningGraphIntelligence.ts";
 import { INTENT_LIVE_PARTITIONS } from "./intentLiveObservabilityPartitions.mjs";
 
 export { INTENT_LIVE_PARTITIONS };
@@ -325,6 +331,135 @@ export function runIntentEvaluationPartition(part, env = {}) {
   });
   const intentCognitionProducts = intentCognitionResult.products;
   const intentCognition = intentCognitionResult.meta;
+  const preMultiObjectiveLinks = intentCognitionProducts.map((p) => p.link || p.title);
+  const multiObjectiveResult = applyControlledMultiObjectiveCommerce({
+    products: intentCognitionProducts,
+    query: part.query,
+    canonicalQuery: canonical,
+    governance,
+    calibration,
+    runtime,
+    orchestration,
+    memory,
+    coordination,
+    fusion,
+    reasoning: adaptiveReasoning,
+    decision: decisionIntelligence,
+    strategy: strategyIntelligence,
+    market: marketIntelligence,
+    behavioral: behavioralCommerce,
+    cognition: cognitionEngine,
+    intent: intentCognition,
+    preOrderLinks: preMultiObjectiveLinks,
+    trayId: part.id,
+  });
+  const multiObjectiveProducts = multiObjectiveResult.products;
+  const multiObjectiveCommerce = multiObjectiveResult.meta;
+  const preStrategicLinks = multiObjectiveProducts.map((p) => p.link || p.title);
+  const strategicRankingResult = applyControlledAdaptiveStrategicRanking({
+    products: multiObjectiveProducts,
+    query: part.query,
+    canonicalQuery: canonical,
+    governance,
+    calibration,
+    runtime,
+    orchestration,
+    memory,
+    coordination,
+    fusion,
+    multiObjective: multiObjectiveCommerce,
+    intent: intentCognition,
+    preOrderLinks: preStrategicLinks,
+    trayId: part.id,
+  });
+  const strategicRankingProducts = strategicRankingResult.products;
+  const adaptiveStrategicRanking = strategicRankingResult.meta;
+  const preLearningLinks = strategicRankingProducts.map((p) => p.link || p.title);
+  const memorylessLearningResult = applyControlledMemorylessCommerceLearning({
+    products: strategicRankingProducts,
+    query: part.query,
+    canonicalQuery: canonical,
+    governance,
+    calibration,
+    runtime,
+    orchestration,
+    memory,
+    coordination,
+    fusion,
+    multiObjective: multiObjectiveCommerce,
+    intent: intentCognition,
+    strategic: adaptiveStrategicRanking,
+    preOrderLinks: preLearningLinks,
+    trayId: part.id,
+  });
+  const memorylessCommerceLearning = memorylessLearningResult.meta;
+  const memorylessLearningProducts = memorylessLearningResult.products;
+  const preRealityLinks = memorylessLearningProducts.map((p) => p.link || p.title);
+  const marketRealityResult = applyControlledMarketRealityIntelligence({
+    products: memorylessLearningProducts,
+    query: part.query,
+    canonicalQuery: canonical,
+    governance,
+    calibration,
+    runtime,
+    orchestration,
+    memory,
+    coordination,
+    fusion,
+    multiObjective: multiObjectiveCommerce,
+    intent: intentCognition,
+    strategic: adaptiveStrategicRanking,
+    memoryless: memorylessCommerceLearning,
+    preOrderLinks: preRealityLinks,
+    trayId: part.id,
+  });
+  const marketRealityIntelligence = marketRealityResult.meta;
+  const marketRealityProducts = marketRealityResult.products;
+  const preCommerceDecisionLinks = marketRealityProducts.map((p) => p.link || p.title);
+  const commerceDecisionResult = applyControlledCommerceDecisionIntelligence({
+    products: marketRealityProducts,
+    query: part.query,
+    canonicalQuery: canonical,
+    governance,
+    calibration,
+    runtime,
+    orchestration,
+    memory,
+    coordination,
+    fusion,
+    multiObjective: multiObjectiveCommerce,
+    intent: intentCognition,
+    strategic: adaptiveStrategicRanking,
+    memoryless: memorylessCommerceLearning,
+    marketReality: marketRealityIntelligence,
+    preOrderLinks: preCommerceDecisionLinks,
+    trayId: part.id,
+  });
+  const commerceDecisionIntelligence = commerceDecisionResult.meta;
+  const commerceDecisionProducts = commerceDecisionResult.products;
+  const preReasoningGraphLinks = commerceDecisionProducts.map((p) => p.link || p.title);
+  const reasoningGraphResult = applyControlledAutonomousCommerceReasoningGraph({
+    products: commerceDecisionProducts,
+    query: part.query,
+    canonicalQuery: canonical,
+    governance,
+    calibration,
+    runtime,
+    orchestration,
+    memory,
+    coordination,
+    fusion,
+    multiObjective: multiObjectiveCommerce,
+    intent: intentCognition,
+    strategic: adaptiveStrategicRanking,
+    memoryless: memorylessCommerceLearning,
+    marketReality: marketRealityIntelligence,
+    commerceDecision: commerceDecisionIntelligence,
+    preOrderLinks: preReasoningGraphLinks,
+    trayId: part.id,
+  });
+  const autonomousCommerceReasoningGraph = reasoningGraphResult.meta;
+  const reasoningGraphProducts = reasoningGraphResult.products;
 
   let drift = 0;
   const offTop = offRanked.slice(0, 3).map((p) => p.link);
@@ -379,6 +514,18 @@ export function runIntentEvaluationPartition(part, env = {}) {
     cognitionProducts,
     intentCognition,
     intentCognitionProducts,
+    multiObjectiveCommerce,
+    multiObjectiveProducts,
+    adaptiveStrategicRanking,
+    strategicRankingProducts,
+    memorylessCommerceLearning,
+    memorylessLearningProducts,
+    marketRealityIntelligence,
+    marketRealityProducts,
+    commerceDecisionIntelligence,
+    commerceDecisionProducts,
+    autonomousCommerceReasoningGraph,
+    reasoningGraphProducts,
     products: runA,
   };
 }
@@ -405,6 +552,12 @@ export function runIntentEvaluationPartitions(env = EVAL_CANARY_ENV) {
       behavioralCommerce: row.behavioralCommerce,
       cognitionEngine: row.cognitionEngine,
       intentCognition: row.intentCognition,
+      multiObjectiveCommerce: row.multiObjectiveCommerce,
+      adaptiveStrategicRanking: row.adaptiveStrategicRanking,
+      memorylessCommerceLearning: row.memorylessCommerceLearning,
+      marketRealityIntelligence: row.marketRealityIntelligence,
+      commerceDecisionIntelligence: row.commerceDecisionIntelligence,
+      autonomousCommerceReasoningGraph: row.autonomousCommerceReasoningGraph,
       row,
     };
   });
@@ -668,6 +821,141 @@ export function runIntentEvaluationPartitions(env = EVAL_CANARY_ENV) {
     r.intentCognition = intentCognitionResult.meta;
     r.row.intentCognition = r.intentCognition;
     r.row.intentCognitionProducts = intentCognitionResult.products;
+    const preMultiObjectiveLinks = intentCognitionResult.products.map((p) => p.link || p.title);
+    const multiObjectiveResult = applyControlledMultiObjectiveCommerce({
+      products: intentCognitionResult.products,
+      query: r.row.query,
+      canonicalQuery: buildCanonicalQuery(r.row.query),
+      governance: r.governance,
+      calibration: r.calibration,
+      runtime: r.runtime,
+      orchestration: r.orchestration,
+      memory: r.memory,
+      coordination: r.coordination,
+      fusion: r.fusion,
+      reasoning: r.adaptiveReasoning,
+      decision: r.decisionIntelligence,
+      strategy: r.strategyIntelligence,
+      market: r.marketIntelligence,
+      behavioral: r.behavioralCommerce,
+      cognition: r.cognitionEngine,
+      intent: r.intentCognition,
+      preOrderLinks: preMultiObjectiveLinks,
+      trayId: r.trayId,
+    });
+    r.multiObjectiveCommerce = multiObjectiveResult.meta;
+    r.row.multiObjectiveCommerce = r.multiObjectiveCommerce;
+    r.row.multiObjectiveProducts = multiObjectiveResult.products;
+    const preStrategicLinks = multiObjectiveResult.products.map((p) => p.link || p.title);
+    const strategicRankingResult = applyControlledAdaptiveStrategicRanking({
+      products: multiObjectiveResult.products,
+      query: r.row.query,
+      canonicalQuery: buildCanonicalQuery(r.row.query),
+      governance: r.governance,
+      calibration: r.calibration,
+      runtime: r.runtime,
+      orchestration: r.orchestration,
+      memory: r.memory,
+      coordination: r.coordination,
+      fusion: r.fusion,
+      multiObjective: r.multiObjectiveCommerce,
+      intent: r.intentCognition,
+      preOrderLinks: preStrategicLinks,
+      trayId: r.trayId,
+    });
+    r.adaptiveStrategicRanking = strategicRankingResult.meta;
+    r.row.adaptiveStrategicRanking = r.adaptiveStrategicRanking;
+    r.row.strategicRankingProducts = strategicRankingResult.products;
+    const preLearningLinks = strategicRankingResult.products.map((p) => p.link || p.title);
+    const memorylessLearningResult = applyControlledMemorylessCommerceLearning({
+      products: strategicRankingResult.products,
+      query: r.row.query,
+      canonicalQuery: buildCanonicalQuery(r.row.query),
+      governance: r.governance,
+      calibration: r.calibration,
+      runtime: r.runtime,
+      orchestration: r.orchestration,
+      memory: r.memory,
+      coordination: r.coordination,
+      fusion: r.fusion,
+      multiObjective: r.multiObjectiveCommerce,
+      intent: r.intentCognition,
+      strategic: r.adaptiveStrategicRanking,
+      preOrderLinks: preLearningLinks,
+      trayId: r.trayId,
+    });
+    r.memorylessCommerceLearning = memorylessLearningResult.meta;
+    r.row.memorylessCommerceLearning = r.memorylessCommerceLearning;
+    r.row.memorylessLearningProducts = memorylessLearningResult.products;
+    const preRealityLinks = memorylessLearningResult.products.map((p) => p.link || p.title);
+    const marketRealityResult = applyControlledMarketRealityIntelligence({
+      products: memorylessLearningResult.products,
+      query: r.row.query,
+      canonicalQuery: buildCanonicalQuery(r.row.query),
+      governance: r.governance,
+      calibration: r.calibration,
+      runtime: r.runtime,
+      orchestration: r.orchestration,
+      memory: r.memory,
+      coordination: r.coordination,
+      fusion: r.fusion,
+      multiObjective: r.multiObjectiveCommerce,
+      intent: r.intentCognition,
+      strategic: r.adaptiveStrategicRanking,
+      memoryless: r.memorylessCommerceLearning,
+      preOrderLinks: preRealityLinks,
+      trayId: r.trayId,
+    });
+    r.marketRealityIntelligence = marketRealityResult.meta;
+    r.row.marketRealityIntelligence = r.marketRealityIntelligence;
+    r.row.marketRealityProducts = marketRealityResult.products;
+    const preCommerceDecisionLinks = marketRealityResult.products.map((p) => p.link || p.title);
+    const commerceDecisionResult = applyControlledCommerceDecisionIntelligence({
+      products: marketRealityResult.products,
+      query: r.row.query,
+      canonicalQuery: buildCanonicalQuery(r.row.query),
+      governance: r.governance,
+      calibration: r.calibration,
+      runtime: r.runtime,
+      orchestration: r.orchestration,
+      memory: r.memory,
+      coordination: r.coordination,
+      fusion: r.fusion,
+      multiObjective: r.multiObjectiveCommerce,
+      intent: r.intentCognition,
+      strategic: r.adaptiveStrategicRanking,
+      memoryless: r.memorylessCommerceLearning,
+      marketReality: r.marketRealityIntelligence,
+      preOrderLinks: preCommerceDecisionLinks,
+      trayId: r.trayId,
+    });
+    r.commerceDecisionIntelligence = commerceDecisionResult.meta;
+    r.row.commerceDecisionIntelligence = r.commerceDecisionIntelligence;
+    r.row.commerceDecisionProducts = commerceDecisionResult.products;
+    const preReasoningGraphLinks = commerceDecisionResult.products.map((p) => p.link || p.title);
+    const reasoningGraphResult = applyControlledAutonomousCommerceReasoningGraph({
+      products: commerceDecisionResult.products,
+      query: r.row.query,
+      canonicalQuery: buildCanonicalQuery(r.row.query),
+      governance: r.governance,
+      calibration: r.calibration,
+      runtime: r.runtime,
+      orchestration: r.orchestration,
+      memory: r.memory,
+      coordination: r.coordination,
+      fusion: r.fusion,
+      multiObjective: r.multiObjectiveCommerce,
+      intent: r.intentCognition,
+      strategic: r.adaptiveStrategicRanking,
+      memoryless: r.memorylessCommerceLearning,
+      marketReality: r.marketRealityIntelligence,
+      commerceDecision: r.commerceDecisionIntelligence,
+      preOrderLinks: preReasoningGraphLinks,
+      trayId: r.trayId,
+    });
+    r.autonomousCommerceReasoningGraph = reasoningGraphResult.meta;
+    r.row.autonomousCommerceReasoningGraph = r.autonomousCommerceReasoningGraph;
+    r.row.reasoningGraphProducts = reasoningGraphResult.products;
     r.row.optimization = r.optimization;
     r.row.governance = r.governance;
     r.row.calibration = r.calibration;

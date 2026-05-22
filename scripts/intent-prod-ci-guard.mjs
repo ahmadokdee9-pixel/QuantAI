@@ -308,6 +308,114 @@ check(
 );
 
 check(
+  "multi_objective_commerce_telemetry",
+  route.includes("multiObjectiveCommerce") && route.includes("applyControlledMultiObjectiveCommerce"),
+  "meta.multiObjectiveCommerce wired in search route"
+);
+
+check(
+  "multi_objective_default_off_in_example",
+  /MULTI_OBJECTIVE_COMMERCE_ENABLED=false/.test(example) || /#\s*MULTI_OBJECTIVE_COMMERCE_ENABLED=false/.test(example),
+  "MULTI_OBJECTIVE_COMMERCE_ENABLED documented OFF in .env.example"
+);
+
+check(
+  "no_personalization_multi_objective",
+  !/personalizationObjective|userObjectiveProfile|embeddingObjective|autonomousObjective/.test(route),
+  "no personalization multi-objective in search route"
+);
+
+check(
+  "adaptive_strategic_ranking_telemetry",
+  route.includes("adaptiveStrategicRanking") && route.includes("applyControlledAdaptiveStrategicRanking"),
+  "meta.adaptiveStrategicRanking wired in search route"
+);
+
+check(
+  "adaptive_strategic_ranking_default_off_in_example",
+  /ADAPTIVE_STRATEGIC_RANKING_ENABLED=false/.test(example) || /#\s*ADAPTIVE_STRATEGIC_RANKING_ENABLED=false/.test(example),
+  "ADAPTIVE_STRATEGIC_RANKING_ENABLED documented OFF in .env.example"
+);
+
+check(
+  "no_personalization_strategic_ranking",
+  !/personalizationRanking|userRankingProfile|embeddingRanking|autonomousRanking/.test(route),
+  "no personalization strategic ranking in search route"
+);
+
+check(
+  "memoryless_commerce_learning_telemetry",
+  route.includes("memorylessCommerceLearning") && route.includes("applyControlledMemorylessCommerceLearning"),
+  "meta.memorylessCommerceLearning wired in search route"
+);
+
+check(
+  "memoryless_learning_default_off_in_example",
+  /MEMORYLESS_COMMERCE_LEARNING_ENABLED=false/.test(example) || /#\s*MEMORYLESS_COMMERCE_LEARNING_ENABLED=false/.test(example),
+  "MEMORYLESS_COMMERCE_LEARNING_ENABLED documented OFF in .env.example"
+);
+
+check(
+  "no_user_memory_in_memoryless_learning",
+  !/userProfile|personalizationMemory|userHistoryStore|embeddingLearning/.test(route),
+  "no user memory patterns in memoryless learning route"
+);
+
+check(
+  "market_reality_intelligence_telemetry",
+  route.includes("marketRealityIntelligence") && route.includes("applyControlledMarketRealityIntelligence"),
+  "meta.marketRealityIntelligence wired in search route"
+);
+
+check(
+  "market_reality_default_off_in_example",
+  /MARKET_REALITY_INTELLIGENCE_ENABLED=false/.test(example) || /#\s*MARKET_REALITY_INTELLIGENCE_ENABLED=false/.test(example),
+  "MARKET_REALITY_INTELLIGENCE_ENABLED documented OFF in .env.example"
+);
+
+check(
+  "no_personalization_market_reality",
+  !/userProfile|personalizationMemory|embeddingReality|autonomousMarketReality/.test(route),
+  "no personalization market reality in search route"
+);
+
+check(
+  "commerce_decision_intelligence_telemetry",
+  route.includes("commerceDecisionIntelligence") && route.includes("applyControlledCommerceDecisionIntelligence"),
+  "meta.commerceDecisionIntelligence wired in search route"
+);
+
+check(
+  "commerce_decision_default_off_in_example",
+  /COMMERCE_DECISION_INTELLIGENCE_ENABLED=false/.test(example) || /#\s*COMMERCE_DECISION_INTELLIGENCE_ENABLED=false/.test(example),
+  "COMMERCE_DECISION_INTELLIGENCE_ENABLED documented OFF in .env.example"
+);
+
+check(
+  "no_personalization_commerce_decision",
+  !/userProfile|personalizationMemory|embeddingDecision|autonomousCommerceDecision/.test(route),
+  "no personalization commerce decision in search route"
+);
+
+check(
+  "autonomous_commerce_reasoning_graph_telemetry",
+  route.includes("autonomousCommerceReasoningGraph") && route.includes("applyControlledAutonomousCommerceReasoningGraph"),
+  "meta.autonomousCommerceReasoningGraph wired in search route"
+);
+
+check(
+  "reasoning_graph_default_off_in_example",
+  /AUTONOMOUS_COMMERCE_REASONING_GRAPH_ENABLED=false/.test(example) || /#\s*AUTONOMOUS_COMMERCE_REASONING_GRAPH_ENABLED=false/.test(example),
+  "AUTONOMOUS_COMMERCE_REASONING_GRAPH_ENABLED documented OFF in .env.example"
+);
+
+check(
+  "no_autonomous_agents_in_reasoning_graph",
+  !/autonomousAgent|autonomousCommerceAgent|embeddingReasoningGraph/.test(route),
+  "no autonomous agent patterns in reasoning graph route"
+);
+
+check(
   "no_hardcoded_prod_apply_true",
   !/INTENT_INTELLIGENCE_PROD_APPLY\s*=\s*["']true["']/.test(route),
   "no hardcoded production apply in route"

@@ -69,6 +69,12 @@ import { applyControlledMarketIntelligence } from "@/lib/market/marketIntelligen
 import { applyControlledBehavioralCommerce } from "@/lib/behavioral/behavioralCommerce";
 import { applyControlledCognitionEngine } from "@/lib/cognition/cognitionIntelligence";
 import { applyControlledIntentCognition } from "@/lib/intent/intentIntelligence";
+import { applyControlledMultiObjectiveCommerce } from "@/lib/multiObjective/multiObjectiveIntelligence";
+import { applyControlledAdaptiveStrategicRanking } from "@/lib/strategicRanking/strategicRankingIntelligence";
+import { applyControlledMemorylessCommerceLearning } from "@/lib/memorylessLearning/memorylessLearningIntelligence";
+import { applyControlledMarketRealityIntelligence } from "@/lib/marketReality/marketRealityIntelligence";
+import { applyControlledCommerceDecisionIntelligence } from "@/lib/commerceDecision/commerceDecisionIntelligence";
+import { applyControlledAutonomousCommerceReasoningGraph } from "@/lib/commerceReasoningGraph/commerceReasoningGraphIntelligence";
 import { buildWatchTasteCanaryMeta } from "@/lib/taste/watchTasteApply";
 import { TASTE_GRAMMAR_PIPELINE_CACHE_KEY } from "@/lib/taste/verticalTasteFlags";
 import { buildDegradedTrayNotice, buildEmptyTrayExplanation } from "@/lib/search/trayDiagnostics";
@@ -1032,6 +1038,129 @@ async function handleSearch(
     });
     products = intentCognitionResult.products;
     const intentCognition = intentCognitionResult.meta;
+    const preMultiObjectiveLinks = products.map((p) => p.link || p.title);
+    const multiObjectiveResult = applyControlledMultiObjectiveCommerce({
+      products,
+      query,
+      canonicalQuery,
+      governance: intentGovernance,
+      calibration: intentCalibration,
+      runtime: intentRuntime,
+      orchestration: intentOrchestration,
+      memory: intentMemory,
+      coordination: intentCoordination,
+      fusion: intentFusion,
+      reasoning: adaptiveReasoning,
+      decision: decisionIntelligence,
+      strategy: strategyIntelligence,
+      market: marketIntelligence,
+      behavioral: behavioralCommerce,
+      cognition: cognitionEngine,
+      intent: intentCognition,
+      preOrderLinks: preMultiObjectiveLinks,
+    });
+    products = multiObjectiveResult.products;
+    const multiObjectiveCommerce = multiObjectiveResult.meta;
+    const preStrategicLinks = products.map((p) => p.link || p.title);
+    const strategicRankingResult = applyControlledAdaptiveStrategicRanking({
+      products,
+      query,
+      canonicalQuery,
+      governance: intentGovernance,
+      calibration: intentCalibration,
+      runtime: intentRuntime,
+      orchestration: intentOrchestration,
+      memory: intentMemory,
+      coordination: intentCoordination,
+      fusion: intentFusion,
+      multiObjective: multiObjectiveCommerce,
+      intent: intentCognition,
+      preOrderLinks: preStrategicLinks,
+    });
+    products = strategicRankingResult.products;
+    const adaptiveStrategicRanking = strategicRankingResult.meta;
+    const preLearningLinks = products.map((p) => p.link || p.title);
+    const memorylessLearningResult = applyControlledMemorylessCommerceLearning({
+      products,
+      query,
+      canonicalQuery,
+      governance: intentGovernance,
+      calibration: intentCalibration,
+      runtime: intentRuntime,
+      orchestration: intentOrchestration,
+      memory: intentMemory,
+      coordination: intentCoordination,
+      fusion: intentFusion,
+      multiObjective: multiObjectiveCommerce,
+      intent: intentCognition,
+      strategic: adaptiveStrategicRanking,
+      preOrderLinks: preLearningLinks,
+    });
+    products = memorylessLearningResult.products;
+    const memorylessCommerceLearning = memorylessLearningResult.meta;
+    const preRealityLinks = products.map((p) => p.link || p.title);
+    const marketRealityResult = applyControlledMarketRealityIntelligence({
+      products,
+      query,
+      canonicalQuery,
+      governance: intentGovernance,
+      calibration: intentCalibration,
+      runtime: intentRuntime,
+      orchestration: intentOrchestration,
+      memory: intentMemory,
+      coordination: intentCoordination,
+      fusion: intentFusion,
+      multiObjective: multiObjectiveCommerce,
+      intent: intentCognition,
+      strategic: adaptiveStrategicRanking,
+      memoryless: memorylessCommerceLearning,
+      preOrderLinks: preRealityLinks,
+    });
+    products = marketRealityResult.products;
+    const marketRealityIntelligence = marketRealityResult.meta;
+    const preCommerceDecisionLinks = products.map((p) => p.link || p.title);
+    const commerceDecisionResult = applyControlledCommerceDecisionIntelligence({
+      products,
+      query,
+      canonicalQuery,
+      governance: intentGovernance,
+      calibration: intentCalibration,
+      runtime: intentRuntime,
+      orchestration: intentOrchestration,
+      memory: intentMemory,
+      coordination: intentCoordination,
+      fusion: intentFusion,
+      multiObjective: multiObjectiveCommerce,
+      intent: intentCognition,
+      strategic: adaptiveStrategicRanking,
+      memoryless: memorylessCommerceLearning,
+      marketReality: marketRealityIntelligence,
+      preOrderLinks: preCommerceDecisionLinks,
+    });
+    products = commerceDecisionResult.products;
+    const commerceDecisionIntelligence = commerceDecisionResult.meta;
+    const preReasoningGraphLinks = products.map((p) => p.link || p.title);
+    const reasoningGraphResult = applyControlledAutonomousCommerceReasoningGraph({
+      products,
+      query,
+      canonicalQuery,
+      governance: intentGovernance,
+      calibration: intentCalibration,
+      runtime: intentRuntime,
+      orchestration: intentOrchestration,
+      memory: intentMemory,
+      coordination: intentCoordination,
+      fusion: intentFusion,
+      multiObjective: multiObjectiveCommerce,
+      intent: intentCognition,
+      strategic: adaptiveStrategicRanking,
+      memoryless: memorylessCommerceLearning,
+      marketReality: marketRealityIntelligence,
+      commerceDecision: commerceDecisionIntelligence,
+      preOrderLinks: preReasoningGraphLinks,
+    });
+    products = reasoningGraphResult.products;
+    const autonomousCommerceReasoningGraph = reasoningGraphResult.meta;
     const fallbackReason = guestOperationalDegraded
       ? String(guestOperationalDegraded.reason ?? "operational_degraded")
       : liveDiscovery.status === "enabled"
@@ -1177,6 +1306,12 @@ async function handleSearch(
         behavioralCommerce,
         cognitionEngine,
         intentCognition,
+        multiObjectiveCommerce,
+        adaptiveStrategicRanking,
+        memorylessCommerceLearning,
+        marketRealityIntelligence,
+        commerceDecisionIntelligence,
+        autonomousCommerceReasoningGraph,
       },
     };
 
