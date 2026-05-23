@@ -457,5 +457,17 @@ check(
   "no hardcoded production apply in route"
 );
 
+check(
+  "phase1_tray_artifact_rebuild",
+  route.includes("rebuildSearchTrayArtifacts") && route.includes("finalizeSearchNormalization"),
+  "Phase 1 meta lifecycle rebuild + normalization finalize wired"
+);
+
+check(
+  "phase1_latency_budget_meta",
+  route.includes("latencyBudget") && route.includes("buildLatencyBudgetReport"),
+  "latency budget exported in search meta"
+);
+
 if (failed) process.exit(1);
 console.log("\nIntent production CI guard: PASS");

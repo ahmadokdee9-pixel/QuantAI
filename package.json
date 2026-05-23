@@ -60,6 +60,8 @@
     "test:intent-prod-rollback": "npx --yes tsx scripts/intent-prod-rollback.mjs",
     "test:intent-prod-p43": "npm run test:intent-prod-guard && npm run test:intent-prod-rollout && npm run test:intent-prod-rollback",
     "test:intent-prod-ci-guard": "node scripts/intent-prod-ci-guard.mjs",
+    "test:search-meta-lifecycle": "node scripts/search-meta-lifecycle-guard.mjs",
+    "test:intent-full-stack": "npm run test:intent",
     "test:intent-live-audit": "npx --yes tsx scripts/intent-live-audit.mjs",
     "test:intent-drift-monitor": "npx --yes tsx scripts/intent-drift-monitor.mjs",
     "test:intent-ranking-integrity": "npx --yes tsx scripts/intent-ranking-integrity.mjs",

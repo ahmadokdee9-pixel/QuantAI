@@ -28,6 +28,11 @@ export {
   buildShadowTelemetry,
   normalizationMetaForSearchResponse,
 } from "./searchIntegration";
+export { finalizeSearchNormalization } from "./finalizeSearchNormalization";
+export type {
+  FinalizeSearchNormalizationInput,
+  FinalizeSearchNormalizationResult,
+} from "./finalizeSearchNormalization";
 export type { SearchNormalizationIntegrationResult } from "./searchIntegration";
 export { runDedupPipeline, computeTop3DuplicateRate } from "./dedupPipeline";
 export { buildEquivalenceGraph } from "./equivalenceGraph";

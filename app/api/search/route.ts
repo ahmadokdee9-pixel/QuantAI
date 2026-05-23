@@ -34,11 +34,13 @@ import { buildCanonicalQuery, canonicalQueryForDebug, type CanonicalQueryContrac
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import { semanticRerankSearchResults } from "@/lib/search/semanticReranker";
 import { buildLatencyBudgetReport } from "@/lib/search/latencyBudget";
+import { PipelineTrace } from "@/lib/search/pipelineTrace";
+import { rebuildSearchTrayArtifacts, verifyTrayMetaCoherence } from "@/lib/search/searchTrayArtifacts";
+import { composeProductionMeta } from "@/lib/search/productionMetaComposer";
+import { scanControlledStackRegistry } from "@/lib/governance/controlledStackRegistry";
 import {
   integrateNormalizationInSearchTray,
-  normalizationMetaForSearchResponse,
-  emitNormalizationShadowTelemetry,
-  isStage1ShadowRollout,
+  finalizeSearchNormalization,
   type NormalizationShadowTelemetry,
   type NormalizationTrayMeta,
 } from "@/lib/intelligence/normalization";
@@ -294,13 +296,6 @@ type SearchDataPayload = {
   entitlements?: SearchEntitlementsDTO;
 };
 
-type StageSuppressionTrace = {
-  stage: string;
-  before: number;
-  after: number;
-  suppressed: number;
-};
-
 function sourceCount(products: QuantProduct[]): number {
   return new Set(products.map((p) => p.store.trim().toLowerCase()).filter(Boolean)).size;
 }
@@ -311,7 +306,7 @@ function searchDebugMeta(args: {
   canonicalQuery?: CanonicalQueryContract | null;
   fallbackReason?: string | null;
   errorState?: string | null;
-  stageSuppression?: StageSuppressionTrace[];
+  stageSuppression?: { stage: string; before: number; after: number; suppressed: number; durationMs?: number }[];
   searchLatencyMs?: number;
   operationalState?: Record<string, unknown> | null;
   latencyBudget?: Record<string, unknown> | null;
@@ -565,17 +560,14 @@ async function handleSearch(
     let commerceMeta!: SearchCommerceAIMeta;
     let liveDiscovery!: LiveCommerceDiscoveryMeta;
     const canonicalQuery: CanonicalQueryContract = requestCanonicalQuery;
-    const stageSuppression: StageSuppressionTrace[] = [];
+    const pipelineTrace = new PipelineTrace();
+    const controlledRegistry = scanControlledStackRegistry();
     let normalizationMeta: NormalizationTrayMeta | null = null;
     let normalizationShadowPostSemantic: NormalizationShadowTelemetry | null = null;
     let normalizationShadowPostControlled: NormalizationShadowTelemetry | null = null;
+    let normalizationResponseMeta: Record<string, unknown> = {};
     const traceStage = (stage: string, before: number, after: number) => {
-      stageSuppression.push({
-        stage,
-        before,
-        after,
-        suppressed: Math.max(0, before - after),
-      });
+      pipelineTrace.trace(stage, before, after);
     };
     const loadPipelineTray = async () => {
       const tray = await getCachedSearchPipeline(pipelineKey);
@@ -704,9 +696,6 @@ async function handleSearch(
     stageBefore = products.length;
     products = buildBuyingDecisionLayer(products, query, canonicalQuery);
     traceStage("buying_decision_order", stageBefore, products.length);
-    dealClusters = buildDealClusters(products);
-    searchIntelligence = buildSearchIntelligence(query, products, dealClusters);
-    const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
 
     const { topCategory } = memoryPatchFromSearch(query);
 
@@ -715,7 +704,6 @@ async function handleSearch(
       void mergeRecommendationMemory(userId, query, topCategory, shopperPersona.labels);
     }
 
-    const marketAwareness = computeMarketAwarenessForTray(query, products);
     const tasteGrammarShadow = buildVerticalTasteShadowMeta({
       query,
       canonicalQuery,
@@ -855,6 +843,7 @@ async function handleSearch(
       rankingStable: true,
     });
     const preRuntimeTrayLinks = products.map((p) => p.link || p.title);
+    const controlledStackStarted = Date.now();
     const intentRuntimeResult = applyControlledIntentRuntime({
       products,
       query,
@@ -1231,36 +1220,53 @@ async function handleSearch(
     products = economicSimulationResult.products;
     const economicWorldSimulation = economicSimulationResult.meta;
 
+    const controlledStackMs = Date.now() - controlledStackStarted;
+    pipelineTrace.mark(
+      controlledRegistry.fastPathEligible ? "controlled_stack_fast_path" : "controlled_stack",
+      products.length,
+      controlledStackMs
+    );
+
+    const trayArtifactsPostControlled = rebuildSearchTrayArtifacts(query, products);
+    dealClusters = trayArtifactsPostControlled.dealClusters;
+    searchIntelligence = trayArtifactsPostControlled.searchIntelligence;
+    traceStage("tray_artifacts_rebuild", products.length, products.length);
+
     const searchLatencyMs = Date.now() - searchStarted;
 
-    const normPostControlled = integrateNormalizationInSearchTray(products, query, "post_controlled", {
+    const normalizationFinal = finalizeSearchNormalization({
+      products,
+      query,
       searchLatencyMs,
+      shadowPostSemantic: normalizationShadowPostSemantic,
+      priorMeta: normalizationMeta,
     });
-    products = normPostControlled.products;
-    normalizationMeta = normPostControlled.meta;
-    normalizationShadowPostControlled = normPostControlled.shadowTelemetry;
+    products = normalizationFinal.products;
+    normalizationMeta = normalizationFinal.meta;
+    normalizationShadowPostControlled = normalizationFinal.shadowPostControlled;
+    normalizationResponseMeta = normalizationFinal.responseMeta;
     traceStage(
       "normalization_post_controlled",
-      normPostControlled.meta.inputCount,
-      normPostControlled.meta.outputCount
+      normalizationFinal.meta.inputCount,
+      normalizationFinal.meta.outputCount
     );
-    dealClusters = buildDealClusters(products);
-    searchIntelligence = buildSearchIntelligence(query, products, dealClusters);
 
-    if (isStage1ShadowRollout() && normalizationShadowPostControlled) {
-      emitNormalizationShadowTelemetry({
-        queryLength: query.length,
-        searchLatencyMs,
-        productCount: products.length,
-        shadow: normalizationShadowPostControlled,
-      });
-    }
+    const trayArtifactsFinal = rebuildSearchTrayArtifacts(query, products);
+    dealClusters = trayArtifactsFinal.dealClusters;
+    searchIntelligence = trayArtifactsFinal.searchIntelligence;
+
+    const marketAwareness = computeMarketAwarenessForTray(query, products);
+    const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
+    const trayMetaCoherence = verifyTrayMetaCoherence(products, dealClusters);
 
     const fallbackReason = guestOperationalDegraded
       ? String(guestOperationalDegraded.reason ?? "operational_degraded")
       : liveDiscovery.status === "enabled"
         ? null
         : liveDiscovery.error || liveDiscovery.status;
+    const stageSuppression = pipelineTrace.rowsSnapshot();
+    const latencyBudget = buildLatencyBudgetReport(searchLatencyMs, stageSuppression);
+
     const debugMeta = searchDebugMeta({
       products,
       liveDiscovery,
@@ -1270,6 +1276,7 @@ async function handleSearch(
       stageSuppression,
       searchLatencyMs,
       operationalState: guestOperationalDegraded,
+      latencyBudget,
     });
 
     const data: SearchDataPayload = {
@@ -1409,17 +1416,25 @@ async function handleSearch(
         autonomousCommerceReasoningGraph,
         unifiedCognitiveGovernance,
         economicWorldSimulation,
-        ...(normalizationMeta && normalizationShadowPostControlled
-          ? normalizationMetaForSearchResponse(
-              normalizationMeta,
-              normalizationShadowPostControlled,
-              searchLatencyMs
-            )
-          : {}),
+        controlledStack: {
+          version: "phase1",
+          fastPath: controlledRegistry.fastPathEligible,
+          enabledLayerCount: controlledRegistry.enabledCount,
+          enabledLayerIds: controlledRegistry.enabledLayerIds,
+          latencyMs: controlledStackMs,
+        },
+        trayMetaCoherence,
+        latencyBudget,
+        ...normalizationResponseMeta,
         normalizationShadowPostSemantic,
         normalizationShadowPostControlled,
       },
     };
+
+    data.meta = composeProductionMeta({
+      meta: data.meta,
+      controlledStackFastPath: controlledRegistry.fastPathEligible,
+    });
 
     logSearchEvent(products.length > 0 ? "success" : "empty", {
       queryLength: query.length,
