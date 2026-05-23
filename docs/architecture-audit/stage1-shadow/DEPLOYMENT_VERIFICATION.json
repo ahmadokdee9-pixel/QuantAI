@@ -1,0 +1,43 @@
+{
+  "deploymentReadinessScore": 100,
+  "readyToDeploy": true,
+  "checks": [
+    {
+      "name": "env flags parse Stage 1 config",
+      "ok": true
+    },
+    {
+      "name": "APPLY=true ignored when MODE=shadow (production safety)",
+      "ok": true
+    },
+    {
+      "name": "outputCount === inputCount in shadow mode",
+      "ok": true
+    },
+    {
+      "name": "integrateNormalizationInSearchTray preserves tray size",
+      "ok": true
+    },
+    {
+      "name": "normalizationMetaForSearchResponse exports required meta keys",
+      "ok": true
+    },
+    {
+      "name": "normalization layer has no embedding/retrieval imports",
+      "ok": true
+    },
+    {
+      "name": "npm run test:normalization",
+      "ok": true
+    },
+    {
+      "name": "npm run test:normalization-ranking",
+      "ok": true
+    },
+    {
+      "name": "npm run build",
+      "ok": true
+    }
+  ],
+  "failed": 0
+}

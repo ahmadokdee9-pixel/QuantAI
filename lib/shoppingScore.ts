@@ -15,6 +15,10 @@ import type { MarketPulseSnapshot } from "@/lib/intelligence/marketPulseEngine";
 import type { IdentityGateDecision } from "@/lib/intelligence/productIdentity";
 import type { CommerceQualityInsight } from "@/lib/intelligence/commerceQualityLayer";
 import type { BuyingDecisionSignal } from "@/lib/intelligence/buyingDecisionEngine";
+import type {
+  NormalizationTrayMeta,
+  QiNormalizedCommerceIdentity,
+} from "@/lib/intelligence/normalization/types";
 import {
   getStoreTrustScore,
   TRUSTED_SUBSTRINGS,
@@ -76,6 +80,10 @@ export type QuantProduct = {
   qiMerchantConfidence01?: number;
   /** Canonical product lineage + confidence triple (commerce OS). */
   qiCanonicalIdentity?: QiCanonicalIdentity;
+  /** Phase 0 canonical commerce identity — stable IDs, dedup, equivalence class. */
+  qiNormalizedCommerce?: QiNormalizedCommerceIdentity;
+  /** Tray-level normalization telemetry (duplicated per row when normalization runs). */
+  qiNormalizationMeta?: NormalizationTrayMeta;
   /** Global commerce foundation: query, identity, merchant, market, and decision planes. */
   qiGlobalCommerce?: QiGlobalCommerceIntelligence;
   /** Tray-level daily market pulse duplicated per row for card/decision memo stability. */

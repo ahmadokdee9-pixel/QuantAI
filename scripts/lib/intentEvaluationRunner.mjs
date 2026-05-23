@@ -31,6 +31,8 @@ import { applyControlledMemorylessCommerceLearning } from "../../lib/memorylessL
 import { applyControlledMarketRealityIntelligence } from "../../lib/marketReality/marketRealityIntelligence.ts";
 import { applyControlledCommerceDecisionIntelligence } from "../../lib/commerceDecision/commerceDecisionIntelligence.ts";
 import { applyControlledAutonomousCommerceReasoningGraph } from "../../lib/commerceReasoningGraph/commerceReasoningGraphIntelligence.ts";
+import { applyControlledUnifiedCognitiveGovernance } from "../../lib/cognitiveGovernance/cognitiveGovernanceIntelligence.ts";
+import { applyControlledEconomicWorldSimulation } from "../../lib/economicWorldSimulation/economicWorldSimulationIntelligence.ts";
 import { INTENT_LIVE_PARTITIONS } from "./intentLiveObservabilityPartitions.mjs";
 
 export { INTENT_LIVE_PARTITIONS };
@@ -460,6 +462,55 @@ export function runIntentEvaluationPartition(part, env = {}) {
   });
   const autonomousCommerceReasoningGraph = reasoningGraphResult.meta;
   const reasoningGraphProducts = reasoningGraphResult.products;
+  const preCognitiveGovernanceLinks = reasoningGraphProducts.map((p) => p.link || p.title);
+  const cognitiveGovernanceResult = applyControlledUnifiedCognitiveGovernance({
+    products: reasoningGraphProducts,
+    query: part.query,
+    canonicalQuery: canonical,
+    governance,
+    calibration,
+    runtime,
+    orchestration,
+    memory,
+    coordination,
+    fusion,
+    multiObjective: multiObjectiveCommerce,
+    intent: intentCognition,
+    strategic: adaptiveStrategicRanking,
+    memoryless: memorylessCommerceLearning,
+    marketReality: marketRealityIntelligence,
+    commerceDecision: commerceDecisionIntelligence,
+    reasoningGraph: autonomousCommerceReasoningGraph,
+    preOrderLinks: preCognitiveGovernanceLinks,
+    trayId: part.id,
+  });
+  const unifiedCognitiveGovernance = cognitiveGovernanceResult.meta;
+  const cognitiveGovernanceProducts = cognitiveGovernanceResult.products;
+  const preEconomicSimulationLinks = cognitiveGovernanceProducts.map((p) => p.link || p.title);
+  const economicSimulationResult = applyControlledEconomicWorldSimulation({
+    products: cognitiveGovernanceProducts,
+    query: part.query,
+    canonicalQuery: canonical,
+    governance,
+    calibration,
+    runtime,
+    orchestration,
+    memory,
+    coordination,
+    fusion,
+    multiObjective: multiObjectiveCommerce,
+    intent: intentCognition,
+    strategic: adaptiveStrategicRanking,
+    memoryless: memorylessCommerceLearning,
+    marketReality: marketRealityIntelligence,
+    commerceDecision: commerceDecisionIntelligence,
+    reasoningGraph: autonomousCommerceReasoningGraph,
+    cognitiveGovernance: unifiedCognitiveGovernance,
+    preOrderLinks: preEconomicSimulationLinks,
+    trayId: part.id,
+  });
+  const economicWorldSimulation = economicSimulationResult.meta;
+  const economicSimulationProducts = economicSimulationResult.products;
 
   let drift = 0;
   const offTop = offRanked.slice(0, 3).map((p) => p.link);
@@ -526,6 +577,10 @@ export function runIntentEvaluationPartition(part, env = {}) {
     commerceDecisionProducts,
     autonomousCommerceReasoningGraph,
     reasoningGraphProducts,
+    unifiedCognitiveGovernance,
+    cognitiveGovernanceProducts,
+    economicWorldSimulation,
+    economicSimulationProducts,
     products: runA,
   };
 }
@@ -558,6 +613,8 @@ export function runIntentEvaluationPartitions(env = EVAL_CANARY_ENV) {
       marketRealityIntelligence: row.marketRealityIntelligence,
       commerceDecisionIntelligence: row.commerceDecisionIntelligence,
       autonomousCommerceReasoningGraph: row.autonomousCommerceReasoningGraph,
+      unifiedCognitiveGovernance: row.unifiedCognitiveGovernance,
+      economicWorldSimulation: row.economicWorldSimulation,
       row,
     };
   });
@@ -956,6 +1013,57 @@ export function runIntentEvaluationPartitions(env = EVAL_CANARY_ENV) {
     r.autonomousCommerceReasoningGraph = reasoningGraphResult.meta;
     r.row.autonomousCommerceReasoningGraph = r.autonomousCommerceReasoningGraph;
     r.row.reasoningGraphProducts = reasoningGraphResult.products;
+    const preCognitiveGovernanceLinks = reasoningGraphResult.products.map((p) => p.link || p.title);
+    const cognitiveGovernanceResult = applyControlledUnifiedCognitiveGovernance({
+      products: reasoningGraphResult.products,
+      query: r.row.query,
+      canonicalQuery: buildCanonicalQuery(r.row.query),
+      governance: r.governance,
+      calibration: r.calibration,
+      runtime: r.runtime,
+      orchestration: r.orchestration,
+      memory: r.memory,
+      coordination: r.coordination,
+      fusion: r.fusion,
+      multiObjective: r.multiObjectiveCommerce,
+      intent: r.intentCognition,
+      strategic: r.adaptiveStrategicRanking,
+      memoryless: r.memorylessCommerceLearning,
+      marketReality: r.marketRealityIntelligence,
+      commerceDecision: r.commerceDecisionIntelligence,
+      reasoningGraph: r.autonomousCommerceReasoningGraph,
+      preOrderLinks: preCognitiveGovernanceLinks,
+      trayId: r.trayId,
+    });
+    r.unifiedCognitiveGovernance = cognitiveGovernanceResult.meta;
+    r.row.unifiedCognitiveGovernance = r.unifiedCognitiveGovernance;
+    r.row.cognitiveGovernanceProducts = cognitiveGovernanceResult.products;
+    const preEconomicSimulationLinks = cognitiveGovernanceResult.products.map((p) => p.link || p.title);
+    const economicSimulationResult = applyControlledEconomicWorldSimulation({
+      products: cognitiveGovernanceResult.products,
+      query: r.row.query,
+      canonicalQuery: buildCanonicalQuery(r.row.query),
+      governance: r.governance,
+      calibration: r.calibration,
+      runtime: r.runtime,
+      orchestration: r.orchestration,
+      memory: r.memory,
+      coordination: r.coordination,
+      fusion: r.fusion,
+      multiObjective: r.multiObjectiveCommerce,
+      intent: r.intentCognition,
+      strategic: r.adaptiveStrategicRanking,
+      memoryless: r.memorylessCommerceLearning,
+      marketReality: r.marketRealityIntelligence,
+      commerceDecision: r.commerceDecisionIntelligence,
+      reasoningGraph: r.autonomousCommerceReasoningGraph,
+      cognitiveGovernance: r.unifiedCognitiveGovernance,
+      preOrderLinks: preEconomicSimulationLinks,
+      trayId: r.trayId,
+    });
+    r.economicWorldSimulation = economicSimulationResult.meta;
+    r.row.economicWorldSimulation = r.economicWorldSimulation;
+    r.row.economicSimulationProducts = economicSimulationResult.products;
     r.row.optimization = r.optimization;
     r.row.governance = r.governance;
     r.row.calibration = r.calibration;

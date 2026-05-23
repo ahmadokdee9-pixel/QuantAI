@@ -16,6 +16,7 @@ import {
 } from "@/lib/search/queryUnderstanding";
 import { assessModelGenerationConflict } from "@/lib/intelligence/modelGenerationGuard";
 import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
+import { readNormalizationFlags } from "@/lib/intelligence/normalization/flags";
 import { bilingualMatchTokens } from "@/lib/search/bilingualMatchTokens";
 import {
   hasLuxuryWatchIntent,
@@ -388,15 +389,48 @@ function isHardJunk(q: SemanticQueryUnderstanding, p: QuantProduct, score: numbe
   return false;
 }
 
+function normalizedListingKey(p: QuantProduct): string {
+  const n = p.qiNormalizedCommerce;
+  if (n?.rankingIdentityKey) return n.rankingIdentityKey;
+  if (n?.commerceId) return `${n.commerceId}::${p.store.toLowerCase()}`;
+  return `${p.link}::${p.title.toLowerCase().replace(/\s+/g, " ").slice(0, 80)}`;
+}
+
 function dedupeListings(products: QuantProduct[]): QuantProduct[] {
   const seen = new Set<string>();
   const out: QuantProduct[] = [];
   for (const p of products) {
-    const key = `${p.link}::${p.title.toLowerCase().replace(/\s+/g, " ").slice(0, 80)}`;
+    const key = normalizedListingKey(p);
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(p);
   }
+  return out;
+}
+
+/** Remove duplicate normalized identities from ranked output when apply mode is on. */
+function suppressNormalizedDuplicatesInRank(products: QuantProduct[]): QuantProduct[] {
+  const flags = readNormalizationFlags();
+  if (!flags.enabled) return products;
+
+  const seenCommerce = new Set<string>();
+  const seenRanking = new Set<string>();
+  const out: QuantProduct[] = [];
+
+  for (const p of products) {
+    const n = p.qiNormalizedCommerce;
+    if (n?.commerceId && seenCommerce.has(n.commerceId)) {
+      if (flags.apply) continue;
+    }
+    const rKey = n?.rankingIdentityKey ?? normalizedListingKey(p);
+    if (seenRanking.has(rKey)) {
+      if (flags.apply) continue;
+    }
+    if (n?.commerceId) seenCommerce.add(n.commerceId);
+    seenRanking.add(rKey);
+    out.push(p);
+  }
+
   return out;
 }
 
@@ -451,5 +485,6 @@ export function semanticRerankSearchResults(
         })()
       : ranked;
 
-  return intentRanked.map((p, i) => ({ ...p, qiRank: i }));
+  const dedupedRank = suppressNormalizedDuplicatesInRank(intentRanked);
+  return dedupedRank.map((p, i) => ({ ...p, qiRank: i }));
 }

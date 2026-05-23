@@ -1,0 +1,2291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>QuantAI Full Architecture Audit</title>
+  <style>
+@page {
+  size: A4;
+  margin: 22mm 18mm 24mm 18mm;
+  @bottom-center {
+    content: counter(page);
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-size: 9pt;
+    color: #64748b;
+  }
+}
+
+@page :first {
+  margin: 0;
+  @bottom-center { content: none; }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.55;
+  color: #0f172a;
+  background: #ffffff;
+  margin: 0;
+  padding: 0;
+}
+
+.title-page {
+  page-break-after: always;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 45%, #f1f5f9 100%);
+  border-bottom: 4px solid #1e40af;
+  padding: 48px 40px;
+}
+
+.title-page .org {
+  font-size: 11pt;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #475569;
+  margin-bottom: 28px;
+}
+
+.title-page h1 {
+  font-size: 28pt;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 12px;
+  line-height: 1.15;
+  max-width: 90%;
+}
+
+.title-page .subtitle {
+  font-size: 14pt;
+  color: #334155;
+  margin: 0 0 36px;
+  font-weight: 400;
+}
+
+.title-page .meta {
+  font-size: 10.5pt;
+  color: #64748b;
+  line-height: 1.8;
+}
+
+.title-page .classification {
+  margin-top: 48px;
+  padding: 10px 18px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 9.5pt;
+  color: #475569;
+  background: #ffffff;
+}
+
+.toc-page {
+  page-break-after: always;
+  padding-top: 8px;
+}
+
+.toc-page h2 {
+  font-size: 18pt;
+  border-bottom: 2px solid #1e40af;
+  padding-bottom: 8px;
+  margin-top: 0;
+}
+
+.toc-list {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0 0;
+}
+
+.toc-list li {
+  margin: 6px 0;
+  line-height: 1.4;
+}
+
+.toc-list a {
+  color: #1e40af;
+  text-decoration: none;
+}
+
+.toc-l1 { font-weight: 600; margin-top: 10px; }
+.toc-l2 { padding-left: 18px; font-size: 10pt; }
+
+.content {
+  max-width: 100%;
+}
+
+h1, h2, h3, h4 {
+  color: #0f172a;
+  page-break-after: avoid;
+}
+
+h1 {
+  font-size: 20pt;
+  border-bottom: 2px solid #1e40af;
+  padding-bottom: 6px;
+  margin-top: 28px;
+}
+
+h2 {
+  font-size: 15pt;
+  border-bottom: 1px solid #cbd5e1;
+  padding-bottom: 4px;
+  margin-top: 24px;
+}
+
+h3 {
+  font-size: 12pt;
+  margin-top: 18px;
+  color: #1e293b;
+}
+
+h4 {
+  font-size: 11pt;
+  margin-top: 14px;
+}
+
+p { margin: 8px 0 10px; }
+
+strong { color: #0f172a; }
+
+ul, ol {
+  margin: 8px 0 12px;
+  padding-left: 22px;
+}
+
+li { margin: 4px 0; }
+
+hr {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 20px 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0 18px;
+  font-size: 9.5pt;
+  page-break-inside: avoid;
+}
+
+thead th {
+  background: #1e40af;
+  color: #ffffff;
+  font-weight: 600;
+  text-align: left;
+  padding: 8px 10px;
+}
+
+tbody td {
+  border: 1px solid #cbd5e1;
+  padding: 7px 10px;
+  vertical-align: top;
+}
+
+tbody tr:nth-child(even) td {
+  background: #f8fafc;
+}
+
+code {
+  font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
+  font-size: 9pt;
+  background: #f1f5f9;
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: #0f172a;
+}
+
+pre {
+  font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
+  font-size: 8.5pt;
+  line-height: 1.45;
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 14px 16px;
+  border-radius: 6px;
+  overflow-x: auto;
+  page-break-inside: avoid;
+  border: 1px solid #334155;
+  margin: 12px 0 16px;
+}
+
+pre code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
+.diagram-block {
+  margin: 14px 0 18px;
+  page-break-inside: avoid;
+  border: 1px solid #94a3b8;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.diagram-label {
+  background: #1e40af;
+  color: #ffffff;
+  font-size: 8.5pt;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+}
+
+.diagram-source {
+  background: #1e293b;
+  color: #cbd5e1;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+blockquote {
+  border-left: 4px solid #1e40af;
+  margin: 12px 0;
+  padding: 8px 16px;
+  background: #f8fafc;
+  color: #334155;
+}
+
+a { color: #1e40af; }
+
+.footer-note {
+  margin-top: 32px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+  font-size: 9pt;
+  color: #64748b;
+  font-style: italic;
+}
+</style>
+</head>
+<body>
+
+<section class="title-page">
+  <div class="org">Smartbuy · QuantAI</div>
+  <h1>QuantAI Full Architecture Audit</h1>
+  <p class="subtitle">Pre–Phase 7 Complete System Assessment</p>
+  <div class="meta">
+    <div><strong>Date:</strong> May 2026</div>
+    <div><strong>Scope:</strong> P4.8–P6.9 controlled layers, search integration, CI harness</div>
+    <div><strong>Method:</strong> Read-only codebase audit</div>
+    <div><strong>Version:</strong> 1.0</div>
+  </div>
+  <div class="classification">Internal — Architecture &amp; Engineering</div>
+</section>
+<nav class="toc-page"><h2>Table of Contents</h2><ol class="toc-list"><li class="toc-l1"><a href="#quantai-full-architecture-audit-prephase-7">QuantAI Full Architecture Audit (Pre–Phase 7)</a></li>
+<li class="toc-l2"><a href="#table-of-contents">Table of Contents</a></li>
+<li class="toc-l2"><a href="#executive-summary">Executive Summary</a></li>
+<li class="toc-l2"><a href="#1-complete-system-map">1. Complete System Map</a></li>
+<li class="toc-l2"><a href="#2-connection-audit">2. Connection Audit</a></li>
+<li class="toc-l2"><a href="#3-search-integration-audit">3. Search Integration Audit</a></li>
+<li class="toc-l2"><a href="#4-performance-complexity-audit">4. Performance + Complexity Audit</a></li>
+<li class="toc-l2"><a href="#5-system-classification">5. System Classification</a></li>
+<li class="toc-l2"><a href="#6-visibility-audit">6. Visibility Audit</a></li>
+<li class="toc-l2"><a href="#7-future-roadmap-recommendations">7. Future Roadmap Recommendations</a></li>
+<li class="toc-l2"><a href="#8-final-strategic-decision">8. Final Strategic Decision</a></li>
+<li class="toc-l2"><a href="#strategic-report-card">Strategic Report Card</a></li>
+<li class="toc-l2"><a href="#strengths-summary">Strengths (summary)</a></li>
+<li class="toc-l2"><a href="#weaknesses-summary">Weaknesses (summary)</a></li>
+<li class="toc-l2"><a href="#architecture-risks-summary">Architecture risks (summary)</a></li>
+<li class="toc-l2"><a href="#recommendation-for-next-development-phase">Recommendation for Next Development Phase</a></li>
+<li class="toc-l2"><a href="#9-final-executive-technical-conclusion">9. Final Executive Technical Conclusion</a></li>
+<li class="toc-l2"><a href="#10-critical-risks-before-phase-7">10. Critical Risks Before Phase 7</a></li>
+<li class="toc-l2"><a href="#11-recommended-stabilization-roadmap">11. Recommended Stabilization Roadmap</a></li>
+<li class="toc-l2"><a href="#12-production-readiness-scorecard">12. Production Readiness Scorecard</a></li>
+<li class="toc-l2"><a href="#appendix-key-file-references">Appendix: Key file references</a></li></ol></nav>
+<main class="content">
+<h1 id="quantai-full-architecture-audit-prephase-7">QuantAI Full Architecture Audit (Pre–Phase 7)</h1>
+<p><strong>Date:</strong> May 2026<br><strong>Scope:</strong> Entire intelligence stack wired through <code>app/api/search/route.ts</code>, P4.8–P6.9 controlled layers, pre-stack ranking infrastructure, and evaluation/CI harness.<br><strong>Method:</strong> Read-only codebase audit — no implementation changes.</p>
+<hr>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#executive-summary">Executive Summary</a></li>
+<li><a href="#1-complete-system-map">Complete System Map</a></li>
+<li><a href="#2-connection-audit">Connection Audit</a></li>
+<li><a href="#3-search-integration-audit">Search Integration Audit</a></li>
+<li><a href="#4-performance--complexity-audit">Performance &amp; Complexity Audit</a></li>
+<li><a href="#5-system-classification-cios">System Classification (CIOS)</a></li>
+<li><a href="#6-visibility-audit">Visibility Audit</a></li>
+<li><a href="#7-future-roadmap--phase-7-readiness">Future Roadmap &amp; Phase 7 Readiness</a></li>
+<li><a href="#8-final-strategic-decision">Final Strategic Decision</a></li>
+<li><a href="#9-final-executive-technical-conclusion">Final Executive Technical Conclusion</a></li>
+<li><a href="#10-critical-risks-before-phase-7">Critical Risks Before Phase 7</a></li>
+<li><a href="#11-recommended-stabilization-roadmap">Recommended Stabilization Roadmap</a></li>
+<li><a href="#12-production-readiness-scorecard">Production Readiness Scorecard</a></li>
+<li><a href="#strategic-report-card">Strategic Report Card</a></li>
+<li><a href="#strengths-summary">Strengths, Weaknesses &amp; Risks Summaries</a></li>
+<li><a href="#recommendation-for-next-development-phase">Recommendation for Next Development Phase</a></li>
+<li><a href="#appendix-key-file-references">Appendix: Key File References</a></li>
+</ol>
+<hr>
+<h2 id="executive-summary">Executive Summary</h2>
+<p>Smartbuy QuantAI is not a single “AI model.” It is a <strong>deep, deterministic commerce ranking operating system</strong> with ~32 product-mutating stages, 20 controlled apply layers (P5.0–P6.9), extensive rollback/governance/replay machinery, and rich meta telemetry — almost all <strong>production-OFF by default</strong>.</p>
+<p><strong>Bottom line:</strong> The architecture is <strong>research-grade and CI-mature</strong>, but <strong>production-invisible</strong> today. Ranking users actually see is dominated by <strong>cached enrichment + heuristic pre-stack layers</strong> (persona, semantic rerank, commerce quality), not by P6 cognition/governance/simulation. <strong>Phase 7 should not start until architecture stabilization and retrieval/normalization foundations are addressed.</strong></p>
+<hr>
+<h2 id="1-complete-system-map">1. Complete System Map</h2>
+<h3 id="11-end-to-end-execution-order">1.1 End-to-end execution order</h3>
+<div class="diagram-block mermaid-diagram"><div class="diagram-label">Architecture Diagram (Mermaid)</div><pre class="diagram-source">flowchart TD
+  subgraph fetch[&quot;Product sourcing&quot;]
+    A[SerpAPI + fallbacks] --&gt; B[Live commerce discovery fusion]
+    B --&gt; C[Cached pipeline]
+  end
+
+  subgraph cached[&quot;Cached pipeline (~120s TTL)&quot;]
+    C --&gt; D[enrichProductsWithIntelligence]
+    D --&gt; E[attachCommerceAiLayer]
+    E --&gt; F[dealClusters + searchIntelligence v1]
+  end
+
+  subgraph pre[&quot;Per-request pre-controlled (always active)&quot;]
+    F --&gt; G[predictiveCommerce]
+    G --&gt; H[personaRanking + sessionMemory]
+    H --&gt; I[marketAwarenessRanking]
+    I --&gt; J[hardIdentityGate]
+    J --&gt; K[semanticRerank]
+    K --&gt; L[commerceQualityLayer]
+    L --&gt; M[buyingDecisionLayer]
+    M --&gt; N[dealClusters + searchIntelligence v2 STALE after here]
+  end
+
+  subgraph meta[&quot;Meta builders (no reorder)&quot;]
+    N --&gt; O[taste / intent / governance / calibration meta]
+  end
+
+  subgraph controlled[&quot;Controlled apply chain P5.0–P6.9&quot;]
+    O --&gt; P5[Runtime → Orchestration → Memory → Coordination → Fusion]
+    P5 --&gt; P55[Reasoning → Decision → Strategy → Market]
+    P55 --&gt; P59[Behavioral → Cognition → Intent Cognition]
+    P59 --&gt; P62[Multi-Objective → Strategic Ranking]
+    P62 --&gt; P64[Memoryless Learning → Market Reality]
+    P64 --&gt; P66[Commerce Decision → Reasoning Graph]
+    P66 --&gt; P68[Cognitive Governance → Economic Simulation]
+  end
+
+  P68 --&gt; OUT[Final products + meta]</pre></div>
+<h3 id="12-product-mutating-layers-32-total">1.2 Product-mutating layers (32 total)</h3>
+<h4>A. Cached pipeline (<code>runSearchPipeline</code>, ~120s TTL)</h4>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Function</th>
+<th>Reassigns <code>products</code>?</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><code>enrichProductsWithIntelligence</code></td>
+<td>Yes</td>
+<td>Core scoring, <code>qiRank</code>, merchant/trust/style engines</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Empty-tray guard</td>
+<td>Conditional</td>
+<td></td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>attachCommerceAiLayer</code></td>
+<td>Yes</td>
+<td>Commerce AI on top-N</td>
+</tr>
+</tbody></table>
+<p>Also produces: <code>dealClusters</code>, <code>searchIntelligence</code>, <code>liveDiscovery</code> meta.</p>
+<h4 id="b-per-request-pre-controlled-stack-always-active">B. Per-request pre-controlled stack (always active)</h4>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Function</th>
+<th>Reassigns <code>products</code>?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>4</td>
+<td><code>applyPredictiveCommerceToTray</code></td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>applyPersonaRanking</code></td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>applyMarketAwarenessRanking</code></td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>applyHardIdentityGate</code></td>
+<td>Yes (may shrink)</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>recoverSafeIdentityBreadth</code></td>
+<td>Conditional</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>semanticRerankSearchResults</code></td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Semantic empty guard</td>
+<td>Conditional</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>buildCommerceQualityLayer</code></td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>buildBuyingDecisionLayer</code></td>
+<td>Yes</td>
+</tr>
+</tbody></table>
+<p><strong>Stale snapshot point:</strong> After #12, <code>dealClusters</code> and <code>searchIntelligence</code> are rebuilt — but 20 more controlled layers run afterward without refresh.</p>
+<h4 id="c-controlled-apply-chain-p50p69">C. Controlled apply chain (P5.0–P6.9)</h4>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Phase</th>
+<th>Apply function</th>
+<th>Meta key</th>
+<th>Default prod</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>13</td>
+<td>P5.0</td>
+<td><code>applyControlledIntentRuntime</code></td>
+<td><code>intentRuntime</code></td>
+<td>OFF</td>
+</tr>
+<tr>
+<td>14</td>
+<td>P5.1</td>
+<td><code>applyControlledIntentOrchestration</code></td>
+<td><code>intentOrchestration</code></td>
+<td>OFF</td>
+</tr>
+<tr>
+<td>15</td>
+<td>P5.2</td>
+<td><code>applyControlledIntentMemory</code></td>
+<td><code>intentMemory</code></td>
+<td>OFF</td>
+</tr>
+<tr>
+<td>16</td>
+<td>P5.3</td>
+<td><code>applyControlledIntentCoordination</code></td>
+<td><code>intentCoordination</code></td>
+<td>OFF</td>
+</tr>
+<tr>
+<td>17</td>
+<td>P5.4</td>
+<td><code>applyControlledIntentFusion</code></td>
+<td><code>intentFusion</code></td>
+<td>OFF</td>
+</tr>
+<tr>
+<td>18</td>
+<td>P5.5</td>
+<td><code>applyControlledAdaptiveReasoning</code></td>
+<td><code>adaptiveReasoning</code></td>
+<td>OFF</td>
+</tr>
+<tr>
+<td>19</td>
+<td>P5.6</td>
+<td><code>applyControlledDecisionIntelligence</code></td>
+<td><code>decisionIntelligence</code></td>
+<td>OFF</td>
+</tr>
+<tr>
+<td>20</td>
+<td>P5.7</td>
+<td><code>applyControlledStrategyIntelligence</code></td>
+<td><code>strategyIntelligence</code></td>
+<td>OFF</td>
+</tr>
+<tr>
+<td>21</td>
+<td>P5.8</td>
+<td><code>applyControlledMarketIntelligence</code></td>
+<td><code>marketIntelligence</code></td>
+<td>OFF</td>
+</tr>
+<tr>
+<td>22</td>
+<td>P5.9</td>
+<td><code>applyControlledBehavioralCommerce</code></td>
+<td><code>behavioralCommerce</code></td>
+<td>OFF</td>
+</tr>
+<tr>
+<td>23</td>
+<td>P6.0</td>
+<td><code>applyControlledCognitionEngine</code></td>
+<td><code>cognitionEngine</code></td>
+<td>OFF</td>
+</tr>
+<tr>
+<td>24</td>
+<td>P6.1</td>
+<td><code>applyControlledIntentCognition</code></td>
+<td><code>intentCognition</code></td>
+<td>OFF</td>
+</tr>
+<tr>
+<td>25</td>
+<td>P6.2</td>
+<td><code>applyControlledMultiObjectiveCommerce</code></td>
+<td><code>multiObjectiveCommerce</code></td>
+<td>OFF</td>
+</tr>
+<tr>
+<td>26</td>
+<td>P6.3</td>
+<td><code>applyControlledAdaptiveStrategicRanking</code></td>
+<td><code>adaptiveStrategicRanking</code></td>
+<td>OFF</td>
+</tr>
+<tr>
+<td>27</td>
+<td>P6.4</td>
+<td><code>applyControlledMemorylessCommerceLearning</code></td>
+<td><code>memorylessCommerceLearning</code></td>
+<td>OFF</td>
+</tr>
+<tr>
+<td>28</td>
+<td>P6.5</td>
+<td><code>applyControlledMarketRealityIntelligence</code></td>
+<td><code>marketRealityIntelligence</code></td>
+<td>OFF</td>
+</tr>
+<tr>
+<td>29</td>
+<td>P6.6</td>
+<td><code>applyControlledCommerceDecisionIntelligence</code></td>
+<td><code>commerceDecisionIntelligence</code></td>
+<td>OFF</td>
+</tr>
+<tr>
+<td>30</td>
+<td>P6.7</td>
+<td><code>applyControlledAutonomousCommerceReasoningGraph</code></td>
+<td><code>autonomousCommerceReasoningGraph</code></td>
+<td>OFF</td>
+</tr>
+<tr>
+<td>31</td>
+<td>P6.8</td>
+<td><code>applyControlledUnifiedCognitiveGovernance</code></td>
+<td><code>unifiedCognitiveGovernance</code></td>
+<td>OFF</td>
+</tr>
+<tr>
+<td>32</td>
+<td>P6.9</td>
+<td><code>applyControlledEconomicWorldSimulation</code></td>
+<td><code>economicWorldSimulation</code></td>
+<td>OFF</td>
+</tr>
+</tbody></table>
+<p><strong>Advisory-only (meta, no apply reorder):</strong> P4.8 <code>intentGovernance</code>, P4.9 <code>intentCalibration</code>, plus intent evaluation/optimization/canary/observability blocks.</p>
+<h3 id="13-orchestration-chain-pattern-repeated-20">1.3 Orchestration chain pattern (repeated 20×)</h3>
+<p>Each controlled layer follows the same OS-grade template:</p>
+<pre><code>flags/profiles → engine (detect → stabilize/fuse → confidence → contradictions → balance → influence)
+→ optional stabilization ranking → mutation gate → rollback/replay integrity → telemetry meta
+</code></pre>
+<p><strong>Governance flow:</strong> P4.8 <code>intentGovernance</code> dampens downstream layers; P6.8 <code>cognitiveGovernance</code> arbitrates cross-layer contradictions; P6.9 <code>economicWorldSimulation</code> adds ecosystem/economic governors on top of P6.8.</p>
+<p><strong>Rollback cascade:</strong> Each layer&#39;s <code>*_EMERGENCY_SHUTDOWN</code> and upstream shutdown flags propagate via <code>is*HardRollback()</code> — P6.9 cascades from P6.8 → P6.7 → … → intent runtime shutdowns.</p>
+<p><strong>Replay safety chain:</strong> Every layer: <code>preOrderLinks</code> snapshot → projected ranking → <code>compute*ReplayIntegrity</code> → rollback if integrity &lt; 70 or drift exceeded → deterministic replay validators in CI.</p>
+<p><strong>Confidence propagation:</strong> Layer N produces <code>*Confidence</code> in balance result; layer N+1 may read upstream meta but <strong>does not always receive all upstream metas in <code>route.ts</code> args</strong> (see §2).</p>
+<h3 id="14-routing-lane-inventory-approximate">1.4 Routing lane inventory (approximate)</h3>
+<table>
+<thead>
+<tr>
+<th>Domain</th>
+<th align="right">Lanes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Intent fusion</td>
+<td align="right">8</td>
+</tr>
+<tr>
+<td>Reasoning</td>
+<td align="right">8</td>
+</tr>
+<tr>
+<td>Decision</td>
+<td align="right">9</td>
+</tr>
+<tr>
+<td>Strategy</td>
+<td align="right">10</td>
+</tr>
+<tr>
+<td>Market</td>
+<td align="right">12</td>
+</tr>
+<tr>
+<td>Behavioral</td>
+<td align="right">10</td>
+</tr>
+<tr>
+<td>Cognition</td>
+<td align="right">11</td>
+</tr>
+<tr>
+<td>Intent cognition</td>
+<td align="right">11</td>
+</tr>
+<tr>
+<td>Multi-objective</td>
+<td align="right">11</td>
+</tr>
+<tr>
+<td>Strategic ranking</td>
+<td align="right">11</td>
+</tr>
+<tr>
+<td>Memoryless learning</td>
+<td align="right">11</td>
+</tr>
+<tr>
+<td>Market reality</td>
+<td align="right">14</td>
+</tr>
+<tr>
+<td>Commerce decision</td>
+<td align="right">13</td>
+</tr>
+<tr>
+<td>Reasoning graph</td>
+<td align="right">12</td>
+</tr>
+<tr>
+<td>Cognitive governance</td>
+<td align="right">13</td>
+</tr>
+<tr>
+<td>Economic simulation</td>
+<td align="right">15</td>
+</tr>
+</tbody></table>
+<p><strong>Total distinct lane names: ~150+.</strong> Most layers share primitives (<code>hold</code>, <code>stabilize</code>, <code>reinforce</code>, <code>compare</code>, <code>replay-protect</code>, <code>*-check</code>, <code>ranking-safe</code>, <code>rollback-safe</code>) but each domain reimplements resolution independently.</p>
+<h3 id="15-telemetry-meta-outputs">1.5 Telemetry / meta outputs</h3>
+<p>Final <code>data.meta</code> exposes <strong>60+ intelligence fields</strong>, including duplicate/debug mirrors (<code>buyingDecision</code> = <code>buyingDecisionDebug</code>, seven keys aliasing <code>commerceQualityDebug</code>). Controlled layers each emit: score, delta, confidence, integrity, routing lane, rollback flags, protection governors, analytics, monitoring, signal hashes, snapshot hashes.</p>
+<h3 id="16-evaluation-runner-chain">1.6 Evaluation runner chain</h3>
+<pre><code>scripts/lib/intentEvaluationRunner.mjs
+  governance/calibration (meta build)
+  → runtime → orchestration → memory → coordination → fusion
+  → reasoning → decision → strategy → market → behavioral → cognition → intentCognition
+  → multiObjective → strategicRanking → memorylessLearning → marketReality → commerceDecision
+  → commerceReasoningGraph → cognitiveGovernance → economicWorldSimulation
+</code></pre>
+<p>Runner env chain (inner → outer):</p>
+<pre><code>intentRuntimeRunner → orchestration → memory → coordination → fusion
+→ reasoning → decision → strategy → market → behavioral → cognition
+→ intent → multiObjective → strategicRanking → memorylessLearning → marketReality
+→ commerceDecision → commerceReasoningGraph → cognitiveGovernance → economicWorldSimulation
+</code></pre>
+<hr>
+<h2 id="2-connection-audit">2. Connection Audit</h2>
+<h3 id="21-truly-connected-">2.1 Truly connected ✅</h3>
+<table>
+<thead>
+<tr>
+<th>Connection</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>All 20 controlled apply functions called sequentially in <code>route.ts</code></td>
+<td>✅ Wired</td>
+</tr>
+<tr>
+<td><code>products</code> reassigned through entire controlled chain</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>P6.7–P6.9 receive full upstream chain (through <code>cognitiveGovernance</code> / <code>reasoningGraph</code>)</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>CI guard validates wiring + default OFF for every P5–P6.9 layer</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Runner chain <code>economicWorldSimulationRunner</code> extends full P6.8→…→P5.0 env</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Evaluation runner mirrors route apply order</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Emergency shutdown blocks mutation (validated per phase)</td>
+<td>✅</td>
+</tr>
+</tbody></table>
+<h3 id="22-partially-connected-">2.2 Partially connected ⚠️</h3>
+<table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Upstream meta not passed to mid-stack layers</strong></td>
+<td>e.g. <code>applyControlledAdaptiveStrategicRanking</code> in route receives intent/multi-objective/strategic inputs but <strong>not</strong> reasoning/decision/strategy/market/behavioral/cognition metas — engines use only what route passes</td>
+</tr>
+<tr>
+<td><strong>Meta computed on stale tray</strong></td>
+<td><code>dealClusters</code>, <code>searchIntelligence</code>, <code>bundleSuggestions</code>, <code>marketAwareness</code>, taste/intent meta builders run <strong>before</strong> 20 controlled layers — final product order can diverge</td>
+</tr>
+<tr>
+<td><strong>Pre-stack vs controlled tension</strong></td>
+<td><code>applyPersonaRanking</code> + <code>commerceSessionMemory</code> always mutate ranking; P6+ explicitly forbids personalization — two philosophies coexist</td>
+</tr>
+<tr>
+<td><strong>Engine runs when layer OFF</strong></td>
+<td>Disabled layers still execute full engine (signals, hashes, confidence) then return baseline order — connected for telemetry, wasteful for perf</td>
+</tr>
+<tr>
+<td><strong><code>test:intent</code> scope</strong></td>
+<td>Covers P6.1–P6.9 only; P4.8–P6.0 require separate scripts (<code>test:intent-p48</code>…<code>test:cognition</code>) — no single full-stack regression command</td>
+</tr>
+</tbody></table>
+<h3 id="23-exists-but-unused-dead-">2.3 Exists but unused / dead ⚠️</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Location</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>buildLatencyBudgetReport</code></td>
+<td>Imported in route, never called; <code>latencyBudget</code> always null</td>
+</tr>
+<tr>
+<td>Phase 7</td>
+<td>No references in repo</td>
+</tr>
+<tr>
+<td>Duplicate meta keys</td>
+<td><code>buyingDecision</code>, <code>dealStrength</code>, etc. mirror same objects</td>
+</tr>
+<tr>
+<td>Furniture taste canary <code>preOrderLinks</code></td>
+<td>Captured only for watch/fragrance; furniture gets <code>[]</code></td>
+</tr>
+</tbody></table>
+<h3 id="24-duplicate-logic-">2.4 Duplicate logic 🔁</h3>
+<p>Each P5.5–P6.9 domain reimplements ~14 modules with near-identical structure:</p>
+<ul>
+<li>Flags, profiles, detection, stabilization, fusion, confidence, contradictions, balancer, ranking, replay, telemetry, engine, intelligence, governors/guards</li>
+</ul>
+<p><strong>~12 copies</strong> of: mutation gate, CHECK_LANES blockade, drift rollback, replay integrity ≥ 70, prod opt-in gates, emergency shutdown.</p>
+<p>This is <strong>intentionally consistent</strong> for phase isolation but creates <strong>maintenance duplication</strong> and subtle drift risk (e.g. P6.7 circular detection fix vs P6.8 governor thresholds).</p>
+<h3 id="25-shadow-orchestration">2.5 Shadow orchestration</h3>
+<ul>
+<li><strong>Pre-controlled stack</strong> (persona, semantic, quality) effectively <strong>overrides</strong> controlled stack in production because P5–P6.9 are OFF.</li>
+<li><strong>Cached enrichment</strong> (<code>enrichProductsWithIntelligence</code>) is the <strong>primary score authority</strong> — 20+ sub-engines inside scoring (merchant confidence, style, regret risk, discovery profiles).</li>
+<li>Controlled layers are <strong>shadow infrastructure</strong> until explicitly enabled + prod opt-in.</li>
+</ul>
+<h3 id="26-governance-gaps">2.6 Governance gaps</h3>
+<table>
+<thead>
+<tr>
+<th>Gap</th>
+<th>Risk</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>No single cross-stack governance coordinator</td>
+<td>P6.8 governs meta-signals but doesn&#39;t retroactively fix stale meta</td>
+</tr>
+<tr>
+<td>Per-layer contradiction arbitration</td>
+<td>No global contradiction resolver across pre-stack + controlled</td>
+</tr>
+<tr>
+<td><code>INTENT_GOVERNANCE</code> (P4.8) vs <code>COGNITIVE_GOVERNANCE</code> (P6.8)</td>
+<td>Two governance concepts; only P6.8 participates in ranking apply</td>
+</tr>
+<tr>
+<td>Check-lane blockade dominates</td>
+<td>P6.6–P6.9 live partitions often show <code>mutation=false</code> even in bounded test env — safe but limits visible ranking change</td>
+</tr>
+</tbody></table>
+<h3 id="27-unreachable-low-use-routing-lanes">2.7 Unreachable / low-use routing lanes</h3>
+<p>Many <code>*-check</code> lanes exist per domain but only activate when detection/governor thresholds fire. In stable live partitions, lanes like <code>ranking-safe</code>, <code>reinforce</code>, or <code>hold</code> dominate. Check lanes are <strong>reachable in code</strong> but <strong>rarely exercised in happy-path partitions</strong> — CI validates lane enum membership, not full lane coverage.</p>
+<h3 id="28-unused-rollback-protections">2.8 Unused rollback protections</h3>
+<p>All rollback protections are <strong>wired in code</strong> and validated by unit/replay tests. In production (layers OFF), rollback paths are <strong>never exercised at runtime</strong> — protections are dormant but present.</p>
+<hr>
+<h2 id="3-search-integration-audit">3. Search Integration Audit</h2>
+<h3 id="31-does-final-ranking-use-latest-intelligence">3.1 Does final ranking use latest intelligence?</h3>
+<p><strong>Partially.</strong></p>
+<ul>
+<li><strong>Product order:</strong> Yes — <code>products</code> flows through all 20 controlled layers sequentially.</li>
+<li><strong>Effective influence in production:</strong> <strong>No</strong> — with all <code>*_ENABLED=false</code>, controlled layers return <strong>unchanged order</strong> (engine telemetry only).</li>
+<li><strong>What actually ranks today:</strong> Cached <code>enrichProductsWithIntelligence</code> → predictive → persona → market awareness → identity gate → semantic rerank → commerce quality → buying decision.</li>
+</ul>
+<h3 id="32-bounded-mutation">3.2 Bounded mutation</h3>
+<p><strong>Correct when enabled:</strong> Each layer clamps delta, blocks CHECK lanes, rolls back on drift/replay failure, requires <code>bounded-*</code> / <code>protected-*</code> / <code>full-safe-*</code> mode + env allow + prod/canary opt-in.</p>
+<p><strong>Production default:</strong> Mutation path never reached — <strong>safe by design</strong>.</p>
+<h3 id="33-telemetry-only-mode">3.3 Telemetry-only mode</h3>
+<p><strong>Works as designed:</strong> Enabled + <code>telemetry-only</code> mode → full meta, <code>mutationApplied: false</code>. Validated in every phase audit script.</p>
+<h3 id="34-production-off-safety">3.4 Production OFF safety</h3>
+<p><strong>Strong:</strong> <code>.env.example</code> documents <code>*_ENABLED=false</code> for all P5–P6.9 layers. CI guard (<code>scripts/intent-prod-ci-guard.mjs</code>) enforces wiring + default OFF + no hardcoded prod apply. Layer-specific <code>*_PROD_APPLY</code> / <code>*_CANARY_APPLY</code> gates exist.</p>
+<p>Environment variables (all default OFF in <code>.env.example</code>):</p>
+<pre><code>INTENT_RUNTIME_ENABLED=false
+INTENT_ORCHESTRATION_ENABLED=false
+INTENT_MEMORY_ENABLED=false
+INTENT_COORDINATION_ENABLED=false
+INTENT_FUSION_ENABLED=false
+ADAPTIVE_REASONING_ENABLED=false
+DECISION_INTELLIGENCE_ENABLED=false
+STRATEGY_INTELLIGENCE_ENABLED=false
+MARKET_INTELLIGENCE_ENABLED=false
+BEHAVIORAL_COMMERCE_ENABLED=false
+COGNITION_ENGINE_ENABLED=false
+INTENT_COGNITION_ENABLED=false
+MULTI_OBJECTIVE_COMMERCE_ENABLED=false
+ADAPTIVE_STRATEGIC_RANKING_ENABLED=false
+MEMORYLESS_COMMERCE_LEARNING_ENABLED=false
+MARKET_REALITY_INTELLIGENCE_ENABLED=false
+COMMERCE_DECISION_INTELLIGENCE_ENABLED=false
+AUTONOMOUS_COMMERCE_REASONING_GRAPH_ENABLED=false
+COGNITIVE_GOVERNANCE_ENABLED=false
+ECONOMIC_WORLD_SIMULATION_ENABLED=false
+</code></pre>
+<h3 id="35-critical-integration-bug-class-stale-downstream-artifacts">3.5 Critical integration bug class: stale downstream artifacts</h3>
+<p><code>data.products</code> reflects post-P6.9 order, but <code>data.dealClusters</code>, <code>data.searchIntelligence</code>, and several meta fields reflect <strong>pre-controlled</strong> tray (~line 687–698 vs 838–1212 in <code>app/api/search/route.ts</code>). <strong>Users/API consumers comparing clusters to final ranking will see inconsistency.</strong></p>
+<h3 id="36-before-intelligence-stack-product-sourcing">3.6 Before intelligence stack (product sourcing)</h3>
+<ol>
+<li>Query normalization + cache key</li>
+<li>Auth, rate limits, subscription tier</li>
+<li><code>fetchShoppingProductsWithFallback</code> (SerpAPI + multi-fallback, cap 60)</li>
+<li><code>runSafeLiveCommerceDiscovery</code> (internal + external merchant fusion)</li>
+<li>Cached <code>enrichProductsWithIntelligence</code> — first real scoring/ranking authority</li>
+</ol>
+<hr>
+<h2 id="4-performance-complexity-audit">4. Performance + Complexity Audit</h2>
+<table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th>Assessment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Orchestration depth</strong></td>
+<td><strong>Very deep</strong> — 32 mutating stages + 20 sequential engines per request</td>
+</tr>
+<tr>
+<td><strong>Architecture complexity</strong></td>
+<td><strong>High</strong> — ~504 files in <code>lib/</code>, ~12 parallel domain clones</td>
+</tr>
+<tr>
+<td><strong>Recursive risk</strong></td>
+<td><strong>Low in code</strong> (explicitly forbidden) — but <strong>recursive influence detection</strong> exists as meta-signal</td>
+</tr>
+<tr>
+<td><strong>Stability risk</strong></td>
+<td><strong>Low in prod</strong> (layers OFF) — <strong>Medium in canary</strong> (cumulative small deltas × 20 layers)</td>
+</tr>
+<tr>
+<td><strong>Contradiction escalation</strong></td>
+<td><strong>Managed</strong> per layer; global escalation uncoordinated</td>
+</tr>
+<tr>
+<td><strong>Confidence inflation</strong></td>
+<td><strong>Detected</strong> in P6.8/P6.9 governors; multiple layers each compute confidence independently</td>
+</tr>
+<tr>
+<td><strong>Replay instability</strong></td>
+<td><strong>Well guarded</strong> per layer; cross-layer replay not unified</td>
+</tr>
+<tr>
+<td><strong>Routing explosion</strong></td>
+<td><strong>~150 lanes</strong> — high cognitive load for operators</td>
+</tr>
+<tr>
+<td><strong>Maintainability</strong></td>
+<td><strong>Phase-isolated = good for rollout; bad for long-term DRY</strong></td>
+</tr>
+<tr>
+<td><strong>Performance bottleneck</strong></td>
+<td><strong>20 sequential engine runs per request even when OFF</strong>; cached pipeline helps fetch/enrich but not controlled stack</td>
+</tr>
+</tbody></table>
+<p><strong>Estimated controlled-stack cost:</strong> Even disabled, each layer runs detection/fusion/confidence/balance — likely <strong>milliseconds × 20</strong> of pure computation per search, plus meta JSON assembly.</p>
+<h3 id="41-test-harness-coverage">4.1 Test harness coverage</h3>
+<table>
+<thead>
+<tr>
+<th>Script</th>
+<th>Coverage</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>test:intent</code></td>
+<td>P6.9 → P6.1 + intent unit tests (newest-first)</td>
+</tr>
+<tr>
+<td><code>test:intent-p69</code></td>
+<td>Full <code>test:intent</code></td>
+</tr>
+<tr>
+<td><code>test:intent-p68</code></td>
+<td>Through P6.8 (excludes P6.9)</td>
+</tr>
+<tr>
+<td><code>test:intent-p48</code> … <code>test:intent-p60</code></td>
+<td>Individual earlier phase gates</td>
+</tr>
+<tr>
+<td><code>test:intent-prod-ci-guard</code></td>
+<td>Wiring + default OFF + anti-patterns</td>
+</tr>
+</tbody></table>
+<p><strong>Gap:</strong> No single command runs P4.8 through P6.9 in one CI pass.</p>
+<hr>
+<h2 id="5-system-classification">5. System Classification</h2>
+<h3 id="51-what-type-of-system-is-quantai-now">5.1 What type of system is QuantAI now?</h3>
+<p>A <strong>deterministic commerce intelligence operating system (CIOS)</strong> — layered ranking middleware with:</p>
+<ul>
+<li>Bounded influence mutation</li>
+<li>Replay-safe rollback</li>
+<li>Multi-phase telemetry</li>
+<li>Production kill switches</li>
+<li>Canary/prod opt-in gates</li>
+<li>Extensive CI validation harness</li>
+</ul>
+<p>It is <strong>not</strong> an embedding RAG system, <strong>not</strong> an autonomous agent shop, <strong>not</strong> a personalization engine (by P6 design intent, though pre-stack persona exists).</p>
+<h3 id="52-capabilities-already-present">5.2 Capabilities already present</h3>
+<table>
+<thead>
+<tr>
+<th>Capability</th>
+<th>Maturity</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Deterministic ranking mutation with rollback</td>
+<td><strong>Production-grade patterns</strong></td>
+</tr>
+<tr>
+<td>Multi-layer governance &amp; economic simulation meta</td>
+<td><strong>Lab-grade (OFF in prod)</strong></td>
+</tr>
+<tr>
+<td>Intent/cognition signal extraction</td>
+<td><strong>Strong meta; weak ranking impact (OFF)</strong></td>
+</tr>
+<tr>
+<td>Merchant/trust/reality scoring in enrichProducts</td>
+<td><strong>Active in prod</strong></td>
+</tr>
+<tr>
+<td>Semantic rerank + identity gating</td>
+<td><strong>Active in prod</strong></td>
+</tr>
+<tr>
+<td>Taste grammar (vertical canaries)</td>
+<td><strong>Partial / category-scoped</strong></td>
+</tr>
+<tr>
+<td>Session/persona ranking</td>
+<td><strong>Active (conflicts with P6 no-personalization)</strong></td>
+</tr>
+<tr>
+<td>Full-stack CI + replay validation</td>
+<td><strong>Strong for P6.1–P6.9</strong></td>
+</tr>
+<tr>
+<td>Live observability partitions</td>
+<td><strong>Strong</strong></td>
+</tr>
+</tbody></table>
+<h3 id="53-capabilities-still-missing-architecturally">5.3 Capabilities still missing (architecturally)</h3>
+<ul>
+<li>Unified product normalization / canonical SKU graph</li>
+<li>Retailer intelligence graph (beyond merchant confidence heuristics)</li>
+<li>Query understanding that <strong>feeds ranking</strong> (not just meta sidecars)</li>
+<li>Retrieval layer (embeddings explicitly excluded from P6 — gap remains)</li>
+<li>Cross-layer meta synchronization (stale cluster problem)</li>
+<li>Single-stack integration test (P4.8 through P6.9 in one command)</li>
+<li>Production activation playbook with measurable ranking lift</li>
+<li>Trust graph / offer provenance chain</li>
+<li>Real-world price/availability infrastructure beyond SerpAPI</li>
+</ul>
+<h3 id="54-what-separates-it-from-ordinary-ai-shopping-apps">5.4 What separates it from ordinary AI shopping apps</h3>
+<ol>
+<li><strong>20-layer controlled apply chain</strong> with explicit rollback — rare in consumer commerce</li>
+<li><strong>Deterministic replay CI</strong> across live partitions — research/engineering rigor</li>
+<li><strong>Governance/simulation meta-layers</strong> (P6.8/P6.9) — unusual depth for ranking middleware</li>
+<li><strong>Production-safe-by-default</strong> multi-phase rollout architecture</li>
+</ol>
+<p>Ordinary apps: one LLM rerank or one scoring function. QuantAI: <strong>an OS with phases</strong>.</p>
+<h3 id="55-operating-system-grade-layers">5.5 Operating-system-grade layers</h3>
+<table>
+<thead>
+<tr>
+<th>OS-grade</th>
+<th>Layer</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>✅</td>
+<td>Rollback/replay/emergency shutdown pattern (all P5–P6.9)</td>
+</tr>
+<tr>
+<td>✅</td>
+<td>Intent runtime/orchestration/memory/coordination/fusion (P5.0–P5.4)</td>
+</tr>
+<tr>
+<td>✅</td>
+<td>Cognitive governance + economic simulation (P6.8–P6.9)</td>
+</tr>
+<tr>
+<td>⚠️ Partial</td>
+<td>Cross-layer orchestration (route arg gaps, stale meta)</td>
+</tr>
+<tr>
+<td>❌ Not yet</td>
+<td>Unified kernel scheduler (single governor for entire stack)</td>
+</tr>
+</tbody></table>
+<h3 id="56-domain-module-inventory-p48p69">5.6 Domain module inventory (P4.8–P6.9)</h3>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Folder</th>
+<th>Files (approx)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>P4.8–P5.4, P6.1</td>
+<td><code>lib/intent/</code></td>
+<td>67 (shared)</td>
+</tr>
+<tr>
+<td>P5.5</td>
+<td><code>lib/reasoning/</code></td>
+<td>10</td>
+</tr>
+<tr>
+<td>P5.6</td>
+<td><code>lib/decision/</code></td>
+<td>12</td>
+</tr>
+<tr>
+<td>P5.7</td>
+<td><code>lib/strategy/</code></td>
+<td>14</td>
+</tr>
+<tr>
+<td>P5.8</td>
+<td><code>lib/market/</code></td>
+<td>14</td>
+</tr>
+<tr>
+<td>P5.9</td>
+<td><code>lib/behavioral/</code></td>
+<td>13</td>
+</tr>
+<tr>
+<td>P6.0</td>
+<td><code>lib/cognition/</code></td>
+<td>12</td>
+</tr>
+<tr>
+<td>P6.2</td>
+<td><code>lib/multiObjective/</code></td>
+<td>19</td>
+</tr>
+<tr>
+<td>P6.3</td>
+<td><code>lib/strategicRanking/</code></td>
+<td>13</td>
+</tr>
+<tr>
+<td>P6.4</td>
+<td><code>lib/memorylessLearning/</code></td>
+<td>13</td>
+</tr>
+<tr>
+<td>P6.5</td>
+<td><code>lib/marketReality/</code></td>
+<td>13</td>
+</tr>
+<tr>
+<td>P6.6</td>
+<td><code>lib/commerceDecision/</code></td>
+<td>13</td>
+</tr>
+<tr>
+<td>P6.7</td>
+<td><code>lib/commerceReasoningGraph/</code></td>
+<td>14</td>
+</tr>
+<tr>
+<td>P6.8</td>
+<td><code>lib/cognitiveGovernance/</code></td>
+<td>14</td>
+</tr>
+<tr>
+<td>P6.9</td>
+<td><code>lib/economicWorldSimulation/</code></td>
+<td>14</td>
+</tr>
+</tbody></table>
+<p>Plus pre-stack intelligence in <code>lib/intelligence/</code> (enrichProducts, semantic rerank, taste, etc.).</p>
+<hr>
+<h2 id="6-visibility-audit">6. Visibility Audit</h2>
+<h3 id="61-why-intelligence-isn39t-visually-noticeable">6.1 Why intelligence isn&#39;t visually noticeable</h3>
+<ol>
+<li><strong>All P5–P6.9 layers default OFF</strong> — zero controlled ranking mutation in production.</li>
+<li><strong>Even in test/canary</strong>, CHECK lanes block mutation on unstable partitions (P6.6–P6.9 often <code>mutation=false</code>).</li>
+<li><strong>No UI surfaces meta</strong> — intelligence lives in <code>data.meta</code> JSON invisible to shoppers.</li>
+<li><strong>Bounded deltas are tiny</strong> (~0.06–0.10) — top-5 order often unchanged even when mutation applies.</li>
+<li><strong>Pre-stack heuristics dominate</strong> — user-perceived quality comes from enrichProducts + semantic rerank, not governance/simulation.</li>
+<li><strong>Stale meta</strong> — UI/debug views of clusters/intelligence may not match final ranking.</li>
+</ol>
+<h3 id="62-backend-only-systems-today">6.2 Backend-only systems (today)</h3>
+<p>All P4.8–P6.9 controlled layers, intent evaluation/optimization/canary blocks, reasoning graph, cognitive governance, economic simulation — <strong>telemetry and safety infrastructure</strong>, not user-visible features.</p>
+<h3 id="63-systems-that-invisibly-influence-results-today">6.3 Systems that invisibly influence results today</h3>
+<table>
+<thead>
+<tr>
+<th>Active</th>
+<th>System</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>✅</td>
+<td><code>enrichProductsWithIntelligence</code> (core scoring)</td>
+</tr>
+<tr>
+<td>✅</td>
+<td>Live commerce discovery fusion</td>
+</tr>
+<tr>
+<td>✅</td>
+<td>Predictive commerce tray adjust</td>
+</tr>
+<tr>
+<td>✅</td>
+<td>Persona ranking + session memory</td>
+</tr>
+<tr>
+<td>✅</td>
+<td>Market awareness ranking</td>
+</tr>
+<tr>
+<td>✅</td>
+<td>Hard identity gate</td>
+</tr>
+<tr>
+<td>✅</td>
+<td>Semantic rerank</td>
+</tr>
+<tr>
+<td>✅</td>
+<td>Commerce quality + buying decision layers</td>
+</tr>
+<tr>
+<td>⚠️ Canary-only</td>
+<td>Taste grammar apply (category-scoped)</td>
+</tr>
+<tr>
+<td>⚠️ Canary-only</td>
+<td>Intent intelligence apply bridge</td>
+</tr>
+</tbody></table>
+<h3 id="64-what-must-activate-later-for-visible-improvement">6.4 What must activate later for visible improvement</h3>
+<ol>
+<li><strong>Enable bounded mutation</strong> for 1–2 layers at a time with canary + prod opt-in</li>
+<li><strong>Fix stale meta</strong> so downstream UX/debug reflects final ranking</li>
+<li><strong>Product normalization</strong> so ranking moves meaningfully between equivalent listings</li>
+<li><strong>Query understanding → ranking</strong> bridge (not meta-only)</li>
+<li><strong>Consolidate pre-stack persona</strong> with P6 no-personalization policy or isolate to explicit opt-in</li>
+</ol>
+<hr>
+<h2 id="7-future-roadmap-recommendations">7. Future Roadmap Recommendations</h2>
+<h3 id="71-should-come-next-before-phase-7">7.1 SHOULD come next (before Phase 7)</h3>
+<table>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Initiative</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>P0</strong></td>
+<td><strong>Architecture stabilization sprint</strong></td>
+<td>Stale meta fix, route arg completeness, single full-stack test</td>
+</tr>
+<tr>
+<td><strong>P0</strong></td>
+<td><strong>Production activation framework</strong></td>
+<td>Layer-by-layer canary with ranking lift metrics</td>
+</tr>
+<tr>
+<td><strong>P1</strong></td>
+<td><strong>Product normalization layer</strong></td>
+<td>Canonical identity, dedup, variant collapse — biggest search quality ROI</td>
+</tr>
+<tr>
+<td><strong>P1</strong></td>
+<td><strong>Query understanding kernel</strong></td>
+<td>Structured intent → scoring weights (deterministic, not embeddings-first)</td>
+</tr>
+<tr>
+<td><strong>P1</strong></td>
+<td><strong>Retailer/merchant trust graph</strong></td>
+<td>Extend <code>merchantIntelligence</code> into persistent graph</td>
+</tr>
+<tr>
+<td><strong>P2</strong></td>
+<td><strong>Cross-stack governance kernel</strong></td>
+<td>One coordinator vs 12 duplicated governor modules</td>
+</tr>
+<tr>
+<td><strong>P2</strong></td>
+<td><strong>Performance: lazy engine eval</strong></td>
+<td>Skip engine when layer OFF (telemetry-lite path)</td>
+</tr>
+</tbody></table>
+<h3 id="72-should-not-be-built-yet">7.2 SHOULD NOT be built (yet)</h3>
+<ul>
+<li>Phase 7 <strong>new intelligence layers</strong> before stabilization</li>
+<li>Embeddings/autonomous agents (explicitly excluded; would violate phase contracts)</li>
+<li>More duplicated P6.x clones without consolidation</li>
+<li>UI redesign to “show AI thinking” before ranking actually improves</li>
+<li>Personalization memory expansion conflicting with P6.4–P6.9 constraints</li>
+</ul>
+<h3 id="73-dangerous-directions-to-avoid">7.3 Dangerous directions to avoid</h3>
+<ul>
+<li>Enabling all 20 layers simultaneously in production (compounding micro-deltas + latency)</li>
+<li>Adding Phase 7 “super layer” atop unresolved stale-meta bug</li>
+<li>Bypassing CHECK lanes to force mutation (destabilizes replay CI guarantees)</li>
+<li>Embedding-based retrieval without normalization (garbage-in reranking)</li>
+</ul>
+<h3 id="74-missing-foundations-critical">7.4 Missing foundations (critical)</h3>
+<table>
+<thead>
+<tr>
+<th>Foundation</th>
+<th>Current state</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Semantic understanding tied to ranking</td>
+<td>Meta-only sidecars; not unified kernel</td>
+</tr>
+<tr>
+<td>Product normalization</td>
+<td>Partial in enrichProducts; not OS-unified</td>
+</tr>
+<tr>
+<td>Retailer intelligence</td>
+<td>Per-listing heuristics only</td>
+</tr>
+<tr>
+<td>Taste/aesthetic intelligence</td>
+<td>Fragmented (taste grammars + style profiles)</td>
+</tr>
+<tr>
+<td>Commerce memory</td>
+<td>Session memory active; P6.4 memoryless by design — policy conflict</td>
+</tr>
+<tr>
+<td>Personalization architecture</td>
+<td>Pre-stack persona vs P6 no-personalization</td>
+</tr>
+<tr>
+<td>Trust graph</td>
+<td>Merchant confidence only</td>
+</tr>
+<tr>
+<td>Real-world commerce infrastructure</td>
+<td>SerpAPI + heuristics; limited offer verification</td>
+</tr>
+<tr>
+<td>Retrieval/search intelligence</td>
+<td>Not implemented (embeddings excluded from P6)</td>
+</tr>
+<tr>
+<td>Query understanding</td>
+<td><code>canonicalQuery</code> + intents exist; weak ranking coupling</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="8-final-strategic-decision">8. Final Strategic Decision</h2>
+<h3 id="is-quantai-ready-for-phase-7">Is QuantAI ready for Phase 7?</h3>
+<p><strong>No — architecture stabilization should come first.</strong></p>
+<p>Phase 6.9 completed the <strong>governance/simulation capstone</strong> of the current design language. Adding Phase 7 now would <strong>stack more duplicated modules</strong> on top of known integration debt (stale meta, partial arg wiring, OFF-by-default invisibility, 20× sequential engine cost).</p>
+<h3 id="highest-priority-next-move">Highest priority next move</h3>
+<p><strong>Stabilization Phase (Pre-P7 hardening):</strong></p>
+<ol>
+<li>Fix stale <code>dealClusters</code> / <code>searchIntelligence</code> / meta-after-controlled mismatch</li>
+<li>Add <code>test:intent-full-stack</code> covering P4.8→P6.9 in one CI command</li>
+<li>Complete route.ts upstream meta propagation for P6.3–P6.5</li>
+<li>Lazy-eval path when layers disabled</li>
+<li>Document + execute <strong>single-layer prod canary</strong> (recommend starting with <strong>P6.2 multi-objective</strong> or <strong>P6.5 market reality</strong> — closest to commerce quality signals)</li>
+</ol>
+<h3 id="biggest-real-world-improvement">Biggest real-world improvement</h3>
+<p><strong>Product normalization + canonical listing identity at tray build time</strong>, wired into <code>enrichProductsWithIntelligence</code> and semantic rerank — not another meta layer.</p>
+<h3 id="what-would-create-visible-search-superiority">What would create visible search superiority</h3>
+<ol>
+<li>Normalize/dedup listings so top results aren&#39;t near-duplicates</li>
+<li>Activate <strong>one</strong> bounded layer in canary with measurable top-3 lift</li>
+<li>Query-intent → scoring weight injection (price-sensitive, trust-sensitive, compare-mode)</li>
+<li>Fix meta/product consistency so optimization loops can learn from live traffic</li>
+</ol>
+<hr>
+<h2 id="strategic-report-card">Strategic Report Card</h2>
+<table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th>Rating</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Strengths</strong></td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>Rollback/replay/CI maturity unmatched for commerce ranking</td>
+</tr>
+<tr>
+<td><strong>Weaknesses</strong></td>
+<td>⭐⭐</td>
+<td>Production invisibility, stale meta, duplication, perf overhead</td>
+</tr>
+<tr>
+<td><strong>Architecture risks</strong></td>
+<td>⭐⭐⭐</td>
+<td>Medium — manageable with stabilization, high if Phase 7 adds layers</td>
+</tr>
+<tr>
+<td><strong>Scalability</strong></td>
+<td>⭐⭐⭐</td>
+<td>Code scales by cloning phases; ops complexity grows linearly</td>
+</tr>
+<tr>
+<td><strong>Intelligence maturity</strong></td>
+<td>⭐⭐⭐⭐ meta / ⭐⭐ prod impact</td>
+<td>Deep signals, shallow activation</td>
+</tr>
+<tr>
+<td><strong>Commercialization readiness</strong></td>
+<td>⭐⭐⭐</td>
+<td>Safe to ship (OFF defaults); not yet differentiated in UX</td>
+</tr>
+<tr>
+<td><strong>Long-term direction</strong></td>
+<td>Consolidate → normalize → activate → then Phase 7 retrieval/kernel</td>
+<td></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="strengths-summary">Strengths (summary)</h2>
+<ul>
+<li>Deterministic, replay-safe ranking mutation with bounded influence</li>
+<li>Comprehensive rollback cascade and emergency shutdown per layer</li>
+<li>Production OFF-by-default with prod/canary opt-in gates</li>
+<li>Extensive CI validation (audit, drift, integrity, stability, replay, confidence, balance, routing per phase)</li>
+<li>Live observability partitions for regression detection</li>
+<li>Clear phase isolation enabling incremental rollout</li>
+<li>P6.8/P6.9 governance and economic simulation capstone architecture</li>
+</ul>
+<h2 id="weaknesses-summary">Weaknesses (summary)</h2>
+<ul>
+<li>Controlled stack invisible in production (all layers OFF)</li>
+<li>Stale meta relative to final product order</li>
+<li>20 sequential engine evaluations per request even when disabled</li>
+<li>~12 duplicated domain module patterns (maintenance burden)</li>
+<li>Partial upstream meta propagation in route.ts</li>
+<li>Pre-stack persona/session memory conflicts with P6 no-personalization policy</li>
+<li>No unified cross-stack governance coordinator</li>
+<li><code>test:intent</code> does not cover full P4.8–P6.9 stack in one command</li>
+</ul>
+<h2 id="architecture-risks-summary">Architecture risks (summary)</h2>
+<ul>
+<li>Layer proliferation without consolidation</li>
+<li>Cumulative latency from sequential engines</li>
+<li>Routing lane explosion (~150 lanes)</li>
+<li>Confidence inflation across independent layer computations</li>
+<li>Stale downstream artifacts causing incorrect optimization/debug signals</li>
+<li>Policy tension between personalization (pre-stack) and memoryless governance (P6+)</li>
+</ul>
+<hr>
+<h2 id="recommendation-for-next-development-phase">Recommendation for Next Development Phase</h2>
+<p><strong>Do not start QuantAI Phase 7.</strong></p>
+<p>Instead execute <strong>QuantAI Architecture Stabilization (Pre-P7)</strong> with these exit criteria:</p>
+<ul>
+<li><input disabled="" type="checkbox"> Zero stale meta relative to final <code>products</code> order</li>
+<li><input disabled="" type="checkbox"> <code>npm run test:intent-full-stack</code> green (P4.8–P6.9)</li>
+<li><input disabled="" type="checkbox"> One layer prod-canaried with documented ranking lift</li>
+<li><input disabled="" type="checkbox"> Product normalization spec + MVP wired into enrichment</li>
+<li><input disabled="" type="checkbox"> Governance kernel RFC (consolidate 12 governor modules vs continue cloning)</li>
+</ul>
+<p><strong>After stabilization, Phase 7 should be retrieval/query-kernel oriented</strong> — not another 14-file meta layer clone — building on normalized products and activated bounded mutation, with visible search quality as the acceptance metric.</p>
+<hr>
+<h2 id="9-final-executive-technical-conclusion">9. Final Executive Technical Conclusion</h2>
+<p>QuantAI, as implemented in Smartbuy through Phase 6.9, represents a <strong>deterministic commerce ranking operating system (CIOS)</strong> rather than a monolithic AI product. The codebase contains a fully wired, rollback-safe, replay-validated mutation stack spanning reasoning (P5), behavioral cognition (P5.5), intent cognition (P5.6), multi-objective optimization (P6.2), strategic ranking (P6.3), memoryless learning (P6.4), market reality (P6.5), commerce decision (P6.6), autonomous commerce reasoning graph (P6.7), unified cognitive governance (P6.8), and economic world simulation (P6.9).</p>
+<p><strong>Technical verdict:</strong> The engineering maturity of the controlled stack is <strong>exceptional for a commerce ranking system</strong> — bounded influence, per-layer emergency shutdown, prod/canary gates, drift detection, integrity audits, and phase-isolated CI harnesses are production-grade patterns rarely seen at this depth. However, <strong>production impact is currently near zero</strong> because every controlled apply layer defaults to <code>ENABLED=false</code>, and the ranking order users experience is determined upstream by cached <code>enrichProductsWithIntelligence</code>, persona scoring, semantic rerank, and commerce quality heuristics.</p>
+<p><strong>Architecture integrity:</strong> All 20 controlled layers are correctly wired in sequence through <code>app/api/search/route.ts</code> and mirrored in <code>scripts/lib/intentEvaluationRunner.mjs</code>. Meta telemetry is rich and partitioned for observability. The primary structural defect is <strong>stale meta</strong>: downstream artifacts (<code>dealClusters</code>, <code>searchIntelligence</code>, and related meta fields) are computed before the 20-layer controlled stack runs and are <strong>not refreshed</strong> after final product ordering — creating a correctness gap for optimization loops, debugging, and any future activation of controlled layers.</p>
+<p><strong>Performance posture:</strong> Even with all layers disabled, the route executes sequential engine evaluations across the full stack on every request, incurring measurable latency overhead without ranking benefit. This is acceptable in research/CI mode but <strong>not acceptable at production scale</strong> without lazy evaluation or short-circuit paths.</p>
+<p><strong>Strategic conclusion:</strong> QuantAI has built the <strong>governance and safety infrastructure</strong> needed for safe layer activation, but has not yet built the <strong>retrieval and normalization foundations</strong> needed for visible search superiority. Phase 7, if conceived as another meta-layer clone, would compound maintenance burden and latency without addressing the root causes of user-visible ranking quality. The correct next move is <strong>Pre-P7 stabilization</strong>: fix meta consistency, consolidate duplicated governor patterns, wire product normalization, establish full-stack CI coverage, and canary one bounded layer with measurable lift — <strong>then</strong> proceed to a retrieval-oriented Phase 7.</p>
+<table>
+<thead>
+<tr>
+<th>Conclusion axis</th>
+<th>Assessment</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Code correctness (controlled stack)</td>
+<td>✅ Wired and validated through P6.9</td>
+</tr>
+<tr>
+<td>Production ranking impact today</td>
+<td>⚠️ Minimal — pre-stack + cache dominate</td>
+</tr>
+<tr>
+<td>Meta/telemetry consistency</td>
+<td>❌ Stale relative to final order</td>
+</tr>
+<tr>
+<td>CI/replay maturity</td>
+<td>✅ Industry-leading for this domain</td>
+</tr>
+<tr>
+<td>Ready for Phase 7 as currently scoped</td>
+<td>❌ No — stabilization required first</td>
+</tr>
+<tr>
+<td>Recommended direction</td>
+<td>Consolidate → normalize → activate → retrieval kernel</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="10-critical-risks-before-phase-7">10. Critical Risks Before Phase 7</h2>
+<p>The following risks are <strong>blocking or high-severity</strong> if Phase 7 development proceeds without Pre-P7 stabilization. Each risk includes impact, likelihood, and mitigation requirement.</p>
+<h3 id="101-stale-meta-downstream-artifact-drift">10.1 Stale meta / downstream artifact drift</h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Description</strong></td>
+<td><code>dealClusters</code>, <code>searchIntelligence</code>, and related meta are built at ~line 687 in <code>route.ts</code> before the P5–P6.9 controlled stack mutates product order (~838–1212). Final meta export does not rebuild these artifacts.</td>
+</tr>
+<tr>
+<td><strong>Impact</strong></td>
+<td>Optimization loops, A/B analysis, and operator dashboards operate on incorrect cluster/intelligence signals relative to actual ranking. Any layer activation would silently desync telemetry from user-visible order.</td>
+</tr>
+<tr>
+<td><strong>Likelihood</strong></td>
+<td><strong>Certain</strong> — present on every request today.</td>
+</tr>
+<tr>
+<td><strong>Severity</strong></td>
+<td><strong>Critical</strong></td>
+</tr>
+<tr>
+<td><strong>Mitigation</strong></td>
+<td>Recompute or patch meta artifacts after controlled stack completes; add CI assertion that meta product IDs match final <code>products</code> order.</td>
+</tr>
+</tbody></table>
+<h3 id="102-sequential-engine-overhead-disabled-layers-still-execute">10.2 Sequential engine overhead (disabled layers still execute)</h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Description</strong></td>
+<td>All 20 controlled apply functions are invoked sequentially even when <code>ENABLED=false</code>, running detection, rollback evaluation, and telemetry paths.</td>
+</tr>
+<tr>
+<td><strong>Impact</strong></td>
+<td>Latency budget consumed without ranking benefit; scales poorly under traffic; masks true cost of layer activation.</td>
+</tr>
+<tr>
+<td><strong>Likelihood</strong></td>
+<td><strong>Certain</strong> on every search request.</td>
+</tr>
+<tr>
+<td><strong>Severity</strong></td>
+<td><strong>High</strong></td>
+</tr>
+<tr>
+<td><strong>Mitigation</strong></td>
+<td>Lazy-eval / early-exit when layer disabled; batch telemetry-only fast path; latency budget enforcement via <code>buildLatencyBudgetReport</code> (currently imported but unused).</td>
+</tr>
+</tbody></table>
+<h3 id="103-layer-proliferation-without-consolidation">10.3 Layer proliferation without consolidation</h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Description</strong></td>
+<td>~12 duplicated domain module patterns (governor, rollback, replay, drift, integrity, stability, confidence, balance, routing, audit scripts per phase). Each phase adds ~14 files + 8 audit scripts.</td>
+</tr>
+<tr>
+<td><strong>Impact</strong></td>
+<td>Maintenance cost grows linearly; bug fixes must be replicated across phases; onboarding friction increases.</td>
+</tr>
+<tr>
+<td><strong>Likelihood</strong></td>
+<td><strong>High</strong> if Phase 7 follows P6 clone pattern.</td>
+</tr>
+<tr>
+<td><strong>Severity</strong></td>
+<td><strong>High</strong></td>
+</tr>
+<tr>
+<td><strong>Mitigation</strong></td>
+<td>Governance kernel RFC: shared rollback/replay/audit framework with phase-specific config, not duplicated implementations.</td>
+</tr>
+</tbody></table>
+<h3 id="104-production-invisibility-false-confidence-from-ci-only-validation">10.4 Production invisibility / false confidence from CI-only validation</h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Description</strong></td>
+<td>Full stack validation runs in bounded test environments with layers enabled; production runs all layers OFF. CI green does not prove production ranking improvement.</td>
+</tr>
+<tr>
+<td><strong>Impact</strong></td>
+<td>Team may assume intelligence maturity translates to UX differentiation when it does not.</td>
+</tr>
+<tr>
+<td><strong>Likelihood</strong></td>
+<td><strong>High</strong> — structural by design (safe defaults).</td>
+</tr>
+<tr>
+<td><strong>Severity</strong></td>
+<td><strong>Medium–High</strong></td>
+</tr>
+<tr>
+<td><strong>Mitigation</strong></td>
+<td>Single-layer prod canary with documented top-3 lift metrics; separate prod vs eval observability dashboards.</td>
+</tr>
+</tbody></table>
+<h3 id="105-policy-tension-personalization-vs-memoryless-governance">10.5 Policy tension: personalization vs memoryless governance</h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Description</strong></td>
+<td>Pre-stack persona/session memory influences ranking; P6.4+ enforces memoryless learning and P6.8 cognitive governance policies that conflict with persistent personalization signals.</td>
+</tr>
+<tr>
+<td><strong>Impact</strong></td>
+<td>Unpredictable ranking behavior when layers activate; difficult to explain ranking to users/regulators.</td>
+</tr>
+<tr>
+<td><strong>Likelihood</strong></td>
+<td><strong>Medium</strong> — latent until layers enabled.</td>
+</tr>
+<tr>
+<td><strong>Severity</strong></td>
+<td><strong>Medium</strong></td>
+</tr>
+<tr>
+<td><strong>Mitigation</strong></td>
+<td>Unified policy coordinator; explicit precedence rules between pre-stack persona and P6 governance.</td>
+</tr>
+</tbody></table>
+<h3 id="106-routing-lane-explosion-150-lanes">10.6 Routing lane explosion (~150 lanes)</h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Description</strong></td>
+<td>Per-phase routing modules define numerous conditional lanes; cumulative lane count across P5–P6.9 creates combinatorial test surface.</td>
+</tr>
+<tr>
+<td><strong>Impact</strong></td>
+<td>Untested lane combinations in production; regression risk on env var changes.</td>
+</tr>
+<tr>
+<td><strong>Likelihood</strong></td>
+<td><strong>Medium</strong></td>
+</tr>
+<tr>
+<td><strong>Severity</strong></td>
+<td><strong>Medium</strong></td>
+</tr>
+<tr>
+<td><strong>Mitigation</strong></td>
+<td>Lane inventory consolidation; reduce lanes via shared routing kernel; expand <code>test:intent-full-stack</code> coverage.</td>
+</tr>
+</tbody></table>
+<h3 id="107-confidence-inflation-across-independent-layers">10.7 Confidence inflation across independent layers</h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Description</strong></td>
+<td>Each layer computes independent confidence scores; no cross-layer calibration or deduplication.</td>
+</tr>
+<tr>
+<td><strong>Impact</strong></td>
+<td>Meta may report high aggregate confidence while ranking changes are bounded/neutral; misleading for automated decision systems.</td>
+</tr>
+<tr>
+<td><strong>Likelihood</strong></td>
+<td><strong>Medium</strong></td>
+</tr>
+<tr>
+<td><strong>Severity</strong></td>
+<td><strong>Medium</strong></td>
+</tr>
+<tr>
+<td><strong>Mitigation</strong></td>
+<td>Cross-layer confidence normalization in P6.8 governance or dedicated calibration pass.</td>
+</tr>
+</tbody></table>
+<h3 id="108-missing-retrievalnormalization-foundation">10.8 Missing retrieval/normalization foundation</h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Description</strong></td>
+<td>No canonical product identity normalization at enrichment time; near-duplicate listings can occupy top slots.</td>
+</tr>
+<tr>
+<td><strong>Impact</strong></td>
+<td>User-visible search quality ceiling regardless of meta-layer sophistication.</td>
+</tr>
+<tr>
+<td><strong>Likelihood</strong></td>
+<td><strong>Certain</strong> for multi-listing queries.</td>
+</tr>
+<tr>
+<td><strong>Severity</strong></td>
+<td><strong>High</strong> (commercial impact)</td>
+</tr>
+<tr>
+<td><strong>Mitigation</strong></td>
+<td>Product normalization spec + MVP in <code>enrichProductsWithIntelligence</code>; dedup before semantic rerank.</td>
+</tr>
+</tbody></table>
+<h3 id="risk-priority-matrix">Risk priority matrix</h3>
+<table>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Risk</th>
+<th>Action before Phase 7</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>P0</td>
+<td>Stale meta drift</td>
+<td>Fix and CI-gate</td>
+</tr>
+<tr>
+<td>P0</td>
+<td>Missing normalization</td>
+<td>Spec + MVP wire</td>
+</tr>
+<tr>
+<td>P1</td>
+<td>Sequential overhead</td>
+<td>Lazy-eval path</td>
+</tr>
+<tr>
+<td>P1</td>
+<td>Layer proliferation</td>
+<td>Governance kernel RFC</td>
+</tr>
+<tr>
+<td>P1</td>
+<td>CI/prod gap</td>
+<td>Single-layer canary</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>Personalization policy tension</td>
+<td>Unified coordinator</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>Lane explosion</td>
+<td>Consolidate + full-stack test</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>Confidence inflation</td>
+<td>Cross-layer calibration</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="11-recommended-stabilization-roadmap">11. Recommended Stabilization Roadmap</h2>
+<p><strong>Program name:</strong> QuantAI Architecture Stabilization (Pre-P7)<br><strong>Duration estimate:</strong> 4–6 engineering sprints (team-size dependent)<br><strong>Exit criterion:</strong> All checklist items green before Phase 7 RFC approval.</p>
+<h3 id="phase-a-meta-consistency-amp-observability-sprint-12">Phase A — Meta consistency &amp; observability (Sprint 1–2)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Work item</th>
+<th>Deliverable</th>
+<th>Owner</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A1</td>
+<td>Recompute <code>dealClusters</code> / <code>searchIntelligence</code> after controlled stack</td>
+<td>Patched <code>route.ts</code>; unit test asserting ID order match</td>
+<td>Search platform</td>
+</tr>
+<tr>
+<td>A2</td>
+<td>Wire <code>buildLatencyBudgetReport</code> into route response meta</td>
+<td>Latency budget visible in meta + dashboards</td>
+<td>Search platform</td>
+</tr>
+<tr>
+<td>A3</td>
+<td>Add stale-meta CI guard</td>
+<td>New script in <code>scripts/</code>; wired to <code>test:intent-prod-ci-guard</code></td>
+<td>CI/Infra</td>
+</tr>
+<tr>
+<td>A4</td>
+<td>Document meta field lifecycle</td>
+<td><code>docs/architecture-audit/META_LIFECYCLE.md</code></td>
+<td>Architecture</td>
+</tr>
+</tbody></table>
+<h3 id="phase-b-performance-amp-lazy-evaluation-sprint-23">Phase B — Performance &amp; lazy evaluation (Sprint 2–3)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Work item</th>
+<th>Deliverable</th>
+<th>Owner</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>B1</td>
+<td>Short-circuit disabled layers (telemetry-only fast path)</td>
+<td>Measurable p50/p95 latency reduction</td>
+<td>Search platform</td>
+</tr>
+<tr>
+<td>B2</td>
+<td>Lazy-eval when entire P5–P6.9 block disabled</td>
+<td>Single guard bypassing 20 engine calls</td>
+<td>Search platform</td>
+</tr>
+<tr>
+<td>B3</td>
+<td>Benchmark report (before/after)</td>
+<td>Published in <code>docs/architecture-audit/</code></td>
+<td>Performance</td>
+</tr>
+</tbody></table>
+<h3 id="phase-c-test-coverage-amp-ci-consolidation-sprint-34">Phase C — Test coverage &amp; CI consolidation (Sprint 3–4)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Work item</th>
+<th>Deliverable</th>
+<th>Owner</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>C1</td>
+<td>Implement <code>npm run test:intent-full-stack</code> (P4.8–P6.9)</td>
+<td>Green in CI</td>
+<td>CI/Infra</td>
+</tr>
+<tr>
+<td>C2</td>
+<td>Consolidate per-phase audit scripts where duplicated</td>
+<td>Reduced script count; shared audit kernel</td>
+<td>Architecture</td>
+</tr>
+<tr>
+<td>C3</td>
+<td>Lane inventory test matrix</td>
+<td>Automated lane combination smoke test</td>
+<td>CI/Infra</td>
+</tr>
+</tbody></table>
+<h3 id="phase-d-product-normalization-foundation-sprint-35">Phase D — Product normalization foundation (Sprint 3–5)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Work item</th>
+<th>Deliverable</th>
+<th>Owner</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>D1</td>
+<td>Canonical listing identity spec</td>
+<td>RFC approved</td>
+<td>Product + Architecture</td>
+</tr>
+<tr>
+<td>D2</td>
+<td>Normalization MVP in <code>enrichProductsWithIntelligence</code></td>
+<td>Deduped top-N in eval harness</td>
+<td>Search quality</td>
+</tr>
+<tr>
+<td>D3</td>
+<td>Semantic rerank input uses normalized IDs</td>
+<td>Integration test</td>
+<td>Search quality</td>
+</tr>
+</tbody></table>
+<h3 id="phase-e-governance-consolidation-rfc-sprint-45">Phase E — Governance consolidation RFC (Sprint 4–5)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Work item</th>
+<th>Deliverable</th>
+<th>Owner</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>E1</td>
+<td>Governance kernel RFC (12 modules → shared framework)</td>
+<td>Architecture decision record</td>
+<td>Architecture</td>
+</tr>
+<tr>
+<td>E2</td>
+<td>Prototype shared rollback/replay module</td>
+<td>POC with P6.5 + P6.8</td>
+<td>Search platform</td>
+</tr>
+<tr>
+<td>E3</td>
+<td>Policy precedence spec (persona vs P6 governance)</td>
+<td>Documented rules</td>
+<td>Architecture</td>
+</tr>
+</tbody></table>
+<h3 id="phase-f-controlled-production-activation-sprint-56">Phase F — Controlled production activation (Sprint 5–6)</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Work item</th>
+<th>Deliverable</th>
+<th>Owner</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>F1</td>
+<td>Select canary layer (recommend P6.2 multi-objective or P6.5 market reality)</td>
+<td>Decision record</td>
+<td>Leadership</td>
+</tr>
+<tr>
+<td>F2</td>
+<td>Prod/canary enablement with rollback playbook</td>
+<td>Runbook + on-call procedure</td>
+<td>SRE</td>
+</tr>
+<tr>
+<td>F3</td>
+<td>Measure top-3 ranking lift over 2-week window</td>
+<td>Dashboard + written results</td>
+<td>Search quality</td>
+</tr>
+<tr>
+<td>F4</td>
+<td>Pre-P7 exit review</td>
+<td>Sign-off checklist complete</td>
+<td>Engineering leadership</td>
+</tr>
+</tbody></table>
+<h3 id="stabilization-timeline-gantt-style">Stabilization timeline (Gantt-style)</h3>
+<pre><code>Sprint:  1    2    3    4    5    6
+         |----|----|----|----|----|----|
+Phase A  [Meta consistency========]
+Phase B       [Perf / lazy eval=====]
+Phase C            [CI / full-stack==]
+Phase D            [Normalization=======]
+Phase E                 [Gov RFC========]
+Phase F                      [Canary=====]
+</code></pre>
+<h3 id="pre-p7-exit-checklist-must-be-100-before-phase-7">Pre-P7 exit checklist (must be 100% before Phase 7)</h3>
+<ul>
+<li><input disabled="" type="checkbox"> Zero stale meta relative to final <code>products</code> order (CI enforced)</li>
+<li><input disabled="" type="checkbox"> <code>npm run test:intent-full-stack</code> green (P4.8–P6.9)</li>
+<li><input disabled="" type="checkbox"> Lazy-eval path deployed; p95 latency regression &lt; 5% vs baseline</li>
+<li><input disabled="" type="checkbox"> Product normalization MVP wired into enrichment</li>
+<li><input disabled="" type="checkbox"> Governance kernel RFC approved (consolidate vs continue cloning)</li>
+<li><input disabled="" type="checkbox"> One layer prod-canaried with documented ranking lift</li>
+<li><input disabled="" type="checkbox"> Policy precedence documented (persona vs P6 governance)</li>
+<li><input disabled="" type="checkbox"> Phase 7 scoped as retrieval/query-kernel (not meta-layer clone)</li>
+</ul>
+<hr>
+<h2 id="12-production-readiness-scorecard">12. Production Readiness Scorecard</h2>
+<p><strong>Assessment date:</strong> May 2026<br><strong>Scope:</strong> Smartbuy QuantAI P4.8–P6.9 as wired in production (<code>ENABLED=false</code> defaults)<br><strong>Scoring:</strong> 0 = not ready, 1 = partial, 2 = ready, <strong>N/A</strong> = not applicable at current activation level</p>
+<h3 id="121-core-readiness-dimensions">12.1 Core readiness dimensions</h3>
+<table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th align="center">Score (0–2)</th>
+<th align="center">Weight</th>
+<th align="center">Weighted</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Functional correctness (controlled stack wiring)</strong></td>
+<td align="center">2</td>
+<td align="center">15%</td>
+<td align="center">0.30</td>
+<td>All 20 layers wired route.ts + eval runner; P6.9 tests pass</td>
+</tr>
+<tr>
+<td><strong>Production ranking impact</strong></td>
+<td align="center">0</td>
+<td align="center">20%</td>
+<td align="center">0.00</td>
+<td>All controlled layers OFF; pre-stack dominates</td>
+</tr>
+<tr>
+<td><strong>Meta / telemetry accuracy</strong></td>
+<td align="center">0</td>
+<td align="center">15%</td>
+<td align="center">0.00</td>
+<td>Stale meta after controlled stack</td>
+</tr>
+<tr>
+<td><strong>Latency &amp; performance</strong></td>
+<td align="center">1</td>
+<td align="center">10%</td>
+<td align="center">0.10</td>
+<td>Sequential disabled-layer overhead</td>
+</tr>
+<tr>
+<td><strong>Rollback &amp; emergency shutdown</strong></td>
+<td align="center">2</td>
+<td align="center">10%</td>
+<td align="center">0.20</td>
+<td>Per-layer rollback + emergency flags validated</td>
+</tr>
+<tr>
+<td><strong>CI / replay / drift detection</strong></td>
+<td align="center">2</td>
+<td align="center">10%</td>
+<td align="center">0.20</td>
+<td>Per-phase audit scripts + prod CI guard</td>
+</tr>
+<tr>
+<td><strong>Observability &amp; partitioning</strong></td>
+<td align="center">2</td>
+<td align="center">5%</td>
+<td align="center">0.10</td>
+<td>Live observability partitions per layer</td>
+</tr>
+<tr>
+<td><strong>Security &amp; prod gates</strong></td>
+<td align="center">2</td>
+<td align="center">5%</td>
+<td align="center">0.10</td>
+<td>Prod/canary opt-in; OFF-by-default</td>
+</tr>
+<tr>
+<td><strong>Operational runbooks</strong></td>
+<td align="center">1</td>
+<td align="center">5%</td>
+<td align="center">0.05</td>
+<td>Rollback exists; canary runbook not yet written</td>
+</tr>
+<tr>
+<td><strong>Documentation &amp; architecture clarity</strong></td>
+<td align="center">2</td>
+<td align="center">5%</td>
+<td align="center">0.10</td>
+<td>This audit + phase docs</td>
+</tr>
+</tbody></table>
+<p><strong>Total weighted score: 1.15 / 2.00 (57.5%) — NOT production-ready for intelligence differentiation</strong></p>
+<h3 id="122-layer-activation-readiness-per-phase-group">12.2 Layer activation readiness (per phase group)</h3>
+<table>
+<thead>
+<tr>
+<th>Phase group</th>
+<th>Layers</th>
+<th align="center">CI validated</th>
+<th align="center">Prod enabled</th>
+<th align="center">Rollback tested</th>
+<th align="center">Canary ready</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>P5.0–P5.4 Reasoning &amp; behavioral</td>
+<td>5</td>
+<td align="center">✅</td>
+<td align="center">❌ OFF</td>
+<td align="center">✅</td>
+<td align="center">⚠️ Not selected</td>
+</tr>
+<tr>
+<td>P5.5–P5.6 Cognition</td>
+<td>2</td>
+<td align="center">✅</td>
+<td align="center">❌ OFF</td>
+<td align="center">✅</td>
+<td align="center">⚠️ Not selected</td>
+</tr>
+<tr>
+<td>P6.2–P6.3 Optimization &amp; strategy</td>
+<td>2</td>
+<td align="center">✅</td>
+<td align="center">❌ OFF</td>
+<td align="center">✅</td>
+<td align="center">✅ Candidate (P6.2)</td>
+</tr>
+<tr>
+<td>P6.4 Memoryless learning</td>
+<td>1</td>
+<td align="center">✅</td>
+<td align="center">❌ OFF</td>
+<td align="center">✅</td>
+<td align="center">⚠️ Policy conflict</td>
+</tr>
+<tr>
+<td>P6.5 Market reality</td>
+<td>1</td>
+<td align="center">✅</td>
+<td align="center">❌ OFF</td>
+<td align="center">✅</td>
+<td align="center">✅ Candidate (P6.5)</td>
+</tr>
+<tr>
+<td>P6.6 Commerce decision</td>
+<td>1</td>
+<td align="center">✅</td>
+<td align="center">❌ OFF</td>
+<td align="center">✅</td>
+<td align="center">⚠️ Not selected</td>
+</tr>
+<tr>
+<td>P6.7 Reasoning graph</td>
+<td>1</td>
+<td align="center">✅</td>
+<td align="center">❌ OFF</td>
+<td align="center">✅</td>
+<td align="center">⚠️ Not selected</td>
+</tr>
+<tr>
+<td>P6.8 Cognitive governance</td>
+<td>1</td>
+<td align="center">✅</td>
+<td align="center">❌ OFF</td>
+<td align="center">✅</td>
+<td align="center">⚠️ Depends on lower layers</td>
+</tr>
+<tr>
+<td>P6.9 Economic simulation</td>
+<td>1</td>
+<td align="center">✅</td>
+<td align="center">❌ OFF</td>
+<td align="center">✅</td>
+<td align="center">⚠️ Outermost capstone</td>
+</tr>
+</tbody></table>
+<h3 id="123-go-no-go-gates">12.3 Go / no-go gates</h3>
+<table>
+<thead>
+<tr>
+<th>Gate</th>
+<th align="center">Status</th>
+<th>Required for prod intelligence launch</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>All layers OFF by default (safe baseline)</td>
+<td align="center">✅ GO</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Stale meta fixed</td>
+<td align="center">❌ NO-GO</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Full-stack CI (<code>test:intent-full-stack</code>)</td>
+<td align="center">❌ NO-GO</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Normalization MVP</td>
+<td align="center">❌ NO-GO</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Single-layer canary with measured lift</td>
+<td align="center">❌ NO-GO</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Latency budget enforced</td>
+<td align="center">❌ NO-GO</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Governance kernel decision</td>
+<td align="center">❌ NO-GO</td>
+<td>Yes (before Phase 7)</td>
+</tr>
+<tr>
+<td>Phase 7 layer clone</td>
+<td align="center">❌ NO-GO</td>
+<td>Do not proceed</td>
+</tr>
+</tbody></table>
+<h3 id="124-readiness-verdict">12.4 Readiness verdict</h3>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Safe to operate current production (layers OFF)</strong></td>
+<td>✅ <strong>YES</strong> — defaults prevent ranking mutation</td>
+</tr>
+<tr>
+<td><strong>Ready to differentiate search via QuantAI layers</strong></td>
+<td>❌ <strong>NO</strong> — meta stale, no normalization, no canary</td>
+</tr>
+<tr>
+<td><strong>Ready to begin Phase 7 development</strong></td>
+<td>❌ <strong>NO</strong> — complete Pre-P7 stabilization first</td>
+</tr>
+<tr>
+<td><strong>Ready to begin Pre-P7 stabilization</strong></td>
+<td>✅ <strong>YES</strong> — exit criteria defined, risks documented</td>
+</tr>
+</tbody></table>
+<p><strong>Overall production readiness grade: C+ (safe but not differentiated)</strong><br><strong>Target grade after Pre-P7: B+ (one activated layer, consistent meta, normalization MVP)</strong></p>
+<hr>
+<h2 id="appendix-key-file-references">Appendix: Key file references</h2>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Path</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Search route (main pipeline)</td>
+<td><code>app/api/search/route.ts</code></td>
+</tr>
+<tr>
+<td>Core product enrichment</td>
+<td><code>lib/intelligence/enrichProducts.ts</code></td>
+</tr>
+<tr>
+<td>Intent evaluation runner</td>
+<td><code>scripts/lib/intentEvaluationRunner.mjs</code></td>
+</tr>
+<tr>
+<td>Production CI guard</td>
+<td><code>scripts/intent-prod-ci-guard.mjs</code></td>
+</tr>
+<tr>
+<td>Environment template</td>
+<td><code>.env.example</code></td>
+</tr>
+<tr>
+<td>Phase test composition</td>
+<td><code>package.json</code> (<code>test:intent</code>, <code>test:intent-p69</code>)</td>
+</tr>
+<tr>
+<td>Outermost eval runner</td>
+<td><code>scripts/lib/economicWorldSimulationRunner.mjs</code></td>
+</tr>
+</tbody></table>
+<hr>
+<p><em>Generated by QuantAI architecture audit. Audit-only — no code changes.</em></p>
+
+</main>
+</body>
+</html>

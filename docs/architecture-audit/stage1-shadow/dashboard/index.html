@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>QuantAI Stage 1 — Normalization Shadow Dashboard</title>
+  <style>
+    :root { --bg:#f8fafc; --ink:#0f172a; --muted:#64748b; --accent:#1e40af; --ok:#166534; --warn:#b45309; }
+    * { box-sizing:border-box; }
+    body { font-family: "Segoe UI", system-ui, sans-serif; margin:0; background:var(--bg); color:var(--ink); }
+    header { background:linear-gradient(180deg,#fff,#f1f5f9); border-bottom:3px solid var(--accent); padding:28px 32px; }
+    h1 { margin:0 0 6px; font-size:24px; }
+    .meta { color:var(--muted); font-size:13px; }
+    main { padding:24px 32px 48px; max-width:1200px; margin:0 auto; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin:20px 0; }
+    .card { background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:14px 16px; }
+    .label { font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+    .value { font-size:22px; font-weight:700; margin-top:6px; }
+    .sub { font-size:12px; color:var(--muted); margin-top:4px; }
+    table { width:100%; border-collapse:collapse; background:#fff; border:1px solid #cbd5e1; border-radius:8px; overflow:hidden; margin:16px 0 28px; font-size:13px; }
+    th { background:var(--accent); color:#fff; text-align:left; padding:10px 12px; }
+    td { border-top:1px solid #e2e8f0; padding:9px 12px; vertical-align:top; }
+    tr:nth-child(even) td { background:#f8fafc; }
+    h2 { font-size:17px; border-bottom:1px solid #cbd5e1; padding-bottom:6px; margin-top:28px; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; }
+    .badge-ok { background:#dcfce7; color:var(--ok); }
+    .badge-warn { background:#fef3c7; color:var(--warn); }
+    footer { color:var(--muted); font-size:12px; margin-top:32px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>QuantAI Stage 1 — Normalization Shadow Dashboard</h1>
+    <div class="meta">Commerce Intelligence OS · Shadow telemetry only (APPLY=false) · Generated 2026-05-23T01:35:19.579Z</div>
+  </header>
+  <main>
+    <section>
+      <h2>Rollout readiness (aggregate)</h2>
+      <div class="grid">
+        <div class="card"><div class="label">Readiness score</div><div class="value">0/100</div><div class="sub">Target ≥85 for APPLY review</div></div>
+        <div class="card"><div class="label">Top-3 dup rate (avg)</div><div class="value">0</div><div class="sub">Before normalization projection</div></div>
+        <div class="card"><div class="label">Projected ranking lift</div><div class="value">0</div><div class="sub">If APPLY=true</div></div>
+        <div class="card"><div class="label">Canonical ID coverage</div><div class="value">0%</div><div class="sub">Target ≥85%</div></div>
+        <div class="card"><div class="label">Semantic coherence</div><div class="value">0%</div><div class="sub">Top-5 identity diversity</div></div>
+        <div class="card"><div class="label">Search latency p95</div><div class="value">0ms</div><div class="sub">p99 0ms</div></div>
+        <div class="card"><div class="label">Norm latency p95</div><div class="value">0ms</div><div class="sub">p99 0ms</div></div>
+        <div class="card"><div class="label">False collapse incidents</div><div class="value">0</div><div class="sub">Target 0</div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Live golden queries (0)</h2>
+      <table>
+        <thead><tr>
+          <th>Query</th><th>Shadow</th><th>Top3 Dup</th><th>Projected Lift</th><th>Eq Groups</th><th>Coverage</th><th>Semantic</th><th>Readiness</th><th>Latency</th>
+        </tr></thead>
+        <tbody>
+          <tr><td colspan='9'>No live probe data — run npm run test:stage1-shadow-probe</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Offline golden fixtures (2)</h2>
+      <table>
+        <thead><tr><th>Case</th><th>Status</th><th>Shadow top3Dup</th><th>Apply top3Dup</th><th>Projected lift</th></tr></thead>
+        <tbody>
+          <tr>
+    <td>iphone-15-duplicates</td>
+    <td><span class="badge badge-ok">PASS</span></td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+  </tr><tr>
+    <td>nike-af1-duplicates</td>
+    <td><span class="badge badge-ok">PASS</span></td>
+    <td>0</td>
+    <td>0</td>
+    <td>0</td>
+  </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <footer>
+      Stage 1 config: QUANTAI_NORMALIZATION_ENABLED=true · MODE=shadow · APPLY=false · SHADOW_TELEMETRY=true<br/>
+      Offline fixtures: 2 · Live queries: 0
+    </footer>
+  </main>
+</body>
+</html>

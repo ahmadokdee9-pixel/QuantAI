@@ -19,6 +19,7 @@ export const QuantAnalyticsEvents = {
   PRICING_CTA_CHECKOUT: "quantai.pricing.checkout_start",
   PRICING_CTA_DASHBOARD: "quantai.pricing.dashboard_open",
   DASHBOARD_VIEW: "quantai.dashboard.view",
+  NORMALIZATION_SHADOW: "quantai.normalization.shadow",
 } as const;
 
 export type QuantAnalyticsEvent = (typeof QuantAnalyticsEvents)[keyof typeof QuantAnalyticsEvents];

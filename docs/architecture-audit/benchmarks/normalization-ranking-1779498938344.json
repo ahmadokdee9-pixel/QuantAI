@@ -1,0 +1,80 @@
+{
+  "generatedAt": "2026-05-23T01:15:38.342Z",
+  "mode": "offline",
+  "flags": {
+    "enabled": false,
+    "mode": "shadow",
+    "apply": false
+  },
+  "summary": {
+    "offlineTotal": 2,
+    "offlinePassed": 1,
+    "offlinePassRatePct": 50,
+    "avgShadowLatencyMs": 21.28,
+    "avgApplyLatencyMs": 6.93,
+    "avgRankingLift": 0
+  },
+  "offlineResults": [
+    {
+      "id": "iphone-15-duplicates",
+      "query": "iphone 15 128gb black",
+      "ok": false,
+      "issues": [
+        "shadow_top3_unique_1"
+      ],
+      "metrics": {
+        "shadow": {
+          "inputCount": 5,
+          "outputCount": 5,
+          "top3DuplicateRate": 0,
+          "top3UniqueCommerceIds": 1,
+          "equivalenceGroups": 1,
+          "latencyMs": 37.01859999999988
+        },
+        "apply": {
+          "inputCount": 5,
+          "outputCount": 3,
+          "top3DuplicateRate": 0,
+          "top3UniqueCommerceIds": 3,
+          "duplicateListingCount": 2,
+          "rankingLiftEstimate": 0,
+          "latencyMs": 8.905300000000125
+        },
+        "clusterEquivalenceBacked": true
+      }
+    },
+    {
+      "id": "nike-af1-duplicates",
+      "query": "nike air force 1 white size 10",
+      "ok": true,
+      "issues": [],
+      "metrics": {
+        "shadow": {
+          "inputCount": 4,
+          "outputCount": 4,
+          "top3DuplicateRate": 0,
+          "top3UniqueCommerceIds": 2,
+          "equivalenceGroups": 1,
+          "latencyMs": 5.548800000000028
+        },
+        "apply": {
+          "inputCount": 4,
+          "outputCount": 3,
+          "top3DuplicateRate": 0,
+          "top3UniqueCommerceIds": 3,
+          "duplicateListingCount": 1,
+          "rankingLiftEstimate": 0,
+          "latencyMs": 4.962499999999864
+        },
+        "clusterEquivalenceBacked": true
+      }
+    }
+  ],
+  "liveResults": [],
+  "searchQualityMetrics": {
+    "top3DuplicateRateReductionTarget": 0.4,
+    "falseCollapseRateTarget": 0.02,
+    "normalizationLatencyP95TargetMs": 3,
+    "clusterEquivalenceCoherenceTarget": 1
+  }
+}

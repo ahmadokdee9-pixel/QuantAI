@@ -416,6 +416,42 @@ check(
 );
 
 check(
+  "unified_cognitive_governance_telemetry",
+  route.includes("unifiedCognitiveGovernance") && route.includes("applyControlledUnifiedCognitiveGovernance"),
+  "meta.unifiedCognitiveGovernance wired in search route"
+);
+
+check(
+  "cognitive_governance_default_off_in_example",
+  /COGNITIVE_GOVERNANCE_ENABLED=false/.test(example) || /#\s*COGNITIVE_GOVERNANCE_ENABLED=false/.test(example),
+  "COGNITIVE_GOVERNANCE_ENABLED documented OFF in .env.example"
+);
+
+check(
+  "no_autonomous_agents_in_cognitive_governance",
+  !/autonomousAgent|autonomousGovernanceAgent|embeddingGovernance|memoryStorage/.test(route),
+  "no autonomous agent or memory storage patterns in cognitive governance route"
+);
+
+check(
+  "economic_world_simulation_telemetry",
+  route.includes("economicWorldSimulation") && route.includes("applyControlledEconomicWorldSimulation"),
+  "meta.economicWorldSimulation wired in search route"
+);
+
+check(
+  "economic_simulation_default_off_in_example",
+  /ECONOMIC_WORLD_SIMULATION_ENABLED=false/.test(example) || /#\s*ECONOMIC_WORLD_SIMULATION_ENABLED=false/.test(example),
+  "ECONOMIC_WORLD_SIMULATION_ENABLED documented OFF in .env.example"
+);
+
+check(
+  "no_autonomous_agents_in_economic_simulation",
+  !/autonomousAgent|autonomousSimulationAgent|embeddingSimulation|memoryStorage/.test(route),
+  "no autonomous agent or memory storage patterns in economic simulation route"
+);
+
+check(
   "no_hardcoded_prod_apply_true",
   !/INTENT_INTELLIGENCE_PROD_APPLY\s*=\s*["']true["']/.test(route),
   "no hardcoded production apply in route"

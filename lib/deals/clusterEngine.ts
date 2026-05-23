@@ -70,6 +70,46 @@ export function clusterProductsByTitle(products: QuantProduct[]): QuantProduct[]
   return [...buckets.values()].map((g) => g);
 }
 
+/**
+ * Groups listings by normalized equivalenceClassId when present (Phase 0 Sprint 2).
+ * Falls back to title-based clustering for rows without qiNormalizedCommerce.
+ */
+export function clusterProductsByEquivalence(products: QuantProduct[]): QuantProduct[][] {
+  const n = products.length;
+  if (n === 0) return [];
+
+  const normalizedCount = products.filter((p) => p.qiNormalizedCommerce?.equivalenceClassId).length;
+  if (normalizedCount === 0) return clusterProductsByTitle(products);
+
+  const byEquivalence = new Map<string, QuantProduct[]>();
+  const fallback: QuantProduct[] = [];
+
+  for (const p of products) {
+    const eqId = p.qiNormalizedCommerce?.equivalenceClassId;
+    if (eqId) {
+      const list = byEquivalence.get(eqId) ?? [];
+      list.push(p);
+      byEquivalence.set(eqId, list);
+    } else {
+      fallback.push(p);
+    }
+  }
+
+  const groups: QuantProduct[][] = [...byEquivalence.values()];
+
+  if (fallback.length > 0) {
+    groups.push(...clusterProductsByTitle(fallback));
+  }
+
+  return groups;
+}
+
+/** Preferred clustering: equivalence when normalization meta present, else legacy title. */
+export function clusterProducts(products: QuantProduct[]): QuantProduct[][] {
+  const hasEquivalence = products.some((p) => p.qiNormalizedCommerce?.equivalenceClassId);
+  return hasEquivalence ? clusterProductsByEquivalence(products) : clusterProductsByTitle(products);
+}
+
 export function canonicalClusterTitle(listings: QuantProduct[]): string {
   if (listings.length === 0) return "";
   const sorted = [...listings].sort((a, b) => a.title.length - b.title.length);

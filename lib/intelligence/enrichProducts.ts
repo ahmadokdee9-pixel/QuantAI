@@ -25,6 +25,7 @@ import { buildGlobalCommerceFoundationForTray } from "./globalCommerceFoundation
 import { buildDiscoveryIntelligenceForTray } from "./discoveryEngine";
 import { buildMarketPulseSnapshot } from "./marketPulseEngine";
 import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
+import { normalizeCommerceProductTray, readNormalizationFlags } from "@/lib/intelligence/normalization";
 
 export function enrichProductsWithIntelligence(
   products: QuantProduct[],
@@ -34,18 +35,29 @@ export function enrichProductsWithIntelligence(
   if (products.length === 0) return [];
   const productsIn = filterTrayNoise(products, searchQuery);
   if (productsIn.length === 0) return [];
-  const stats = computeListStats(productsIn);
-  const listMaxValueRaw = computeListMaxValueRaw(productsIn);
+
+  const normFlags = readNormalizationFlags();
+  const { products: normalizedTray, meta: normalizationMeta } = normalizeCommerceProductTray(
+    productsIn,
+    searchQuery
+  );
+  const trayInput = normFlags.enabled ? normalizedTray : productsIn;
+  const attachNormMeta = normFlags.enabled
+    ? (row: QuantProduct): QuantProduct => ({ ...row, qiNormalizationMeta: normalizationMeta })
+    : (row: QuantProduct): QuantProduct => row;
+
+  const stats = computeListStats(trayInput);
+  const listMaxValueRaw = computeListMaxValueRaw(trayInput);
   const intents = canonicalQuery?.commerceIntents ?? parseCommerceSearchIntents(searchQuery);
   const humanIntent = buildHumanIntentProfile(searchQuery, intents);
   const styleQuery = inferQueryStyleProfile(searchQuery, intents);
 
-  const scored = productsIn.map((p) => {
+  const scored = trayInput.map((p) => {
     const listingIdentity = assessUniversalListingIdentity(p, searchQuery);
     const engine = scoreProductEngine(p, searchQuery, stats, listMaxValueRaw, intents, listingIdentity);
-    const bundle = buildProductRelationshipBundle(p, productsIn, searchQuery, intents.alternativeQuery, intents, intents.taste);
-    const profile = classifyDiscoveryProfile(p, productsIn, intents, bundle);
-    const altWhy = buildAlternativeWhyLine(p, productsIn, intents, intents.alternativeQuery, bundle, profile);
+    const bundle = buildProductRelationshipBundle(p, trayInput, searchQuery, intents.alternativeQuery, intents, intents.taste);
+    const profile = classifyDiscoveryProfile(p, trayInput, intents, bundle);
+    const altWhy = buildAlternativeWhyLine(p, trayInput, intents, intents.alternativeQuery, bundle, profile);
 
     let relDelta = 0;
     if (intents.substituteSemanticActive || intents.alternativeSeeking) {
@@ -68,16 +80,16 @@ export function enrichProductsWithIntelligence(
     );
     const styleNudge = productStyleCompositeNudge(p, styleQuery, engine.category, humanIntent);
 
-    let reason = buildScoreReasoning(p, productsIn, stats, engine.signals, engine.category);
+    let reason = buildScoreReasoning(p, trayInput, stats, engine.signals, engine.category);
     if (altWhy) reason = `${reason} ${altWhy}`.slice(0, 1400);
 
     const trend = simulatePriceTrend(p, stats);
-    const qiVerdict = getAdaptiveVerdict(p, productsIn, stats, engine.signals, {
+    const qiVerdict = getAdaptiveVerdict(p, trayInput, stats, engine.signals, {
       query: searchQuery,
       intents,
       category: engine.category,
     });
-    const qiPsychology = getPsychologyInsight(p, productsIn, stats, engine.signals, engine.category, {
+    const qiPsychology = getPsychologyInsight(p, trayInput, stats, engine.signals, engine.category, {
       query: searchQuery,
       intents,
       alternativeWhyNarrative: altWhy,
@@ -97,7 +109,7 @@ export function enrichProductsWithIntelligence(
       qiDiscoveryTags: profile.tags,
       qiAlternativeWhy: altWhy,
     };
-    const qiRealityTrust = buildQuantAIRealityTrustLayer(preHuman, productsIn, {
+    const qiRealityTrust = buildQuantAIRealityTrustLayer(preHuman, trayInput, {
       medianPrice: stats.medianPrice,
       searchQuery,
     });
@@ -108,13 +120,13 @@ export function enrichProductsWithIntelligence(
       intents,
       humanIntent,
       styleQuery,
-      list: productsIn,
+      list: trayInput,
       reality: qiRealityTrust,
     });
     const understandingNudge = productUnderstandingRankNudge(productUnderstanding);
     const regret = assessRegretRisk({
       product: { ...preHuman, qiRealityTrust },
-      list: productsIn,
+      list: trayInput,
       stats,
       category: engine.category,
       searchQuery,
@@ -178,7 +190,7 @@ export function enrichProductsWithIntelligence(
 
   withGlobalCommerce.sort((a, b) => (b.qiComposite ?? 0) - (a.qiComposite ?? 0));
   const curated = applyEliteFirstWindowCuration(withGlobalCommerce, 12);
-  return curated.map((p, i) => ({
+  return curated.map((p, i) => attachNormMeta({
     ...p,
     qiRank: i,
   }));

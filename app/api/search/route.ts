@@ -34,6 +34,14 @@ import { buildCanonicalQuery, canonicalQueryForDebug, type CanonicalQueryContrac
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import { semanticRerankSearchResults } from "@/lib/search/semanticReranker";
 import { buildLatencyBudgetReport } from "@/lib/search/latencyBudget";
+import {
+  integrateNormalizationInSearchTray,
+  normalizationMetaForSearchResponse,
+  emitNormalizationShadowTelemetry,
+  isStage1ShadowRollout,
+  type NormalizationShadowTelemetry,
+  type NormalizationTrayMeta,
+} from "@/lib/intelligence/normalization";
 import { buildVerticalTasteShadowMeta } from "@/lib/taste/verticalTasteShadow";
 import { buildFragranceTasteCanaryMeta } from "@/lib/taste/fragranceTasteApply";
 import { buildFurnitureTasteCanaryMeta } from "@/lib/taste/furnitureTasteApply";
@@ -75,6 +83,8 @@ import { applyControlledMemorylessCommerceLearning } from "@/lib/memorylessLearn
 import { applyControlledMarketRealityIntelligence } from "@/lib/marketReality/marketRealityIntelligence";
 import { applyControlledCommerceDecisionIntelligence } from "@/lib/commerceDecision/commerceDecisionIntelligence";
 import { applyControlledAutonomousCommerceReasoningGraph } from "@/lib/commerceReasoningGraph/commerceReasoningGraphIntelligence";
+import { applyControlledUnifiedCognitiveGovernance } from "@/lib/cognitiveGovernance/cognitiveGovernanceIntelligence";
+import { applyControlledEconomicWorldSimulation } from "@/lib/economicWorldSimulation/economicWorldSimulationIntelligence";
 import { buildWatchTasteCanaryMeta } from "@/lib/taste/watchTasteApply";
 import { TASTE_GRAMMAR_PIPELINE_CACHE_KEY } from "@/lib/taste/verticalTasteFlags";
 import { buildDegradedTrayNotice, buildEmptyTrayExplanation } from "@/lib/search/trayDiagnostics";
@@ -556,6 +566,9 @@ async function handleSearch(
     let liveDiscovery!: LiveCommerceDiscoveryMeta;
     const canonicalQuery: CanonicalQueryContract = requestCanonicalQuery;
     const stageSuppression: StageSuppressionTrace[] = [];
+    let normalizationMeta: NormalizationTrayMeta | null = null;
+    let normalizationShadowPostSemantic: NormalizationShadowTelemetry | null = null;
+    let normalizationShadowPostControlled: NormalizationShadowTelemetry | null = null;
     const traceStage = (stage: string, before: number, after: number) => {
       stageSuppression.push({
         stage,
@@ -672,6 +685,15 @@ async function handleSearch(
         : [];
     products = semanticRerankSearchResults(products, query, canonicalQuery);
     traceStage("semantic_rerank", preSemanticProducts.length, products.length);
+    const normPostSemantic = integrateNormalizationInSearchTray(products, query, "post_semantic");
+    products = normPostSemantic.products;
+    normalizationMeta = normPostSemantic.meta;
+    normalizationShadowPostSemantic = normPostSemantic.shadowTelemetry;
+    traceStage(
+      "normalization_post_semantic",
+      normPostSemantic.meta.inputCount,
+      normPostSemantic.meta.outputCount
+    );
     if (products.length === 0 && preSemanticProducts.length > 0) {
       products = preSemanticProducts.map((p, i) => ({ ...p, qiRank: i }));
       traceStage("semantic_empty_guard", 0, products.length);
@@ -1161,6 +1183,79 @@ async function handleSearch(
     });
     products = reasoningGraphResult.products;
     const autonomousCommerceReasoningGraph = reasoningGraphResult.meta;
+    const preCognitiveGovernanceLinks = products.map((p) => p.link || p.title);
+    const cognitiveGovernanceResult = applyControlledUnifiedCognitiveGovernance({
+      products,
+      query,
+      canonicalQuery,
+      governance: intentGovernance,
+      calibration: intentCalibration,
+      runtime: intentRuntime,
+      orchestration: intentOrchestration,
+      memory: intentMemory,
+      coordination: intentCoordination,
+      fusion: intentFusion,
+      multiObjective: multiObjectiveCommerce,
+      intent: intentCognition,
+      strategic: adaptiveStrategicRanking,
+      memoryless: memorylessCommerceLearning,
+      marketReality: marketRealityIntelligence,
+      commerceDecision: commerceDecisionIntelligence,
+      reasoningGraph: autonomousCommerceReasoningGraph,
+      preOrderLinks: preCognitiveGovernanceLinks,
+    });
+    products = cognitiveGovernanceResult.products;
+    const unifiedCognitiveGovernance = cognitiveGovernanceResult.meta;
+    const preEconomicSimulationLinks = products.map((p) => p.link || p.title);
+    const economicSimulationResult = applyControlledEconomicWorldSimulation({
+      products,
+      query,
+      canonicalQuery,
+      governance: intentGovernance,
+      calibration: intentCalibration,
+      runtime: intentRuntime,
+      orchestration: intentOrchestration,
+      memory: intentMemory,
+      coordination: intentCoordination,
+      fusion: intentFusion,
+      multiObjective: multiObjectiveCommerce,
+      intent: intentCognition,
+      strategic: adaptiveStrategicRanking,
+      memoryless: memorylessCommerceLearning,
+      marketReality: marketRealityIntelligence,
+      commerceDecision: commerceDecisionIntelligence,
+      reasoningGraph: autonomousCommerceReasoningGraph,
+      cognitiveGovernance: unifiedCognitiveGovernance,
+      preOrderLinks: preEconomicSimulationLinks,
+    });
+    products = economicSimulationResult.products;
+    const economicWorldSimulation = economicSimulationResult.meta;
+
+    const searchLatencyMs = Date.now() - searchStarted;
+
+    const normPostControlled = integrateNormalizationInSearchTray(products, query, "post_controlled", {
+      searchLatencyMs,
+    });
+    products = normPostControlled.products;
+    normalizationMeta = normPostControlled.meta;
+    normalizationShadowPostControlled = normPostControlled.shadowTelemetry;
+    traceStage(
+      "normalization_post_controlled",
+      normPostControlled.meta.inputCount,
+      normPostControlled.meta.outputCount
+    );
+    dealClusters = buildDealClusters(products);
+    searchIntelligence = buildSearchIntelligence(query, products, dealClusters);
+
+    if (isStage1ShadowRollout() && normalizationShadowPostControlled) {
+      emitNormalizationShadowTelemetry({
+        queryLength: query.length,
+        searchLatencyMs,
+        productCount: products.length,
+        shadow: normalizationShadowPostControlled,
+      });
+    }
+
     const fallbackReason = guestOperationalDegraded
       ? String(guestOperationalDegraded.reason ?? "operational_degraded")
       : liveDiscovery.status === "enabled"
@@ -1173,7 +1268,7 @@ async function handleSearch(
       fallbackReason,
       errorState: null,
       stageSuppression,
-      searchLatencyMs: Date.now() - searchStarted,
+      searchLatencyMs,
       operationalState: guestOperationalDegraded,
     });
 
@@ -1312,14 +1407,33 @@ async function handleSearch(
         marketRealityIntelligence,
         commerceDecisionIntelligence,
         autonomousCommerceReasoningGraph,
+        unifiedCognitiveGovernance,
+        economicWorldSimulation,
+        ...(normalizationMeta && normalizationShadowPostControlled
+          ? normalizationMetaForSearchResponse(
+              normalizationMeta,
+              normalizationShadowPostControlled,
+              searchLatencyMs
+            )
+          : {}),
+        normalizationShadowPostSemantic,
+        normalizationShadowPostControlled,
       },
     };
 
     logSearchEvent(products.length > 0 ? "success" : "empty", {
       queryLength: query.length,
       products: products.length,
-      latencyMs: debugMeta.searchLatencyMs,
+      latencyMs: searchLatencyMs,
       suppressionStages: stageSuppression.length,
+      ...(normalizationShadowPostControlled?.enabled
+        ? {
+            normalizationShadow: true,
+            top3DuplicateRateBefore: normalizationShadowPostControlled.top3DuplicateRateBefore,
+            projectedRankingLift: normalizationShadowPostControlled.projectedRankingLift,
+            rolloutReadinessScore: normalizationShadowPostControlled.rolloutReadinessScore,
+          }
+        : {}),
     });
 
     return jsonSearch(

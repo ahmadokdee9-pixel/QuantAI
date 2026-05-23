@@ -1,0 +1,79 @@
+{
+  "generatedAt": "2026-05-23T01:34:40.504Z",
+  "mode": "offline",
+  "flags": {
+    "enabled": true,
+    "mode": "shadow",
+    "apply": false,
+    "shadowTelemetry": true
+  },
+  "summary": {
+    "offlineTotal": 2,
+    "offlinePassed": 2,
+    "offlinePassRatePct": 100,
+    "avgShadowLatencyMs": 20.61,
+    "avgApplyLatencyMs": 7.53,
+    "avgRankingLift": 0
+  },
+  "offlineResults": [
+    {
+      "id": "iphone-15-duplicates",
+      "query": "iphone 15 128gb black",
+      "ok": true,
+      "issues": [],
+      "metrics": {
+        "shadow": {
+          "inputCount": 5,
+          "outputCount": 5,
+          "top3DuplicateRate": 0,
+          "top3UniqueCommerceIds": 1,
+          "equivalenceGroups": 1,
+          "latencyMs": 32.91770000000008
+        },
+        "apply": {
+          "inputCount": 5,
+          "outputCount": 3,
+          "top3DuplicateRate": 0,
+          "top3UniqueCommerceIds": 3,
+          "duplicateListingCount": 2,
+          "rankingLiftEstimate": 0,
+          "latencyMs": 8.045399999999972
+        },
+        "clusterEquivalenceBacked": true
+      }
+    },
+    {
+      "id": "nike-af1-duplicates",
+      "query": "nike air force 1 white size 10",
+      "ok": true,
+      "issues": [],
+      "metrics": {
+        "shadow": {
+          "inputCount": 4,
+          "outputCount": 4,
+          "top3DuplicateRate": 0,
+          "top3UniqueCommerceIds": 2,
+          "equivalenceGroups": 1,
+          "latencyMs": 8.29469999999992
+        },
+        "apply": {
+          "inputCount": 4,
+          "outputCount": 3,
+          "top3DuplicateRate": 0,
+          "top3UniqueCommerceIds": 3,
+          "duplicateListingCount": 1,
+          "rankingLiftEstimate": 0,
+          "latencyMs": 7.014999999999986
+        },
+        "clusterEquivalenceBacked": true
+      }
+    }
+  ],
+  "liveResults": [],
+  "searchQualityMetrics": {
+    "top3DuplicateRateReductionTarget": 0.4,
+    "falseCollapseRateTarget": 0.02,
+    "normalizationLatencyP95TargetMs": 3,
+    "clusterEquivalenceCoherenceTarget": 1
+  }
+}

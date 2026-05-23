@@ -1,0 +1,10 @@
+{
+  "name": "quantai-pdf-gen",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "marked": "^18.0.4",
+    "pdf-parse": "^2.4.5",
+    "puppeteer": "^25.0.4"
+  }
+}
