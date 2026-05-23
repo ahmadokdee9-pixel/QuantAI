@@ -1,0 +1,809 @@
+{
+  "generatedAt": "2026-05-23T02:07:00.941Z",
+  "baseUrl": "https://quant-ai-app.vercel.app",
+  "queries": [
+    {
+      "id": "iphone-15-pro",
+      "query": "iphone 15 pro max",
+      "productCount": 25,
+      "inputCount": 25,
+      "outputCount": 25,
+      "equivalenceGroupCount": 4,
+      "falseCollapseIncidents": 0,
+      "multiVariantKeyGroups": 1,
+      "groups": [
+        {
+          "equivalenceClassId": "qcec_13eb86c9",
+          "memberCount": 3,
+          "boundaryViolation": false,
+          "violationReasons": [],
+          "conflictPairs": 0,
+          "members": [
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=iphone 15 pro max mobile&prds=catalogid:14919452750346977447,productid:7520782021988020072,headlineOfferDocid:13509823528234362725,imageDocid:14660325161147568501,rds:PC_11875031404663079123|PROD_PC_11875031404663079123,gpcid:11875031404663079123,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Apple iPhone 15 Pro Max 256GB White Titanium",
+              "store": "Back Market",
+              "price": 649,
+              "variantKey": "apple::iphone15promax256gb+max+pro::cond:unknown|cwhite|s256",
+              "modelTierKey": "iphone15_pro_max",
+              "storageGb": 256,
+              "colorKey": "white",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=apple iphone 15 pro pro phone Galaxus IKEA Kaufland Marktplaats phone apple iphone 15 pro pro mobile&prds=catalogid:14919452750346977447,productid:7520782021988020072,headlineOfferDocid:6616392398239948721,imageDocid:14660325161147568501,rds:PC_11875031404663079123|PROD_PC_11875031404663079123,gpcid:11875031404663079123,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Apple iPhone 15 Pro Max 256GB White Titanium",
+              "store": "You-Mobile",
+              "price": 759,
+              "variantKey": "apple::iphone15promax256gb+max+pro::cond:unknown|cwhite|s256",
+              "modelTierKey": "iphone15_pro_max",
+              "storageGb": 256,
+              "colorKey": "white",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=iphone 15 pro max mobile&prds=productid:2978616004570791249,headlineOfferDocid:2978616004570791249,imageDocid:1574613959777560383,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Apple Iphone 15 Pro Max 256gb A2849 Spectrum Mobile Only - White",
+              "store": "eBay - bgpawnshop",
+              "price": 581.47,
+              "variantKey": "apple::iphone15promax256gb+max+pro::cond:unknown|cwhite|s256",
+              "modelTierKey": "iphone15_pro_max",
+              "storageGb": 256,
+              "colorKey": "white",
+              "sizeKey": null,
+              "condition": "unknown"
+            }
+          ]
+        },
+        {
+          "equivalenceClassId": "qcec_309e8f92",
+          "memberCount": 2,
+          "boundaryViolation": false,
+          "violationReasons": [],
+          "conflictPairs": 0,
+          "members": [
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=apple iphone 15 pro pro phone Galaxus IKEA Kaufland Marktplaats phone apple iphone 15 pro pro mobile&prds=catalogid:5126219470696002599,productid:8180959524024643705,headlineOfferDocid:7223637646721805674,imageDocid:2340497351008256405,rds:PC_6285855430991265102|PROD_PC_6285855430991265102,gpcid:6285855430991265102,mid:576462550351986025,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Apple iPhone 15 Pro Max Titanium",
+              "store": "Back Market",
+              "price": 702,
+              "variantKey": "apple::iphone15promaxtitanium+max+pro::cond:unknown",
+              "modelTierKey": "iphone15_pro_max",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=iphone 15 pro max mobile&prds=catalogid:10178122561754829190,productid:11520997220305726959,headlineOfferDocid:3130923178187795946,imageDocid:1264273231678683170,rds:PC_6285855430991265102|PROD_PC_6285855430991265102,gpcid:6285855430991265102,mid:576462550351986025,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Apple iPhone 15 Pro Max Titanium",
+              "store": "Mobiel.nl",
+              "price": 1178,
+              "variantKey": "apple::iphone15promaxtitanium+max+pro::cond:unknown",
+              "modelTierKey": "iphone15_pro_max",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            }
+          ]
+        },
+        {
+          "equivalenceClassId": "qcec_dfd10fe5",
+          "memberCount": 2,
+          "boundaryViolation": false,
+          "violationReasons": [],
+          "conflictPairs": 0,
+          "members": [
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=apple iphone 15 pro pro phone Galaxus IKEA Kaufland Marktplaats phone apple iphone 15 pro pro mobile&prds=catalogid:9470260502660396237,productid:6607817505826613693,headlineOfferDocid:16904206875750882694,imageDocid:15998265289993031249,rds:PC_4702526954592161872|PROD_PC_4702526954592161872,gpcid:4702526954592161872,mid:576462756293218671,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Apple iPhone 15 Plus",
+              "store": "Back Market",
+              "price": 686,
+              "variantKey": "apple::iphone15pluslivemarket+plus::cond:unknown",
+              "modelTierKey": "iphone15_plus",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=iphone 15 pro max mobile&prds=catalogid:9470260502660396237,productid:6607817505826613693,headlineOfferDocid:7801094321432316019,imageDocid:13190255528462344882,rds:PC_4702526954592161872|PROD_PC_4702526954592161872,gpcid:4702526954592161872,mid:576462756293218671,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Apple iPhone 15 Plus",
+              "store": "bol.com",
+              "price": 899.99,
+              "variantKey": "apple::iphone15plussalelive+plus::cond:unknown",
+              "modelTierKey": "iphone15_plus",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            }
+          ]
+        },
+        {
+          "equivalenceClassId": "qcec_2dca6f3e",
+          "memberCount": 2,
+          "boundaryViolation": false,
+          "violationReasons": [],
+          "conflictPairs": 0,
+          "members": [
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=iphone 15 pro max mobile&prds=productid:13922112602583891772,headlineOfferDocid:13922112602583891772,imageDocid:5073418863415180283,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Apple Iphone 15 Pro Max, 256gb, Blue (metro) Lcd Issue [246]",
+              "store": "eBay",
+              "price": 344.55,
+              "variantKey": "apple::iphone15promax+pro::cblue|cond:unknown|s256",
+              "modelTierKey": "iphone15_pro_max",
+              "storageGb": 256,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=iphone 15 pro max mobile&prds=productid:8764589887258227871,headlineOfferDocid:8764589887258227871,imageDocid:5256330581941456447,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "See Photos Apple Iphone 15 Pro Max, 256gb, Blue (metro) [270]",
+              "store": "eBay",
+              "price": 335.93,
+              "variantKey": "apple::iphone15promax+pro::cblue|cond:unknown|s256",
+              "modelTierKey": "iphone15_pro_max",
+              "storageGb": 256,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nike-af1",
+      "query": "nike air force 1 white",
+      "productCount": 32,
+      "inputCount": 32,
+      "outputCount": 32,
+      "equivalenceGroupCount": 4,
+      "falseCollapseIncidents": 0,
+      "multiVariantKeyGroups": 0,
+      "groups": [
+        {
+          "equivalenceClassId": "qcec_dc522f65",
+          "memberCount": 8,
+          "boundaryViolation": false,
+          "violationReasons": [],
+          "conflictPairs": 0,
+          "members": [
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=productid:13994120071032740744,headlineOfferDocid:13994120071032740744,imageDocid:8124748042208348680,rds:PC_4603638701197768447|PROD_PC_4603638701197768447,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 LE Kinderschoen - Wit - Maat: 36.5",
+              "store": "Nike Officieel",
+              "price": 99.99,
+              "variantKey": "nike::nikeairforce1::cond:unknown|cwhite",
+              "modelTierKey": "af1_white",
+              "storageGb": null,
+              "colorKey": "white",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:15031559557878658115,productid:13780978432650122517,headlineOfferDocid:13310664935286834916,imageDocid:6045825907784523940,rds:PC_18331143760124932443|PROD_PC_18331143760124932443,gpcid:18331143760124932443,mid:576462852360663126,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 Mid '07 Summit White Sneaker",
+              "store": "bol.com",
+              "price": 99.99,
+              "variantKey": "nike::nikeairforce1::cond:unknown|cwhite",
+              "modelTierKey": "af1_white",
+              "storageGb": null,
+              "colorKey": "white",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=productid:1816917280025115461,headlineOfferDocid:1816917280025115461,imageDocid:15303984965177226645,rds:PC_3646958218502139977|PROD_PC_3646958218502139977,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 Leather Triple White",
+              "store": "Amazon.nl - Seller",
+              "price": 127.6,
+              "variantKey": "nike::nikeairforce1::cond:unknown|cwhite",
+              "modelTierKey": "af1_white",
+              "storageGb": null,
+              "colorKey": "white",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=productid:10030049428216226973,headlineOfferDocid:10030049428216226973,imageDocid:1897459149661037257,rds:PC_16191379476449380790|PROD_PC_16191379476449380790,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 Low '07 White",
+              "store": "StockX",
+              "price": 88,
+              "variantKey": "nike::nikeairforce1::cond:unknown|cwhite",
+              "modelTierKey": "af1_white",
+              "storageGb": null,
+              "colorKey": "white",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=productid:13401962853060092478,headlineOfferDocid:13401962853060092478,imageDocid:3765888186574359988,rds:PC_3646958218502139977|PROD_PC_3646958218502139977,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 Leather Triple White Sneakers Wit",
+              "store": "Spartoo.nl",
+              "price": 117.95,
+              "variantKey": "nike::nikeairforce1::cond:unknown|cwhite",
+              "modelTierKey": "af1_white",
+              "storageGb": null,
+              "colorKey": "white",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=productid:16216855171268052686,headlineOfferDocid:16216855171268052686,imageDocid:13527286205886772480,rds:PC_8340342951384091787|PROD_PC_8340342951384091787,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 '07 Vrouwen Triple White - Wit - 38.5",
+              "store": "Basket4Ballers",
+              "price": 121,
+              "variantKey": "nike::nikeairforce1::cond:unknown|cwhite",
+              "modelTierKey": "af1_white",
+              "storageGb": null,
+              "colorKey": "white",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:15398557272464146064,productid:7572988380639220106,headlineOfferDocid:16875793680980173780,imageDocid:5453508977924242228,rds:PC_1996405803511470748|PROD_PC_1996405803511470748,gpcid:1996405803511470748,mid:576462555528440760,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 '07 White",
+              "store": "mysneakers",
+              "price": 114.99,
+              "variantKey": "nike::nikeairforce1::cond:unknown|cwhite",
+              "modelTierKey": "af1_white",
+              "storageGb": null,
+              "colorKey": "white",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=productid:9326153301942965288,headlineOfferDocid:9326153301942965288,imageDocid:3648195344379679008,rds:PC_6907542980841031276|PROD_PC_6907542980841031276,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 Low White '07",
+              "store": "b4ysneakers.com",
+              "price": 129.95,
+              "variantKey": "nike::nikeairforce1::cond:unknown|cwhite",
+              "modelTierKey": "af1_white",
+              "storageGb": null,
+              "colorKey": "white",
+              "sizeKey": null,
+              "condition": "unknown"
+            }
+          ]
+        },
+        {
+          "equivalenceClassId": "qcec_ed52eb82",
+          "memberCount": 12,
+          "boundaryViolation": false,
+          "violationReasons": [],
+          "conflictPairs": 0,
+          "members": [
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:13060541401851642128,productid:13420302988516885132,headlineOfferDocid:5050540572671350693,imageDocid:8157191456819588125,rds:PC_16191379476449380790|PROD_PC_16191379476449380790,gpcid:16191379476449380790,mid:576462512048632485,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 '07 Men's",
+              "store": "zalando.nl en",
+              "price": 95.95,
+              "variantKey": "nike::nikeairforce1::cond:unknown|zs",
+              "modelTierKey": "af1_s",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": "s",
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:2250215762821858373,productid:10268246458984529729,headlineOfferDocid:10294506582319043083,imageDocid:15248867383817562624,rds:PC_13489612949068563998|PROD_PC_13489612949068563998,gpcid:13489612949068563998,mid:576462827744254474,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 '07 Next Nature Women's Shoes",
+              "store": "Zalando.nl",
+              "price": 107.95,
+              "variantKey": "nike::nikeairforce1::cond:unknown|zs",
+              "modelTierKey": "af1_s",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": "s",
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:489113416012269513,productid:14604941339079972582,headlineOfferDocid:4772330204673377236,imageDocid:16552268390648641006,rds:PC_9524561827935981791|PROD_PC_9524561827935981791,gpcid:9524561827935981791,mid:576462880246159887,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 '07 EasyOn Women's Shoes",
+              "store": "zalando.nl en",
+              "price": 95.95,
+              "variantKey": "nike::nikeairforce1::cond:unknown|zs",
+              "modelTierKey": "af1_s",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": "s",
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:1721305099810179197,productid:2293605254153234838,headlineOfferDocid:9759347076173811566,imageDocid:12021782720339354124,rds:PC_18385425046990961649|PROD_PC_18385425046990961649,gpcid:18385425046990961649,mid:576462820998648372,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 Low Shadow Women's",
+              "store": "ABOUT YOU",
+              "price": 116.99,
+              "variantKey": "nike::nikeairforce1::cond:unknown|zs",
+              "modelTierKey": "af1_s",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": "s",
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:6297009823467678131,productid:6937262351901569566,headlineOfferDocid:9874984116052264302,imageDocid:10190288643279717431,rds:PC_12841205828268411294|PROD_PC_12841205828268411294,gpcid:12841205828268411294,mid:576462842780719627,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 '07 Women's Sneakers",
+              "store": "bol.com",
+              "price": 129.99,
+              "variantKey": "nike::nikeairforce1::cond:unknown|zs",
+              "modelTierKey": "af1_s",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": "s",
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:6723320636860427981,productid:203329837590273980,headlineOfferDocid:7832086585951278169,imageDocid:2951041689263487796,rds:PC_17835573869919720065|PROD_PC_17835573869919720065,gpcid:17835573869919720065,mid:576462852223255041,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 '07 LX Women's Shoes",
+              "store": "Zalando.nl",
+              "price": 116.95,
+              "variantKey": "nike::nikeairforce1::cond:unknown|zs",
+              "modelTierKey": "af1_s",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": "s",
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:12493124598289144560,productid:11099591100814531059,headlineOfferDocid:9203227993972474980,imageDocid:16420352121445291749,rds:PC_9637150233536671126|PROD_PC_9637150233536671126,gpcid:9637150233536671126,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 '07 Men's Trainer",
+              "store": "zalando.nl en",
+              "price": 119.95,
+              "variantKey": "nike::nikeairforce1::cond:unknown|zs",
+              "modelTierKey": "af1_s",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": "s",
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:1294085998350590007,productid:12811023100414460187,headlineOfferDocid:4503080725398125781,imageDocid:6229104772879091523,rds:PC_5029516364214158533|PROD_PC_5029516364214158533,gpcid:5029516364214158533,mid:576462862783465729,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 '07 Women's",
+              "store": "snipes.com",
+              "price": 95.99,
+              "variantKey": "nike::nikeairforce1::cond:unknown|zs",
+              "modelTierKey": "af1_s",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": "s",
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:5013217459941210503,productid:17524491084443742310,headlineOfferDocid:2293970577390461920,imageDocid:11169374438482615122,rds:PC_9480079283128785224|PROD_PC_9480079283128785224,gpcid:9480079283128785224,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 '07 LV8 Men's Shoes",
+              "store": "Nike Official",
+              "price": 129.99,
+              "variantKey": "nike::nikeairforce1::cond:unknown|zs",
+              "modelTierKey": "af1_s",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": "s",
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:17839257853339210863,productid:3713682518822482865,headlineOfferDocid:12163269210858885376,imageDocid:3437241758043810132,rds:PC_11962270553754240181|PROD_PC_11962270553754240181,gpcid:11962270553754240181,mid:576462537850841536,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 '07 LV8 Men's",
+              "store": "BSTN Store",
+              "price": 119.99,
+              "variantKey": "nike::nikeairforce1::cond:unknown|zs",
+              "modelTierKey": "af1_s",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": "s",
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:9813174184230018267,productid:573778895738117970,headlineOfferDocid:2164612416653650840,imageDocid:4617227390276369983,rds:PC_13141729980884167145|PROD_PC_13141729980884167145,gpcid:13141729980884167145,mid:576462829897042610,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Women's Nike Air Force 1 Sage Low",
+              "store": "Hypeboost",
+              "price": 121,
+              "variantKey": "nike::nikeairforce1::cond:unknown|zs",
+              "modelTierKey": "af1_s",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": "s",
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:16890415406216599122,productid:9400971164182585347,headlineOfferDocid:11987753249656300666,imageDocid:3783617317989198027,rds:PC_15471862407869967544|PROD_PC_15471862407869967544,gpcid:15471862407869967544,mid:576462821140375644,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Men's Nike Air Force 1 '07 Trainer",
+              "store": "StockX",
+              "price": 200,
+              "variantKey": "nike::nikeairforce1::cond:unknown|zs",
+              "modelTierKey": "af1_s",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": "s",
+              "condition": "unknown"
+            }
+          ]
+        },
+        {
+          "equivalenceClassId": "qcec_566b5ca6",
+          "memberCount": 7,
+          "boundaryViolation": false,
+          "violationReasons": [],
+          "conflictPairs": 0,
+          "members": [
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:12442573165462825429,productid:17394906581697850384,headlineOfferDocid:8906282442338869645,imageDocid:18401990557412944370,rds:PC_17149157929660346157|PROD_PC_17149157929660346157,gpcid:17149157929660346157,mid:576462875853921032,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Kids' Nike Air Force 1 Low Leopard Trainer",
+              "store": "zalando.nl en",
+              "price": 99.99,
+              "variantKey": "nike::nikeairforce1::cond:unknown",
+              "modelTierKey": "af1",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:6859767981181597081,productid:1134933568788333178,headlineOfferDocid:8158136046951951503,imageDocid:10517350327034289040,rds:PC_1060881842349747256|PROD_PC_1060881842349747256,gpcid:1060881842349747256,mid:576462888121655090,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 Low Older Kids' Shoes",
+              "store": "Nike Official",
+              "price": 99.99,
+              "variantKey": "nike::nikeairforce1::cond:unknown",
+              "modelTierKey": "af1",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:14955943872518609739,productid:988934015396344540,headlineOfferDocid:15262705324289101554,imageDocid:711496104357539788,rds:PC_2902947320353711387|PROD_PC_2902947320353711387,gpcid:14449973651975601724,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 Older Kids' Shoes",
+              "store": "Nike Official",
+              "price": 99.99,
+              "variantKey": "nike::nikeairforce1::cond:unknown",
+              "modelTierKey": "af1",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:3895293174696267116,productid:12622180607379168749,headlineOfferDocid:11936527043209127064,imageDocid:14375444092351673727,rds:PC_7280604536507028123|PROD_PC_7280604536507028123,gpcid:7280604536507028123,mid:576462772021260156,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 Flyknit 2.0 Shoes",
+              "store": "Nike Officieel",
+              "price": 129.99,
+              "variantKey": "nike::nikeairforce1::cond:unknown",
+              "modelTierKey": "af1",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:9000466194226134483,productid:9274413753981228339,headlineOfferDocid:11394173487363699803,imageDocid:10698773926498346248,rds:PC_3646958218502139977|PROD_PC_3646958218502139977,gpcid:3646958218502139977,mid:576462777621544796,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Kids' Nike Air Force 1 LE",
+              "store": "StockX",
+              "price": 97,
+              "variantKey": "nike::nikeairforce1::cond:unknown",
+              "modelTierKey": "af1",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:12715576027017358948,productid:2039230152685293275,headlineOfferDocid:393193674764962173,imageDocid:12391868074640696915,rds:PC_4603638701197768447|PROD_PC_4603638701197768447,gpcid:4603638701197768447,mid:576462845701834475,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Kids' Nike Air Force 1",
+              "store": "Limited Resell NL",
+              "price": 104.9,
+              "variantKey": "nike::nikeairforce1::cond:unknown",
+              "modelTierKey": "af1",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:5606882998850527662,productid:2167969017309403388,headlineOfferDocid:11005427190411496605,imageDocid:6913181225552271743,rds:PC_2458484365974523440|PROD_PC_2458484365974523440,gpcid:2458484365974523440,mid:576462840616728532,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Air Force 1 Low Retro Premium",
+              "store": "BSTN Store",
+              "price": 111.99,
+              "variantKey": "nike::nikeairforce1::cond:unknown",
+              "modelTierKey": "af1",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            }
+          ]
+        },
+        {
+          "equivalenceClassId": "qcec_41db456e",
+          "memberCount": 3,
+          "boundaryViolation": false,
+          "violationReasons": [],
+          "conflictPairs": 0,
+          "members": [
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:15566666139888624470,productid:5332018572888699490,headlineOfferDocid:15372799231832996614,imageDocid:5382958083043285184,rds:PC_13200349866960000331|PROD_PC_13200349866960000331,gpcid:13200349866960000331,mid:576462873296576673,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Sportswear AIR Force 1 07 Flyease Trainers Men's",
+              "store": "Zalando.nl",
+              "price": 107.95,
+              "variantKey": "nike::airforce1::cond:unknown|zs",
+              "modelTierKey": "af1_s",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": "s",
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:7405393348588748642,productid:8254649969828700300,headlineOfferDocid:13062329249438105434,imageDocid:712977764782986005,rds:PC_9365022334881502749|PROD_PC_9365022334881502749,gpcid:9365022334881502749,mid:576462827236612865,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Sportswear Air Force 1 '07 Trainers Women's",
+              "store": "snipes.com",
+              "price": 90,
+              "variantKey": "nike::airforce1::cond:unknown|zs",
+              "modelTierKey": "af1_s",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": "s",
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=nike air force 1 white&prds=catalogid:7577372241182916164,productid:9971648864654707614,headlineOfferDocid:10017647406120999323,imageDocid:8021854661723379027,rds:PC_14930235228159218564|PROD_PC_14930235228159218564,gpcid:14930235228159218564,pvt:a&hl=en&gl=nl&udm=28",
+              "title": "Nike Sportswear W Air Force 1 trainers Women's",
+              "store": "Footlocker.nl",
+              "price": 129.99,
+              "variantKey": "nike::airforce1::cond:unknown|zs",
+              "modelTierKey": "af1_s",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": "s",
+              "condition": "unknown"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "airpods",
+      "query": "airpods pro 2",
+      "productCount": 32,
+      "inputCount": 32,
+      "outputCount": 32,
+      "equivalenceGroupCount": 5,
+      "falseCollapseIncidents": 1,
+      "multiVariantKeyGroups": 1,
+      "groups": [
+        {
+          "equivalenceClassId": "qcec_e2c670d",
+          "memberCount": 2,
+          "boundaryViolation": false,
+          "violationReasons": [],
+          "conflictPairs": 0,
+          "members": [
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=apple airpods pro pro audio Fnac Galaxus IKEA Kaufland audio apple airpods pro pro wireless headphones&prds=catalogid:10908229999226551247,productid:4718623095236084471,headlineOfferDocid:15077397517557667368,imageDocid:783336761970326911,rds:PC_3896066944466806859|PROD_PC_3896066944466806859,gpcid:3896066944466806859,mid:576462809303838237,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Apple AirPods Pro 2",
+              "store": "bol.com",
+              "price": 199,
+              "variantKey": "apple::airpodspro+airpodspro2livemarket+pro::cond:unknown",
+              "modelTierKey": "airpods_pro_2",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=apple airpods pro 2 wireless headphones&prds=catalogid:3538300857391553572,productid:3851242626909631946,headlineOfferDocid:2029849443727302374,imageDocid:855295107933015699,rds:PC_3896066944466806859|PROD_PC_3896066944466806859,gpcid:3896066944466806859,mid:576462809303838237,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Apple AirPods Pro 2",
+              "store": "CSMobiles",
+              "price": 170,
+              "variantKey": "apple::airpodspro+airpodspro2livemarket+pro::cond:unknown",
+              "modelTierKey": "airpods_pro_2",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            }
+          ]
+        },
+        {
+          "equivalenceClassId": "qcec_b659c5a3",
+          "memberCount": 3,
+          "boundaryViolation": false,
+          "violationReasons": [],
+          "conflictPairs": 0,
+          "members": [
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=apple airpods pro 2 wireless headphones&prds=productid:1966731079254556310,headlineOfferDocid:1966731079254556310,imageDocid:6199545262476155031,rds:PC_3896066944466806859|PROD_PC_3896066944466806859,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Apple Airpods Pro 2nd Generation - Gen 2 With Magsafe Usb-c -",
+              "store": "eBay - thisandthat605",
+              "price": 86.14,
+              "variantKey": "apple::airpodspro+airpodspro2ndgeneration+pro::cond:unknown",
+              "modelTierKey": "airpods_pro_2",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=apple airpods pro 2 wireless headphones&prds=productid:6402178702886039686,headlineOfferDocid:6402178702886039686,imageDocid:11094343179428217910,rds:PC_3896066944466806859|PROD_PC_3896066944466806859,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Airpods Pro 2nd Generation",
+              "store": "eBay",
+              "price": 124.05,
+              "variantKey": "apple::airpodspro+airpodspro2ndgeneration+pro::cond:unknown",
+              "modelTierKey": "airpods_pro_2",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=apple airpods pro 2 wireless headphones&prds=productid:8476418220417394517,headlineOfferDocid:8476418220417394517,imageDocid:9003049081496488832,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Apple Model: Airpods Pro 2nd Generation Mqd83j/a Wireless Earphones",
+              "store": "eBay - fujiyama00",
+              "price": 258.43,
+              "variantKey": "apple::airpodspro+airpodspro2ndgeneration+pro::cond:unknown",
+              "modelTierKey": "airpods_pro_2",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            }
+          ]
+        },
+        {
+          "equivalenceClassId": "qcec_e651e4c7",
+          "memberCount": 5,
+          "boundaryViolation": false,
+          "violationReasons": [],
+          "conflictPairs": 0,
+          "members": [
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=apple airpods pro 2 wireless headphones&prds=catalogid:3389053951126373050,productid:6497772839855766441,headlineOfferDocid:17432403433656991359,imageDocid:11248583366850811109,rds:PC_3323897376901893063|PROD_PC_3323897376901893063,gpcid:3323897376901893063,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Apple AirPods Pro 3",
+              "store": "Coolblue",
+              "price": 224,
+              "variantKey": "apple::airpodspro+airpodspro3+pro::cond:unknown",
+              "modelTierKey": "airpods_pro",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=apple airpods pro pro audio Fnac Galaxus IKEA Kaufland audio apple airpods pro pro wireless headphones&prds=catalogid:3389053951126373050,productid:6497772839855766441,headlineOfferDocid:11794719560348087750,imageDocid:3352669039863844640,rds:PC_3323897376901893063|PROD_PC_3323897376901893063,gpcid:3323897376901893063,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Apple AirPods Pro 3",
+              "store": "Apple",
+              "price": 249,
+              "variantKey": "apple::airpodspro+airpodspro3livemarket+pro::cond:unknown",
+              "modelTierKey": "airpods_pro",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=apple airpods pro 2 wireless headphones&prds=productid:1633401330619370379,headlineOfferDocid:1633401330619370379,imageDocid:593558489288949077,rds:PC_3323897376901893063|PROD_PC_3323897376901893063,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Apple AirPods Pro 3 (USB-C) Maroon - Glossy Full",
+              "store": "AS2 Electronics",
+              "price": 431.68,
+              "variantKey": "apple::airpodspro+airpodspro3+pro::cond:unknown",
+              "modelTierKey": "airpods_pro",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=apple airpods pro 2 wireless headphones&prds=productid:17812789692696771252,headlineOfferDocid:17812789692696771252,imageDocid:11034812505858502214,rds:PC_3323897376901893063|PROD_PC_3323897376901893063,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Apple AirPods Pro 3 (USB-C) Blue - Deep Sapphire Matte Full",
+              "store": "AS2 Electronics",
+              "price": 431.68,
+              "variantKey": "apple::airpodspro+airpodspro3+pro::cblue|cond:unknown",
+              "modelTierKey": "airpods_pro",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=apple airpods pro pro audio Fnac Galaxus IKEA Kaufland audio apple airpods pro pro wireless headphones&prds=productid:5005522326429931380,headlineOfferDocid:5005522326429931380,imageDocid:8597443848447413414,rds:PC_3323897376901893063|PROD_PC_3323897376901893063,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Apple AirPods Pro 3 (USB-C) Maroon - Matte",
+              "store": "AS2 Electronics",
+              "price": 431.68,
+              "variantKey": "apple::airpodspro+airpodspro3+pro::cond:unknown",
+              "modelTierKey": "airpods_pro",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            }
+          ]
+        },
+        {
+          "equivalenceClassId": "qcec_dc5618a7",
+          "memberCount": 3,
+          "boundaryViolation": true,
+          "violationReasons": [
+            "model_tier"
+          ],
+          "conflictPairs": 2,
+          "members": [
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=apple airpods pro 2 wireless headphones&prds=productid:5039512560248765729,headlineOfferDocid:5039512560248765729,imageDocid:15073307835771675271,rds:PC_3896066944466806859|PROD_PC_3896066944466806859,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Linker AirPod Pro 2 Lightning (Los, A2699)",
+              "store": "Remonkey",
+              "price": 94.95,
+              "variantKey": "apple::airpodpro+pro::cond:unknown",
+              "modelTierKey": "airpods_pro_2",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=apple airpods pro 2 wireless headphones&prds=productid:769326735846644092,headlineOfferDocid:769326735846644092,imageDocid:907161120819033332,rds:PC_3896066944466806859|PROD_PC_3896066944466806859,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Airpod Pro 2s",
+              "store": "eBay",
+              "price": 118.88,
+              "variantKey": "apple::airpodpro+pro::cond:unknown",
+              "modelTierKey": "airpods_pro",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=apple airpods pro 2 wireless headphones&prds=productid:611824801642527900,headlineOfferDocid:611824801642527900,imageDocid:5821290992562216476,rds:PC_3896066944466806859|PROD_PC_3896066944466806859,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Airpod Pro 2",
+              "store": "eBay",
+              "price": 186.07,
+              "variantKey": "apple::airpodpro+pro::cond:unknown",
+              "modelTierKey": "airpods_pro_2",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            }
+          ]
+        },
+        {
+          "equivalenceClassId": "qcec_8efa32e",
+          "memberCount": 2,
+          "boundaryViolation": false,
+          "violationReasons": [],
+          "conflictPairs": 0,
+          "members": [
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=apple airpods pro 2 wireless headphones&prds=productid:17073830472311148110,headlineOfferDocid:17073830472311148110,imageDocid:3569312901731538612,rds:PC_3896066944466806859|PROD_PC_3896066944466806859,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Apple Airpods Pro 2 (2ndgenpro) W. Magsafe Wireless Charging Usbc &",
+              "store": "eBay",
+              "price": 146.4,
+              "variantKey": "apple::airpodspro+airpodspro2+pro::cond:unknown",
+              "modelTierKey": "airpods_pro_2",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            },
+            {
+              "link": "https://www.google.com/search?ibp=oshop&q=apple airpods pro 2 wireless headphones&prds=productid:3560820244980527526,headlineOfferDocid:3560820244980527526,imageDocid:13367375817186974387,pvt:hg&hl=en&gl=nl&udm=28",
+              "title": "Mulberry Apple AirPods Pro 2",
+              "store": "DOMBĒ",
+              "price": 21.9,
+              "variantKey": "apple::airpodspro+airpodspro2+pro::cond:unknown",
+              "modelTierKey": "airpods_pro_2",
+              "storageGb": null,
+              "colorKey": "ond:unknown",
+              "sizeKey": null,
+              "condition": "unknown"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

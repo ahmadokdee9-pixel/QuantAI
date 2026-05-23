@@ -20,6 +20,7 @@
     "test:normalization": "npx --yes tsx scripts/normalization-sanity.mjs",
     "test:normalization-ranking": "npx --yes tsx scripts/evaluate-normalization-ranking.mjs",
     "test:stage1-shadow-probe": "npx --yes tsx scripts/normalization-stage1-live-probe.mjs",
+    "stage1-variant-boundary-probe": "npx --yes tsx scripts/normalization-variant-boundary-probe.mjs",
     "stage1-shadow-dashboard": "npx --yes tsx scripts/normalization-shadow-dashboard.mjs",
     "stage1-shadow-report": "npx --yes tsx scripts/normalization-shadow-report.mjs",
     "stage1-deployment-verify": "npx --yes tsx scripts/stage1-production-deployment-verify.mjs",

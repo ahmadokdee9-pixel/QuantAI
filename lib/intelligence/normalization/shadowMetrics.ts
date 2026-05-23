@@ -5,6 +5,7 @@
 import type { QuantProduct } from "@/lib/shoppingScore";
 import type { NormalizationShadowTelemetry, NormalizationTrayMeta } from "./types";
 import { computeTop3DuplicateRate } from "./dedupPipeline";
+import { equivalenceGroupHasVariantBoundaryViolation } from "./variantBoundary";
 
 function round4(n: number): number {
   return Math.round(n * 10000) / 10000;
@@ -43,25 +44,19 @@ export function semanticCoherenceScore(products: QuantProduct[], n = 5): number 
 }
 
 /**
- * Detect would-be false collapses: equivalence groups spanning multiple variant keys
- * (different storage/color collapsed into one representative).
+ * Detect would-be false collapses: equivalence groups where paired members have
+ * conflicting storage, color, size, or model-tier axes (not merely different variantKey strings).
  */
 export function detectFalseCollapseIncidents(
   products: QuantProduct[],
   meta: NormalizationTrayMeta
 ): number {
   let incidents = 0;
-  const byLink = new Map(products.map((p) => [p.link, p]));
 
   for (const group of meta.groups) {
     if (group.memberLinks.length < 2) continue;
-    const variantKeys = new Set<string>();
-    for (const link of group.memberLinks) {
-      const p = byLink.get(link);
-      const vk = p?.qiNormalizedCommerce?.variantKey;
-      if (vk) variantKeys.add(vk);
-    }
-    if (variantKeys.size > 1) incidents++;
+    const check = equivalenceGroupHasVariantBoundaryViolation(products, group.memberLinks);
+    if (check.violation) incidents++;
   }
 
   return incidents;

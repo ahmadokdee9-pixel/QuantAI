@@ -11,6 +11,7 @@ import {
 } from "@/lib/intelligence/productIdentity";
 import type { NormalizedListingRecord } from "./types";
 import { buildEquivalenceClassId } from "./canonicalId";
+import { extractVariantAxes, variantBoundaryConflict } from "./variantBoundary";
 
 const EQUIVALENCE_MATCH_FLOOR = 0.78;
 const IDENTIFIER_MATCH_FLOOR = 0.84;
@@ -42,8 +43,21 @@ function shareIdentifier(a: NormalizedListingRecord, b: NormalizedListingRecord)
   return a.identifierAnchors.some((x) => setB.has(x));
 }
 
+function variantKeysDiffer(a: NormalizedListingRecord, b: NormalizedListingRecord): boolean {
+  return a.variantKey !== b.variantKey;
+}
+
+/** Block clustering when both listings expose conflicting storage/color/size/model-tier axes. */
+function hasVariantBoundaryBlock(a: NormalizedListingRecord, b: NormalizedListingRecord): boolean {
+  if (!variantKeysDiffer(a, b)) return false;
+  const axesA = extractVariantAxes(a.product);
+  const axesB = extractVariantAxes(b.product);
+  return variantBoundaryConflict(axesA, axesB).conflict;
+}
+
 function shouldCluster(a: NormalizedListingRecord, b: NormalizedListingRecord, peerMedian: number): boolean {
   if (a.commerceId === b.commerceId) return true;
+  if (hasVariantBoundaryBlock(a, b)) return false;
   if (shareIdentifier(a, b)) return true;
 
   const ia = extractProductIdentity(a.product);

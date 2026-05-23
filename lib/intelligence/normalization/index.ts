@@ -31,6 +31,14 @@ export {
 export type { SearchNormalizationIntegrationResult } from "./searchIntegration";
 export { runDedupPipeline, computeTop3DuplicateRate } from "./dedupPipeline";
 export { buildEquivalenceGraph } from "./equivalenceGraph";
+export {
+  extractVariantAxes,
+  extractModelTierKey,
+  variantBoundaryConflict,
+  equivalenceGroupHasVariantBoundaryViolation,
+  parseVariantFingerprintSegments,
+} from "./variantBoundary";
+export type { VariantAxes, VariantBoundaryVerdict } from "./variantBoundary";
 export { areSameMerchantNearDuplicates, reconcileMerchantDuplicates } from "./merchantReconciliation";
 export type {
   NormalizationCollapseReason,

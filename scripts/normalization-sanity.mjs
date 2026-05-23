@@ -6,7 +6,11 @@ import {
   buildCommerceId,
   buildListingKey,
   areSameMerchantNearDuplicates,
+  variantBoundaryConflict,
+  extractVariantAxes,
+  equivalenceGroupHasVariantBoundaryViolation,
 } from "../lib/intelligence/normalization/index.ts";
+import { detectFalseCollapseIncidents } from "../lib/intelligence/normalization/shadowMetrics.ts";
 
 /** @param {Partial<import("../lib/shoppingScore.ts").QuantProduct> & Pick<import("../lib/shoppingScore.ts").QuantProduct, "title" | "store" | "price" | "link">} partial */
 function product(partial) {
@@ -118,6 +122,52 @@ ok("disabled by default leaves tray untouched", () => {
   assert.equal(meta.enabled, false);
   assert.equal(products[0]?.qiNormalizedCommerce, undefined);
   if (prev != null) process.env.QUANTAI_NORMALIZATION_ENABLED = prev;
+});
+
+ok("variant boundary detects storage conflict", () => {
+  const a = extractVariantAxes(
+    product({ title: "Apple iPhone 15 128GB Black", store: "Amazon", price: 799, link: "https://a.com/1" })
+  );
+  const b = extractVariantAxes(
+    product({ title: "Apple iPhone 15 256GB Black", store: "Walmart", price: 899, link: "https://w.com/1" })
+  );
+  assert.equal(variantBoundaryConflict(a, b).conflict, true);
+  assert.ok(variantBoundaryConflict(a, b).reasons.includes("storage_gb"));
+});
+
+ok("variant boundary detects nike color conflict", () => {
+  const a = extractVariantAxes(
+    product({ title: "Nike Air Force 1 White Size 10", store: "Foot Locker", price: 110, link: "https://fl.com/w" })
+  );
+  const b = extractVariantAxes(
+    product({ title: "Nike Air Force 1 Black Size 10", store: "JD", price: 112, link: "https://jd.com/b" })
+  );
+  assert.equal(variantBoundaryConflict(a, b).conflict, true);
+  assert.ok(variantBoundaryConflict(a, b).reasons.includes("color"));
+});
+
+ok("128GB vs 256GB not in same multi-member equivalence group (shadow)", () => {
+  const prev = {
+    e: process.env.QUANTAI_NORMALIZATION_ENABLED,
+    m: process.env.QUANTAI_NORMALIZATION_MODE,
+    a: process.env.QUANTAI_NORMALIZATION_APPLY,
+  };
+  process.env.QUANTAI_NORMALIZATION_ENABLED = "true";
+  process.env.QUANTAI_NORMALIZATION_MODE = "shadow";
+  process.env.QUANTAI_NORMALIZATION_APPLY = "false";
+
+  const tray = [
+    product({ id: 1, title: "Apple iPhone 15 128GB Black", store: "Amazon", price: 799, link: "https://a.com/1" }),
+    product({ id: 2, title: "Apple iPhone 15 256GB Black", store: "Walmart", price: 899, link: "https://w.com/1" }),
+  ];
+  const { products, meta } = normalizeCommerceProductTray(tray, "iphone 15");
+  const multi = meta.groups.filter((g) => g.memberLinks.length >= 2);
+  assert.equal(multi.length, 0);
+  assert.equal(detectFalseCollapseIncidents(products, meta), 0);
+
+  process.env.QUANTAI_NORMALIZATION_ENABLED = prev.e;
+  process.env.QUANTAI_NORMALIZATION_MODE = prev.m;
+  process.env.QUANTAI_NORMALIZATION_APPLY = prev.a;
 });
 
 ok("shadow mode forces apply=false even if APPLY env is true", () => {
