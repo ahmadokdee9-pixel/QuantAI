@@ -1,0 +1,109 @@
+{
+  "generatedAt": "2026-05-23T23:52:37.674Z",
+  "baseUrl": "https://quant-ai-app.vercel.app",
+  "alerts": [
+    {
+      "id": "airpods",
+      "type": "false_collapse",
+      "count": 1
+    },
+    {
+      "id": "ps5-controller",
+      "type": "shadow_disabled"
+    },
+    {
+      "id": "ps5-controller",
+      "type": "low_canonical_coverage",
+      "value": 0
+    }
+  ],
+  "rows": [
+    {
+      "id": "iphone-15-pro",
+      "ok": true,
+      "apply": false,
+      "falseCollapseIncidents": 0,
+      "top3DuplicateReduction": 0,
+      "canonicalIdentityCoverage": 1,
+      "merchantDiversityDelta": 0,
+      "trayInvariant": true,
+      "rankingMutation": false
+    },
+    {
+      "id": "samsung-s24",
+      "ok": true,
+      "apply": false,
+      "falseCollapseIncidents": 0,
+      "top3DuplicateReduction": 0,
+      "canonicalIdentityCoverage": 1,
+      "merchantDiversityDelta": 0,
+      "trayInvariant": true,
+      "rankingMutation": false
+    },
+    {
+      "id": "nike-af1",
+      "ok": true,
+      "apply": false,
+      "falseCollapseIncidents": 0,
+      "top3DuplicateReduction": 0,
+      "canonicalIdentityCoverage": 1,
+      "merchantDiversityDelta": 0,
+      "trayInvariant": true,
+      "rankingMutation": false
+    },
+    {
+      "id": "airpods",
+      "ok": true,
+      "apply": false,
+      "falseCollapseIncidents": 1,
+      "top3DuplicateReduction": 0,
+      "canonicalIdentityCoverage": 1,
+      "merchantDiversityDelta": 0,
+      "trayInvariant": true,
+      "rankingMutation": false
+    },
+    {
+      "id": "ysl-libre",
+      "ok": true,
+      "apply": false,
+      "falseCollapseIncidents": 0,
+      "top3DuplicateReduction": 0,
+      "canonicalIdentityCoverage": 1,
+      "merchantDiversityDelta": 0,
+      "trayInvariant": true,
+      "rankingMutation": false
+    },
+    {
+      "id": "ps5-controller",
+      "falseCollapseIncidents": 0,
+      "top3DuplicateReduction": 0,
+      "canonicalIdentityCoverage": 0,
+      "merchantDiversityDelta": 0,
+      "trayInvariant": true,
+      "rankingMutation": false
+    },
+    {
+      "id": "gaming-monitor",
+      "ok": true,
+      "apply": false,
+      "falseCollapseIncidents": 0,
+      "top3DuplicateReduction": 0,
+      "canonicalIdentityCoverage": 1,
+      "merchantDiversityDelta": 0,
+      "trayInvariant": true,
+      "rankingMutation": false
+    },
+    {
+      "id": "office-chair",
+      "ok": true,
+      "apply": false,
+      "falseCollapseIncidents": 0,
+      "top3DuplicateReduction": 0,
+      "canonicalIdentityCoverage": 1,
+      "merchantDiversityDelta": 0,
+      "trayInvariant": true,
+      "rankingMutation": false
+    }
+  ],
+  "healthy": false
+}

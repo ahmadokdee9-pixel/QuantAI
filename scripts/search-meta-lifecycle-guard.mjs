@@ -64,4 +64,22 @@ check(
   "unified replay kernel exists"
 );
 
+check(
+  "phase3_unified_kernel",
+  route.includes("runUnifiedControlledStack"),
+  "Phase 3 unified controlled stack kernel wired"
+);
+
+check(
+  "phase3_normalization_graph",
+  route.includes("executeNormalizationStage"),
+  "normalization execution graph wired for post_semantic"
+);
+
+check(
+  "phase3_orchestration_meta",
+  route.includes("controlledStackOrchestration") || route.includes("orchestration:"),
+  "orchestration graph exported in controlled stack meta"
+);
+
 process.exit(failed ? 1 : 0);

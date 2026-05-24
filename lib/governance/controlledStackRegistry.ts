@@ -89,6 +89,11 @@ export function isAnyControlledLayerEnabled(): boolean {
   return scanControlledStackRegistry().enabledCount > 0;
 }
 
+export function isControlledLayerEnabled(id: ControlledLayerId): boolean {
+  const entry = LAYER_CHECKS.find((l) => l.id === id);
+  return entry?.enabled() ?? false;
+}
+
 /** Shared top-N drift counter for replay/governance kernels. */
 export function countRankingTopDrift(pre: string[], post: string[], n = 5): number {
   let drift = 0;

@@ -5,13 +5,16 @@
 import { QuantAnalyticsEvents } from "@/lib/analytics/events";
 import { trackServerEvent } from "@/lib/analytics/trackServer";
 import { logProductionInfo } from "@/lib/log/productionLog";
-import type { NormalizationShadowTelemetry } from "./types";
+import type { NormalizationShadowTelemetry, NormalizationTrayMeta } from "./types";
+import { emitNormalizationShadowAuditLog } from "./shadowAuditLog";
 
 export type NormalizationShadowLogPayload = {
   queryLength: number;
   searchLatencyMs: number;
   productCount: number;
   shadow: NormalizationShadowTelemetry;
+  meta?: NormalizationTrayMeta;
+  queryCategory?: string;
 };
 
 /** Emit Stage 1 shadow telemetry to production logs and optional analytics sink. */
@@ -52,6 +55,15 @@ export function emitNormalizationShadowTelemetry(payload: NormalizationShadowLog
   logProductionInfo("quantai.normalization.shadow", fields);
 
   trackServerEvent(QuantAnalyticsEvents.NORMALIZATION_SHADOW, fields);
+
+  emitNormalizationShadowAuditLog({
+    queryLength,
+    searchLatencyMs,
+    productCount,
+    shadow,
+    meta: payload.meta,
+    queryCategory: payload.queryCategory,
+  });
 }
 
 function round4(n: number): number {

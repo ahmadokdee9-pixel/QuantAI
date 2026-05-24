@@ -11,6 +11,7 @@ import type {
   NormalizationTrayMeta,
   NormalizationStage,
 } from "./types";
+import { top3DuplicateReduction } from "./applyReadiness";
 
 export type SearchNormalizationIntegrationResult = {
   products: QuantProduct[];
@@ -188,11 +189,16 @@ export function normalizationMetaForSearchResponse(
       top3DuplicateRateDelta: round4(
         meta.top3DuplicateRateBefore - meta.top3DuplicateRateAfter
       ),
+      top3DuplicateReduction: top3DuplicateReduction(
+        meta.top3DuplicateRateBefore,
+        enriched.projectedTop3DuplicateRate ?? meta.top3DuplicateRateAfter
+      ),
       rankingLiftEstimate: enriched.rankingLiftEstimate,
       projectedRankingLift: enriched.projectedRankingLift ?? enriched.rankingLiftEstimate,
       projectedTop3DuplicateRate: enriched.projectedTop3DuplicateRate,
       equivalenceGroupCount: meta.equivalenceGroupCount,
       canonicalIdentityCoverage: enriched.canonicalIdentityCoverage,
+      uniqueCommerceIdCount: meta.uniqueCommerceIdCount,
       merchantDiversityScoreBefore: enriched.merchantDiversityScoreBefore,
       merchantDiversityScoreAfter: enriched.merchantDiversityScoreAfter,
       merchantDiversityDelta: enriched.merchantDiversityDelta,
@@ -203,6 +209,19 @@ export function normalizationMetaForSearchResponse(
         searchLatencyMs > 0
           ? round4((meta.latencyMs ?? enriched.latencyMs) / searchLatencyMs)
           : 0,
+    },
+    normalizationPhase2: {
+      observation: "shadow_only",
+      rankingMutation: false,
+      applyBlocked: true,
+      trayInvariant: meta.inputCount === meta.outputCount,
+      measuredDuplicateReduction: top3DuplicateReduction(
+        meta.top3DuplicateRateBefore,
+        enriched.projectedTop3DuplicateRate ?? meta.top3DuplicateRateAfter
+      ),
+      falseCollapseIncidents: enriched.falseCollapseIncidents ?? 0,
+      canonicalIdentityCoverage: enriched.canonicalIdentityCoverage ?? 0,
+      merchantDiversityDelta: enriched.merchantDiversityDelta ?? 0,
     },
   };
 }

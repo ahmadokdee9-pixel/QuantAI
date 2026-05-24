@@ -38,8 +38,9 @@ import { PipelineTrace } from "@/lib/search/pipelineTrace";
 import { rebuildSearchTrayArtifacts, verifyTrayMetaCoherence } from "@/lib/search/searchTrayArtifacts";
 import { composeProductionMeta } from "@/lib/search/productionMetaComposer";
 import { scanControlledStackRegistry } from "@/lib/governance/controlledStackRegistry";
+import { runUnifiedControlledStack } from "@/lib/governance/unifiedControlledStackKernel";
 import {
-  integrateNormalizationInSearchTray,
+  executeNormalizationStage,
   finalizeSearchNormalization,
   type NormalizationShadowTelemetry,
   type NormalizationTrayMeta,
@@ -65,28 +66,6 @@ import { buildIntentEvaluationMeta } from "@/lib/intent/intentEvaluationEngine";
 import { buildIntentOptimizationMeta } from "@/lib/intent/intentOptimizationEngine";
 import { buildIntentGovernanceMeta } from "@/lib/intent/intentGovernanceEngine";
 import { buildIntentCalibrationMeta } from "@/lib/intent/intentCalibrationEngine";
-import {
-  applyControlledIntentRuntime,
-} from "@/lib/intent/intentRuntimeController";
-import { applyControlledIntentOrchestration } from "@/lib/intent/intentOrchestrator";
-import { applyControlledIntentMemory } from "@/lib/intent/intentMemory";
-import { applyControlledIntentCoordination } from "@/lib/intent/intentCoordination";
-import { applyControlledIntentFusion } from "@/lib/intent/intentFusion";
-import { applyControlledAdaptiveReasoning } from "@/lib/reasoning/adaptiveReasoning";
-import { applyControlledDecisionIntelligence } from "@/lib/decision/decisionIntelligence";
-import { applyControlledStrategyIntelligence } from "@/lib/strategy/strategyIntelligence";
-import { applyControlledMarketIntelligence } from "@/lib/market/marketIntelligence";
-import { applyControlledBehavioralCommerce } from "@/lib/behavioral/behavioralCommerce";
-import { applyControlledCognitionEngine } from "@/lib/cognition/cognitionIntelligence";
-import { applyControlledIntentCognition } from "@/lib/intent/intentIntelligence";
-import { applyControlledMultiObjectiveCommerce } from "@/lib/multiObjective/multiObjectiveIntelligence";
-import { applyControlledAdaptiveStrategicRanking } from "@/lib/strategicRanking/strategicRankingIntelligence";
-import { applyControlledMemorylessCommerceLearning } from "@/lib/memorylessLearning/memorylessLearningIntelligence";
-import { applyControlledMarketRealityIntelligence } from "@/lib/marketReality/marketRealityIntelligence";
-import { applyControlledCommerceDecisionIntelligence } from "@/lib/commerceDecision/commerceDecisionIntelligence";
-import { applyControlledAutonomousCommerceReasoningGraph } from "@/lib/commerceReasoningGraph/commerceReasoningGraphIntelligence";
-import { applyControlledUnifiedCognitiveGovernance } from "@/lib/cognitiveGovernance/cognitiveGovernanceIntelligence";
-import { applyControlledEconomicWorldSimulation } from "@/lib/economicWorldSimulation/economicWorldSimulationIntelligence";
 import { buildWatchTasteCanaryMeta } from "@/lib/taste/watchTasteApply";
 import { TASTE_GRAMMAR_PIPELINE_CACHE_KEY } from "@/lib/taste/verticalTasteFlags";
 import { buildDegradedTrayNotice, buildEmptyTrayExplanation } from "@/lib/search/trayDiagnostics";
@@ -677,7 +656,11 @@ async function handleSearch(
         : [];
     products = semanticRerankSearchResults(products, query, canonicalQuery);
     traceStage("semantic_rerank", preSemanticProducts.length, products.length);
-    const normPostSemantic = integrateNormalizationInSearchTray(products, query, "post_semantic");
+    const normPostSemantic = executeNormalizationStage({
+      products,
+      query,
+      stage: "post_semantic",
+    });
     products = normPostSemantic.products;
     normalizationMeta = normPostSemantic.meta;
     normalizationShadowPostSemantic = normPostSemantic.shadowTelemetry;
@@ -842,385 +825,50 @@ async function handleSearch(
       products,
       rankingStable: true,
     });
-    const preRuntimeTrayLinks = products.map((p) => p.link || p.title);
-    const controlledStackStarted = Date.now();
-    const intentRuntimeResult = applyControlledIntentRuntime({
+    const controlledStackResult = runUnifiedControlledStack({
       products,
-      query,
-      canonicalQuery,
-      intentIntelligence,
-      intentApply,
-      intentProductionApply,
-      intentObservability,
-      intentCanary,
-      intentEvaluation,
-      intentOptimization,
-      intentGovernance,
-      intentCalibration,
-      preOrderLinks: preRuntimeTrayLinks,
-      rankingStable: true,
+      registry: controlledRegistry,
+      intent: {
+        query,
+        canonicalQuery,
+        intentIntelligence,
+        intentApply,
+        intentProductionApply,
+        intentObservability,
+        intentCanary,
+        intentEvaluation,
+        intentOptimization,
+        intentGovernance,
+        intentCalibration,
+        rankingStable: true,
+      },
     });
-    products = intentRuntimeResult.products;
-    const intentRuntime = intentRuntimeResult.meta;
-    const preOrchestrationLinks = products.map((p) => p.link || p.title);
-    const intentOrchestrationResult = applyControlledIntentOrchestration({
-      products,
-      evaluation: intentEvaluation,
-      optimization: intentOptimization,
-      governance: intentGovernance,
-      calibration: intentCalibration,
-      runtime: intentRuntime,
-      preOrderLinks: preOrchestrationLinks,
-    });
-    products = intentOrchestrationResult.products;
-    const intentOrchestration = intentOrchestrationResult.meta;
-    const preMemoryLinks = products.map((p) => p.link || p.title);
-    const intentMemoryResult = applyControlledIntentMemory({
-      products,
-      query,
-      canonicalQuery,
-      governance: intentGovernance,
-      calibration: intentCalibration,
-      runtime: intentRuntime,
-      orchestration: intentOrchestration,
-      preOrderLinks: preMemoryLinks,
-    });
-    products = intentMemoryResult.products;
-    const intentMemory = intentMemoryResult.meta;
-    const preCoordinationLinks = products.map((p) => p.link || p.title);
-    const intentCoordinationResult = applyControlledIntentCoordination({
-      products,
-      query,
-      canonicalQuery,
-      governance: intentGovernance,
-      calibration: intentCalibration,
-      runtime: intentRuntime,
-      orchestration: intentOrchestration,
-      memory: intentMemory,
-      preOrderLinks: preCoordinationLinks,
-    });
-    products = intentCoordinationResult.products;
-    const intentCoordination = intentCoordinationResult.meta;
-    const preFusionLinks = products.map((p) => p.link || p.title);
-    const intentFusionResult = applyControlledIntentFusion({
-      products,
-      query,
-      canonicalQuery,
-      governance: intentGovernance,
-      calibration: intentCalibration,
-      runtime: intentRuntime,
-      orchestration: intentOrchestration,
-      memory: intentMemory,
-      coordination: intentCoordination,
-      preOrderLinks: preFusionLinks,
-    });
-    products = intentFusionResult.products;
-    const intentFusion = intentFusionResult.meta;
-    const preReasoningLinks = products.map((p) => p.link || p.title);
-    const adaptiveReasoningResult = applyControlledAdaptiveReasoning({
-      products,
-      query,
-      canonicalQuery,
-      governance: intentGovernance,
-      calibration: intentCalibration,
-      runtime: intentRuntime,
-      orchestration: intentOrchestration,
-      memory: intentMemory,
-      coordination: intentCoordination,
-      fusion: intentFusion,
-      preOrderLinks: preReasoningLinks,
-    });
-    products = adaptiveReasoningResult.products;
-    const adaptiveReasoning = adaptiveReasoningResult.meta;
-    const preDecisionLinks = products.map((p) => p.link || p.title);
-    const decisionIntelligenceResult = applyControlledDecisionIntelligence({
-      products,
-      query,
-      canonicalQuery,
-      governance: intentGovernance,
-      calibration: intentCalibration,
-      runtime: intentRuntime,
-      orchestration: intentOrchestration,
-      memory: intentMemory,
-      coordination: intentCoordination,
-      fusion: intentFusion,
-      reasoning: adaptiveReasoning,
-      preOrderLinks: preDecisionLinks,
-    });
-    products = decisionIntelligenceResult.products;
-    const decisionIntelligence = decisionIntelligenceResult.meta;
-    const preStrategyLinks = products.map((p) => p.link || p.title);
-    const strategyIntelligenceResult = applyControlledStrategyIntelligence({
-      products,
-      query,
-      canonicalQuery,
-      governance: intentGovernance,
-      calibration: intentCalibration,
-      runtime: intentRuntime,
-      orchestration: intentOrchestration,
-      memory: intentMemory,
-      coordination: intentCoordination,
-      fusion: intentFusion,
-      reasoning: adaptiveReasoning,
-      decision: decisionIntelligence,
-      preOrderLinks: preStrategyLinks,
-    });
-    products = strategyIntelligenceResult.products;
-    const strategyIntelligence = strategyIntelligenceResult.meta;
-    const preMarketLinks = products.map((p) => p.link || p.title);
-    const marketIntelligenceResult = applyControlledMarketIntelligence({
-      products,
-      query,
-      canonicalQuery,
-      governance: intentGovernance,
-      calibration: intentCalibration,
-      runtime: intentRuntime,
-      orchestration: intentOrchestration,
-      memory: intentMemory,
-      coordination: intentCoordination,
-      fusion: intentFusion,
-      reasoning: adaptiveReasoning,
-      decision: decisionIntelligence,
-      strategy: strategyIntelligence,
-      preOrderLinks: preMarketLinks,
-    });
-    products = marketIntelligenceResult.products;
-    const marketIntelligence = marketIntelligenceResult.meta;
-    const preBehavioralLinks = products.map((p) => p.link || p.title);
-    const behavioralCommerceResult = applyControlledBehavioralCommerce({
-      products,
-      query,
-      canonicalQuery,
-      governance: intentGovernance,
-      calibration: intentCalibration,
-      runtime: intentRuntime,
-      orchestration: intentOrchestration,
-      memory: intentMemory,
-      coordination: intentCoordination,
-      fusion: intentFusion,
-      reasoning: adaptiveReasoning,
-      decision: decisionIntelligence,
-      strategy: strategyIntelligence,
-      market: marketIntelligence,
-      preOrderLinks: preBehavioralLinks,
-    });
-    products = behavioralCommerceResult.products;
-    const behavioralCommerce = behavioralCommerceResult.meta;
-    const preCognitionLinks = products.map((p) => p.link || p.title);
-    const cognitionEngineResult = applyControlledCognitionEngine({
-      products,
-      query,
-      canonicalQuery,
-      governance: intentGovernance,
-      calibration: intentCalibration,
-      runtime: intentRuntime,
-      orchestration: intentOrchestration,
-      memory: intentMemory,
-      coordination: intentCoordination,
-      fusion: intentFusion,
-      reasoning: adaptiveReasoning,
-      decision: decisionIntelligence,
-      strategy: strategyIntelligence,
-      market: marketIntelligence,
-      behavioral: behavioralCommerce,
-      preOrderLinks: preCognitionLinks,
-    });
-    products = cognitionEngineResult.products;
-    const cognitionEngine = cognitionEngineResult.meta;
-    const preIntentLinks = products.map((p) => p.link || p.title);
-    const intentCognitionResult = applyControlledIntentCognition({
-      products,
-      query,
-      canonicalQuery,
-      governance: intentGovernance,
-      calibration: intentCalibration,
-      runtime: intentRuntime,
-      orchestration: intentOrchestration,
-      memory: intentMemory,
-      coordination: intentCoordination,
-      fusion: intentFusion,
-      reasoning: adaptiveReasoning,
-      decision: decisionIntelligence,
-      strategy: strategyIntelligence,
-      market: marketIntelligence,
-      behavioral: behavioralCommerce,
-      cognition: cognitionEngine,
-      preOrderLinks: preIntentLinks,
-    });
-    products = intentCognitionResult.products;
-    const intentCognition = intentCognitionResult.meta;
-    const preMultiObjectiveLinks = products.map((p) => p.link || p.title);
-    const multiObjectiveResult = applyControlledMultiObjectiveCommerce({
-      products,
-      query,
-      canonicalQuery,
-      governance: intentGovernance,
-      calibration: intentCalibration,
-      runtime: intentRuntime,
-      orchestration: intentOrchestration,
-      memory: intentMemory,
-      coordination: intentCoordination,
-      fusion: intentFusion,
-      reasoning: adaptiveReasoning,
-      decision: decisionIntelligence,
-      strategy: strategyIntelligence,
-      market: marketIntelligence,
-      behavioral: behavioralCommerce,
-      cognition: cognitionEngine,
-      intent: intentCognition,
-      preOrderLinks: preMultiObjectiveLinks,
-    });
-    products = multiObjectiveResult.products;
-    const multiObjectiveCommerce = multiObjectiveResult.meta;
-    const preStrategicLinks = products.map((p) => p.link || p.title);
-    const strategicRankingResult = applyControlledAdaptiveStrategicRanking({
-      products,
-      query,
-      canonicalQuery,
-      governance: intentGovernance,
-      calibration: intentCalibration,
-      runtime: intentRuntime,
-      orchestration: intentOrchestration,
-      memory: intentMemory,
-      coordination: intentCoordination,
-      fusion: intentFusion,
-      multiObjective: multiObjectiveCommerce,
-      intent: intentCognition,
-      preOrderLinks: preStrategicLinks,
-    });
-    products = strategicRankingResult.products;
-    const adaptiveStrategicRanking = strategicRankingResult.meta;
-    const preLearningLinks = products.map((p) => p.link || p.title);
-    const memorylessLearningResult = applyControlledMemorylessCommerceLearning({
-      products,
-      query,
-      canonicalQuery,
-      governance: intentGovernance,
-      calibration: intentCalibration,
-      runtime: intentRuntime,
-      orchestration: intentOrchestration,
-      memory: intentMemory,
-      coordination: intentCoordination,
-      fusion: intentFusion,
-      multiObjective: multiObjectiveCommerce,
-      intent: intentCognition,
-      strategic: adaptiveStrategicRanking,
-      preOrderLinks: preLearningLinks,
-    });
-    products = memorylessLearningResult.products;
-    const memorylessCommerceLearning = memorylessLearningResult.meta;
-    const preRealityLinks = products.map((p) => p.link || p.title);
-    const marketRealityResult = applyControlledMarketRealityIntelligence({
-      products,
-      query,
-      canonicalQuery,
-      governance: intentGovernance,
-      calibration: intentCalibration,
-      runtime: intentRuntime,
-      orchestration: intentOrchestration,
-      memory: intentMemory,
-      coordination: intentCoordination,
-      fusion: intentFusion,
-      multiObjective: multiObjectiveCommerce,
-      intent: intentCognition,
-      strategic: adaptiveStrategicRanking,
-      memoryless: memorylessCommerceLearning,
-      preOrderLinks: preRealityLinks,
-    });
-    products = marketRealityResult.products;
-    const marketRealityIntelligence = marketRealityResult.meta;
-    const preCommerceDecisionLinks = products.map((p) => p.link || p.title);
-    const commerceDecisionResult = applyControlledCommerceDecisionIntelligence({
-      products,
-      query,
-      canonicalQuery,
-      governance: intentGovernance,
-      calibration: intentCalibration,
-      runtime: intentRuntime,
-      orchestration: intentOrchestration,
-      memory: intentMemory,
-      coordination: intentCoordination,
-      fusion: intentFusion,
-      multiObjective: multiObjectiveCommerce,
-      intent: intentCognition,
-      strategic: adaptiveStrategicRanking,
-      memoryless: memorylessCommerceLearning,
-      marketReality: marketRealityIntelligence,
-      preOrderLinks: preCommerceDecisionLinks,
-    });
-    products = commerceDecisionResult.products;
-    const commerceDecisionIntelligence = commerceDecisionResult.meta;
-    const preReasoningGraphLinks = products.map((p) => p.link || p.title);
-    const reasoningGraphResult = applyControlledAutonomousCommerceReasoningGraph({
-      products,
-      query,
-      canonicalQuery,
-      governance: intentGovernance,
-      calibration: intentCalibration,
-      runtime: intentRuntime,
-      orchestration: intentOrchestration,
-      memory: intentMemory,
-      coordination: intentCoordination,
-      fusion: intentFusion,
-      multiObjective: multiObjectiveCommerce,
-      intent: intentCognition,
-      strategic: adaptiveStrategicRanking,
-      memoryless: memorylessCommerceLearning,
-      marketReality: marketRealityIntelligence,
-      commerceDecision: commerceDecisionIntelligence,
-      preOrderLinks: preReasoningGraphLinks,
-    });
-    products = reasoningGraphResult.products;
-    const autonomousCommerceReasoningGraph = reasoningGraphResult.meta;
-    const preCognitiveGovernanceLinks = products.map((p) => p.link || p.title);
-    const cognitiveGovernanceResult = applyControlledUnifiedCognitiveGovernance({
-      products,
-      query,
-      canonicalQuery,
-      governance: intentGovernance,
-      calibration: intentCalibration,
-      runtime: intentRuntime,
-      orchestration: intentOrchestration,
-      memory: intentMemory,
-      coordination: intentCoordination,
-      fusion: intentFusion,
-      multiObjective: multiObjectiveCommerce,
-      intent: intentCognition,
-      strategic: adaptiveStrategicRanking,
-      memoryless: memorylessCommerceLearning,
-      marketReality: marketRealityIntelligence,
-      commerceDecision: commerceDecisionIntelligence,
-      reasoningGraph: autonomousCommerceReasoningGraph,
-      preOrderLinks: preCognitiveGovernanceLinks,
-    });
-    products = cognitiveGovernanceResult.products;
-    const unifiedCognitiveGovernance = cognitiveGovernanceResult.meta;
-    const preEconomicSimulationLinks = products.map((p) => p.link || p.title);
-    const economicSimulationResult = applyControlledEconomicWorldSimulation({
-      products,
-      query,
-      canonicalQuery,
-      governance: intentGovernance,
-      calibration: intentCalibration,
-      runtime: intentRuntime,
-      orchestration: intentOrchestration,
-      memory: intentMemory,
-      coordination: intentCoordination,
-      fusion: intentFusion,
-      multiObjective: multiObjectiveCommerce,
-      intent: intentCognition,
-      strategic: adaptiveStrategicRanking,
-      memoryless: memorylessCommerceLearning,
-      marketReality: marketRealityIntelligence,
-      commerceDecision: commerceDecisionIntelligence,
-      reasoningGraph: autonomousCommerceReasoningGraph,
-      cognitiveGovernance: unifiedCognitiveGovernance,
-      preOrderLinks: preEconomicSimulationLinks,
-    });
-    products = economicSimulationResult.products;
-    const economicWorldSimulation = economicSimulationResult.meta;
-
-    const controlledStackMs = Date.now() - controlledStackStarted;
+    products = controlledStackResult.products;
+    const {
+      intentRuntime,
+      intentOrchestration,
+      intentMemory,
+      intentCoordination,
+      intentFusion,
+      adaptiveReasoning,
+      decisionIntelligence,
+      strategyIntelligence,
+      marketIntelligence,
+      behavioralCommerce,
+      cognitionEngine,
+      intentCognition,
+      multiObjectiveCommerce,
+      adaptiveStrategicRanking,
+      memorylessCommerceLearning,
+      marketRealityIntelligence,
+      commerceDecisionIntelligence,
+      autonomousCommerceReasoningGraph,
+      unifiedCognitiveGovernance,
+      economicWorldSimulation,
+    } = controlledStackResult.metas;
+    const controlledStackMs = controlledStackResult.latencyMs;
+    const controlledStackOrchestration = controlledStackResult.orchestration;
+    const controlledStackRankingMutation = controlledStackResult.rankingMutation;
     pipelineTrace.mark(
       controlledRegistry.fastPathEligible ? "controlled_stack_fast_path" : "controlled_stack",
       products.length,
@@ -1417,11 +1065,16 @@ async function handleSearch(
         unifiedCognitiveGovernance,
         economicWorldSimulation,
         controlledStack: {
-          version: "phase1",
+          version: "phase3",
           fastPath: controlledRegistry.fastPathEligible,
           enabledLayerCount: controlledRegistry.enabledCount,
           enabledLayerIds: controlledRegistry.enabledLayerIds,
           latencyMs: controlledStackMs,
+          rankingMutation: controlledStackRankingMutation,
+          orchestration: controlledStackOrchestration,
+        },
+        normalizationStage1: {
+          rankingMutation: false,
         },
         trayMetaCoherence,
         latencyBudget,

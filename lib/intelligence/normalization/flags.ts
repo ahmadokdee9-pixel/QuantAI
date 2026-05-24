@@ -32,8 +32,13 @@ export function readNormalizationFlags(env: NodeJS.ProcessEnv = process.env): No
   const enabled = parseBool(env.QUANTAI_NORMALIZATION_ENABLED, false);
   const mode = parseMode(env.QUANTAI_NORMALIZATION_MODE);
   const applyRaw = parseBool(env.QUANTAI_NORMALIZATION_APPLY, false);
+  const productionConfirmed = parseBool(env.QUANTAI_NORMALIZATION_APPLY_PRODUCTION_CONFIRMED, false);
   // Production safety: shadow/meta_only never mutate tray regardless of APPLY env typo.
-  const apply = mode === "shadow" || mode === "meta_only" ? false : applyRaw;
+  let apply = mode === "shadow" || mode === "meta_only" ? false : applyRaw;
+  // Phase 2: production APPLY requires explicit double-confirm env (staging canary uses separate flags).
+  if (apply && process.env.NODE_ENV === "production" && !productionConfirmed) {
+    apply = false;
+  }
   const shadowTelemetry = parseBool(
     env.QUANTAI_NORMALIZATION_SHADOW_TELEMETRY,
     enabled
@@ -45,4 +50,9 @@ export function readNormalizationFlags(env: NodeJS.ProcessEnv = process.env): No
 export function isStage1ShadowRollout(env: NodeJS.ProcessEnv = process.env): boolean {
   const flags = readNormalizationFlags(env);
   return flags.enabled && flags.mode === "shadow" && !flags.apply && flags.shadowTelemetry;
+}
+
+/** Phase 2 shadow observation — alias for Stage 1 discipline (telemetry only). */
+export function isPhase2ShadowObservation(env: NodeJS.ProcessEnv = process.env): boolean {
+  return isStage1ShadowRollout(env);
 }

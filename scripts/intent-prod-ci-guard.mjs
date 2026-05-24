@@ -31,6 +31,14 @@ if (existsSync(LOCAL) && process.env.CI === "true" && process.env.INTENT_PROD_AP
 }
 
 const route = readFileSync(ROUTE, "utf8");
+const kernelWired =
+  route.includes("runUnifiedControlledStack") &&
+  existsSync(resolve(ROOT, "lib/governance/unifiedControlledStackKernel.ts"));
+check(
+  "phase3_unified_controlled_stack_kernel",
+  kernelWired,
+  "search route uses runUnifiedControlledStack (Phase 3 kernel)"
+);
 check(
   "intent_production_apply_telemetry",
   route.includes("intentProductionApply") && route.includes("buildIntentProductionApplyMeta"),
@@ -93,7 +101,7 @@ check(
 
 check(
   "intent_runtime_telemetry",
-  route.includes("intentRuntime") && route.includes("applyControlledIntentRuntime"),
+  route.includes("intentRuntime") && (kernelWired || route.includes("applyControlledIntentRuntime")),
   "meta.intentRuntime wired in search route"
 );
 
@@ -111,7 +119,7 @@ check(
 
 check(
   "intent_orchestration_telemetry",
-  route.includes("intentOrchestration") && route.includes("applyControlledIntentOrchestration"),
+  route.includes("intentOrchestration") && (kernelWired || route.includes("applyControlledIntentOrchestration")),
   "meta.intentOrchestration wired in search route"
 );
 
@@ -129,7 +137,7 @@ check(
 
 check(
   "intent_memory_telemetry",
-  route.includes("intentMemory") && route.includes("applyControlledIntentMemory"),
+  route.includes("intentMemory") && (kernelWired || route.includes("applyControlledIntentMemory")),
   "meta.intentMemory wired in search route"
 );
 
@@ -147,7 +155,7 @@ check(
 
 check(
   "intent_coordination_telemetry",
-  route.includes("intentCoordination") && route.includes("applyControlledIntentCoordination"),
+  route.includes("intentCoordination") && (kernelWired || route.includes("applyControlledIntentCoordination")),
   "meta.intentCoordination wired in search route"
 );
 
@@ -165,7 +173,7 @@ check(
 
 check(
   "intent_fusion_telemetry",
-  route.includes("intentFusion") && route.includes("applyControlledIntentFusion"),
+  route.includes("intentFusion") && (kernelWired || route.includes("applyControlledIntentFusion")),
   "meta.intentFusion wired in search route"
 );
 
@@ -183,7 +191,7 @@ check(
 
 check(
   "adaptive_reasoning_telemetry",
-  route.includes("adaptiveReasoning") && route.includes("applyControlledAdaptiveReasoning"),
+  route.includes("adaptiveReasoning") && (kernelWired || route.includes("applyControlledAdaptiveReasoning")),
   "meta.adaptiveReasoning wired in search route"
 );
 
@@ -201,7 +209,7 @@ check(
 
 check(
   "decision_intelligence_telemetry",
-  route.includes("decisionIntelligence") && route.includes("applyControlledDecisionIntelligence"),
+  route.includes("decisionIntelligence") && (kernelWired || route.includes("applyControlledDecisionIntelligence")),
   "meta.decisionIntelligence wired in search route"
 );
 
@@ -219,7 +227,7 @@ check(
 
 check(
   "strategy_intelligence_telemetry",
-  route.includes("strategyIntelligence") && route.includes("applyControlledStrategyIntelligence"),
+  route.includes("strategyIntelligence") && (kernelWired || route.includes("applyControlledStrategyIntelligence")),
   "meta.strategyIntelligence wired in search route"
 );
 
@@ -237,7 +245,7 @@ check(
 
 check(
   "market_intelligence_telemetry",
-  route.includes("marketIntelligence") && route.includes("applyControlledMarketIntelligence"),
+  route.includes("marketIntelligence") && (kernelWired || route.includes("applyControlledMarketIntelligence")),
   "meta.marketIntelligence wired in search route"
 );
 
@@ -255,7 +263,7 @@ check(
 
 check(
   "behavioral_commerce_telemetry",
-  route.includes("behavioralCommerce") && route.includes("applyControlledBehavioralCommerce"),
+  route.includes("behavioralCommerce") && (kernelWired || route.includes("applyControlledBehavioralCommerce")),
   "meta.behavioralCommerce wired in search route"
 );
 
@@ -273,7 +281,7 @@ check(
 
 check(
   "cognition_engine_telemetry",
-  route.includes("cognitionEngine") && route.includes("applyControlledCognitionEngine"),
+  route.includes("cognitionEngine") && (kernelWired || route.includes("applyControlledCognitionEngine")),
   "meta.cognitionEngine wired in search route"
 );
 
@@ -291,7 +299,7 @@ check(
 
 check(
   "intent_cognition_telemetry",
-  route.includes("intentCognition") && route.includes("applyControlledIntentCognition"),
+  route.includes("intentCognition") && (kernelWired || route.includes("applyControlledIntentCognition")),
   "meta.intentCognition wired in search route"
 );
 
@@ -309,7 +317,7 @@ check(
 
 check(
   "multi_objective_commerce_telemetry",
-  route.includes("multiObjectiveCommerce") && route.includes("applyControlledMultiObjectiveCommerce"),
+  route.includes("multiObjectiveCommerce") && (kernelWired || route.includes("applyControlledMultiObjectiveCommerce")),
   "meta.multiObjectiveCommerce wired in search route"
 );
 
@@ -327,7 +335,7 @@ check(
 
 check(
   "adaptive_strategic_ranking_telemetry",
-  route.includes("adaptiveStrategicRanking") && route.includes("applyControlledAdaptiveStrategicRanking"),
+  route.includes("adaptiveStrategicRanking") && (kernelWired || route.includes("applyControlledAdaptiveStrategicRanking")),
   "meta.adaptiveStrategicRanking wired in search route"
 );
 
@@ -345,7 +353,7 @@ check(
 
 check(
   "memoryless_commerce_learning_telemetry",
-  route.includes("memorylessCommerceLearning") && route.includes("applyControlledMemorylessCommerceLearning"),
+  route.includes("memorylessCommerceLearning") && (kernelWired || route.includes("applyControlledMemorylessCommerceLearning")),
   "meta.memorylessCommerceLearning wired in search route"
 );
 
@@ -363,7 +371,7 @@ check(
 
 check(
   "market_reality_intelligence_telemetry",
-  route.includes("marketRealityIntelligence") && route.includes("applyControlledMarketRealityIntelligence"),
+  route.includes("marketRealityIntelligence") && (kernelWired || route.includes("applyControlledMarketRealityIntelligence")),
   "meta.marketRealityIntelligence wired in search route"
 );
 
@@ -381,7 +389,7 @@ check(
 
 check(
   "commerce_decision_intelligence_telemetry",
-  route.includes("commerceDecisionIntelligence") && route.includes("applyControlledCommerceDecisionIntelligence"),
+  route.includes("commerceDecisionIntelligence") && (kernelWired || route.includes("applyControlledCommerceDecisionIntelligence")),
   "meta.commerceDecisionIntelligence wired in search route"
 );
 
@@ -399,7 +407,7 @@ check(
 
 check(
   "autonomous_commerce_reasoning_graph_telemetry",
-  route.includes("autonomousCommerceReasoningGraph") && route.includes("applyControlledAutonomousCommerceReasoningGraph"),
+  route.includes("autonomousCommerceReasoningGraph") && (kernelWired || route.includes("applyControlledAutonomousCommerceReasoningGraph")),
   "meta.autonomousCommerceReasoningGraph wired in search route"
 );
 
@@ -417,7 +425,7 @@ check(
 
 check(
   "unified_cognitive_governance_telemetry",
-  route.includes("unifiedCognitiveGovernance") && route.includes("applyControlledUnifiedCognitiveGovernance"),
+  route.includes("unifiedCognitiveGovernance") && (kernelWired || route.includes("applyControlledUnifiedCognitiveGovernance")),
   "meta.unifiedCognitiveGovernance wired in search route"
 );
 
@@ -435,7 +443,7 @@ check(
 
 check(
   "economic_world_simulation_telemetry",
-  route.includes("economicWorldSimulation") && route.includes("applyControlledEconomicWorldSimulation"),
+  route.includes("economicWorldSimulation") && (kernelWired || route.includes("applyControlledEconomicWorldSimulation")),
   "meta.economicWorldSimulation wired in search route"
 );
 

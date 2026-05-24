@@ -3,14 +3,9 @@
  */
 
 import type { QuantProduct } from "@/lib/shoppingScore";
-import {
-  integrateNormalizationInSearchTray,
-  buildShadowTelemetry,
-  normalizationMetaForSearchResponse,
-  emitNormalizationShadowTelemetry,
-  isStage1ShadowRollout,
-  readNormalizationFlags,
-} from "./index";
+import { finalizeNormalizationGraph } from "./normalizationExecutionGraph";
+import { readNormalizationFlags } from "./flags";
+import { buildShadowTelemetry } from "./searchIntegration";
 import type { NormalizationShadowTelemetry, NormalizationTrayMeta } from "./types";
 
 export type FinalizeSearchNormalizationResult = {
@@ -74,34 +69,20 @@ export function finalizeSearchNormalization(
     };
   }
 
-  const postControlled = integrateNormalizationInSearchTray(
-    input.products,
-    input.query,
-    "post_controlled",
-    { searchLatencyMs: input.searchLatencyMs }
-  );
-
-  if (isStage1ShadowRollout()) {
-    emitNormalizationShadowTelemetry({
-      queryLength: input.query.length,
-      searchLatencyMs: input.searchLatencyMs,
-      productCount: postControlled.products.length,
-      shadow: postControlled.shadowTelemetry,
-    });
-  }
-
-  const responseMeta = normalizationMetaForSearchResponse(
-    postControlled.meta,
-    postControlled.shadowTelemetry,
-    input.searchLatencyMs
-  );
+  const finalized = finalizeNormalizationGraph({
+    products: input.products,
+    query: input.query,
+    searchLatencyMs: input.searchLatencyMs,
+    shadowPostSemantic: input.shadowPostSemantic,
+    priorMeta: input.priorMeta,
+  });
 
   return {
-    products: postControlled.products,
-    meta: postControlled.meta,
-    shadowPostControlled: postControlled.shadowTelemetry,
-    shadowPostSemantic: input.shadowPostSemantic ?? undefined,
-    responseMeta,
+    products: finalized.products,
+    meta: finalized.meta,
+    shadowPostControlled: finalized.shadowPostControlled,
+    shadowPostSemantic: finalized.shadowPostSemantic,
+    responseMeta: { ...finalized.responseMeta, normalizationGraph: finalized.graph },
     latencyMs: Date.now() - started,
   };
 }

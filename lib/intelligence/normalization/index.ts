@@ -29,6 +29,29 @@ export {
   normalizationMetaForSearchResponse,
 } from "./searchIntegration";
 export { finalizeSearchNormalization } from "./finalizeSearchNormalization";
+export {
+  executeNormalizationStage,
+  finalizeNormalizationGraph,
+  NORMALIZATION_GRAPH_NODES,
+  type NormalizationExecutionGraphSnapshot,
+} from "./normalizationExecutionGraph";
+export {
+  evaluatePhase2ApplyReadiness,
+  top3DuplicateReduction,
+  probeMetricsFromShadow,
+} from "./applyReadiness";
+export type {
+  Phase2AggregateMetrics,
+  Phase2ApplyReadinessVerdict,
+  Phase2ApplyGate,
+  Phase2ProbeSample,
+} from "./applyReadiness";
+export { readApplyCanaryConfig, summarizeApplyCanaryGates } from "./applyCanary";
+export type { ApplyCanaryConfig, ApplyCanaryGateSummary } from "./applyCanary";
+export { verifyNormalizationApplyRollback } from "./applyRollback";
+export type { ApplyRollbackVerification } from "./applyRollback";
+export { emitNormalizationShadowAuditLog } from "./shadowAuditLog";
+export { isPhase2ShadowObservation } from "./flags";
 export type {
   FinalizeSearchNormalizationInput,
   FinalizeSearchNormalizationResult,
