@@ -82,4 +82,16 @@ check(
   "orchestration graph exported in controlled stack meta"
 );
 
+check(
+  "phase4_identity_foundation",
+  route.includes("buildIdentityFoundation"),
+  "Phase 4 identity foundation wired in search route"
+);
+
+check(
+  "phase4_identity_module",
+  existsSync(resolve(ROOT, "lib/intelligence/identity/canonicalProductGraph.ts")),
+  "canonicalProductGraph.ts exists"
+);
+
 process.exit(failed ? 1 : 0);

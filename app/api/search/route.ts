@@ -45,6 +45,10 @@ import {
   type NormalizationShadowTelemetry,
   type NormalizationTrayMeta,
 } from "@/lib/intelligence/normalization";
+import {
+  buildIdentityFoundation,
+  identityFoundationMetaForSearch,
+} from "@/lib/intelligence/identity";
 import { buildVerticalTasteShadowMeta } from "@/lib/taste/verticalTasteShadow";
 import { buildFragranceTasteCanaryMeta } from "@/lib/taste/fragranceTasteApply";
 import { buildFurnitureTasteCanaryMeta } from "@/lib/taste/furnitureTasteApply";
@@ -545,6 +549,7 @@ async function handleSearch(
     let normalizationShadowPostSemantic: NormalizationShadowTelemetry | null = null;
     let normalizationShadowPostControlled: NormalizationShadowTelemetry | null = null;
     let normalizationResponseMeta: Record<string, unknown> = {};
+    let identityFoundationResponseMeta: Record<string, unknown> = {};
     const traceStage = (stage: string, before: number, after: number) => {
       pipelineTrace.trace(stage, before, after);
     };
@@ -899,6 +904,18 @@ async function handleSearch(
       normalizationFinal.meta.outputCount
     );
 
+    const identityFoundationResult = buildIdentityFoundation({
+      products,
+      query,
+      normalizationMeta,
+    });
+    identityFoundationResponseMeta = identityFoundationMetaForSearch(identityFoundationResult);
+    traceStage(
+      "identity_foundation",
+      identityFoundationResult.meta.inputCount,
+      identityFoundationResult.meta.canonicalProductCount
+    );
+
     const trayArtifactsFinal = rebuildSearchTrayArtifacts(query, products);
     dealClusters = trayArtifactsFinal.dealClusters;
     searchIntelligence = trayArtifactsFinal.searchIntelligence;
@@ -1079,6 +1096,7 @@ async function handleSearch(
         trayMetaCoherence,
         latencyBudget,
         ...normalizationResponseMeta,
+        ...identityFoundationResponseMeta,
         normalizationShadowPostSemantic,
         normalizationShadowPostControlled,
       },
