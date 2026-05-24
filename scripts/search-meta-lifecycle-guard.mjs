@@ -106,4 +106,16 @@ check(
   "buildTrustTruthEngine.ts exists"
 );
 
+check(
+  "phase6_commerce_memory",
+  route.includes("buildCommerceMemoryFoundation"),
+  "Phase 6 commerce memory wired in search route"
+);
+
+check(
+  "phase6_memory_module",
+  existsSync(resolve(ROOT, "lib/intelligence/memory/buildCommerceMemoryFoundation.ts")),
+  "buildCommerceMemoryFoundation.ts exists"
+);
+
 process.exit(failed ? 1 : 0);

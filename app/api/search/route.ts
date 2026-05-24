@@ -54,6 +54,11 @@ import {
   trustEngineMetaForSearch,
   snapshotTrustOrchestration,
 } from "@/lib/intelligence/trust";
+import {
+  buildCommerceMemoryFoundation,
+  commerceMemoryMetaForSearch,
+  snapshotMemoryOrchestration,
+} from "@/lib/intelligence/memory";
 import { buildVerticalTasteShadowMeta } from "@/lib/taste/verticalTasteShadow";
 import { buildFragranceTasteCanaryMeta } from "@/lib/taste/fragranceTasteApply";
 import { buildFurnitureTasteCanaryMeta } from "@/lib/taste/furnitureTasteApply";
@@ -556,6 +561,7 @@ async function handleSearch(
     let normalizationResponseMeta: Record<string, unknown> = {};
     let identityFoundationResponseMeta: Record<string, unknown> = {};
     let trustEngineResponseMeta: Record<string, unknown> = {};
+    let commerceMemoryResponseMeta: Record<string, unknown> = {};
     const traceStage = (stage: string, before: number, after: number) => {
       pipelineTrace.trace(stage, before, after);
     };
@@ -954,6 +960,43 @@ async function handleSearch(
       trustTruthResult.meta.offerIntelligenceCount
     );
 
+    const commerceMemoryResult = buildCommerceMemoryFoundation(
+      {
+        products,
+        query,
+        canonicalProducts: identityFoundationResult.canonicalProducts,
+        trustResult: trustTruthResult,
+        sessionMemory: commerceSessionMemory,
+      },
+      {
+        sessionMemory: commerceSessionMemory,
+        orchestration: {
+          query,
+          identityFoundation: identityFoundationResult,
+          trustResult: trustTruthResult,
+          normalizationMeta,
+          controlledStackFastPath: controlledRegistry.fastPathEligible,
+          controlledStackRankingMutation: controlledStackRankingMutation,
+        },
+      }
+    );
+    commerceMemoryResponseMeta = commerceMemoryMetaForSearch(
+      commerceMemoryResult,
+      snapshotMemoryOrchestration({
+        query,
+        identityFoundation: identityFoundationResult,
+        trustResult: trustTruthResult,
+        normalizationMeta,
+        controlledStackFastPath: controlledRegistry.fastPathEligible,
+        controlledStackRankingMutation: controlledStackRankingMutation,
+      })
+    );
+    traceStage(
+      "commerce_memory",
+      commerceMemoryResult.meta.inputCount,
+      commerceMemoryResult.meta.memoryNodeCount
+    );
+
     const trayArtifactsFinal = rebuildSearchTrayArtifacts(query, products);
     dealClusters = trayArtifactsFinal.dealClusters;
     searchIntelligence = trayArtifactsFinal.searchIntelligence;
@@ -1136,6 +1179,7 @@ async function handleSearch(
         ...normalizationResponseMeta,
         ...identityFoundationResponseMeta,
         ...trustEngineResponseMeta,
+        ...commerceMemoryResponseMeta,
         normalizationShadowPostSemantic,
         normalizationShadowPostControlled,
       },
