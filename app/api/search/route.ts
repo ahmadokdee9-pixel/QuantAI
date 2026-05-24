@@ -64,6 +64,11 @@ import {
   recommendationCognitionMetaForSearch,
   snapshotRecommendationCognitionOrchestration,
 } from "@/lib/intelligence/recommendationCognition";
+import {
+  buildAutonomousCommerceOs,
+  autonomousCommerceOsMetaForSearch,
+  snapshotAutonomousCommerceOrchestration,
+} from "@/lib/intelligence/autonomousCommerce";
 import { buildVerticalTasteShadowMeta } from "@/lib/taste/verticalTasteShadow";
 import { buildFragranceTasteCanaryMeta } from "@/lib/taste/fragranceTasteApply";
 import { buildFurnitureTasteCanaryMeta } from "@/lib/taste/furnitureTasteApply";
@@ -568,6 +573,7 @@ async function handleSearch(
     let trustEngineResponseMeta: Record<string, unknown> = {};
     let commerceMemoryResponseMeta: Record<string, unknown> = {};
     let recommendationCognitionResponseMeta: Record<string, unknown> = {};
+    let autonomousCommerceOsResponseMeta: Record<string, unknown> = {};
     const traceStage = (stage: string, before: number, after: number) => {
       pipelineTrace.trace(stage, before, after);
     };
@@ -1043,6 +1049,49 @@ async function handleSearch(
       recommendationCognitionResult.meta.candidateCount
     );
 
+    const autonomousCommerceOsResult = buildAutonomousCommerceOs(
+      {
+        products,
+        query,
+        canonicalProducts: identityFoundationResult.canonicalProducts,
+        trustResult: trustTruthResult,
+        memoryResult: commerceMemoryResult,
+        recommendationResult: recommendationCognitionResult,
+        sessionMemory: commerceSessionMemory,
+      },
+      {
+        sessionMemory: commerceSessionMemory,
+        orchestration: {
+          query,
+          identityFoundation: identityFoundationResult,
+          trustResult: trustTruthResult,
+          memoryResult: commerceMemoryResult,
+          recommendationResult: recommendationCognitionResult,
+          normalizationMeta,
+          controlledStackFastPath: controlledRegistry.fastPathEligible,
+          controlledStackRankingMutation: controlledStackRankingMutation,
+        },
+      }
+    );
+    autonomousCommerceOsResponseMeta = autonomousCommerceOsMetaForSearch(
+      autonomousCommerceOsResult,
+      snapshotAutonomousCommerceOrchestration({
+        query,
+        identityFoundation: identityFoundationResult,
+        trustResult: trustTruthResult,
+        memoryResult: commerceMemoryResult,
+        recommendationResult: recommendationCognitionResult,
+        normalizationMeta,
+        controlledStackFastPath: controlledRegistry.fastPathEligible,
+        controlledStackRankingMutation: controlledStackRankingMutation,
+      })
+    );
+    traceStage(
+      "autonomous_commerce_os",
+      autonomousCommerceOsResult.meta.inputCount,
+      autonomousCommerceOsResult.meta.graphNodeCount
+    );
+
     const trayArtifactsFinal = rebuildSearchTrayArtifacts(query, products);
     dealClusters = trayArtifactsFinal.dealClusters;
     searchIntelligence = trayArtifactsFinal.searchIntelligence;
@@ -1227,6 +1276,7 @@ async function handleSearch(
         ...trustEngineResponseMeta,
         ...commerceMemoryResponseMeta,
         ...recommendationCognitionResponseMeta,
+        ...autonomousCommerceOsResponseMeta,
         normalizationShadowPostSemantic,
         normalizationShadowPostControlled,
       },

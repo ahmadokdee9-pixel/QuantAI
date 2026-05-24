@@ -130,4 +130,16 @@ check(
   "buildRecommendationCognition.ts exists"
 );
 
+check(
+  "phase8_autonomous_commerce_os",
+  route.includes("buildAutonomousCommerceOs"),
+  "Phase 8 autonomous commerce OS wired in search route"
+);
+
+check(
+  "phase8_commerce_os_module",
+  existsSync(resolve(ROOT, "lib/intelligence/autonomousCommerce/buildAutonomousCommerceOs.ts")),
+  "buildAutonomousCommerceOs.ts exists"
+);
+
 process.exit(failed ? 1 : 0);
