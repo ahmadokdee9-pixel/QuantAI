@@ -118,4 +118,16 @@ check(
   "buildCommerceMemoryFoundation.ts exists"
 );
 
+check(
+  "phase7_recommendation_cognition",
+  route.includes("buildRecommendationCognition"),
+  "Phase 7 recommendation cognition wired in search route"
+);
+
+check(
+  "phase7_cognition_module",
+  existsSync(resolve(ROOT, "lib/intelligence/recommendationCognition/buildRecommendationCognition.ts")),
+  "buildRecommendationCognition.ts exists"
+);
+
 process.exit(failed ? 1 : 0);

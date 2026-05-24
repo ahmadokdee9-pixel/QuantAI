@@ -59,6 +59,11 @@ import {
   commerceMemoryMetaForSearch,
   snapshotMemoryOrchestration,
 } from "@/lib/intelligence/memory";
+import {
+  buildRecommendationCognition,
+  recommendationCognitionMetaForSearch,
+  snapshotRecommendationCognitionOrchestration,
+} from "@/lib/intelligence/recommendationCognition";
 import { buildVerticalTasteShadowMeta } from "@/lib/taste/verticalTasteShadow";
 import { buildFragranceTasteCanaryMeta } from "@/lib/taste/fragranceTasteApply";
 import { buildFurnitureTasteCanaryMeta } from "@/lib/taste/furnitureTasteApply";
@@ -562,6 +567,7 @@ async function handleSearch(
     let identityFoundationResponseMeta: Record<string, unknown> = {};
     let trustEngineResponseMeta: Record<string, unknown> = {};
     let commerceMemoryResponseMeta: Record<string, unknown> = {};
+    let recommendationCognitionResponseMeta: Record<string, unknown> = {};
     const traceStage = (stage: string, before: number, after: number) => {
       pipelineTrace.trace(stage, before, after);
     };
@@ -997,6 +1003,46 @@ async function handleSearch(
       commerceMemoryResult.meta.memoryNodeCount
     );
 
+    const recommendationCognitionResult = buildRecommendationCognition(
+      {
+        products,
+        query,
+        canonicalProducts: identityFoundationResult.canonicalProducts,
+        trustResult: trustTruthResult,
+        memoryResult: commerceMemoryResult,
+        sessionMemory: commerceSessionMemory,
+      },
+      {
+        sessionMemory: commerceSessionMemory,
+        orchestration: {
+          query,
+          identityFoundation: identityFoundationResult,
+          trustResult: trustTruthResult,
+          memoryResult: commerceMemoryResult,
+          normalizationMeta,
+          controlledStackFastPath: controlledRegistry.fastPathEligible,
+          controlledStackRankingMutation: controlledStackRankingMutation,
+        },
+      }
+    );
+    recommendationCognitionResponseMeta = recommendationCognitionMetaForSearch(
+      recommendationCognitionResult,
+      snapshotRecommendationCognitionOrchestration({
+        query,
+        identityFoundation: identityFoundationResult,
+        trustResult: trustTruthResult,
+        memoryResult: commerceMemoryResult,
+        normalizationMeta,
+        controlledStackFastPath: controlledRegistry.fastPathEligible,
+        controlledStackRankingMutation: controlledStackRankingMutation,
+      })
+    );
+    traceStage(
+      "recommendation_cognition",
+      recommendationCognitionResult.meta.inputCount,
+      recommendationCognitionResult.meta.candidateCount
+    );
+
     const trayArtifactsFinal = rebuildSearchTrayArtifacts(query, products);
     dealClusters = trayArtifactsFinal.dealClusters;
     searchIntelligence = trayArtifactsFinal.searchIntelligence;
@@ -1180,6 +1226,7 @@ async function handleSearch(
         ...identityFoundationResponseMeta,
         ...trustEngineResponseMeta,
         ...commerceMemoryResponseMeta,
+        ...recommendationCognitionResponseMeta,
         normalizationShadowPostSemantic,
         normalizationShadowPostControlled,
       },
