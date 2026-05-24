@@ -94,4 +94,16 @@ check(
   "canonicalProductGraph.ts exists"
 );
 
+check(
+  "phase5_trust_engine",
+  route.includes("buildTrustTruthEngine"),
+  "Phase 5 trust engine wired in search route"
+);
+
+check(
+  "phase5_trust_module",
+  existsSync(resolve(ROOT, "lib/intelligence/trust/buildTrustTruthEngine.ts")),
+  "buildTrustTruthEngine.ts exists"
+);
+
 process.exit(failed ? 1 : 0);

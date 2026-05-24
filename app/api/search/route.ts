@@ -49,6 +49,11 @@ import {
   buildIdentityFoundation,
   identityFoundationMetaForSearch,
 } from "@/lib/intelligence/identity";
+import {
+  buildTrustTruthEngine,
+  trustEngineMetaForSearch,
+  snapshotTrustOrchestration,
+} from "@/lib/intelligence/trust";
 import { buildVerticalTasteShadowMeta } from "@/lib/taste/verticalTasteShadow";
 import { buildFragranceTasteCanaryMeta } from "@/lib/taste/fragranceTasteApply";
 import { buildFurnitureTasteCanaryMeta } from "@/lib/taste/furnitureTasteApply";
@@ -550,6 +555,7 @@ async function handleSearch(
     let normalizationShadowPostControlled: NormalizationShadowTelemetry | null = null;
     let normalizationResponseMeta: Record<string, unknown> = {};
     let identityFoundationResponseMeta: Record<string, unknown> = {};
+    let trustEngineResponseMeta: Record<string, unknown> = {};
     const traceStage = (stage: string, before: number, after: number) => {
       pipelineTrace.trace(stage, before, after);
     };
@@ -916,6 +922,38 @@ async function handleSearch(
       identityFoundationResult.meta.canonicalProductCount
     );
 
+    const trustTruthResult = buildTrustTruthEngine(
+      {
+        products,
+        query,
+        canonicalProducts: identityFoundationResult.canonicalProducts,
+      },
+      {
+        orchestration: {
+          query,
+          identityFoundation: identityFoundationResult,
+          normalizationMeta,
+          controlledStackFastPath: controlledRegistry.fastPathEligible,
+          controlledStackRankingMutation: controlledStackRankingMutation,
+        },
+      }
+    );
+    trustEngineResponseMeta = trustEngineMetaForSearch(
+      trustTruthResult,
+      snapshotTrustOrchestration({
+        query,
+        identityFoundation: identityFoundationResult,
+        normalizationMeta,
+        controlledStackFastPath: controlledRegistry.fastPathEligible,
+        controlledStackRankingMutation: controlledStackRankingMutation,
+      })
+    );
+    traceStage(
+      "trust_engine",
+      trustTruthResult.meta.inputCount,
+      trustTruthResult.meta.offerIntelligenceCount
+    );
+
     const trayArtifactsFinal = rebuildSearchTrayArtifacts(query, products);
     dealClusters = trayArtifactsFinal.dealClusters;
     searchIntelligence = trayArtifactsFinal.searchIntelligence;
@@ -1097,6 +1135,7 @@ async function handleSearch(
         latencyBudget,
         ...normalizationResponseMeta,
         ...identityFoundationResponseMeta,
+        ...trustEngineResponseMeta,
         normalizationShadowPostSemantic,
         normalizationShadowPostControlled,
       },
