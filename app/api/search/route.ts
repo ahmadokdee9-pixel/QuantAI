@@ -103,6 +103,11 @@ import {
   autonomousCommerceStrategyMetaForSearch,
   snapshotStrategyOrchestration,
 } from "@/lib/intelligence/autonomousCommerceStrategy";
+import {
+  buildUniversalCommerceIntelligence,
+  universalCommerceIntelligenceMetaForSearch,
+  snapshotUniversalOrchestration,
+} from "@/lib/intelligence/universalCommerceIntelligence";
 import { buildVerticalTasteShadowMeta } from "@/lib/taste/verticalTasteShadow";
 import { buildFragranceTasteCanaryMeta } from "@/lib/taste/fragranceTasteApply";
 import { buildFurnitureTasteCanaryMeta } from "@/lib/taste/furnitureTasteApply";
@@ -615,6 +620,7 @@ async function handleSearch(
     let autonomousCommerceIdentityResponseMeta: Record<string, unknown> = {};
     let predictiveCommerceIntentResponseMeta: Record<string, unknown> = {};
     let autonomousCommerceStrategyResponseMeta: Record<string, unknown> = {};
+    let universalCommerceIntelligenceResponseMeta: Record<string, unknown> = {};
     const traceStage = (stage: string, before: number, after: number) => {
       pipelineTrace.trace(stage, before, after);
     };
@@ -1336,6 +1342,30 @@ async function handleSearch(
       autonomousCommerceStrategyResult.meta.fusedAxisCount
     );
 
+    const universalCommerceIntelligenceResult = buildUniversalCommerceIntelligence({
+      products,
+      query,
+      trust: trustTruthResult,
+      commerceOs: autonomousCommerceOsResult,
+      commerceIdentity: autonomousCommerceIdentityResult,
+      predictiveIntent: predictiveCommerceIntentResult,
+      commerceStrategy: autonomousCommerceStrategyResult,
+      activation: controlledActivationResult,
+    });
+    universalCommerceIntelligenceResponseMeta = universalCommerceIntelligenceMetaForSearch(
+      universalCommerceIntelligenceResult,
+      snapshotUniversalOrchestration({
+        commerceIdentity: autonomousCommerceIdentityResult,
+        predictiveIntent: predictiveCommerceIntentResult,
+        commerceStrategy: autonomousCommerceStrategyResult,
+      })
+    );
+    traceStage(
+      "universal_commerce_intelligence",
+      universalCommerceIntelligenceResult.meta.inputCount,
+      universalCommerceIntelligenceResult.meta.fusedAxisCount
+    );
+
     const trayArtifactsFinal = rebuildSearchTrayArtifacts(query, products);
     dealClusters = trayArtifactsFinal.dealClusters;
     searchIntelligence = trayArtifactsFinal.searchIntelligence;
@@ -1528,6 +1558,7 @@ async function handleSearch(
         ...autonomousCommerceIdentityResponseMeta,
         ...predictiveCommerceIntentResponseMeta,
         ...autonomousCommerceStrategyResponseMeta,
+        ...universalCommerceIntelligenceResponseMeta,
         normalizationShadowPostSemantic,
         normalizationShadowPostControlled,
       },

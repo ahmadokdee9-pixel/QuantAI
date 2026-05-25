@@ -234,4 +234,18 @@ check(
   "buildAutonomousCommerceStrategy.ts exists"
 );
 
+check(
+  "phase16_universal_commerce_intelligence",
+  route.includes("buildUniversalCommerceIntelligence"),
+  "Phase 16 universal commerce intelligence wired in search route"
+);
+
+check(
+  "phase16_universal_module",
+  existsSync(
+    resolve(ROOT, "lib/intelligence/universalCommerceIntelligence/buildUniversalCommerceIntelligence.ts")
+  ),
+  "buildUniversalCommerceIntelligence.ts exists"
+);
+
 process.exit(failed ? 1 : 0);
