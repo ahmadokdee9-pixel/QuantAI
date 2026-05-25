@@ -166,4 +166,16 @@ check(
   "buildCommerceEvolution.ts exists"
 );
 
+check(
+  "phase11_commerce_brain",
+  route.includes("buildUnifiedCommerceBrain"),
+  "Phase 11 unified commerce brain wired in search route"
+);
+
+check(
+  "phase11_brain_module",
+  existsSync(resolve(ROOT, "lib/intelligence/commerceBrain/buildUnifiedCommerceBrain.ts")),
+  "buildUnifiedCommerceBrain.ts exists"
+);
+
 process.exit(failed ? 1 : 0);
