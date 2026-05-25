@@ -276,4 +276,19 @@ check(
   "buildAutonomousCommerceEvolution.ts exists"
 );
 
+check(
+  "beta_stabilization_wired",
+  route.includes("isProductionShadowStackDisabled") &&
+    route.includes("skipShadowStack") &&
+    route.includes("createGuestPipelineCache") &&
+    route.includes("loadPipelineWithInflightDedupe"),
+  "guest cache, dedupe, shadow skip wired"
+);
+
+check(
+  "beta_stabilization_module",
+  existsSync(resolve(ROOT, "lib/search/productionStabilizationEnv.ts")),
+  "productionStabilizationEnv.ts exists"
+);
+
 process.exit(failed ? 1 : 0);

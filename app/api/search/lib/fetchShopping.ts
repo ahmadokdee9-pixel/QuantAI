@@ -139,15 +139,24 @@ export async function fetchShoppingProducts(
       upstreamQ
     )}&gl=${encodeURIComponent(gl)}&hl=en&num=${num}&api_key=${process.env.SERPAPI_KEY}`;
 
+    const timeoutMs = (() => {
+      const raw = Number(process.env.SEARCH_SERPAPI_TIMEOUT_MS ?? "12000");
+      return Number.isFinite(raw) ? Math.min(20000, Math.max(5000, Math.round(raw))) : 12000;
+    })();
+    const retries = (() => {
+      const raw = Number(process.env.SEARCH_SERPAPI_RETRIES ?? "1");
+      return Number.isFinite(raw) ? Math.min(2, Math.max(0, Math.round(raw))) : 1;
+    })();
+
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25_000);
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     let response: Response;
     try {
       response = await fetchWithRetry(
         url,
         { cache: "no-store", signal: controller.signal },
-        { retries: 2, baseDelayMs: 500, signal: controller.signal, label: "serpapi_shopping" }
+        { retries, baseDelayMs: 400, signal: controller.signal, label: "serpapi_shopping" }
       );
     } catch {
       return { ok: false, error: "Search request timed out", status: 504 };

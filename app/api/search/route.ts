@@ -32,6 +32,15 @@ import { resolveServerSubscriptionTier } from "@/lib/subscription/resolveTier";
 import { buildUniversalCommerceContext, tasteTagListForApi } from "@/lib/commerce-os";
 import { buildCanonicalQuery, canonicalQueryForDebug, type CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
+import {
+  applyBetaDiscoveryDefaults,
+  createAuthPipelineCache,
+  createGuestPipelineCache,
+  isProductionShadowStackDisabled,
+  loadPipelineWithInflightDedupe,
+  searchFallbackQueryCap,
+  searchPrimaryMinProducts,
+} from "@/lib/search/productionStabilization";
 import { semanticRerankSearchResults } from "@/lib/search/semanticReranker";
 import { buildLatencyBudgetReport } from "@/lib/search/latencyBudget";
 import { PipelineTrace } from "@/lib/search/pipelineTrace";
@@ -233,6 +242,7 @@ async function runSearchPipeline(query: string): Promise<{
   liveDiscovery: LiveCommerceDiscoveryMeta;
   canonicalQuery: CanonicalQueryContract;
 }> {
+  applyBetaDiscoveryDefaults();
   const canonicalQuery = buildCanonicalQuery(query);
   const result = await fetchShoppingProductsWithFallback(query, canonicalQuery);
   if (!result.ok) {
@@ -303,18 +313,23 @@ async function fetchShoppingProductsWithFallback(
     query,
   ];
 
-  if (primary.ok && primary.products.length >= 8) return primary;
+  const primaryMin = searchPrimaryMinProducts();
+  if (primary.ok && primary.products.length >= primaryMin) return primary;
 
   const merged = new Map<string, QuantProduct>();
   if (primary.ok) {
     for (const product of primary.products) merged.set(product.link || product.title, product);
   }
   const seen = new Set<string>();
+  let fallbackAttempts = 0;
+  const maxFallback = searchFallbackQueryCap();
   for (const fallbackQuery of fallbackQueries) {
+    if (fallbackAttempts >= maxFallback) break;
     const q = fallbackQuery.replace(/\s+/g, " ").trim();
     const key = q.toLowerCase();
     if (!q || seen.has(key) || key === canonicalQuery.upstreamQuery.toLowerCase()) continue;
     seen.add(key);
+    fallbackAttempts += 1;
     const recovered = await fetchShoppingProducts(q, { ...canonicalQuery, upstreamQuery: q });
     if (recovered.ok) {
       for (const product of recovered.products) {
@@ -333,11 +348,14 @@ async function fetchShoppingProductsWithFallback(
   return primary;
 }
 
-/** Cross-request tray cache — normalized key improves hit rate; short TTL keeps prices fresh. */
-const getCachedSearchPipeline = unstable_cache(
-  async (pipelineQuery: string) => runSearchPipeline(pipelineQuery),
-  [TASTE_GRAMMAR_PIPELINE_CACHE_KEY],
-  { revalidate: 120 }
+/** Cross-request tray cache — guest TTL longer for beta cold-path reduction. */
+const getCachedAuthSearchPipeline = createAuthPipelineCache(
+  runSearchPipeline,
+  TASTE_GRAMMAR_PIPELINE_CACHE_KEY
+);
+const getCachedGuestSearchPipeline = createGuestPipelineCache(
+  runSearchPipeline,
+  TASTE_GRAMMAR_PIPELINE_CACHE_KEY
 );
 
 type SearchDataPayload = {
@@ -536,7 +554,9 @@ async function handleSearch(
       });
       if (!limited.ok) {
         try {
-          const cachedTray = await getCachedSearchPipeline(pipelineKey);
+          const cachedTray = await loadPipelineWithInflightDedupe(`guest:${pipelineKey}`, () =>
+            getCachedGuestSearchPipeline(pipelineKey)
+          );
           if (cachedTray.products.length > 0) {
             guestOperationalDegraded = {
               degraded: true,
@@ -614,6 +634,7 @@ async function handleSearch(
     const canonicalQuery: CanonicalQueryContract = requestCanonicalQuery;
     const pipelineTrace = new PipelineTrace();
     const controlledRegistry = scanControlledStackRegistry();
+    const skipShadowStack = isProductionShadowStackDisabled();
     let normalizationMeta: NormalizationTrayMeta | null = null;
     let normalizationShadowPostSemantic: NormalizationShadowTelemetry | null = null;
     let normalizationShadowPostControlled: NormalizationShadowTelemetry | null = null;
@@ -637,7 +658,14 @@ async function handleSearch(
       pipelineTrace.trace(stage, before, after);
     };
     const loadPipelineTray = async () => {
-      const tray = await getCachedSearchPipeline(pipelineKey);
+      const isGuestPipeline = !userId;
+      const tray = await loadPipelineWithInflightDedupe(
+        `${isGuestPipeline ? "guest" : "auth"}:${pipelineKey}`,
+        () =>
+          isGuestPipeline
+            ? getCachedGuestSearchPipeline(pipelineKey)
+            : getCachedAuthSearchPipeline(pipelineKey)
+      );
       products = tray.products;
       dealClusters = tray.dealClusters;
       searchIntelligence = tray.searchIntelligence;
@@ -660,7 +688,12 @@ async function handleSearch(
         logSearchEvent("upstream_fail", { status: httpStatus, message: message.slice(0, 120) });
         let recovered = false;
         try {
-          const cachedTray = await getCachedSearchPipeline(pipelineKey);
+          const recoveryScope = userId ? "auth" : "guest";
+          const cachedTray = await loadPipelineWithInflightDedupe(`${recoveryScope}:${pipelineKey}`, () =>
+            userId
+              ? getCachedAuthSearchPipeline(pipelineKey)
+              : getCachedGuestSearchPipeline(pipelineKey)
+          );
           if (cachedTray.products.length > 0) {
             products = cachedTray.products;
             dealClusters = cachedTray.dealClusters;
@@ -987,6 +1020,7 @@ async function handleSearch(
       normalizationFinal.meta.outputCount
     );
 
+    if (!skipShadowStack) {
     const identityFoundationResult = buildIdentityFoundation({
       products,
       query,
@@ -1434,6 +1468,9 @@ async function handleSearch(
     const trayArtifactsFinal = rebuildSearchTrayArtifacts(query, products);
     dealClusters = trayArtifactsFinal.dealClusters;
     searchIntelligence = trayArtifactsFinal.searchIntelligence;
+    } else {
+      traceStage("shadow_stack_skipped", products.length, products.length);
+    }
 
     const marketAwareness = computeMarketAwarenessForTray(query, products);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);

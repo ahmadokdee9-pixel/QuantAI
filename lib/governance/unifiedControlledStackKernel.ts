@@ -94,6 +94,27 @@ export function runUnifiedControlledStack(
   const mutationPolicy = resolveGlobalMutationPolicy();
   const preStackLinks = input.products.map((p) => p.link || p.title).slice(0, 5);
 
+  if (registry.fastPathEligible && registry.enabledCount === 0) {
+    const accum: ControlledStackAccum = {
+      ...input.intent,
+      products: [...input.products],
+    };
+    return {
+      products: accum.products,
+      metas: accumToMetas(accum),
+      latencyMs: 0,
+      orchestration: {
+        version: "phase3",
+        fastPath: true,
+        mutationPolicyReason: mutationPolicy.reason,
+        layers: [],
+        replayTraces: [],
+      },
+      registry,
+      rankingMutation: false,
+    };
+  }
+
   const layers: OrchestrationLayerRecord[] = [];
   const replayTraces: DeterministicReplayTrace[] = [];
 

@@ -1,0 +1,90 @@
+# Production env manifest — public beta
+
+**Policy:** Shadow-only intelligence. **No APPLY.** Phases **11–18 OFF**.
+
+Copy this block into Vercel **Production** (never use bare `vercel env pull` — use `npm run env:pull`).
+
+## Required secrets (non-empty)
+
+| Variable | Purpose |
+|----------|---------|
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Auth UI |
+| `CLERK_SECRET_KEY` | Auth API |
+| `NEXT_PUBLIC_SUPABASE_URL` | Persistence |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server writes |
+| `SERPAPI_KEY` | Search discovery |
+| `OPENAI_API_KEY` | Compare verdict, build |
+
+## Strongly recommended
+
+| Variable | Purpose |
+|----------|---------|
+| `NEXT_PUBLIC_APP_URL` | Stripe, sitemap, robots |
+| `UPSTASH_REDIS_REST_URL` | Distributed rate limits |
+| `UPSTASH_REDIS_REST_TOKEN` | Distributed rate limits |
+| `QUANTAI_ANALYTICS_SINK_URL` | Server event forward |
+
+## APPLY flags — MUST be `false` or unset
+
+```
+QUANTAI_NORMALIZATION_APPLY=false
+QUANTAI_NORMALIZATION_APPLY_PRODUCTION_CONFIRMED=false
+QUANTAI_NORMALIZATION_APPLY_CANARY=false
+QUANTAI_NORMALIZATION_CANARY_CONFIRMED=false
+TASTE_UNIFIED_APPLY_ENABLED=false
+INTENT_INTELLIGENCE_APPLY_ENABLED=false
+INTENT_INTELLIGENCE_PROD_APPLY=false
+INTENT_INTELLIGENCE_CANARY_APPLY=false
+INTENT_RUNTIME_PROD_APPLY=false
+INTENT_RUNTIME_CANARY_APPLY=false
+INTENT_ORCHESTRATION_PROD_APPLY=false
+INTENT_ORCHESTRATION_CANARY_APPLY=false
+```
+
+## Phases 11–18 — MUST be `false` or unset
+
+```
+QUANTAI_COMMERCE_BRAIN_ENABLED=false
+QUANTAI_LIVE_COMMERCE_SIGNALS_ENABLED=false
+QUANTAI_AUTONOMOUS_COMMERCE_IDENTITY_ENABLED=false
+QUANTAI_PREDICTIVE_COMMERCE_INTENT_ENABLED=false
+QUANTAI_AUTONOMOUS_COMMERCE_STRATEGY_ENABLED=false
+QUANTAI_UNIVERSAL_COMMERCE_INTELLIGENCE_ENABLED=false
+QUANTAI_EMOTIONAL_COMMERCE_INTELLIGENCE_ENABLED=false
+QUANTAI_AUTONOMOUS_COMMERCE_EVOLUTION_ENABLED=false
+```
+
+## Recommended OFF (latency / meta-only)
+
+```
+QUANTAI_COMMERCE_EVOLUTION_ENABLED=false
+QUANTAI_CONTROLLED_ACTIVATION_ENABLED=false
+QUANTAI_AUTONOMOUS_COMMERCE_OS_ENABLED=false
+QUANTAI_RECOMMENDATION_COGNITION_ENABLED=false
+QUANTAI_COMMERCE_MEMORY_ENABLED=false
+QUANTAI_TRUST_ENGINE_ENABLED=false
+QUANTAI_IDENTITY_FOUNDATION_ENABLED=false
+```
+
+## Safe beta normalization (optional)
+
+```
+QUANTAI_NORMALIZATION_ENABLED=true
+QUANTAI_NORMALIZATION_MODE=shadow
+QUANTAI_NORMALIZATION_APPLY=false
+QUANTAI_NORMALIZATION_SHADOW_TELEMETRY=true
+QUANTAI_SEARCH_META_LITE=true
+```
+
+## Verify locally
+
+```bash
+npm run test:beta-prod-env
+```
+
+## Verify after deploy
+
+```bash
+SEARCH_BASE_URL=https://YOUR_PRODUCTION_DOMAIN npm run test:beta-prod-smoke
+REQUIRE_UPSTASH=true SEARCH_BASE_URL=https://YOUR_PRODUCTION_DOMAIN npm run test:beta-upstash
+```
