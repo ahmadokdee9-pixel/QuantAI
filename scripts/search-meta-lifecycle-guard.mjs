@@ -178,4 +178,18 @@ check(
   "buildUnifiedCommerceBrain.ts exists"
 );
 
+check(
+  "phase12_live_commerce_signals",
+  route.includes("buildLiveAdaptiveCommerceSignals"),
+  "Phase 12 live commerce signals wired in search route"
+);
+
+check(
+  "phase12_live_signals_module",
+  existsSync(
+    resolve(ROOT, "lib/intelligence/liveAdaptiveCommerceSignals/buildLiveCommerceSignals.ts")
+  ),
+  "buildLiveCommerceSignals.ts exists"
+);
+
 process.exit(failed ? 1 : 0);
