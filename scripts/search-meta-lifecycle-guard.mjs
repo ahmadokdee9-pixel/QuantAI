@@ -206,4 +206,18 @@ check(
   "buildAutonomousCommerceIdentity.ts exists"
 );
 
+check(
+  "phase14_predictive_commerce_intent",
+  route.includes("buildPredictiveCommerceIntent"),
+  "Phase 14 predictive commerce intent wired in search route"
+);
+
+check(
+  "phase14_predictive_intent_module",
+  existsSync(
+    resolve(ROOT, "lib/intelligence/predictiveCommerceIntent/buildPredictiveCommerceIntent.ts")
+  ),
+  "buildPredictiveCommerceIntent.ts exists"
+);
+
 process.exit(failed ? 1 : 0);

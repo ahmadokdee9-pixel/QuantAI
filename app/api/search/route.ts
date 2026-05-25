@@ -93,6 +93,11 @@ import {
   autonomousCommerceIdentityMetaForSearch,
   snapshotCommerceIdentityOrchestration,
 } from "@/lib/intelligence/autonomousCommerceIdentity";
+import {
+  buildPredictiveCommerceIntent,
+  predictiveCommerceIntentMetaForSearch,
+  snapshotPredictiveIntentOrchestration,
+} from "@/lib/intelligence/predictiveCommerceIntent";
 import { buildVerticalTasteShadowMeta } from "@/lib/taste/verticalTasteShadow";
 import { buildFragranceTasteCanaryMeta } from "@/lib/taste/fragranceTasteApply";
 import { buildFurnitureTasteCanaryMeta } from "@/lib/taste/furnitureTasteApply";
@@ -603,6 +608,7 @@ async function handleSearch(
     let commerceBrainResponseMeta: Record<string, unknown> = {};
     let liveCommerceSignalsResponseMeta: Record<string, unknown> = {};
     let autonomousCommerceIdentityResponseMeta: Record<string, unknown> = {};
+    let predictiveCommerceIntentResponseMeta: Record<string, unknown> = {};
     const traceStage = (stage: string, before: number, after: number) => {
       pipelineTrace.trace(stage, before, after);
     };
@@ -1262,6 +1268,36 @@ async function handleSearch(
       autonomousCommerceIdentityResult.meta.fusedAxisCount
     );
 
+    const predictiveCommerceIntentResult = buildPredictiveCommerceIntent(
+      {
+        products,
+        query,
+        sessionMemory: commerceSessionMemory,
+        shopperPersona,
+        trust: trustTruthResult,
+        evolution: commerceEvolutionResult,
+        brain: commerceBrainResult,
+        liveSignals: liveCommerceSignalsResult,
+        commerceIdentity: autonomousCommerceIdentityResult,
+        activation: controlledActivationResult,
+      },
+      { sessionMemory: commerceSessionMemory }
+    );
+    predictiveCommerceIntentResponseMeta = predictiveCommerceIntentMetaForSearch(
+      predictiveCommerceIntentResult,
+      snapshotPredictiveIntentOrchestration({
+        evolution: commerceEvolutionResult,
+        brain: commerceBrainResult,
+        liveSignals: liveCommerceSignalsResult,
+        commerceIdentity: autonomousCommerceIdentityResult,
+      })
+    );
+    traceStage(
+      "predictive_commerce_intent",
+      predictiveCommerceIntentResult.meta.inputCount,
+      predictiveCommerceIntentResult.meta.fusedAxisCount
+    );
+
     const trayArtifactsFinal = rebuildSearchTrayArtifacts(query, products);
     dealClusters = trayArtifactsFinal.dealClusters;
     searchIntelligence = trayArtifactsFinal.searchIntelligence;
@@ -1452,6 +1488,7 @@ async function handleSearch(
         ...commerceBrainResponseMeta,
         ...liveCommerceSignalsResponseMeta,
         ...autonomousCommerceIdentityResponseMeta,
+        ...predictiveCommerceIntentResponseMeta,
         normalizationShadowPostSemantic,
         normalizationShadowPostControlled,
       },
