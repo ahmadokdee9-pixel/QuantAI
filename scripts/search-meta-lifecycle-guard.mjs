@@ -154,4 +154,16 @@ check(
   "buildControlledActivation.ts exists"
 );
 
+check(
+  "phase10_commerce_evolution",
+  route.includes("buildCommerceEvolution"),
+  "Phase 10 commerce evolution wired in search route"
+);
+
+check(
+  "phase10_evolution_module",
+  existsSync(resolve(ROOT, "lib/intelligence/commerceEvolution/buildCommerceEvolution.ts")),
+  "buildCommerceEvolution.ts exists"
+);
+
 process.exit(failed ? 1 : 0);

@@ -73,6 +73,11 @@ import {
   buildControlledActivation,
   controlledActivationMetaForSearch,
 } from "@/lib/governance/controlledActivation";
+import {
+  buildCommerceEvolution,
+  commerceEvolutionMetaForSearch,
+  snapshotEvolutionOrchestration,
+} from "@/lib/intelligence/commerceEvolution";
 import { buildVerticalTasteShadowMeta } from "@/lib/taste/verticalTasteShadow";
 import { buildFragranceTasteCanaryMeta } from "@/lib/taste/fragranceTasteApply";
 import { buildFurnitureTasteCanaryMeta } from "@/lib/taste/furnitureTasteApply";
@@ -579,6 +584,7 @@ async function handleSearch(
     let recommendationCognitionResponseMeta: Record<string, unknown> = {};
     let autonomousCommerceOsResponseMeta: Record<string, unknown> = {};
     let controlledActivationResponseMeta: Record<string, unknown> = {};
+    let commerceEvolutionResponseMeta: Record<string, unknown> = {};
     const traceStage = (stage: string, before: number, after: number) => {
       pipelineTrace.trace(stage, before, after);
     };
@@ -1122,6 +1128,33 @@ async function handleSearch(
       controlledActivationResult.shadowMutation.candidateCount
     );
 
+    const commerceEvolutionResult = buildCommerceEvolution(
+      {
+        products,
+        query,
+        sessionMemory: commerceSessionMemory,
+        memoryResult: commerceMemoryResult,
+        recommendationResult: recommendationCognitionResult,
+        commerceOsResult: autonomousCommerceOsResult,
+        activationResult: controlledActivationResult,
+      },
+      { sessionMemory: commerceSessionMemory }
+    );
+    commerceEvolutionResponseMeta = commerceEvolutionMetaForSearch(
+      commerceEvolutionResult,
+      snapshotEvolutionOrchestration({
+        memoryResult: commerceMemoryResult,
+        recommendationResult: recommendationCognitionResult,
+        commerceOsResult: autonomousCommerceOsResult,
+        activationResult: controlledActivationResult,
+      })
+    );
+    traceStage(
+      "commerce_evolution",
+      commerceEvolutionResult.meta.inputCount,
+      commerceEvolutionResult.meta.candidateCount
+    );
+
     const trayArtifactsFinal = rebuildSearchTrayArtifacts(query, products);
     dealClusters = trayArtifactsFinal.dealClusters;
     searchIntelligence = trayArtifactsFinal.searchIntelligence;
@@ -1308,6 +1341,7 @@ async function handleSearch(
         ...recommendationCognitionResponseMeta,
         ...autonomousCommerceOsResponseMeta,
         ...controlledActivationResponseMeta,
+        ...commerceEvolutionResponseMeta,
         normalizationShadowPostSemantic,
         normalizationShadowPostControlled,
       },
