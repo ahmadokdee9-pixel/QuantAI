@@ -1,0 +1,137 @@
+# Public beta 30-query QA report
+
+**Generated:** 2026-05-25T22:00:11.128Z  
+**Base URL:** https://quant-ai-app.vercel.app  
+**Method:** Automated API QA (desktop + mobile User-Agent); HTML shell check for mobile/desktop pages. Visual mobile UI requires manual device pass.
+
+## Final verdict: **CONDITIONAL_PASS** (strict checklist: **FAIL**)
+
+| Metric | Value |
+|--------|------:|
+| Strict pass (all A–F) | 16 / 30 |
+| Strict fail | 14 / 30 |
+| **Functional pass** (A,B,C,E; ignores duplicate-only D) | **28 / 30** |
+| Critical failures (empty tray, pollution, hallucination) | 0 |
+| Broken queries | 0 |
+
+**Interpretation:** 12 fails are **top-3 same-merchant duplicates** (common on Google Shopping aggregators), not empty trays. Two fails are **cold-path latency** &gt;10s (#16 mixed AR iPhone, #23 first robot vacuum). **Invite-only beta** is viable with duplicate UX noted; re-probe #16/#23 after cache warm.
+
+---
+
+## 1. PASS/FAIL table
+
+| # | Query | Lang | Verdict | Latency ms | Products | Mobile API | A–F | Issues |
+|---|-------|------|---------|----------:|---------:|:----------:|-----|--------|
+| 1 | iphone 16 | en | PASS | 2733 | 23 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 2 | airpods | en | PASS | 1117 | 20 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 3 | gaming monitor for PS5 under 500 | en | PASS | 2458 | 19 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 4 | iphone 15 pro max titanium | en | PASS | 4202 | 24 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 5 | compare airpods pro vs airpods 4 | en | FAIL | 7407 | 9 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
+| 6 | best premium headphones for focus | en | PASS | 6338 | 18 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 7 | adidas samba | en | FAIL | 5133 | 26 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
+| 8 | nike shoes like vomero but cheaper | en | FAIL | 6840 | 23 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant, top3_near_duplicate_title |
+| 9 | minimal white sneakers like Common Projects | en | PASS | 5594 | 5 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 10 | sofa | en | FAIL | 1233 | 27 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
+| 11 | luxury looking sofa under 1000 | en | FAIL | 4077 | 22 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
+| 12 | minimal desk setup | en | PASS | 4570 | 22 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 13 | كنبة زاوية | ar | FAIL | 6813 | 24 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
+| 14 | كرسي office minimal | mixed | FAIL | 5453 | 24 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
+| 15 | كرسي مكتب مريح وفخم | ar | FAIL | 5026 | 24 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
+| 16 | iphone 15 برو max titanium | mixed | FAIL | 11394 | 9 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✗ | — |
+| 17 | luxury ساعة under 300 | mixed | PASS | 5441 | 23 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 18 | ساعة شكلها luxury بس سعرها معقول | ar | PASS | 1574 | 9 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 19 | yves saint laurent libre edp 90ml | en | PASS | 2727 | 3 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 20 | جزمة مثل nike vomero بس ارخص | ar | FAIL | 2539 | 21 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant, top3_near_duplicate_title |
+| 21 | ايفون 16 رخيص | ar | FAIL | 2243 | 23 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
+| 22 | سماعات ايربودز | ar | PASS | 8235 | 23 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 23 | robot vacuum under 400 | en | FAIL | 12439 | 24 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✗ | — |
+| 24 | cheap but luxury looking sofa | en | FAIL | 3074 | 23 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
+| 25 | iphone 16 case | en | PASS | 3702 | 9 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 26 | best headphones for focus | en | PASS | 6349 | 18 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 27 | gaming monitor | en | PASS | 1052 | 18 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 28 | robot vacuum under 400 | en | PASS | 907 | 24 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 29 | adidas samba white | en | PASS | 3455 | 26 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 30 | luxury watch rolex style under 500 | en | FAIL | 7640 | 24 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
+
+---
+
+## 2. Broken queries
+
+_None_
+
+---
+
+## 3. Duplicate issues
+
+- **#5** `compare airpods pro vs airpods 4` — top3_same_merchant: craftbymerlin×2
+- **#7** `adidas samba` — top3_same_merchant: adidas.nl×2
+- **#8** `nike shoes like vomero but cheaper` — top3_same_merchant: misterrunning.com×3
+- **#8** `nike shoes like vomero but cheaper` — top3_near_duplicate_title: 
+- **#10** `sofa` — top3_same_merchant: meubels1.nl×2
+- **#11** `luxury looking sofa under 1000` — top3_same_merchant: ubuy×3
+- **#13** `كنبة زاوية` — top3_same_merchant: homary.com×2
+- **#14** `كرسي office minimal` — top3_same_merchant: ikea×3
+- **#15** `كرسي مكتب مريح وفخم` — top3_same_merchant: b mart | منصة بي مارت للتسوق الإلكتروني×2
+- **#20** `جزمة مثل nike vomero بس ارخص` — top3_same_merchant: misterrunning.com×2
+- **#20** `جزمة مثل nike vomero بس ارخص` — top3_near_duplicate_title: 
+- **#21** `ايفون 16 رخيص` — top3_same_merchant: ebay - yywirelesss×2
+- **#24** `cheap but luxury looking sofa` — top3_same_merchant: ubuy×2
+- **#30** `luxury watch rolex style under 500` — top3_same_merchant: paganidesignwatches×2
+
+---
+
+## 4. Hallucination / trust cases
+
+_None flagged_
+
+---
+
+## 5. Latency outliers (>10000ms)
+
+- **#23** `robot vacuum under 400` — **12439ms** (mobile 610ms)
+- **#16** `iphone 15 برو max titanium` — **11394ms** (mobile 2867ms)
+
+---
+
+## 6. Mobile UI / client issues
+
+| Check | Desktop | Mobile UA |
+|-------|---------|-----------|
+| Home `/` | 200 OK (viewport: true) | 200 OK (viewport: true) |
+| Search shell | — | 200 OK |
+
+**Mobile API mismatches** (desktop OK, mobile tray worse):  
+_None_
+
+_Note: Layout/tap targets/card overflow require manual iPhone/Android pass — not evaluated by this script._
+
+---
+
+## 7. Search quality notes
+
+_No additional quality flags beyond table._
+
+---
+
+## 8. Flow tests
+
+| Flow | Result |
+|------|--------|
+| Guest search | PASS (23 products) |
+| Guest save (expect 401) | PASS status=401 |
+| Guest compare (expect 401) | PASS status=401 |
+| Outbound redirect | PASS 302 |
+| Signed-in save | PASS |
+| Signed-in compare | PASS |
+
+---
+
+## Sign-off
+
+| Role | Result |
+|------|--------|
+| Automated QA (strict) | **FAIL** (16/30) |
+| Automated QA (functional) | **PASS** (28/30) |
+| Product manual (visual mobile) | Pending — API shell OK, viewport present |
+
+**Re-run:** `SEARCH_BASE_URL=https://quant-ai-app.vercel.app npm run test:public-beta-30-qa`

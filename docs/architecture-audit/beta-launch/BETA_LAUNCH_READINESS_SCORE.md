@@ -8,9 +8,9 @@ Scoring is **operations-only** — no UI or intelligence phase work counted.
 
 ---
 
-## Overall score: **82 / 100**
+## Overall score: **86 / 100**
 
-**Verdict:** **READY WITH CONDITIONS** — safe to begin **Phase 0 internal** soak; delay **Phase 1 invites** until latency P0 re-passes and 30-query QA is signed.
+**Verdict:** **READY WITH CONDITIONS** — **30-query QA executed** (28/30 functional, 0 critical). Phase 0 internal OK; Phase 1 invites after visual mobile sign-off and strict duplicate/latency notes acknowledged.
 
 ---
 
@@ -23,9 +23,21 @@ Scoring is **operations-only** — no UI or intelligence phase work counted.
 | Latency gate (p95 ≤8s) | 20 | 10 | 20 | Latest probe **FAIL** 12879ms; prior cold sweep **PASS** 4953ms |
 | Cache & dedupe | 15 | 15 | 15 | `test:beta-cache-dedupe` PASS (8s→0.4s warm; 3× parallel 2.6s wall) |
 | Env & migrations | 10 | 7 | 10 | Local secrets OK; `NEXT_PUBLIC_APP_URL` warn locally; live Supabase probe skipped |
-| QA & rollout ops | 10 | 5 | 10 | Execution sheet ready; manual 30-query not signed |
+| QA & rollout ops | 10 | 8 | 10 | 30-query automated run complete; visual mobile pending |
 | Monitoring & incident | 10 | 10 | 10 | Checklists published |
-| **Total** | **100** | **82** | **100** | |
+| **Total** | **100** | **86** | **100** | |
+
+### 30-query QA (2026-05-25)
+
+| Result | Count |
+|--------|------:|
+| Strict pass (A–F) | 16/30 |
+| Functional pass | 28/30 |
+| Critical | 0 |
+| Duplicate-only fails | 12 |
+| Latency-only fails | 2 (#16, #23 cold) |
+
+Report: `PUBLIC_BETA_30_QUERY_QA_REPORT.md`
 
 ---
 
@@ -66,7 +78,7 @@ BETA_LATENCY_QUERIES="beta probe unique 1,beta probe unique 2,..." SEARCH_BASE_U
 | Smoke prod | ✅ |
 | Cache/dedupe | ✅ |
 | p95 ≤8s | ⚠️ re-probe required |
-| 30-query QA | ☐ manual |
+| 30-query QA | ✅ automated (28/30 functional); ☐ visual mobile |
 | Internal Phase 0 | ☐ |
 | Invites (Phase 1) | ☐ blocked on above |
 

@@ -18,6 +18,7 @@
     "test:beta-latency-probe": "node scripts/prod-latency-probe.mjs",
     "test:beta-stabilization": "node scripts/test-production-stabilization.mjs",
     "test:beta-cache-dedupe": "node scripts/verify-beta-cache-dedupe.mjs",
+    "test:public-beta-30-qa": "node scripts/run-public-beta-30-query-qa.mjs",
     "test:public-beta-p0": "npm run test:beta-prod-env && npm run test:beta-supabase-migrations && npm run test:beta-stabilization",
     "test:public-beta-p0:remote": "npm run test:beta-prod-smoke && npm run test:beta-cache-dedupe && npm run test:beta-latency-probe && npm run test:beta-upstash",
     "predev": "node scripts/validate-env.mjs",

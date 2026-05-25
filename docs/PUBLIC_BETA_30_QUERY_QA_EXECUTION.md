@@ -40,7 +40,10 @@ SEARCH_BASE_URL=https://quant-ai-app.vercel.app npm run test:realworld
 
 ## Execution table
 
-**Tester:** _______________  **Date:** _______________  **Build/SHA:** _______________
+**Automated run (2026-05-25):** see `docs/architecture-audit/beta-launch/PUBLIC_BETA_30_QUERY_QA_REPORT.md` and `public-beta-30-query-qa.json`.  
+**Tester:** Agent/automated + manual visual pending  **Date:** 2026-05-25  **Build/SHA:** production
+
+**Automated summary:** 16/30 strict · 28/30 functional · 0 critical · flows PASS (guest + signed-in cookie present)
 
 | # | Query | Bucket | A | B | C | D | E | F | Pass |
 |---|-------|--------|---|---|---|---|---|---|:----:|
