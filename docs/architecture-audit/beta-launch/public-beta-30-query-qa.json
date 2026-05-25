@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-25T22:00:11.128Z",
+  "generatedAt": "2026-05-25T23:54:12.559Z",
   "baseUrl": "https://quant-ai-app.vercel.app",
   "rows": [
     {
@@ -7,28 +7,34 @@
       "query": "iphone 16",
       "bucket": "electronics",
       "lang": "en",
-      "verdict": "PASS",
+      "verdict": "FAIL",
       "criteria": {
         "A": true,
         "B": true,
         "C": true,
-        "D": true,
+        "D": false,
         "E": true,
         "F": true
       },
       "critical": false,
-      "latencyMs": 2733,
+      "latencyMs": 2491,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 735,
-      "productCount": 23,
+      "mobileLatencyMs": 547,
+      "productCount": 20,
       "canonicalCategory": "phone",
       "top3Titles": [
         "iPhone 16 Plus 128GB - Blauwgroen - Simlockvrij",
         "Apple iPhone 16",
-        "Zakelijke Apple iPhone 16 128GB Ultramarijn met een 2 GB internet en Onbeperkt b"
+        "Apple iPhone 16"
       ],
-      "issues": [],
+      "issues": [
+        {
+          "type": "duplicate",
+          "code": "top3_near_duplicate_title",
+          "severity": "medium"
+        }
+      ],
       "degraded": false
     },
     {
@@ -46,11 +52,11 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 1117,
+      "latencyMs": 1029,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 683,
-      "productCount": 20,
+      "mobileLatencyMs": 659,
+      "productCount": 24,
       "canonicalCategory": "audio",
       "top3Titles": [
         "AirPods Pro 3 Wireless Earbuds Bluetooth Headphones with Active Noise Cancelling",
@@ -75,10 +81,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 2458,
+      "latencyMs": 5820,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 1620,
+      "mobileLatencyMs": 582,
       "productCount": 19,
       "canonicalCategory": "electronics",
       "top3Titles": [
@@ -104,16 +110,16 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 4202,
+      "latencyMs": 6909,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 546,
+      "mobileLatencyMs": 585,
       "productCount": 24,
       "canonicalCategory": "phone",
       "top3Titles": [
         "Apple iPhone 15 Pro Max 256GB White Titanium",
-        "iPhone 15 Pro Max - 256GB - Black Titanium - Like",
-        "Apple iPhone 15 Pro Max Titanium"
+        "Apple iPhone 15 Pro Max Titanium",
+        "iPhone 15 Pro Max - 256GB - Black Titanium - Like"
       ],
       "issues": [],
       "degraded": false
@@ -133,23 +139,22 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 7407,
+      "latencyMs": 3154,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 321,
-      "productCount": 9,
+      "mobileLatencyMs": 432,
+      "productCount": 22,
       "canonicalCategory": "audio",
       "top3Titles": [
-        "Apple AirPods 4. Generation Set: Warenrücksendung - Zo goed als nieuw",
-        "Apple AirPods 4 Black Matte Edition",
-        "Shop Apple AirPods 4 Starlight Bold Edition | Craft by Merlin AirPods 4 with ANC"
+        "Apple AirPods Pro 2",
+        "Apple AirPods Pro 3e generatie (2025) - Wireless (USB-C)-oplaadcase Wit",
+        "Apple AirPods Pro 3"
       ],
       "issues": [
         {
           "type": "duplicate",
-          "code": "top3_same_merchant",
-          "severity": "medium",
-          "detail": "craftbymerlin×2"
+          "code": "top3_near_duplicate_title",
+          "severity": "medium"
         }
       ],
       "degraded": false
@@ -169,16 +174,16 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 6338,
+      "latencyMs": 3940,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 450,
-      "productCount": 18,
+      "mobileLatencyMs": 477,
+      "productCount": 20,
       "canonicalCategory": "audio",
       "top3Titles": [
         "Raycon Everyday Headphones Over The Ear Headphones Noise Cancelling",
         "Audio-Technica ATH-M50X headphones",
-        "Kz Zax in-ear headphones Without Microphone"
+        "ANC wireless headphone Berlinger Haus FTV-0017"
       ],
       "issues": [],
       "degraded": false
@@ -188,35 +193,28 @@
       "query": "adidas samba",
       "bucket": "fashion",
       "lang": "en",
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "criteria": {
         "A": true,
         "B": true,
         "C": true,
-        "D": false,
+        "D": true,
         "E": true,
         "F": true
       },
       "critical": false,
-      "latencyMs": 5133,
+      "latencyMs": 2549,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 531,
+      "mobileLatencyMs": 536,
       "productCount": 26,
       "canonicalCategory": "shoes",
       "top3Titles": [
         "adidas Originals Samba Xlg Trainers",
-        "kids adidas Samba Jane Vrouwen,Kinderen",
-        "adidas Infant Originals Nursery Samba OG Trainer"
+        "Adult adidas Originals Samba Super Suede Trainers",
+        "kids adidas Samba Jane Vrouwen,Kinderen"
       ],
-      "issues": [
-        {
-          "type": "duplicate",
-          "code": "top3_same_merchant",
-          "severity": "medium",
-          "detail": "adidas.nl×2"
-        }
-      ],
+      "issues": [],
       "degraded": false
     },
     {
@@ -234,28 +232,23 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 6840,
+      "latencyMs": 3988,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 576,
-      "productCount": 23,
+      "mobileLatencyMs": 508,
+      "productCount": 22,
       "canonicalCategory": "shoes",
       "top3Titles": [
-        "Nike Vomero 18 Women's Neutral Running Shoes - pink, 7.5 US",
-        "Nike Vomero 18 Women's Neutral Running Shoes - black, 10 US",
-        "Nike Vomero 18 Women's Neutral Running Shoes - black, 11.5 US"
+        "Nike Vomero 18 Women's Neutral Running Shoes - pink, 9 US",
+        "Nike Vomero Plus Women's Neutral Running Shoes - purple, 11.5 US",
+        "Nike Air Zoom Vomero 11 Women's Running Shoe - Black"
       ],
       "issues": [
         {
           "type": "duplicate",
           "code": "top3_same_merchant",
           "severity": "medium",
-          "detail": "misterrunning.com×3"
-        },
-        {
-          "type": "duplicate",
-          "code": "top3_near_duplicate_title",
-          "severity": "medium"
+          "detail": "misterrunning.com×2"
         }
       ],
       "degraded": false
@@ -275,16 +268,16 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 5594,
+      "latencyMs": 7787,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 276,
-      "productCount": 5,
+      "mobileLatencyMs": 327,
+      "productCount": 11,
       "canonicalCategory": "shoes",
       "top3Titles": [
         "Nike Sportswear AIR FORCE 1 07 Sneakers laag, Dames, Maat: 39, Black - Leer",
-        "Oliver Cabell Low 1 Sneaker for Unisex Adult-",
-        "adidas Handball Spezial"
+        "Diadora Sneaker Game L Low White",
+        "Oliver Cabell Low 1 Sneaker for Unisex Adult-"
       ],
       "issues": [],
       "degraded": false
@@ -294,35 +287,28 @@
       "query": "sofa",
       "bucket": "furniture",
       "lang": "en",
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "criteria": {
         "A": true,
         "B": true,
         "C": true,
-        "D": false,
+        "D": true,
         "E": true,
         "F": true
       },
       "critical": false,
-      "latencyMs": 1233,
+      "latencyMs": 1518,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 600,
+      "mobileLatencyMs": 595,
       "productCount": 27,
       "canonicalCategory": "furniture",
       "top3Titles": [
         "Corner sofa Comfivo Ficus Available Available",
-        "4-seater Sofa Brown Corner Sofa 278x161cm Material: Fabric Corner Sofa Comfivo S",
-        "Modular Shaped Couch with Chaise Modern 3-Seater Sofa"
+        "Modular Shaped Couch with Chaise Modern 3-Seater Sofa",
+        "Corner Chaise Module Sofia Beige Fabric B 185 x D 92 cm"
       ],
-      "issues": [
-        {
-          "type": "duplicate",
-          "code": "top3_same_merchant",
-          "severity": "medium",
-          "detail": "meubels1.nl×2"
-        }
-      ],
+      "issues": [],
       "degraded": false
     },
     {
@@ -340,23 +326,23 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 4077,
+      "latencyMs": 5093,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 588,
+      "mobileLatencyMs": 649,
       "productCount": 22,
       "canonicalCategory": "furniture",
       "top3Titles": [
-        "Serta Benrama 67\" Soft Modern Sofa, Square Track Arms, Solid Wood Legs, Easy Ass",
         "Signature Design by Ashley Darcy Fabric Sofa in Cobblestone",
-        "Signature Design by Ashley Telora Faux Leather Sofa 2 Bolster Pillows Loose Cush"
+        "Serta Benrama 67\" Soft Modern Sofa, Square Track Arms, Solid Wood Legs, Easy Ass",
+        "Mid-Century Convertible Tufted Fabric Sofa for Cozy Living"
       ],
       "issues": [
         {
           "type": "duplicate",
           "code": "top3_same_merchant",
           "severity": "medium",
-          "detail": "ubuy×3"
+          "detail": "ubuy×2"
         }
       ],
       "degraded": false
@@ -376,16 +362,16 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 4570,
+      "latencyMs": 3363,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 541,
-      "productCount": 22,
+      "mobileLatencyMs": 532,
+      "productCount": 23,
       "canonicalCategory": "desk_setup",
       "top3Titles": [
-        "Desk with top and metal legs LOFT white-honey",
-        "Furinno Econ Multipurpose Home Office Computer Writing Desk Bin",
-        "NAVO ATOM Minimal Aesthetic & Ergonomic Office Chair, Slim & Sleek Premium Home "
+        "Furinno Simplistic A Frame Computer Desk",
+        "Maclean Office chairs MC-872",
+        "FLASH FURNITURE BL-ZP-8805-BK-GG Office Chair,42.25 In H,Gray 420G10"
       ],
       "issues": [],
       "degraded": false
@@ -405,10 +391,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 6813,
+      "latencyMs": 6854,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 963,
+      "mobileLatencyMs": 976,
       "productCount": 24,
       "canonicalCategory": "furniture",
       "top3Titles": [
@@ -441,23 +427,23 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 5453,
+      "latencyMs": 2639,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 1013,
+      "mobileLatencyMs": 953,
       "productCount": 24,
       "canonicalCategory": "furniture",
       "top3Titles": [
         "IKEA FLINTAN office chair with armrests",
         "IKEA FLINTAN office chair",
-        "IKEA Renberget swivel chair"
+        "Enrico C54 Boss Chair Cellbell Boss Chairs & Office Chairs"
       ],
       "issues": [
         {
           "type": "duplicate",
           "code": "top3_same_merchant",
           "severity": "medium",
-          "detail": "ikea×3"
+          "detail": "ikea×2"
         }
       ],
       "degraded": false
@@ -477,16 +463,16 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 5026,
+      "latencyMs": 6745,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 1095,
+      "mobileLatencyMs": 1140,
       "productCount": 24,
       "canonicalCategory": "furniture",
       "top3Titles": [
         "CellBell Callisto C83 Executive Chair Freeshipping",
         "كرسي مكتب مريح للألعاب مع مسند قدمين، كرسي مكتب عالي الظهر من الجلد الصناعي، مسا",
-        "1 قطعة كرسي مكتب عصري مريح بظهر متوسط - قابل للدوران وضبط الارتفاع، مقعد مبطن بإ"
+        "كرسي الألعاب المريح | كرسي مكتبي تنفيذي بظهر عالي مع دعم قطني ووسادة رأس | قابل "
       ],
       "issues": [
         {
@@ -508,23 +494,30 @@
         "A": true,
         "B": true,
         "C": true,
-        "D": true,
+        "D": false,
         "E": true,
-        "F": false
+        "F": true
       },
       "critical": false,
-      "latencyMs": 11394,
-      "latencyOutlier": true,
+      "latencyMs": 3286,
+      "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 2867,
-      "productCount": 9,
+      "mobileLatencyMs": 632,
+      "productCount": 21,
       "canonicalCategory": "phone",
       "top3Titles": [
-        "iPhone 15 Pro Max 1000GB - Naturel Titanium - Simlockvrij",
-        "iPhone 15 Pro Max 512 GB Goed Zwart titanium",
-        "iPhone 15 Pro Max 256 GB Blauw titanium Uitstekend Apple"
+        "Apple iPhone 15 Pro Titanium",
+        "Apple iPhone 15 Plus",
+        "Apple iPhone 15 Pro Max 256GB White Titanium"
       ],
-      "issues": [],
+      "issues": [
+        {
+          "type": "duplicate",
+          "code": "top3_same_merchant",
+          "severity": "medium",
+          "detail": "back market×2"
+        }
+      ],
       "degraded": false
     },
     {
@@ -542,16 +535,16 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 5441,
+      "latencyMs": 7118,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 1112,
-      "productCount": 23,
+      "mobileLatencyMs": 1184,
+      "productCount": 24,
       "canonicalCategory": "watch",
       "top3Titles": [
-        "BENYAR Men's Automatic Watches full Steel Luxury Casual Business Wrist Watch for",
         "Quality Men Watch Luxury High Man Quartz Wristwatch Waterproof",
-        "OLEVS Men Automatic Watch Skeleton 5 Hands Mechanical Classic Luxury Multi Calen"
+        "OLEVS Men Automatic Watch Skeleton 5 Hands Mechanical Classic Luxury Multi Calen",
+        "OLEVS 9910 Tourbillon Self-Winding Sports Luxury Watch (Color: BLUE)"
       ],
       "issues": [],
       "degraded": false
@@ -571,11 +564,11 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 1574,
+      "latencyMs": 3750,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 427,
-      "productCount": 9,
+      "mobileLatencyMs": 749,
+      "productCount": 18,
       "canonicalCategory": "watch",
       "top3Titles": [
         "Casio Watch AE-1200WHD-1AVEF Men's",
@@ -600,10 +593,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 2727,
+      "latencyMs": 5478,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 322,
+      "mobileLatencyMs": 265,
       "productCount": 3,
       "canonicalCategory": "fragrance",
       "top3Titles": [
@@ -629,16 +622,16 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 2539,
+      "latencyMs": 2693,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 882,
-      "productCount": 21,
+      "mobileLatencyMs": 930,
+      "productCount": 23,
       "canonicalCategory": "shoes",
       "top3Titles": [
-        "Nike Vomero Plus Men's Running Shoes",
-        "Nike Vomero Plus Women's Neutral Running Shoes - pink, 7.5 US",
-        "Nike Vomero Plus Women's Neutral Running Shoes - purple, 11.5 US"
+        "Nike Vomero Plus Men's Neutral Running Shoes - green, 9 US",
+        "Nike Vomero Plus Men's Neutral Running Shoes - grey, 10 US",
+        "Nike Vomero Plus Men's Running Shoes"
       ],
       "issues": [
         {
@@ -660,35 +653,28 @@
       "query": "ايفون 16 رخيص",
       "bucket": "budget AR",
       "lang": "ar",
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "criteria": {
         "A": true,
         "B": true,
         "C": true,
-        "D": false,
+        "D": true,
         "E": true,
         "F": true
       },
       "critical": false,
-      "latencyMs": 2243,
+      "latencyMs": 8830,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 661,
-      "productCount": 23,
+      "mobileLatencyMs": 686,
+      "productCount": 18,
       "canonicalCategory": "phone",
       "top3Titles": [
         "Apple iPhone 16",
-        "Apple Iphone 16 A3081 Xfinity Only 128gb Ultramarine Very Good",
+        "Zakelijke Apple iPhone 16 128GB Ultramarijn met een Onbeperkt internet en Onbepe",
         "Apple Iphone 16 A3081 T-mobile Only 128gb Ultramarine Very Good"
       ],
-      "issues": [
-        {
-          "type": "duplicate",
-          "code": "top3_same_merchant",
-          "severity": "medium",
-          "detail": "ebay - yywirelesss×2"
-        }
-      ],
+      "issues": [],
       "degraded": false
     },
     {
@@ -706,16 +692,16 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 8235,
+      "latencyMs": 8548,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 818,
-      "productCount": 23,
+      "mobileLatencyMs": 824,
+      "productCount": 19,
       "canonicalCategory": "audio",
       "top3Titles": [
-        "AirPods Pro 3 Wireless Earbuds Bluetooth Headphones with Active Noise Cancelling",
-        "Mastercard OFF | Apple AirPods Pro 3 True Wireless Bluetooth Earphones with Acti",
-        "Apple AirPods 4 Teal 16 Edition"
+        "Apple AirPods Pro draadloze koptelefoon met actieve ruisonderdrukking, Bluetooth",
+        "Apple AirPods 4",
+        "Apple Airpods Pro 2 (2ndgenpro) W. Magsafe Wireless Charging Usbc &"
       ],
       "issues": [],
       "degraded": false
@@ -725,26 +711,26 @@
       "query": "robot vacuum under 400",
       "bucket": "home",
       "lang": "en",
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "criteria": {
         "A": true,
         "B": true,
         "C": true,
         "D": true,
         "E": true,
-        "F": false
+        "F": true
       },
       "critical": false,
-      "latencyMs": 12439,
-      "latencyOutlier": true,
+      "latencyMs": 4769,
+      "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 610,
+      "mobileLatencyMs": 536,
       "productCount": 24,
       "canonicalCategory": "home",
       "top3Titles": [
         "iRobot Roomba 105 Combo + Black Robot Vacuum",
-        "Xiaomi T12 Robot vacuum cleaners",
-        "Dreame X50 Ultra RobotstofzuigerWhite - te huur"
+        "Dreame X50 Ultra RobotstofzuigerWhite - te huur",
+        "Xiaomi E5 Robot Vacuum"
       ],
       "issues": [],
       "degraded": false
@@ -764,15 +750,15 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 3074,
+      "latencyMs": 2340,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 556,
+      "mobileLatencyMs": 579,
       "productCount": 23,
       "canonicalCategory": "furniture",
       "top3Titles": [
         "Signature Design by Ashley Darcy Fabric Sofa in Cobblestone",
-        "Serta Benrama 67\" Soft Modern Sofa, Square Track Arms, Solid Wood Legs, Easy Ass",
+        "Signature Design by Ashley Telora Faux Leather Sofa 2 Bolster Pillows Loose Cush",
         "2780mm Modern Leath-Aire 3 Seater Deep Sofa with Adjustable Backrest Sailboat"
       ],
       "issues": [
@@ -800,16 +786,16 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 3702,
+      "latencyMs": 4860,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 297,
+      "mobileLatencyMs": 306,
       "productCount": 9,
       "canonicalCategory": "phone",
       "top3Titles": [
         "imoshion Color Backcover - Geschikt voor Apple iPhone 16 - Telefoonhoesje Donker",
         "Caseme Telefoonhoesje geschikt voor Apple iPhone 16E",
-        "iPhone 16 Plus 128GB - Blauwgroen - Simlockvrij"
+        "OtterBox iPhone 16 Case Symmetry Series for MagSafe"
       ],
       "issues": [],
       "degraded": false
@@ -829,10 +815,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 6349,
+      "latencyMs": 2763,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 416,
+      "mobileLatencyMs": 405,
       "productCount": 18,
       "canonicalCategory": "audio",
       "top3Titles": [
@@ -858,11 +844,11 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 1052,
+      "latencyMs": 999,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 511,
-      "productCount": 18,
+      "mobileLatencyMs": 509,
+      "productCount": 20,
       "canonicalCategory": "electronics",
       "top3Titles": [
         "Z-Edge Gaming Monitor 27 inch 200 Hz, 1 ms, FreeSync, Scherm FHD 1080P met DP-ka",
@@ -887,16 +873,16 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 907,
+      "latencyMs": 888,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 520,
+      "mobileLatencyMs": 553,
       "productCount": 24,
       "canonicalCategory": "home",
       "top3Titles": [
         "iRobot Roomba 105 Combo + Black Robot Vacuum",
-        "Xiaomi T12 Robot vacuum cleaners",
-        "Dreame X50 Ultra RobotstofzuigerWhite - te huur"
+        "Dreame X50 Ultra RobotstofzuigerWhite - te huur",
+        "Xiaomi E5 Robot Vacuum"
       ],
       "issues": [],
       "degraded": false
@@ -916,11 +902,11 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 3455,
+      "latencyMs": 3581,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 460,
-      "productCount": 26,
+      "mobileLatencyMs": 506,
+      "productCount": 25,
       "canonicalCategory": "shoes",
       "top3Titles": [
         "Baby adidas Originals white/black Samba Og Comfort Closure Elastic Lace Infant T",
@@ -945,10 +931,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 7640,
+      "latencyMs": 6254,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 586,
+      "mobileLatencyMs": 588,
       "productCount": 24,
       "canonicalCategory": "watch",
       "top3Titles": [
@@ -971,7 +957,7 @@
     "guest": {
       "search401boundary": null,
       "search": true,
-      "products": 23
+      "products": 20
     },
     "signedIn": {
       "skipped": true,
@@ -1016,43 +1002,26 @@
   "broken": [],
   "duplicates": [
     {
-      "id": 5,
-      "query": "compare airpods pro vs airpods 4",
-      "type": "duplicate",
-      "code": "top3_same_merchant",
-      "severity": "medium",
-      "detail": "craftbymerlin×2"
-    },
-    {
-      "id": 7,
-      "query": "adidas samba",
-      "type": "duplicate",
-      "code": "top3_same_merchant",
-      "severity": "medium",
-      "detail": "adidas.nl×2"
-    },
-    {
-      "id": 8,
-      "query": "nike shoes like vomero but cheaper",
-      "type": "duplicate",
-      "code": "top3_same_merchant",
-      "severity": "medium",
-      "detail": "misterrunning.com×3"
-    },
-    {
-      "id": 8,
-      "query": "nike shoes like vomero but cheaper",
+      "id": 1,
+      "query": "iphone 16",
       "type": "duplicate",
       "code": "top3_near_duplicate_title",
       "severity": "medium"
     },
     {
-      "id": 10,
-      "query": "sofa",
+      "id": 5,
+      "query": "compare airpods pro vs airpods 4",
+      "type": "duplicate",
+      "code": "top3_near_duplicate_title",
+      "severity": "medium"
+    },
+    {
+      "id": 8,
+      "query": "nike shoes like vomero but cheaper",
       "type": "duplicate",
       "code": "top3_same_merchant",
       "severity": "medium",
-      "detail": "meubels1.nl×2"
+      "detail": "misterrunning.com×2"
     },
     {
       "id": 11,
@@ -1060,7 +1029,7 @@
       "type": "duplicate",
       "code": "top3_same_merchant",
       "severity": "medium",
-      "detail": "ubuy×3"
+      "detail": "ubuy×2"
     },
     {
       "id": 13,
@@ -1076,7 +1045,7 @@
       "type": "duplicate",
       "code": "top3_same_merchant",
       "severity": "medium",
-      "detail": "ikea×3"
+      "detail": "ikea×2"
     },
     {
       "id": 15,
@@ -1085,6 +1054,14 @@
       "code": "top3_same_merchant",
       "severity": "medium",
       "detail": "b mart | منصة بي مارت للتسوق الإلكتروني×2"
+    },
+    {
+      "id": 16,
+      "query": "iphone 15 برو max titanium",
+      "type": "duplicate",
+      "code": "top3_same_merchant",
+      "severity": "medium",
+      "detail": "back market×2"
     },
     {
       "id": 20,
@@ -1100,14 +1077,6 @@
       "type": "duplicate",
       "code": "top3_near_duplicate_title",
       "severity": "medium"
-    },
-    {
-      "id": 21,
-      "query": "ايفون 16 رخيص",
-      "type": "duplicate",
-      "code": "top3_same_merchant",
-      "severity": "medium",
-      "detail": "ebay - yywirelesss×2"
     },
     {
       "id": 24,
@@ -1127,72 +1096,13 @@
     }
   ],
   "hallucinations": [],
-  "latencyOutliers": [
-    {
-      "id": 23,
-      "query": "robot vacuum under 400",
-      "bucket": "home",
-      "lang": "en",
-      "verdict": "FAIL",
-      "criteria": {
-        "A": true,
-        "B": true,
-        "C": true,
-        "D": true,
-        "E": true,
-        "F": false
-      },
-      "critical": false,
-      "latencyMs": 12439,
-      "latencyOutlier": true,
-      "mobileOk": true,
-      "mobileLatencyMs": 610,
-      "productCount": 24,
-      "canonicalCategory": "home",
-      "top3Titles": [
-        "iRobot Roomba 105 Combo + Black Robot Vacuum",
-        "Xiaomi T12 Robot vacuum cleaners",
-        "Dreame X50 Ultra RobotstofzuigerWhite - te huur"
-      ],
-      "issues": [],
-      "degraded": false
-    },
-    {
-      "id": 16,
-      "query": "iphone 15 برو max titanium",
-      "bucket": "mixed AR/EN",
-      "lang": "mixed",
-      "verdict": "FAIL",
-      "criteria": {
-        "A": true,
-        "B": true,
-        "C": true,
-        "D": true,
-        "E": true,
-        "F": false
-      },
-      "critical": false,
-      "latencyMs": 11394,
-      "latencyOutlier": true,
-      "mobileOk": true,
-      "mobileLatencyMs": 2867,
-      "productCount": 9,
-      "canonicalCategory": "phone",
-      "top3Titles": [
-        "iPhone 15 Pro Max 1000GB - Naturel Titanium - Simlockvrij",
-        "iPhone 15 Pro Max 512 GB Goed Zwart titanium",
-        "iPhone 15 Pro Max 256 GB Blauw titanium Uitstekend Apple"
-      ],
-      "issues": [],
-      "degraded": false
-    }
-  ],
+  "latencyOutliers": [],
   "mobileIssues": [],
   "qualityNotes": [],
   "finalVerdict": {
     "label": "FAIL",
-    "passCount": 16,
-    "failCount": 14,
+    "passCount": 19,
+    "failCount": 11,
     "criticalFails": 0
   }
 }
