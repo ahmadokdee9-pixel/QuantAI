@@ -113,6 +113,11 @@ import {
   emotionalCommerceIntelligenceMetaForSearch,
   snapshotEmotionalOrchestration,
 } from "@/lib/intelligence/emotionalCommerceIntelligence";
+import {
+  buildAutonomousCommerceEvolution,
+  autonomousCommerceEvolutionMetaForSearch,
+  snapshotAutonomousEvolutionOrchestration,
+} from "@/lib/intelligence/autonomousCommerceEvolution";
 import { buildVerticalTasteShadowMeta } from "@/lib/taste/verticalTasteShadow";
 import { buildFragranceTasteCanaryMeta } from "@/lib/taste/fragranceTasteApply";
 import { buildFurnitureTasteCanaryMeta } from "@/lib/taste/furnitureTasteApply";
@@ -627,6 +632,7 @@ async function handleSearch(
     let autonomousCommerceStrategyResponseMeta: Record<string, unknown> = {};
     let universalCommerceIntelligenceResponseMeta: Record<string, unknown> = {};
     let emotionalCommerceIntelligenceResponseMeta: Record<string, unknown> = {};
+    let autonomousCommerceEvolutionResponseMeta: Record<string, unknown> = {};
     const traceStage = (stage: string, before: number, after: number) => {
       pipelineTrace.trace(stage, before, after);
     };
@@ -1398,6 +1404,33 @@ async function handleSearch(
       emotionalCommerceIntelligenceResult.meta.fusedAxisCount
     );
 
+    const autonomousCommerceEvolutionResult = buildAutonomousCommerceEvolution({
+      products,
+      query,
+      sessionMemory: commerceSessionMemory,
+      trust: trustTruthResult,
+      memory: commerceMemoryResult,
+      commerceEvolution: commerceEvolutionResult,
+      commerceIdentity: autonomousCommerceIdentityResult,
+      universalCommerce: universalCommerceIntelligenceResult,
+      commerceStrategy: autonomousCommerceStrategyResult,
+      emotionalCommerce: emotionalCommerceIntelligenceResult,
+      activation: controlledActivationResult,
+    });
+    autonomousCommerceEvolutionResponseMeta = autonomousCommerceEvolutionMetaForSearch(
+      autonomousCommerceEvolutionResult,
+      snapshotAutonomousEvolutionOrchestration({
+        commerceEvolution: commerceEvolutionResult,
+        universalCommerce: universalCommerceIntelligenceResult,
+        emotionalCommerce: emotionalCommerceIntelligenceResult,
+      })
+    );
+    traceStage(
+      "autonomous_commerce_evolution",
+      autonomousCommerceEvolutionResult.meta.inputCount,
+      autonomousCommerceEvolutionResult.meta.fusedAxisCount
+    );
+
     const trayArtifactsFinal = rebuildSearchTrayArtifacts(query, products);
     dealClusters = trayArtifactsFinal.dealClusters;
     searchIntelligence = trayArtifactsFinal.searchIntelligence;
@@ -1592,6 +1625,7 @@ async function handleSearch(
         ...autonomousCommerceStrategyResponseMeta,
         ...universalCommerceIntelligenceResponseMeta,
         ...emotionalCommerceIntelligenceResponseMeta,
+        ...autonomousCommerceEvolutionResponseMeta,
         normalizationShadowPostSemantic,
         normalizationShadowPostControlled,
       },

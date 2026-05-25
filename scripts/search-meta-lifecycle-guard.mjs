@@ -262,4 +262,18 @@ check(
   "buildEmotionalCommerceIntelligence.ts exists"
 );
 
+check(
+  "phase18_autonomous_commerce_evolution",
+  route.includes("buildAutonomousCommerceEvolution"),
+  "Phase 18 autonomous commerce evolution wired in search route"
+);
+
+check(
+  "phase18_evolution_module",
+  existsSync(
+    resolve(ROOT, "lib/intelligence/autonomousCommerceEvolution/buildAutonomousCommerceEvolution.ts")
+  ),
+  "buildAutonomousCommerceEvolution.ts exists"
+);
+
 process.exit(failed ? 1 : 0);
