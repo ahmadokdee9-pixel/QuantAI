@@ -41,6 +41,7 @@ import {
   searchFallbackQueryCap,
   searchPrimaryMinProducts,
 } from "@/lib/search/productionStabilization";
+import { applyMerchantDiversitySafeguard } from "@/lib/search/merchantDiversityRerank";
 import { semanticRerankSearchResults } from "@/lib/search/semanticReranker";
 import { buildLatencyBudgetReport } from "@/lib/search/latencyBudget";
 import { PipelineTrace } from "@/lib/search/pipelineTrace";
@@ -800,6 +801,9 @@ async function handleSearch(
     stageBefore = products.length;
     products = buildBuyingDecisionLayer(products, query, canonicalQuery);
     traceStage("buying_decision_order", stageBefore, products.length);
+    stageBefore = products.length;
+    products = applyMerchantDiversitySafeguard(products);
+    traceStage("merchant_diversity_safeguard", stageBefore, products.length);
 
     const { topCategory } = memoryPatchFromSearch(query);
 
@@ -1471,6 +1475,10 @@ async function handleSearch(
     } else {
       traceStage("shadow_stack_skipped", products.length, products.length);
     }
+
+    stageBefore = products.length;
+    products = applyMerchantDiversitySafeguard(products);
+    traceStage("merchant_diversity_final", stageBefore, products.length);
 
     const marketAwareness = computeMarketAwarenessForTray(query, products);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);

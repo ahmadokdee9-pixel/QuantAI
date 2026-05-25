@@ -1,62 +1,62 @@
 {
-  "generatedAt": "2026-05-25T21:41:32.872Z",
+  "generatedAt": "2026-05-25T23:45:07.255Z",
   "baseUrl": "https://quant-ai-app.vercel.app",
   "queryCount": 5,
   "successCount": 5,
-  "p50Ms": 8644,
-  "p95Ms": 12879,
-  "maxMs": 12879,
+  "p50Ms": 641,
+  "p95Ms": 1006,
+  "maxMs": 1006,
   "warmPass": false,
   "warmP50Ms": null,
   "warmP95Ms": null,
   "p95GateMs": 8000,
-  "p95Pass": false,
+  "p95Pass": true,
   "warmP95Pass": null,
   "rows": [
     {
       "query": "iphone 16",
       "status": 200,
       "success": true,
-      "latencyMs": 1093,
-      "products": 23,
+      "latencyMs": 641,
+      "products": 20,
       "withinCold": true,
-      "searchLatencyMs": 541
+      "searchLatencyMs": 229
     },
     {
       "query": "airpods",
       "status": 200,
       "success": true,
-      "latencyMs": 12879,
-      "products": 20,
-      "withinCold": false,
-      "searchLatencyMs": 12641
+      "latencyMs": 539,
+      "products": 24,
+      "withinCold": true,
+      "searchLatencyMs": 275
     },
     {
       "query": "gaming monitor",
       "status": 200,
       "success": true,
-      "latencyMs": 4101,
-      "products": 18,
+      "latencyMs": 1006,
+      "products": 20,
       "withinCold": true,
-      "searchLatencyMs": 3788
+      "searchLatencyMs": 702
     },
     {
       "query": "sofa",
       "status": 200,
       "success": true,
-      "latencyMs": 8644,
+      "latencyMs": 655,
       "products": 27,
       "withinCold": true,
-      "searchLatencyMs": 7978
+      "searchLatencyMs": 301
     },
     {
       "query": "adidas samba",
       "status": 200,
       "success": true,
-      "latencyMs": 12226,
+      "latencyMs": 535,
       "products": 26,
-      "withinCold": false,
-      "searchLatencyMs": 11943
+      "withinCold": true,
+      "searchLatencyMs": 256
     }
   ],
   "warmRows": []
