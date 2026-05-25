@@ -248,4 +248,18 @@ check(
   "buildUniversalCommerceIntelligence.ts exists"
 );
 
+check(
+  "phase17_emotional_commerce_intelligence",
+  route.includes("buildEmotionalCommerceIntelligence"),
+  "Phase 17 emotional commerce intelligence wired in search route"
+);
+
+check(
+  "phase17_emotional_module",
+  existsSync(
+    resolve(ROOT, "lib/intelligence/emotionalCommerceIntelligence/buildEmotionalCommerceIntelligence.ts")
+  ),
+  "buildEmotionalCommerceIntelligence.ts exists"
+);
+
 process.exit(failed ? 1 : 0);

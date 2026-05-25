@@ -108,6 +108,11 @@ import {
   universalCommerceIntelligenceMetaForSearch,
   snapshotUniversalOrchestration,
 } from "@/lib/intelligence/universalCommerceIntelligence";
+import {
+  buildEmotionalCommerceIntelligence,
+  emotionalCommerceIntelligenceMetaForSearch,
+  snapshotEmotionalOrchestration,
+} from "@/lib/intelligence/emotionalCommerceIntelligence";
 import { buildVerticalTasteShadowMeta } from "@/lib/taste/verticalTasteShadow";
 import { buildFragranceTasteCanaryMeta } from "@/lib/taste/fragranceTasteApply";
 import { buildFurnitureTasteCanaryMeta } from "@/lib/taste/furnitureTasteApply";
@@ -621,6 +626,7 @@ async function handleSearch(
     let predictiveCommerceIntentResponseMeta: Record<string, unknown> = {};
     let autonomousCommerceStrategyResponseMeta: Record<string, unknown> = {};
     let universalCommerceIntelligenceResponseMeta: Record<string, unknown> = {};
+    let emotionalCommerceIntelligenceResponseMeta: Record<string, unknown> = {};
     const traceStage = (stage: string, before: number, after: number) => {
       pipelineTrace.trace(stage, before, after);
     };
@@ -1366,6 +1372,32 @@ async function handleSearch(
       universalCommerceIntelligenceResult.meta.fusedAxisCount
     );
 
+    const emotionalCommerceIntelligenceResult = buildEmotionalCommerceIntelligence({
+      products,
+      query,
+      sessionMemory: commerceSessionMemory,
+      shopperPersona,
+      trust: trustTruthResult,
+      memory: commerceMemoryResult,
+      commerceIdentity: autonomousCommerceIdentityResult,
+      universalCommerce: universalCommerceIntelligenceResult,
+      commerceStrategy: autonomousCommerceStrategyResult,
+      activation: controlledActivationResult,
+    });
+    emotionalCommerceIntelligenceResponseMeta = emotionalCommerceIntelligenceMetaForSearch(
+      emotionalCommerceIntelligenceResult,
+      snapshotEmotionalOrchestration({
+        universalCommerce: universalCommerceIntelligenceResult,
+        commerceStrategy: autonomousCommerceStrategyResult,
+        commerceIdentity: autonomousCommerceIdentityResult,
+      })
+    );
+    traceStage(
+      "emotional_commerce_intelligence",
+      emotionalCommerceIntelligenceResult.meta.inputCount,
+      emotionalCommerceIntelligenceResult.meta.fusedAxisCount
+    );
+
     const trayArtifactsFinal = rebuildSearchTrayArtifacts(query, products);
     dealClusters = trayArtifactsFinal.dealClusters;
     searchIntelligence = trayArtifactsFinal.searchIntelligence;
@@ -1559,6 +1591,7 @@ async function handleSearch(
         ...predictiveCommerceIntentResponseMeta,
         ...autonomousCommerceStrategyResponseMeta,
         ...universalCommerceIntelligenceResponseMeta,
+        ...emotionalCommerceIntelligenceResponseMeta,
         normalizationShadowPostSemantic,
         normalizationShadowPostControlled,
       },
