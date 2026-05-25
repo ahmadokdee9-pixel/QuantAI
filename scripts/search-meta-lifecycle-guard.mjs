@@ -142,4 +142,16 @@ check(
   "buildAutonomousCommerceOs.ts exists"
 );
 
+check(
+  "controlled_activation_wired",
+  route.includes("buildControlledActivation"),
+  "Controlled activation infrastructure wired in search route"
+);
+
+check(
+  "controlled_activation_module",
+  existsSync(resolve(ROOT, "lib/governance/controlledActivation/buildControlledActivation.ts")),
+  "buildControlledActivation.ts exists"
+);
+
 process.exit(failed ? 1 : 0);

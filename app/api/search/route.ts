@@ -69,6 +69,10 @@ import {
   autonomousCommerceOsMetaForSearch,
   snapshotAutonomousCommerceOrchestration,
 } from "@/lib/intelligence/autonomousCommerce";
+import {
+  buildControlledActivation,
+  controlledActivationMetaForSearch,
+} from "@/lib/governance/controlledActivation";
 import { buildVerticalTasteShadowMeta } from "@/lib/taste/verticalTasteShadow";
 import { buildFragranceTasteCanaryMeta } from "@/lib/taste/fragranceTasteApply";
 import { buildFurnitureTasteCanaryMeta } from "@/lib/taste/furnitureTasteApply";
@@ -574,6 +578,7 @@ async function handleSearch(
     let commerceMemoryResponseMeta: Record<string, unknown> = {};
     let recommendationCognitionResponseMeta: Record<string, unknown> = {};
     let autonomousCommerceOsResponseMeta: Record<string, unknown> = {};
+    let controlledActivationResponseMeta: Record<string, unknown> = {};
     const traceStage = (stage: string, before: number, after: number) => {
       pipelineTrace.trace(stage, before, after);
     };
@@ -1092,6 +1097,31 @@ async function handleSearch(
       autonomousCommerceOsResult.meta.graphNodeCount
     );
 
+    const preControlledActivationLinks = products.map((p) => p.link);
+    const activationSessionKey =
+      resolveIntentCanarySessionKey({ query }) ?? `q:${normalizeSearchCacheKey(query)}`;
+    const controlledActivationResult = buildControlledActivation({
+      products,
+      query,
+      sessionKey: activationSessionKey,
+      category: canonicalQuery.category ?? topCategory,
+      preMutationLinks: preControlledActivationLinks,
+      trustResult: trustTruthResult,
+      memoryResult: commerceMemoryResult,
+      recommendationResult: recommendationCognitionResult,
+      commerceOsResult: autonomousCommerceOsResult,
+      latencyBudgetOk: searchLatencyMs < 12_000,
+    });
+    products = controlledActivationResult.products;
+    controlledActivationResponseMeta = controlledActivationMetaForSearch(
+      controlledActivationResult
+    );
+    traceStage(
+      "controlled_activation",
+      products.length,
+      controlledActivationResult.shadowMutation.candidateCount
+    );
+
     const trayArtifactsFinal = rebuildSearchTrayArtifacts(query, products);
     dealClusters = trayArtifactsFinal.dealClusters;
     searchIntelligence = trayArtifactsFinal.searchIntelligence;
@@ -1277,6 +1307,7 @@ async function handleSearch(
         ...commerceMemoryResponseMeta,
         ...recommendationCognitionResponseMeta,
         ...autonomousCommerceOsResponseMeta,
+        ...controlledActivationResponseMeta,
         normalizationShadowPostSemantic,
         normalizationShadowPostControlled,
       },

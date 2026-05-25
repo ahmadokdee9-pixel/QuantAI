@@ -34,6 +34,11 @@ export {
   type GlobalMutationPolicy,
 } from "./applyMutationGuard";
 export { runUnifiedControlledStack } from "./unifiedControlledStackKernel";
+export {
+  buildControlledActivation,
+  controlledActivationMetaForSearch,
+  readControlledActivationFlags,
+} from "./controlledActivation";
 export type {
   UnifiedControlledStackInput,
   UnifiedControlledStackResult,
