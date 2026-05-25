@@ -192,4 +192,18 @@ check(
   "buildLiveCommerceSignals.ts exists"
 );
 
+check(
+  "phase13_autonomous_commerce_identity",
+  route.includes("buildAutonomousCommerceIdentity"),
+  "Phase 13 autonomous commerce identity wired in search route"
+);
+
+check(
+  "phase13_commerce_identity_module",
+  existsSync(
+    resolve(ROOT, "lib/intelligence/autonomousCommerceIdentity/buildAutonomousCommerceIdentity.ts")
+  ),
+  "buildAutonomousCommerceIdentity.ts exists"
+);
+
 process.exit(failed ? 1 : 0);
