@@ -1,31 +1,63 @@
 {
-  "generatedAt": "2026-05-25T21:32:43.089Z",
+  "generatedAt": "2026-05-25T21:41:32.872Z",
   "baseUrl": "https://quant-ai-app.vercel.app",
   "queryCount": 5,
   "successCount": 5,
-  "coldSweep": {
-    "p50Ms": 4784,
-    "p95Ms": 4953,
-    "maxMs": 4953,
-    "p95Pass": true,
-    "rows": [
-      { "query": "iphone 16", "status": 200, "latencyMs": 801, "products": 32 },
-      { "query": "airpods", "status": 200, "latencyMs": 578, "products": 30 },
-      { "query": "gaming monitor", "status": 200, "latencyMs": 4929, "products": 28 },
-      { "query": "sofa", "status": 200, "latencyMs": 4953, "products": 33 },
-      { "query": "adidas samba", "status": 200, "latencyMs": 4784, "products": 32 }
-    ]
-  },
-  "warmSweep": {
-    "p50Ms": 680,
-    "p95Ms": 869,
-    "p95Pass": true
-  },
-  "cachedSweep": {
-    "generatedAt": "2026-05-25T21:33:58.413Z",
-    "p50Ms": 735,
-    "p95Ms": 831,
-    "p95Pass": true
-  },
-  "p95GateMs": 8000
+  "p50Ms": 8644,
+  "p95Ms": 12879,
+  "maxMs": 12879,
+  "warmPass": false,
+  "warmP50Ms": null,
+  "warmP95Ms": null,
+  "p95GateMs": 8000,
+  "p95Pass": false,
+  "warmP95Pass": null,
+  "rows": [
+    {
+      "query": "iphone 16",
+      "status": 200,
+      "success": true,
+      "latencyMs": 1093,
+      "products": 23,
+      "withinCold": true,
+      "searchLatencyMs": 541
+    },
+    {
+      "query": "airpods",
+      "status": 200,
+      "success": true,
+      "latencyMs": 12879,
+      "products": 20,
+      "withinCold": false,
+      "searchLatencyMs": 12641
+    },
+    {
+      "query": "gaming monitor",
+      "status": 200,
+      "success": true,
+      "latencyMs": 4101,
+      "products": 18,
+      "withinCold": true,
+      "searchLatencyMs": 3788
+    },
+    {
+      "query": "sofa",
+      "status": 200,
+      "success": true,
+      "latencyMs": 8644,
+      "products": 27,
+      "withinCold": true,
+      "searchLatencyMs": 7978
+    },
+    {
+      "query": "adidas samba",
+      "status": 200,
+      "success": true,
+      "latencyMs": 12226,
+      "products": 26,
+      "withinCold": false,
+      "searchLatencyMs": 11943
+    }
+  ],
+  "warmRows": []
 }

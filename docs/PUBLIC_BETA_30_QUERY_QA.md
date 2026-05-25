@@ -1,5 +1,7 @@
 # Public beta — 30-query manual QA
 
+**Use the execution sheet for sign-off:** `docs/PUBLIC_BETA_30_QUERY_QA_EXECUTION.md` (per-criterion columns + defect log).
+
 Run against **Production** with 2–3s between queries. Sign off each row before inviting users.
 
 **Commands (automated subset):**

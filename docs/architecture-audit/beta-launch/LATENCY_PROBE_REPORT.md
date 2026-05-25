@@ -1,39 +1,28 @@
 # Beta latency probe
 
-**Generated:** 2026-05-25 (production stabilization validation)  
+**Generated:** 2026-05-25T21:41:32.872Z  
 **Base URL:** https://quant-ai-app.vercel.app
-
-## Cold path (first probe per query, empty CDN cache)
 
 | Metric | Value | Gate |
 |--------|------:|------|
-| p50 | 4784ms | — |
-| p95 (cold) | **4953ms** | ≤ 8000ms |
-| max | 4953ms | — |
+| p50 | 8644ms | — |
+| p95 (cold) | 12879ms | ≤ 8000ms |
+| max | 12879ms | — |
 | success | 5/5 | all OK |
 
-**Verdict (cold p95):** **PASS**
+
+**Verdict (cold p95):** FAIL — re-run before Phase 1 invites; see `BETA_LAUNCH_READINESS_SCORE.md` for prior PASS sweep.
+
+**Note:** Latency varies with SerpAPI cold path; cache probe (`npm run test:beta-cache-dedupe`) may still PASS when p95 probe fails.
+
+
+## Per query (cold)
 
 | Query | Status | ms | Products |
 |-------|--------|---:|---------:|
-| iphone 16 | 200 | 801 | 32 |
-| airpods | 200 | 578 | 30 |
-| gaming monitor | 200 | 4929 | 28 |
-| sofa | 200 | 4953 | 33 |
-| adidas samba | 200 | 4784 | 32 |
+| iphone 16 | 200 | 1093 | 23 |
+| airpods | 200 | 12879 | 20 |
+| gaming monitor | 200 | 4101 | 18 |
+| sofa | 200 | 8644 | 27 |
+| adidas samba | 200 | 12226 | 26 |
 
-## Warm path (second probe per query, same session)
-
-| p50 | p95 | Gate |
-|-----|-----|------|
-| 680ms | 869ms | PASS |
-
-## Cached guest pipeline (subsequent probe run)
-
-| p50 | p95 |
-|-----|-----|
-| 735ms | 831ms |
-
-See `latency-probe.json` for latest automated run output.
-
-**Note:** Deploy stabilization changes to Vercel if `shadow_stack_skipped` is not yet in production stage logs. Re-probe after deploy with fresh queries: `BETA_LATENCY_QUERIES="unique query 1,..." npm run test:beta-latency-probe`.

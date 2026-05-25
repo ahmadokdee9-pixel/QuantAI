@@ -82,9 +82,24 @@ QUANTAI_SEARCH_META_LITE=true
 npm run test:beta-prod-env
 ```
 
+## Beta stabilization (latency — recommended Production)
+
+```
+QUANTAI_BETA_STABILIZATION=true
+QUANTAI_SEARCH_HEURISTIC_COMMERCE_AI=true
+SEARCH_GUEST_CACHE_SECONDS=300
+SEARCH_AUTH_CACHE_SECONDS=120
+SEARCH_SERPAPI_TIMEOUT_MS=12000
+SEARCH_SERPAPI_RETRIES=1
+QUANTAI_SEARCH_PRIMARY_MIN_PRODUCTS=6
+QUANTAI_SEARCH_MAX_FALLBACK_QUERIES=1
+```
+
 ## Verify after deploy
 
 ```bash
 SEARCH_BASE_URL=https://YOUR_PRODUCTION_DOMAIN npm run test:beta-prod-smoke
+SEARCH_BASE_URL=https://YOUR_PRODUCTION_DOMAIN npm run test:beta-cache-dedupe
+SEARCH_BASE_URL=https://YOUR_PRODUCTION_DOMAIN npm run test:beta-latency-probe
 REQUIRE_UPSTASH=true SEARCH_BASE_URL=https://YOUR_PRODUCTION_DOMAIN npm run test:beta-upstash
 ```

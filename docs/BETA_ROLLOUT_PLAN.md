@@ -1,5 +1,7 @@
 # Beta rollout plan
 
+**Operations runbooks:** `docs/INVITE_ONLY_BETA_ROLLOUT.md`, `docs/PRODUCTION_ROLLOUT_CHECKLIST.md`, `docs/PUBLIC_BETA_LAUNCH_CHECKLIST.md`, readiness score `docs/architecture-audit/beta-launch/BETA_LAUNCH_READINESS_SCORE.md`.
+
 ## Phase 0 — Internal (5–10 users, 3–5 days)
 
 **Goal:** Catch P0 regressions without reputation risk.
