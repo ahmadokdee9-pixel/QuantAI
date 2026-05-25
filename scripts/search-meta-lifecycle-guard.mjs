@@ -220,4 +220,18 @@ check(
   "buildPredictiveCommerceIntent.ts exists"
 );
 
+check(
+  "phase15_autonomous_commerce_strategy",
+  route.includes("buildAutonomousCommerceStrategy"),
+  "Phase 15 autonomous commerce strategy wired in search route"
+);
+
+check(
+  "phase15_strategy_module",
+  existsSync(
+    resolve(ROOT, "lib/intelligence/autonomousCommerceStrategy/buildAutonomousCommerceStrategy.ts")
+  ),
+  "buildAutonomousCommerceStrategy.ts exists"
+);
+
 process.exit(failed ? 1 : 0);
