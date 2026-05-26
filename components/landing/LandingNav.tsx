@@ -81,7 +81,7 @@ export default function LandingNav() {
 
       {open && (
         <div
-          className="qa-scroll-touch border-t border-white/[0.06] bg-[#030712]/95 backdrop-blur-xl px-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-4 lg:hidden motion-safe:animate-[fadeIn_0.2s_ease-out]"
+          className="qa-os-toolbar qa-scroll-touch border-t px-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-4 lg:hidden motion-safe:animate-[fadeIn_0.2s_ease-out]"
         >
           <div className="flex max-h-[min(70dvh,28rem)] flex-col gap-1 overflow-y-auto">
             {links.map((l) => (

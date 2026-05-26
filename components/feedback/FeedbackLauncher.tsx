@@ -104,7 +104,7 @@ export default function FeedbackLauncher({ variant = "floating", className = "" 
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={reduceMotion ? undefined : { opacity: 0, y: 12, scale: 0.98 }}
               transition={{ type: "spring", stiffness: 420, damping: 34 }}
-              className="cockpit-glass-panel relative z-10 w-full max-w-lg overflow-hidden border-cyan-400/15 p-6 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]"
+              className="cockpit-glass-panel qa-modal-panel relative z-10 w-full max-w-lg overflow-hidden p-6"
             >
               <div className="pointer-events-none absolute -right-20 -top-20 size-48 rounded-full bg-cyan-400/10 blur-3xl" />
               <div className="relative flex items-start justify-between gap-3">

@@ -189,7 +189,7 @@ export default function CommandPalette() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={reduce ? undefined : { opacity: 0, y: -6, scale: 0.99 }}
             transition={{ type: "spring", stiffness: 420, damping: 34 }}
-            className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-white/[0.1] bg-[#0a101f]/95 shadow-[0_40px_120px_-24px_rgba(0,0,0,0.85),0_0_80px_-30px_rgba(34,211,238,0.15)] backdrop-blur-2xl"
+            className="qa-modal-panel relative w-full max-w-lg overflow-hidden"
           >
             <div className="flex items-center gap-3 border-b border-white/[0.07] px-4 py-3">
               <Command className="size-4 shrink-0 text-cyan-300/80" aria-hidden />

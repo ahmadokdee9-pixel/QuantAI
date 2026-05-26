@@ -1,0 +1,263 @@
+/**
+ * QuantAI Design OS v2 — unified space-age commerce intelligence surface.
+ * Visual evolution only: no layout/logic changes to search or card data.
+ */
+
+:root {
+  /* Core palette */
+  --qa-v2-bg-void: #01040c;
+  --qa-v2-bg-base: #020617;
+  --qa-v2-bg-elevated: #060d1a;
+  --qa-v2-bg-panel: rgba(8, 14, 28, 0.82);
+
+  /* Accent spectrum */
+  --qa-v2-cyan: #22d3ee;
+  --qa-v2-cyan-soft: rgba(34, 211, 238, 0.14);
+  --qa-v2-violet: #a78bfa;
+  --qa-v2-violet-soft: rgba(167, 139, 250, 0.12);
+  --qa-v2-emerald: #34d399;
+
+  /* Typography */
+  --qa-v2-text-primary: rgba(248, 250, 252, 0.97);
+  --qa-v2-text-secondary: rgba(203, 213, 225, 0.82);
+  --qa-v2-text-muted: rgba(148, 163, 184, 0.68);
+  --qa-v2-text-faint: rgba(100, 116, 139, 0.75);
+
+  /* Surfaces */
+  --qa-v2-border: rgba(255, 255, 255, 0.08);
+  --qa-v2-border-strong: rgba(255, 255, 255, 0.12);
+  --qa-v2-border-glow: rgba(34, 211, 238, 0.22);
+  --qa-v2-glass-highlight: rgba(255, 255, 255, 0.06);
+  --qa-v2-inset-line: rgba(255, 255, 255, 0.045);
+
+  /* Depth */
+  --qa-v2-shadow-ambient: 0 32px 100px -48px rgba(0, 0, 0, 0.88);
+  --qa-v2-shadow-glow: 0 0 72px -40px rgba(34, 211, 238, 0.14);
+  --qa-v2-shadow-panel: 0 0 0 1px var(--qa-v2-inset-line) inset, var(--qa-v2-shadow-ambient), var(--qa-v2-shadow-glow);
+
+  /* Motion */
+  --qa-v2-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --qa-v2-duration: 0.4s;
+}
+
+/* —— Global OS root —— */
+html.qa-os-v2,
+.qa-os-v2 {
+  color-scheme: dark;
+}
+
+body.qa-os-v2 {
+  background-color: var(--qa-v2-bg-base);
+  color: var(--qa-v2-text-primary);
+}
+
+.qa-os-v2 .qi-os-atmosphere::before {
+  background:
+    radial-gradient(ellipse 85% 55% at 14% -10%, rgba(34, 211, 238, 0.08), transparent 54%),
+    radial-gradient(ellipse 65% 45% at 92% 6%, rgba(99, 102, 241, 0.06), transparent 50%),
+    radial-gradient(ellipse 50% 35% at 50% 100%, rgba(15, 23, 42, 0.65), transparent 70%),
+    linear-gradient(180deg, #01040c 0%, #030a16 38%, var(--qa-v2-bg-base) 100%);
+}
+
+/* —— Unified glass panels (all pages) —— */
+.qa-os-v2 .cockpit-glass-panel,
+.qa-os-v2 .qa-premium-surface,
+.qa-os-v2 .cockpit-glass-card {
+  border-color: var(--qa-v2-border);
+  background:
+    radial-gradient(120% 90% at 12% -8%, var(--qa-v2-cyan-soft), transparent 42%),
+    radial-gradient(90% 70% at 100% 0%, var(--qa-v2-violet-soft), transparent 38%),
+    linear-gradient(168deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 38%, var(--qa-v2-bg-panel) 100%);
+  box-shadow: var(--qa-v2-shadow-panel);
+  backdrop-filter: blur(32px) saturate(155%);
+  -webkit-backdrop-filter: blur(32px) saturate(155%);
+  transition:
+    border-color var(--qa-v2-duration) var(--qa-v2-ease),
+    box-shadow var(--qa-v2-duration) var(--qa-v2-ease),
+    transform var(--qa-v2-duration) var(--qa-v2-ease);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .qa-os-v2 .cockpit-glass-panel:hover,
+  .qa-os-v2 .cockpit-glass-card:hover {
+    border-color: var(--qa-v2-border-strong);
+    transform: translateY(-1px);
+  }
+}
+
+/* —— Product card visual harmony (scan-first layout unchanged) —— */
+.qa-os-v2 .qi-product-card-shell.qi-intel-surface {
+  border-color: rgba(255, 255, 255, 0.05);
+  background:
+    radial-gradient(140% 100% at 50% -30%, rgba(34, 211, 238, 0.07), transparent 50%),
+    linear-gradient(168deg, rgba(255, 255, 255, 0.04) 0%, rgba(3, 8, 18, 0.96) 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+    0 36px 88px -52px rgba(0, 0, 0, 0.92),
+    0 0 64px -48px rgba(34, 211, 238, 0.1);
+}
+
+.qa-os-v2 .qi-product-card-inner {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 28px 64px -36px rgba(0, 0, 0, 0.86),
+    0 0 48px -40px rgba(34, 211, 238, 0.06),
+    0 0 56px -44px rgba(139, 92, 246, 0.04);
+}
+
+.qa-os-v2 .qi-product-card-shell::before {
+  opacity: 0.1;
+  filter: blur(10px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .qa-os-v2 .qi-product-card-shell::before {
+    animation-duration: 7.5s;
+  }
+
+  .qa-os-v2 .qi-product-card-shell:hover .qi-product-card-inner {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+      0 1px 0 rgba(255, 255, 255, 0.1) inset,
+      0 36px 76px -32px rgba(0, 0, 0, 0.82),
+      0 0 56px -32px rgba(34, 211, 238, 0.1),
+      0 0 64px -36px rgba(139, 92, 246, 0.06);
+  }
+
+  .qa-os-v2 .qi-tray-focus-active.qi-product-card-shell::before {
+    opacity: 0.22;
+    filter: blur(12px);
+  }
+}
+
+.qa-os-v2 .qi-intel-surface {
+  border-color: rgba(255, 255, 255, 0.055);
+  background:
+    radial-gradient(120% 80% at 50% -20%, rgba(34, 211, 238, 0.06), transparent 55%),
+    linear-gradient(168deg, rgba(255, 255, 255, 0.05) 0%, rgba(4, 10, 20, 0.94) 58%, rgba(2, 6, 14, 0.99) 100%);
+}
+
+/* —— Toolbars & sticky chrome —— */
+.qa-os-toolbar {
+  border-bottom: 1px solid var(--qa-v2-border);
+  background: rgba(3, 9, 18, 0.78);
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 24px 56px -36px rgba(0, 0, 0, 0.85),
+    0 0 48px -40px rgba(34, 211, 238, 0.06);
+}
+
+/* —— Drawers / side panels —— */
+.qa-os-drawer {
+  border-color: var(--qa-v2-border);
+  background: linear-gradient(165deg, rgba(9, 15, 28, 0.98), rgba(2, 6, 14, 0.99));
+  box-shadow:
+    -24px 0 80px -24px rgba(0, 0, 0, 0.9),
+    0 0 80px -48px rgba(34, 211, 238, 0.1);
+  backdrop-filter: blur(32px) saturate(150%);
+  -webkit-backdrop-filter: blur(32px) saturate(150%);
+}
+
+/* —— Inputs (search-adjacent surfaces) —— */
+.qa-os-v2 .qa-search-field:focus-within {
+  border-color: var(--qa-v2-border-glow);
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.12),
+    0 0 56px -28px rgba(34, 211, 238, 0.18);
+}
+
+/* —— Typography scale —— */
+.qa-os-v2 .cockpit-overline,
+.qa-os-v2 .qi-silent-overline {
+  color: var(--qa-v2-text-faint);
+  letter-spacing: 0.14em;
+}
+
+.qa-os-v2 .cockpit-display,
+.qa-os-v2 .qi-hero-headline,
+.qa-os-v2 .qi-editorial-display {
+  color: var(--qa-v2-text-primary);
+  letter-spacing: -0.038em;
+}
+
+.qa-os-v2 .cockpit-body,
+.qa-os-v2 .qi-hero-lead,
+.qa-os-v2 .qi-silent-whisper {
+  color: var(--qa-v2-text-muted);
+}
+
+.qa-os-v2 .qa-section-title {
+  color: var(--qa-v2-text-primary);
+}
+
+.qa-os-v2 .qa-section-lead {
+  color: var(--qa-v2-text-muted);
+}
+
+/* —— Chips & secondary controls —— */
+.qa-os-v2 button,
+.qa-os-v2 a {
+  transition:
+    color 0.22s var(--qa-v2-ease),
+    background 0.22s var(--qa-v2-ease),
+    border-color 0.22s var(--qa-v2-ease),
+    box-shadow 0.35s var(--qa-v2-ease);
+}
+
+.qa-os-v2 :focus-visible {
+  outline: 2px solid rgba(45, 212, 191, 0.45);
+  outline-offset: 2px;
+}
+
+/* —— Skeleton loading (tray) —— */
+.qa-os-v2 .skeleton-cinematic {
+  border-color: var(--qa-v2-border);
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.04) inset,
+    0 26px 70px -34px rgba(0, 0, 0, 0.82);
+}
+
+/* —— Compare / floating surfaces —— */
+.qa-os-v2 .stream-ribbon {
+  border-color: var(--qa-v2-border);
+  box-shadow: var(--qa-v2-shadow-panel);
+}
+
+.qa-os-dock {
+  border: 1px solid var(--qa-v2-border);
+  background:
+    radial-gradient(120% 80% at 100% 0%, var(--qa-v2-cyan-soft), transparent 50%),
+    linear-gradient(168deg, rgba(255, 255, 255, 0.06) 0%, rgba(3, 8, 18, 0.88) 100%);
+  box-shadow: var(--qa-v2-shadow-panel);
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+}
+
+/* —— Header cohesion —— */
+.qa-os-v2 .qa-chrome-header {
+  background: rgba(2, 6, 18, 0.8);
+  border-bottom-color: var(--qa-v2-border);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 16px 48px -32px rgba(0, 0, 0, 0.7),
+    0 0 64px -48px rgba(34, 211, 238, 0.08);
+}
+
+/* —— Empty states —— */
+.qa-os-v2 .qa-empty-state {
+  border-color: var(--qa-v2-border);
+  background:
+    radial-gradient(circle at 24% 0%, var(--qa-v2-cyan-soft), transparent 45%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(2, 6, 16, 0.6));
+  box-shadow: var(--qa-v2-shadow-panel);
+}
+
+/* —— Modal panels —— */
+.qa-os-v2 .qa-modal-panel {
+  border-color: var(--qa-v2-border-strong);
+  background: linear-gradient(168deg, rgba(10, 16, 30, 0.99), rgba(2, 5, 12, 1));
+  box-shadow: var(--qa-v2-shadow-panel);
+}

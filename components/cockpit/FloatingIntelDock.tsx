@@ -44,7 +44,7 @@ export default function FloatingIntelDock() {
       className="pointer-events-none fixed bottom-[max(1.25rem,env(safe-area-inset-bottom,0px))] right-[max(0.85rem,env(safe-area-inset-right,0px))] z-[90] flex max-w-[calc(100vw-1.75rem)] flex-col items-end gap-2.5 lg:bottom-28"
       style={{ maxHeight: "min(70vh, 28rem)" }}
     >
-      <div className="pointer-events-auto flex max-h-[inherit] flex-col gap-2.5 overflow-y-auto overflow-x-hidden rounded-2xl border border-white/[0.055] bg-[#050a12]/78 p-2.5 shadow-[0_20px_56px_-28px_rgba(0,0,0,0.88),0_0_40px_-36px_rgba(34,211,238,0.06)] backdrop-blur-2xl">
+      <div className="qa-os-dock pointer-events-auto flex max-h-[inherit] flex-col gap-2.5 overflow-y-auto overflow-x-hidden rounded-2xl p-2.5">
         <span className="sr-only">Quick shortcuts</span>
         <DockBtn
           label="Command palette ⌘K"

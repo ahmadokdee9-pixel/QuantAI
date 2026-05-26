@@ -318,7 +318,7 @@ export default function CopilotDrawer() {
                   ? { duration: 0 }
                   : { type: "spring", stiffness: 380, damping: 34 }
               }
-              className="relative flex h-[100dvh] w-full max-w-md flex-col overflow-hidden border-l border-white/[0.08] bg-[#060b18]/96 shadow-[-24px_0_80px_-20px_rgba(0,0,0,0.85)] backdrop-blur-2xl"
+              className="qa-os-drawer qa-modal-panel relative flex h-[100dvh] w-full max-w-md flex-col overflow-hidden border-l"
             >
               <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
                 <div className="flex items-center gap-2">

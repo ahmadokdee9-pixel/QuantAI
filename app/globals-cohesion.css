@@ -6,16 +6,16 @@
 :root {
   --qa-content-max: 80rem;
   --qa-content-narrow: 64rem;
-  --qa-ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
+  --qa-ease-premium: var(--qa-v2-ease, cubic-bezier(0.22, 1, 0.36, 1));
   --qa-ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
   --qa-duration-fast: 0.22s;
-  --qa-duration-ui: 0.38s;
+  --qa-duration-ui: var(--qa-v2-duration, 0.38s);
   --qa-duration-slow: 0.55s;
-  --qa-header-bg: rgba(2, 6, 23, 0.76);
-  --qa-scrim: rgba(2, 6, 23, 0.82);
-  --qa-border-subtle: rgba(255, 255, 255, 0.07);
-  --qa-border-focus: rgba(34, 211, 238, 0.38);
-  --qa-text-muted: rgba(148, 163, 184, 0.72);
+  --qa-header-bg: rgba(2, 6, 18, 0.8);
+  --qa-scrim: rgba(2, 6, 23, 0.84);
+  --qa-border-subtle: var(--qa-v2-border, rgba(255, 255, 255, 0.08));
+  --qa-border-focus: var(--qa-v2-border-glow, rgba(34, 211, 238, 0.38));
+  --qa-text-muted: var(--qa-v2-text-muted, rgba(148, 163, 184, 0.68));
   --qa-text-soft: rgba(148, 163, 184, 0.55);
 }
 
@@ -23,8 +23,8 @@
 .qa-page-canvas {
   position: relative;
   min-height: 100dvh;
-  color: #f1f5f9;
-  background-color: #020617;
+  color: var(--qa-v2-text-primary, #f1f5f9);
+  background-color: var(--qa-v2-bg-base, #020617);
 }
 
 .qa-content-wrap {

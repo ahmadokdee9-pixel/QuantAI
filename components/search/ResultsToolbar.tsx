@@ -30,7 +30,7 @@ export default function ResultsToolbar({
 }: Props) {
   return (
     <motion.div
-      className="sticky top-[3.25rem] z-30 -mx-4 px-4 py-3 sm:-mx-6 sm:px-6 mb-8 touch-manipulation border-b border-white/[0.07] bg-[#030712]/78 backdrop-blur-[28px] backdrop-saturate-[1.35] supports-[backdrop-filter]:bg-[#030712]/48 shadow-[0_24px_60px_-32px_rgba(0,0,0,0.88),0_0_48px_-36px_rgba(34,211,238,0.08)]"
+      className="qa-os-toolbar sticky top-[3.25rem] z-30 -mx-4 px-4 py-3 sm:-mx-6 sm:px-6 mb-8 touch-manipulation"
     >
         <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-center gap-2">

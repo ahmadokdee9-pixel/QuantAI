@@ -61,7 +61,7 @@ export default function PricingPage() {
   }, [pricingCopilotSession, setCopilotSession]);
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#020617] text-slate-100">
+    <div className="qa-page-canvas relative min-h-screen overflow-x-hidden">
       <AmbientBackdrop />
       <div className="relative z-10">
         <LandingNav />

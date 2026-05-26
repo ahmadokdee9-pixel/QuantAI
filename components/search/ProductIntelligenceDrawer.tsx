@@ -208,7 +208,7 @@ export default function ProductIntelligenceDrawer({ product: p, list, open, onCl
                 ? { duration: 0 }
                 : { type: "spring", stiffness: 420, damping: 38, mass: 0.85 }
             }
-            className="relative z-[2] flex max-h-[min(92dvh,920px)] w-full max-w-lg flex-col overflow-hidden rounded-t-[1.75rem] border border-white/[0.1] border-b-0 bg-[#050912]/98 shadow-[0_-32px_120px_-24px_rgba(0,0,0,0.9)] sm:max-h-none sm:h-full sm:max-w-[min(100vw,26rem)] sm:rounded-none sm:border-l sm:border-t-0 sm:border-r-0 sm:border-b-0 lg:max-w-[min(100vw,34rem)]"
+            className="qa-os-drawer qa-modal-panel relative z-[2] flex max-h-[min(92dvh,920px)] w-full max-w-lg flex-col overflow-hidden rounded-t-[1.75rem] border-b-0 sm:max-h-none sm:h-full sm:max-w-[min(100vw,26rem)] sm:rounded-none sm:border-l sm:border-t-0 sm:border-r-0 sm:border-b-0 lg:max-w-[min(100vw,34rem)]"
             onClick={(e) => e.stopPropagation()}
           >
             <div

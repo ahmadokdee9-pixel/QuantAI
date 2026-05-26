@@ -106,7 +106,7 @@ export default function ExportInsightModal({ open, onClose, query, products, int
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: reduce ? 1 : 0, y: reduce ? 0 : 12 }}
             transition={{ type: "spring", stiffness: 400, damping: 34 }}
-            className="relative z-[1] max-h-[min(92dvh,44rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-white/[0.1] bg-[#060b18]/98 p-4 shadow-2xl backdrop-blur-xl sm:p-5"
+            className="qa-modal-panel relative z-[1] max-h-[min(92dvh,44rem)] w-full max-w-md overflow-y-auto overscroll-contain p-4 sm:p-5"
           >
             <div className="flex items-center justify-between gap-2 border-b border-white/[0.06] pb-3">
               <p className="text-sm font-semibold text-white">Share & export</p>

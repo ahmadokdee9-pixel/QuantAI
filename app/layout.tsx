@@ -65,8 +65,8 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang="en" className={`${fontLatin.variable} ${fontArabic.variable} scroll-smooth`}>
-        <body className="min-h-dvh min-h-[100dvh] overflow-x-hidden bg-[#020617] pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-[env(safe-area-inset-top)] font-sans text-slate-100 antialiased selection:bg-cyan-500/30 selection:text-cyan-50">
+      <html lang="en" className={`qa-os-v2 ${fontLatin.variable} ${fontArabic.variable} scroll-smooth`}>
+        <body className="qa-os-v2 min-h-dvh min-h-[100dvh] overflow-x-hidden bg-[#020617] pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-[env(safe-area-inset-top)] font-sans text-slate-100 antialiased selection:bg-cyan-500/30 selection:text-cyan-50">
           <QuantShell>
             <div id="qa-main">{children}</div>
           </QuantShell>
