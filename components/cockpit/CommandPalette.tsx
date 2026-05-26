@@ -180,7 +180,7 @@ export default function CommandPalette() {
         >
           <button
             type="button"
-            className="absolute inset-0 bg-[#020617]/72 backdrop-blur-sm"
+            className="qa-modal-scrim"
             aria-label="Close command palette"
             onClick={() => setCommandOpen(false)}
           />

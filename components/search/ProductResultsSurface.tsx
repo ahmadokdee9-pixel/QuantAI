@@ -92,12 +92,12 @@ function ResultSkeleton() {
           style={i < 6 ? { animationDelay: `${i * 55}ms` } : undefined}
           className="cockpit-glass-panel skeleton-cinematic overflow-hidden border-white/[0.07] p-5 motion-safe:animate-[fadeIn_0.45s_ease-out_both]"
         >
-          <div className="h-40 rounded-2xl animate-shimmer" />
-          <div className="mt-4 h-4 w-[82%] rounded-lg bg-white/[0.08]" />
-          <div className="mt-2 h-3 w-3/5 rounded bg-white/[0.05]" />
-          <div className="mt-4 h-3 w-full rounded bg-white/[0.04]" />
-          <div className="mt-2 h-3 w-2/3 rounded bg-white/[0.04]" />
-          <div className="mt-6 h-11 rounded-full bg-white/[0.06]" />
+          <div className="qa-skeleton-shimmer h-40 rounded-2xl" />
+          <div className="qa-skeleton-shimmer mt-4 h-4 w-[82%] rounded-lg" />
+          <div className="qa-skeleton-shimmer mt-2 h-3 w-3/5 rounded" />
+          <div className="qa-skeleton-shimmer mt-4 h-3 w-full rounded" />
+          <div className="qa-skeleton-shimmer mt-2 h-3 w-2/3 rounded" />
+          <div className="qa-skeleton-shimmer mt-6 h-11 rounded-full" />
         </div>
       ))}
     </div>

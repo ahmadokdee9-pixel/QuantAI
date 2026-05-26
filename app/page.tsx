@@ -581,7 +581,7 @@ export default function Home() {
   const glassCard = "cockpit-glass-card";
 
   return (
-    <main className="qi-os-atmosphere qi-silent-luxury relative min-h-screen overflow-x-hidden bg-[#02040a] text-slate-100">
+    <main className="qa-page-canvas qi-os-atmosphere qi-silent-luxury relative min-h-screen overflow-x-hidden bg-[#02040a] text-slate-100">
       <AmbientBackdrop lite={mobilePerf} />
 
       <div className="relative z-10">

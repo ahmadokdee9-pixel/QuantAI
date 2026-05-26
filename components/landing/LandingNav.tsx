@@ -19,13 +19,10 @@ export default function LandingNav() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/[0.07] bg-[#020617]/72 backdrop-blur-[24px] backdrop-saturate-150 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset,0_12px_40px_-28px_rgba(0,0,0,0.65)]">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 py-3.5 sm:py-4">
-        <Link
-          href="/"
-          className="group flex items-center gap-2.5 shrink-0 rounded-xl pr-2 transition"
-        >
-          <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400/20 to-violet-500/25 border border-white/10 shadow-[0_0_24px_-4px_rgba(34,211,238,0.35)] transition group-hover:shadow-[0_0_32px_-2px_rgba(34,211,238,0.45)]">
+    <header className="qa-chrome-header">
+      <nav className="qa-content-wrap flex items-center justify-between gap-4 py-3.5 sm:py-4">
+        <Link href="/" className="qa-chrome-brand group shrink-0 pr-2">
+          <span className="qa-chrome-mark size-9">
             <Sparkles className="size-[18px] text-cyan-200" strokeWidth={1.5} aria-hidden />
           </span>
           <div className="leading-tight text-left">
@@ -43,7 +40,7 @@ export default function LandingNav() {
             <a
               key={l.href}
               href={l.href}
-              className="rounded-full px-3.5 py-2 text-[13px] font-medium text-white/55 transition hover:bg-white/[0.06] hover:text-white/90"
+              className="qa-nav-pill"
             >
               {l.label}
             </a>
@@ -57,7 +54,7 @@ export default function LandingNav() {
             <SignInButton mode="modal" forceRedirectUrl="/dashboard">
               <button
                 type="button"
-                className="rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-[13px] font-medium text-white/85 backdrop-blur-sm transition hover:border-white/20 hover:bg-white/[0.08]"
+                className="qa-btn-ghost px-4 py-2"
               >
                 Sign in
               </button>
@@ -65,7 +62,7 @@ export default function LandingNav() {
           )}
           <Link
             href="/dashboard"
-            className="rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-500 px-4 py-2 text-[13px] font-semibold text-slate-950 shadow-[0_0_24px_-4px_rgba(34,211,238,0.55)] transition hover:brightness-105 hover:shadow-[0_0_32px_-2px_rgba(34,211,238,0.5)]"
+            className="qa-btn-primary px-4 py-2"
           >
             Dashboard
           </Link>
@@ -73,7 +70,7 @@ export default function LandingNav() {
 
         <button
           type="button"
-          className="flex size-11 min-h-11 min-w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white/80 lg:hidden"
+          className="qa-icon-btn lg:hidden"
           aria-expanded={open}
           aria-label={open ? "Close menu" : "Open menu"}
           onClick={() => setOpen((v) => !v)}

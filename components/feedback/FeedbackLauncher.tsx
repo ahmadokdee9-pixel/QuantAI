@@ -92,7 +92,7 @@ export default function FeedbackLauncher({ variant = "floating", className = "" 
           >
             <button
               type="button"
-              className="absolute inset-0 bg-[#020617]/80 backdrop-blur-sm"
+              className="qa-modal-scrim"
               aria-label="Close feedback"
               onClick={() => setOpen(false)}
             />

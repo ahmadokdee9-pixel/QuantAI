@@ -87,7 +87,7 @@ export default function OnboardingWelcome() {
         >
           <button
             type="button"
-            className="absolute inset-0 bg-[#020617]/88 backdrop-blur-md"
+            className="qa-modal-scrim"
             aria-label="Dismiss onboarding backdrop"
             onClick={dismiss}
           />
@@ -96,7 +96,7 @@ export default function OnboardingWelcome() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: reduce ? 1 : 0, y: reduce ? 0 : 16 }}
             transition={{ type: "spring", stiffness: 380, damping: 34 }}
-            className="relative z-[1] flex max-h-[min(92dvh,40rem)] w-full max-w-lg flex-col overflow-hidden rounded-[1.35rem] border border-white/[0.1] bg-[#060b18]/98 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)] backdrop-blur-2xl"
+            className="qa-modal-panel relative z-[1] flex max-h-[min(92dvh,40rem)] w-full max-w-lg flex-col overflow-hidden"
           >
             <div className="flex items-start justify-between gap-3 border-b border-white/[0.06] px-5 py-4">
               <div className="flex items-center gap-2.5">
@@ -115,7 +115,7 @@ export default function OnboardingWelcome() {
               <button
                 type="button"
                 onClick={dismiss}
-                className="rounded-xl border border-white/10 p-2 text-slate-400 transition hover:bg-white/[0.06] hover:text-white"
+                className="qa-icon-btn p-2 text-slate-400"
                 aria-label="Skip onboarding"
               >
                 <X className="size-4" aria-hidden />

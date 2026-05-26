@@ -19,16 +19,13 @@ export default function AppChrome({ children }: { children: React.ReactNode }) {
   const reduceMotion = useReducedMotion();
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#020617] text-slate-100">
+    <div className="qa-page-canvas relative min-h-screen overflow-x-hidden">
       <AmbientBackdrop />
       <div className="relative z-10">
-        <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-[#020617]/78 backdrop-blur-[24px] backdrop-saturate-150 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset]">
-          <div className="mx-auto flex max-w-6xl min-w-0 flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-            <Link
-              href="/dashboard"
-              className="flex shrink-0 items-center gap-2 text-[15px] font-semibold tracking-tight text-white/95"
-            >
-              <span className="flex size-8 items-center justify-center rounded-lg border border-white/10 bg-gradient-to-br from-cyan-400/25 to-violet-500/25 shadow-[0_0_20px_-6px_rgba(34,211,238,0.35)]">
+        <header className="qa-chrome-header z-40">
+          <div className="qa-content-wrap flex min-w-0 flex-wrap items-center justify-between gap-3 py-3">
+            <Link href="/dashboard" className="qa-chrome-brand shrink-0">
+              <span className="qa-chrome-mark size-8">
                 <Sparkles className="size-4 text-cyan-200" aria-hidden />
               </span>
               QuantAI
@@ -40,11 +37,7 @@ export default function AppChrome({ children }: { children: React.ReactNode }) {
                   <Link
                     key={href}
                     href={href}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-medium transition duration-300 ${
-                      active
-                        ? "bg-white/[0.12] text-white shadow-[0_0_24px_-12px_rgba(34,211,238,0.25)]"
-                        : "text-slate-400 hover:bg-white/[0.06] hover:text-white/92"
-                    }`}
+                    className={`qa-nav-pill ${active ? "qa-nav-pill--active" : ""}`}
                   >
                     <motion.span
                       className="inline-flex items-center gap-1.5"
@@ -60,7 +53,7 @@ export default function AppChrome({ children }: { children: React.ReactNode }) {
             </nav>
           </div>
         </header>
-        <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">{children}</main>
+        <main className="qa-content-wrap py-8 sm:py-10">{children}</main>
       </div>
     </div>
   );

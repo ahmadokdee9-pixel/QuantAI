@@ -302,7 +302,7 @@ export default function CopilotDrawer() {
           >
             <button
               type="button"
-              className="absolute inset-0 bg-[#020617]/80 backdrop-blur-sm"
+              className="qa-modal-scrim"
               aria-label="Close copilot"
               onClick={() => setOpen(false)}
             />

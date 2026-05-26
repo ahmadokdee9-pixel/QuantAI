@@ -23,7 +23,7 @@ export default function CockpitEmptyState({
   secondaryHref,
 }: Props) {
   return (
-    <div className="qi-sys-panel qi-sys-panel--neutral mx-auto max-w-lg px-6 py-10 text-center sm:px-10">
+    <div className="qa-empty-state qi-sys-panel qi-sys-panel--neutral mx-auto max-w-lg px-6 py-10 text-center sm:px-10">
       {icon ? (
         <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-2xl border border-cyan-400/22 bg-cyan-500/10 text-cyan-200">
           {icon}
