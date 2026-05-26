@@ -1,6 +1,6 @@
 # Public beta 30-query QA report
 
-**Generated:** 2026-05-25T23:54:12.559Z  
+**Generated:** 2026-05-25T23:58:57.270Z  
 **Base URL:** https://quant-ai-app.vercel.app  
 **Method:** Automated API QA (desktop + mobile User-Agent); HTML shell check for mobile/desktop pages. Visual mobile UI requires manual device pass.
 
@@ -18,36 +18,36 @@
 
 | # | Query | Lang | Verdict | Latency ms | Products | Mobile API | A–F | Issues |
 |---|-------|------|---------|----------:|---------:|:----------:|-----|--------|
-| 1 | iphone 16 | en | FAIL | 2491 | 20 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_near_duplicate_title |
-| 2 | airpods | en | PASS | 1029 | 24 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
-| 3 | gaming monitor for PS5 under 500 | en | PASS | 5820 | 19 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
-| 4 | iphone 15 pro max titanium | en | PASS | 6909 | 24 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
-| 5 | compare airpods pro vs airpods 4 | en | FAIL | 3154 | 22 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_near_duplicate_title |
-| 6 | best premium headphones for focus | en | PASS | 3940 | 20 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
-| 7 | adidas samba | en | PASS | 2549 | 26 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
-| 8 | nike shoes like vomero but cheaper | en | FAIL | 3988 | 22 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
-| 9 | minimal white sneakers like Common Projects | en | PASS | 7787 | 11 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
-| 10 | sofa | en | PASS | 1518 | 27 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
-| 11 | luxury looking sofa under 1000 | en | FAIL | 5093 | 22 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
-| 12 | minimal desk setup | en | PASS | 3363 | 23 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
-| 13 | كنبة زاوية | ar | FAIL | 6854 | 24 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
-| 14 | كرسي office minimal | mixed | FAIL | 2639 | 24 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
-| 15 | كرسي مكتب مريح وفخم | ar | FAIL | 6745 | 24 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
-| 16 | iphone 15 برو max titanium | mixed | FAIL | 3286 | 21 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
-| 17 | luxury ساعة under 300 | mixed | PASS | 7118 | 24 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
-| 18 | ساعة شكلها luxury بس سعرها معقول | ar | PASS | 3750 | 18 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
-| 19 | yves saint laurent libre edp 90ml | en | PASS | 5478 | 3 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
-| 20 | جزمة مثل nike vomero بس ارخص | ar | FAIL | 2693 | 23 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant, top3_near_duplicate_title |
-| 21 | ايفون 16 رخيص | ar | PASS | 8830 | 18 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
-| 22 | سماعات ايربودز | ar | PASS | 8548 | 19 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
-| 23 | robot vacuum under 400 | en | PASS | 4769 | 24 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
-| 24 | cheap but luxury looking sofa | en | FAIL | 2340 | 23 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
-| 25 | iphone 16 case | en | PASS | 4860 | 9 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
-| 26 | best headphones for focus | en | PASS | 2763 | 18 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
-| 27 | gaming monitor | en | PASS | 999 | 20 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
-| 28 | robot vacuum under 400 | en | PASS | 888 | 24 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
-| 29 | adidas samba white | en | PASS | 3581 | 25 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
-| 30 | luxury watch rolex style under 500 | en | FAIL | 6254 | 24 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
+| 1 | iphone 16 | en | FAIL | 2535 | 20 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_near_duplicate_title |
+| 2 | airpods | en | PASS | 1069 | 24 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 3 | gaming monitor for PS5 under 500 | en | PASS | 1539 | 19 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 4 | iphone 15 pro max titanium | en | PASS | 924 | 24 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 5 | compare airpods pro vs airpods 4 | en | FAIL | 2362 | 22 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_near_duplicate_title |
+| 6 | best premium headphones for focus | en | PASS | 948 | 20 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 7 | adidas samba | en | PASS | 1130 | 26 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 8 | nike shoes like vomero but cheaper | en | FAIL | 944 | 22 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
+| 9 | minimal white sneakers like Common Projects | en | PASS | 607 | 11 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 10 | sofa | en | PASS | 1130 | 27 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 11 | luxury looking sofa under 1000 | en | FAIL | 1125 | 22 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
+| 12 | minimal desk setup | en | PASS | 1323 | 23 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 13 | كنبة زاوية | ar | FAIL | 1052 | 24 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
+| 14 | كرسي office minimal | mixed | FAIL | 996 | 24 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
+| 15 | كرسي مكتب مريح وفخم | ar | FAIL | 1186 | 24 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
+| 16 | iphone 15 برو max titanium | mixed | FAIL | 735 | 21 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
+| 17 | luxury ساعة under 300 | mixed | PASS | 1213 | 24 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 18 | ساعة شكلها luxury بس سعرها معقول | ar | PASS | 778 | 18 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 19 | yves saint laurent libre edp 90ml | en | PASS | 346 | 3 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 20 | جزمة مثل nike vomero بس ارخص | ar | FAIL | 967 | 23 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant, top3_near_duplicate_title |
+| 21 | ايفون 16 رخيص | ar | PASS | 693 | 18 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 22 | سماعات ايربودز | ar | PASS | 1069 | 24 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 23 | robot vacuum under 400 | en | PASS | 1408 | 24 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 24 | cheap but luxury looking sofa | en | FAIL | 986 | 23 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
+| 25 | iphone 16 case | en | PASS | 387 | 9 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 26 | best headphones for focus | en | PASS | 716 | 18 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 27 | gaming monitor | en | PASS | 800 | 20 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 28 | robot vacuum under 400 | en | PASS | 1015 | 24 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 29 | adidas samba white | en | PASS | 937 | 25 | Y | A:✓ B:✓ C:✓ D:✓ E:✓ F:✓ | — |
+| 30 | luxury watch rolex style under 500 | en | FAIL | 881 | 24 | Y | A:✓ B:✓ C:✓ D:✗ E:✓ F:✓ | top3_same_merchant |
 
 ---
 

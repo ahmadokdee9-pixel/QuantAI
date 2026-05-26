@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-25T23:54:12.559Z",
+  "generatedAt": "2026-05-25T23:58:57.270Z",
   "baseUrl": "https://quant-ai-app.vercel.app",
   "rows": [
     {
@@ -17,10 +17,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 2491,
+      "latencyMs": 2535,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 547,
+      "mobileLatencyMs": 560,
       "productCount": 20,
       "canonicalCategory": "phone",
       "top3Titles": [
@@ -52,10 +52,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 1029,
+      "latencyMs": 1069,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 659,
+      "mobileLatencyMs": 613,
       "productCount": 24,
       "canonicalCategory": "audio",
       "top3Titles": [
@@ -81,10 +81,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 5820,
+      "latencyMs": 1539,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 582,
+      "mobileLatencyMs": 523,
       "productCount": 19,
       "canonicalCategory": "electronics",
       "top3Titles": [
@@ -110,10 +110,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 6909,
+      "latencyMs": 924,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 585,
+      "mobileLatencyMs": 484,
       "productCount": 24,
       "canonicalCategory": "phone",
       "top3Titles": [
@@ -139,10 +139,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 3154,
+      "latencyMs": 2362,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 432,
+      "mobileLatencyMs": 475,
       "productCount": 22,
       "canonicalCategory": "audio",
       "top3Titles": [
@@ -174,10 +174,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 3940,
+      "latencyMs": 948,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 477,
+      "mobileLatencyMs": 554,
       "productCount": 20,
       "canonicalCategory": "audio",
       "top3Titles": [
@@ -203,10 +203,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 2549,
+      "latencyMs": 1130,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 536,
+      "mobileLatencyMs": 524,
       "productCount": 26,
       "canonicalCategory": "shoes",
       "top3Titles": [
@@ -232,10 +232,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 3988,
+      "latencyMs": 944,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 508,
+      "mobileLatencyMs": 497,
       "productCount": 22,
       "canonicalCategory": "shoes",
       "top3Titles": [
@@ -268,10 +268,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 7787,
+      "latencyMs": 607,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 327,
+      "mobileLatencyMs": 324,
       "productCount": 11,
       "canonicalCategory": "shoes",
       "top3Titles": [
@@ -297,7 +297,7 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 1518,
+      "latencyMs": 1130,
       "latencyOutlier": false,
       "mobileOk": true,
       "mobileLatencyMs": 595,
@@ -326,10 +326,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 5093,
+      "latencyMs": 1125,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 649,
+      "mobileLatencyMs": 603,
       "productCount": 22,
       "canonicalCategory": "furniture",
       "top3Titles": [
@@ -362,10 +362,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 3363,
+      "latencyMs": 1323,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 532,
+      "mobileLatencyMs": 518,
       "productCount": 23,
       "canonicalCategory": "desk_setup",
       "top3Titles": [
@@ -391,10 +391,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 6854,
+      "latencyMs": 1052,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 976,
+      "mobileLatencyMs": 949,
       "productCount": 24,
       "canonicalCategory": "furniture",
       "top3Titles": [
@@ -427,10 +427,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 2639,
+      "latencyMs": 996,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 953,
+      "mobileLatencyMs": 927,
       "productCount": 24,
       "canonicalCategory": "furniture",
       "top3Titles": [
@@ -463,10 +463,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 6745,
+      "latencyMs": 1186,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 1140,
+      "mobileLatencyMs": 1112,
       "productCount": 24,
       "canonicalCategory": "furniture",
       "top3Titles": [
@@ -499,10 +499,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 3286,
+      "latencyMs": 735,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 632,
+      "mobileLatencyMs": 570,
       "productCount": 21,
       "canonicalCategory": "phone",
       "top3Titles": [
@@ -535,10 +535,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 7118,
+      "latencyMs": 1213,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 1184,
+      "mobileLatencyMs": 1062,
       "productCount": 24,
       "canonicalCategory": "watch",
       "top3Titles": [
@@ -564,10 +564,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 3750,
+      "latencyMs": 778,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 749,
+      "mobileLatencyMs": 658,
       "productCount": 18,
       "canonicalCategory": "watch",
       "top3Titles": [
@@ -593,10 +593,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 5478,
+      "latencyMs": 346,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 265,
+      "mobileLatencyMs": 170,
       "productCount": 3,
       "canonicalCategory": "fragrance",
       "top3Titles": [
@@ -622,10 +622,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 2693,
+      "latencyMs": 967,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 930,
+      "mobileLatencyMs": 883,
       "productCount": 23,
       "canonicalCategory": "shoes",
       "top3Titles": [
@@ -663,10 +663,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 8830,
+      "latencyMs": 693,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 686,
+      "mobileLatencyMs": 565,
       "productCount": 18,
       "canonicalCategory": "phone",
       "top3Titles": [
@@ -692,16 +692,16 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 8548,
+      "latencyMs": 1069,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 824,
-      "productCount": 19,
+      "mobileLatencyMs": 698,
+      "productCount": 24,
       "canonicalCategory": "audio",
       "top3Titles": [
-        "Apple AirPods Pro draadloze koptelefoon met actieve ruisonderdrukking, Bluetooth",
-        "Apple AirPods 4",
-        "Apple Airpods Pro 2 (2ndgenpro) W. Magsafe Wireless Charging Usbc &"
+        "AirPods Pro 3 Wireless Earbuds Bluetooth Headphones with Active Noise Cancelling",
+        "Apple AirPods Pro 3",
+        "Apple AirPods 4 Black Matte Edition"
       ],
       "issues": [],
       "degraded": false
@@ -721,10 +721,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 4769,
+      "latencyMs": 1408,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 536,
+      "mobileLatencyMs": 450,
       "productCount": 24,
       "canonicalCategory": "home",
       "top3Titles": [
@@ -750,10 +750,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 2340,
+      "latencyMs": 986,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 579,
+      "mobileLatencyMs": 497,
       "productCount": 23,
       "canonicalCategory": "furniture",
       "top3Titles": [
@@ -786,10 +786,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 4860,
+      "latencyMs": 387,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 306,
+      "mobileLatencyMs": 227,
       "productCount": 9,
       "canonicalCategory": "phone",
       "top3Titles": [
@@ -815,10 +815,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 2763,
+      "latencyMs": 716,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 405,
+      "mobileLatencyMs": 349,
       "productCount": 18,
       "canonicalCategory": "audio",
       "top3Titles": [
@@ -844,10 +844,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 999,
+      "latencyMs": 800,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 509,
+      "mobileLatencyMs": 453,
       "productCount": 20,
       "canonicalCategory": "electronics",
       "top3Titles": [
@@ -873,10 +873,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 888,
+      "latencyMs": 1015,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 553,
+      "mobileLatencyMs": 466,
       "productCount": 24,
       "canonicalCategory": "home",
       "top3Titles": [
@@ -902,10 +902,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 3581,
+      "latencyMs": 937,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 506,
+      "mobileLatencyMs": 392,
       "productCount": 25,
       "canonicalCategory": "shoes",
       "top3Titles": [
@@ -914,7 +914,7 @@
         "adidas Originals - Samba OG in White/Grey White/Grey / 10 M / 11 W"
       ],
       "issues": [],
-      "degraded": false
+      "degraded": true
     },
     {
       "id": 30,
@@ -931,10 +931,10 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 6254,
+      "latencyMs": 881,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 588,
+      "mobileLatencyMs": 507,
       "productCount": 24,
       "canonicalCategory": "watch",
       "top3Titles": [
@@ -950,7 +950,7 @@
           "detail": "paganidesignwatches×2"
         }
       ],
-      "degraded": false
+      "degraded": true
     }
   ],
   "flows": {
