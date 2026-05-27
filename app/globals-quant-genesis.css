@@ -1,0 +1,614 @@
+/**
+ * QuantAI GENESIS — complete visual rebirth.
+ * Intelligence, APIs, ranking, and card data are unchanged.
+ */
+
+:root {
+  --qx-void: #020203;
+  --qx-ink: #060608;
+  --qx-graphite: #0e0f12;
+  --qx-titanium: #1a1b21;
+  --qx-chrome: #d4d4d8;
+  --qx-pearl: #fafafa;
+  --qx-mist: rgba(228, 228, 231, 0.72);
+  --qx-ease: cubic-bezier(0.08, 1, 0.22, 1);
+  --qx-gutter: clamp(1.25rem, 4.5vw, 3.25rem);
+  --qx-radius-module: 1.15rem;
+  --qx-shadow-module:
+    0 1px 0 rgba(255, 255, 255, 0.07) inset,
+    0 48px 120px -64px rgba(0, 0, 0, 0.92),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+/* —— Universe —— */
+.qx-genesis {
+  background: var(--qx-void);
+  color: rgba(250, 250, 250, 0.94);
+  font-feature-settings: "ss01", "cv01";
+}
+
+.qx-genesis .qi-living-atmosphere > div:first-child,
+.qx-genesis .qi-living-atmosphere {
+  background: var(--qx-void) !important;
+}
+
+.qx-genesis .qi-atmosphere-veil {
+  opacity: 0.55 !important;
+  background-image:
+    radial-gradient(ellipse 65% 50% at 12% 8%, rgba(212, 212, 216, 0.08), transparent 58%),
+    radial-gradient(ellipse 50% 40% at 88% 12%, rgba(161, 161, 170, 0.05), transparent 55%),
+    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(6, 6, 8, 0.95), transparent 72%) !important;
+}
+
+.qx-env-root {
+  min-height: 100dvh;
+  position: relative;
+}
+
+.qx-env-stage {
+  min-height: 100dvh;
+}
+
+@media (min-width: 1024px) {
+  .qx-env-stage {
+    margin-left: 4.5rem;
+  }
+}
+
+@media (max-width: 1023px) {
+  .qx-env-stage {
+    padding-top: 3.85rem;
+  }
+}
+
+/* —— OS rail —— */
+.qx-genesis .qx-os-rail {
+  background: rgba(2, 2, 3, 0.97);
+  border-color: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px);
+}
+
+.qx-genesis .qx-os-rail-mark {
+  border-radius: 0.75rem;
+  border-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(165deg, rgba(39, 39, 42, 0.35), rgba(9, 9, 11, 0.9));
+  box-shadow: var(--qx-shadow-module);
+}
+
+.qx-genesis .qx-os-rail-link:hover .qx-os-rail-link-bar {
+  background: rgba(212, 212, 216, 0.55);
+  box-shadow: 0 0 12px rgba(212, 212, 216, 0.15);
+}
+
+.qx-genesis .qx-os-rail-link-bar {
+  width: 2px;
+  height: 1.25rem;
+  border-radius: 1px;
+  background: transparent;
+  transition: background 0.45s var(--qx-ease);
+}
+
+/* —— Intelligence gateway —— */
+.qx-gateway {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: calc(env(safe-area-inset-top, 0px) + 2.75rem) var(--qx-gutter)
+    calc(env(safe-area-inset-bottom, 0px) + 3.5rem);
+  overflow: hidden;
+}
+
+.qx-gateway--live {
+  min-height: min(74vh, 46rem);
+}
+
+.qx-gateway-atmosphere {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.qx-gateway-void {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 100% 80% at 72% 0%, rgba(39, 39, 42, 0.35), transparent 55%),
+    radial-gradient(ellipse 60% 50% at 8% 90%, rgba(24, 24, 27, 0.5), transparent 70%),
+    var(--qx-void);
+}
+
+.qx-gateway-grid {
+  position: absolute;
+  inset: -20% -10%;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 88px 88px;
+  mask-image: radial-gradient(ellipse 85% 65% at 35% 25%, black 20%, transparent 75%);
+  transform: perspective(1200px) rotateX(58deg) scale(1.15);
+  transform-origin: 50% 0%;
+  opacity: 0.5;
+}
+
+.qx-gateway-orbit {
+  position: absolute;
+  right: -8%;
+  top: 12%;
+  width: min(52vw, 520px);
+  height: min(52vw, 520px);
+  border-radius: 50%;
+  border: 1px solid rgba(212, 212, 216, 0.08);
+  box-shadow: inset 0 0 80px rgba(212, 212, 216, 0.03);
+}
+
+.qx-gateway-orbit::after {
+  content: "";
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.qx-gateway-axis {
+  position: absolute;
+  left: var(--qx-gutter);
+  top: 14%;
+  bottom: 18%;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(212, 212, 216, 0.22), transparent);
+}
+
+.qx-gateway-composition {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: clamp(3rem, 9vh, 5.5rem);
+  max-width: 100rem;
+  margin-inline: auto;
+  width: 100%;
+}
+
+@media (min-width: 1080px) {
+  .qx-gateway-composition {
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    align-items: end;
+    gap: clamp(2rem, 5vw, 4.5rem);
+  }
+}
+
+.qx-gateway-system {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba(161, 161, 170, 0.7);
+}
+
+.qx-gateway-statement {
+  margin-top: clamp(2rem, 5vh, 3.75rem);
+  font-size: clamp(3rem, 8.5vw, 5.75rem);
+  font-weight: 500;
+  line-height: 0.92;
+  letter-spacing: -0.062em;
+  color: var(--qx-pearl);
+  max-width: 10ch;
+}
+
+.qx-gateway-statement-sub {
+  color: rgba(212, 212, 216, 0.78);
+  font-weight: 460;
+}
+
+.qx-gateway-directive {
+  margin-top: clamp(1.5rem, 3.5vh, 2.5rem);
+  max-width: 30rem;
+  font-size: clamp(0.98rem, 1.65vw, 1.08rem);
+  line-height: 1.72;
+  letter-spacing: -0.012em;
+  color: rgba(161, 161, 170, 0.85);
+}
+
+.qx-gateway-terminal-label {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: rgba(161, 161, 170, 0.6);
+}
+
+.qx-gateway-terminal-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(212, 212, 216, 0.28), transparent);
+}
+
+.qx-gateway-terminal-body {
+  position: relative;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(168deg, rgba(22, 23, 28, 0.95) 0%, rgba(4, 4, 5, 1) 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 64px 140px -72px rgba(0, 0, 0, 0.98);
+  padding: clamp(1.1rem, 2.8vw, 1.5rem);
+}
+
+.qx-gateway-terminal-body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(212, 212, 216, 0.06), transparent 65%);
+}
+
+.qx-gateway-terminal-status {
+  margin-top: 1.15rem;
+}
+
+.qx-gateway-guest {
+  position: relative;
+  z-index: 1;
+  margin-top: clamp(2rem, 4vh, 3rem);
+  max-width: 30rem;
+}
+
+/* —— Command search (hero) —— */
+.qx-genesis .qx-command-root .qi-command-halo,
+.qx-genesis .qx-command-root .qi-command-floor {
+  opacity: 0.35 !important;
+}
+
+.qx-genesis .qx-command-root .qi-command-deck {
+  border-radius: 1rem !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: rgba(8, 9, 11, 0.6) !important;
+  box-shadow: 0 40px 100px -60px rgba(0, 0, 0, 0.95) !important;
+}
+
+.qx-genesis .qx-command-root .qi-command-glass--deep {
+  background: linear-gradient(180deg, rgba(28, 29, 35, 0.4), transparent) !important;
+}
+
+.qx-genesis .qx-command-root input {
+  color: var(--qx-pearl) !important;
+  letter-spacing: -0.02em;
+}
+
+.qx-genesis .qx-command-root .qi-command-submit {
+  background: linear-gradient(180deg, #f4f4f5, #d4d4d8) !important;
+  color: #09090b !important;
+  border: none !important;
+  border-radius: 0.65rem !important;
+}
+
+/* —— Scan field —— */
+.qx-scan-field {
+  position: relative;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--qx-ink);
+  padding: clamp(4.5rem, 11vh, 8rem) 0;
+}
+
+.qx-scan-field--live {
+  background: linear-gradient(180deg, var(--qx-ink) 0%, #010102 100%);
+}
+
+.qx-scan-field-atmosphere {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 90% 45% at 50% 0%, rgba(63, 63, 70, 0.14), transparent 68%),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 140px,
+      rgba(255, 255, 255, 0.004) 140px,
+      rgba(255, 255, 255, 0.004) 141px
+    );
+}
+
+.qx-scan-field-inner {
+  position: relative;
+  z-index: 1;
+}
+
+.qx-genesis #quantai-results-anchor {
+  max-width: none !important;
+  padding-inline: 0 !important;
+  scroll-margin-top: max(5rem, env(safe-area-inset-top, 0px) + 3.5rem);
+}
+
+.qx-genesis .qx-scan-terminal .qa-os-toolbar,
+.qx-genesis .qx-scan-terminal .ResultsToolbar,
+.qx-genesis .qx-scan-terminal > .pointer-events-none {
+  padding-inline: var(--qx-gutter);
+  max-width: 76rem;
+  margin-inline: auto;
+}
+
+/* —— Dossier stream (not product grid) —— */
+.qx-genesis .qx-dossier-stream {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 76rem;
+  margin-inline: auto;
+  padding-inline: var(--qx-gutter);
+}
+
+.qx-genesis .qx-dossier-slot {
+  position: relative;
+  padding-block: clamp(2.25rem, 5vh, 3.5rem);
+}
+
+.qx-genesis .qx-dossier-slot + .qx-dossier-slot {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.qx-genesis .qx-dossier-slot--prime {
+  padding-top: clamp(3.25rem, 6vh, 4.5rem);
+}
+
+.qx-genesis .qx-dossier-slot--prime::before {
+  content: "PRIME ENTITY";
+  position: absolute;
+  top: 1.35rem;
+  left: var(--qx-gutter);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: rgba(212, 212, 216, 0.42);
+}
+
+.qx-genesis .qx-dossier-slot--alpha::before {
+  content: "ALPHA CLUSTER";
+  position: absolute;
+  top: 1.35rem;
+  left: var(--qx-gutter);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: rgba(161, 161, 170, 0.38);
+}
+
+.qx-genesis .qx-dossier-slot--field::before {
+  content: "FIELD SIGNAL";
+  position: absolute;
+  top: 1.35rem;
+  left: var(--qx-gutter);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: rgba(113, 113, 122, 0.45);
+}
+
+/* —— Intelligence entity (card shell) —— */
+.qx-genesis .qx-entity {
+  border-radius: var(--qx-radius-module) !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  background: linear-gradient(158deg, rgba(32, 34, 40, 0.55) 0%, rgba(5, 5, 6, 1) 52%) !important;
+  box-shadow: var(--qx-shadow-module) !important;
+  transform-style: preserve-3d;
+}
+
+.qx-genesis .qx-entity .qi-product-object-bezel {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    transparent 40%,
+    transparent 60%,
+    rgba(255, 255, 255, 0.04) 100%
+  ) !important;
+  opacity: 0.85;
+}
+
+.qx-genesis .qx-entity .qi-product-card-inner {
+  border-radius: calc(var(--qx-radius-module) - 2px) !important;
+}
+
+.qx-genesis .qx-entity .pointer-events-none.bg-cyan-400,
+.qx-genesis .qx-entity .pointer-events-none.bg-violet-500 {
+  display: none !important;
+}
+
+.qx-genesis .qx-entity [class*="border-cyan"],
+.qx-genesis .qx-entity [class*="text-cyan"],
+.qx-genesis .qx-entity [class*="bg-cyan"] {
+  --tw-border-opacity: 1;
+  border-color: rgba(212, 212, 216, 0.2) !important;
+}
+
+.qx-genesis .qx-entity [class*="text-emerald"] {
+  color: rgba(212, 212, 216, 0.95) !important;
+}
+
+.qx-genesis .qx-entity .rounded-\[1\.85rem\],
+.qx-genesis .qx-entity .rounded-\[1\.78rem\] {
+  border-radius: var(--qx-radius-module) !important;
+}
+
+/* —— Compare chamber —— */
+.qx-genesis .qx-compare-chamber {
+  border-radius: var(--qx-radius-module);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(165deg, rgba(18, 19, 23, 0.95), rgba(4, 4, 5, 1));
+  box-shadow: var(--qx-shadow-module);
+}
+
+/* —— Access protocol —— */
+.qx-access-chamber {
+  position: relative;
+  padding: clamp(5.5rem, 13vh, 10rem) var(--qx-gutter);
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  background: var(--qx-void);
+}
+
+.qx-access-chamber-atmosphere {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 75% 55% at 50% 0%, rgba(63, 63, 70, 0.12), transparent 72%),
+    linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.4));
+}
+
+.qx-access-chamber-header {
+  position: relative;
+  z-index: 1;
+  max-width: 42rem;
+  margin-bottom: clamp(3.5rem, 7vh, 5rem);
+}
+
+.qx-access-chamber-header .qi-editorial-display,
+.qx-access-chamber-header h1,
+.qx-access-chamber-header h2 {
+  font-size: clamp(2.15rem, 4.5vw, 3.35rem);
+  font-weight: 500;
+  letter-spacing: -0.048em;
+  line-height: 1.02;
+  color: var(--qx-pearl);
+}
+
+.qx-access-chamber-body {
+  position: relative;
+  z-index: 1;
+  max-width: 58rem;
+}
+
+/* Clearance tiers */
+.qx-genesis .qx-clearance-grid {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.25rem, 3vh, 2rem);
+}
+
+@media (min-width: 900px) {
+  .qx-genesis .qx-clearance-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 1.25rem;
+  }
+}
+
+.qx-genesis .qi-access-layer {
+  border-radius: var(--qx-radius-module) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: linear-gradient(165deg, rgba(20, 21, 26, 0.9), rgba(4, 4, 5, 1)) !important;
+  box-shadow: var(--qx-shadow-module) !important;
+}
+
+.qx-genesis .qi-access-layer--featured {
+  border-color: rgba(212, 212, 216, 0.18) !important;
+  transform: translateY(-0.35rem);
+}
+
+.qx-genesis .qi-access-layer-glow,
+.qx-genesis .qi-access-featured-pedestal {
+  background: radial-gradient(ellipse at 50% 0%, rgba(212, 212, 216, 0.08), transparent 70%) !important;
+  opacity: 0.6 !important;
+}
+
+.qx-genesis .qi-access-layer-glow[class*="cyan"],
+.qx-genesis .qi-access-layer-glow[class*="violet"] {
+  filter: grayscale(1) brightness(1.2);
+}
+
+/* Archive shelf */
+.qx-genesis .qx-archive-shelf {
+  padding: clamp(2rem, 5vh, 3rem) var(--qx-gutter);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.qx-genesis .qx-archive-shelf-inner {
+  max-width: 76rem;
+  margin-inline: auto;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--qx-radius-module);
+  background: linear-gradient(165deg, rgba(14, 15, 18, 0.95), rgba(4, 4, 5, 1));
+  box-shadow: var(--qx-shadow-module);
+  padding: 1.75rem;
+}
+
+/* Appendix */
+.qx-zone--appendix {
+  padding: clamp(3.5rem, 9vh, 6rem) var(--qx-gutter);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.qx-genesis .qx-marketing-legacy {
+  opacity: 0.88;
+  max-width: 50rem;
+}
+
+.qx-genesis .qx-marketing-legacy section {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Kill SaaS grid in genesis */
+.qx-genesis .qi-tray-atmosphere.grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  grid-template-columns: none !important;
+}
+
+/* Skeleton */
+.qx-genesis .qx-dossier-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 76rem;
+  margin-inline: auto;
+  padding-inline: var(--qx-gutter);
+}
+
+.qx-genesis .qx-dossier-skeleton-item {
+  border-radius: var(--qx-radius-module);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(12, 13, 16, 0.8);
+  padding: 1.5rem;
+  min-height: 18rem;
+}
+
+/* Motion */
+@media (prefers-reduced-motion: no-preference) {
+  .qx-genesis .qx-dossier-slot {
+    animation: qx-entity-enter 0.7s var(--qx-ease) both;
+  }
+
+  .qx-genesis .qx-dossier-slot:nth-child(1) { animation-delay: 0.04s; }
+  .qx-genesis .qx-dossier-slot:nth-child(2) { animation-delay: 0.1s; }
+  .qx-genesis .qx-dossier-slot:nth-child(3) { animation-delay: 0.14s; }
+  .qx-genesis .qx-dossier-slot:nth-child(n + 4) { animation-delay: 0.16s; }
+
+  .qx-genesis .qx-gateway-orbit {
+    animation: qx-orbit-drift 48s linear infinite;
+  }
+}
+
+@keyframes qx-entity-enter {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 28px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes qx-orbit-drift {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

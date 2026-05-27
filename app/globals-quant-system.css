@@ -1,0 +1,767 @@
+/* =============================================================================
+   QuantAI — Authoritative visual & layout system (single foundation)
+   Tokens · surfaces · type · elevation · shell · hero · results · pricing · dash
+   ============================================================================= */
+
+:root {
+  /* Shell */
+  --qi-shell-max: 92.5rem;
+  --qi-shell-pad: clamp(1.25rem, 3vw, 2.5rem);
+
+  /* Spacing scale */
+  --qi-space-1: 0.5rem;
+  --qi-space-2: 0.75rem;
+  --qi-space-3: 1rem;
+  --qi-space-4: 1.35rem;
+  --qi-space-5: 1.75rem;
+  --qi-space-6: 2.25rem;
+  --qi-space-7: 3rem;
+  --qi-section-gap: clamp(2.5rem, 6vh, 4.5rem);
+
+  /* Radii */
+  --qi-radius-panel: 1.5rem;
+  --qi-radius-card: 1.35rem;
+  --qi-radius-chip: 9999px;
+
+  /* Ink */
+  --qi-ink: #0c0f15;
+  --qi-ink-secondary: #3d4458;
+  --qi-ink-muted: #5a6278;
+  --qi-ink-whisper: #8b92a8;
+
+  /* Brand */
+  --qi-purple: #6c5cff;
+  --qi-purple-deep: #4338ca;
+  --qi-purple-soft: #ebe8ff;
+
+  /* Canvas & solid surfaces (no washed rgba shells) */
+  --qi-canvas: #f7f8ff;
+  --qi-canvas-mid: #f1f3ff;
+  --qi-surface-solid: #ffffff;
+  --qi-surface-raised: #fafbff;
+  --qi-surface-sunken: #eef1ff;
+
+  /* Borders */
+  --qi-border: rgba(30, 40, 70, 0.12);
+  --qi-border-strong: rgba(108, 92, 255, 0.22);
+  --qi-border-soft: rgba(108, 92, 255, 0.14);
+
+  /* Elevation */
+  --qi-shadow-sm: 0 1px 0 rgba(255, 255, 255, 0.95) inset, 0 10px 28px rgba(14, 15, 21, 0.06);
+  --qi-shadow-md: 0 1px 0 rgba(255, 255, 255, 0.95) inset, 0 16px 42px rgba(108, 92, 255, 0.12), 0 28px 58px rgba(12, 13, 21, 0.06);
+  --qi-shadow-lg: 0 1px 0 rgba(255, 255, 255, 0.96) inset, 0 24px 56px rgba(108, 92, 255, 0.16), 0 40px 88px rgba(12, 13, 21, 0.08);
+  --qi-glow-purple: 0 0 48px rgba(108, 92, 255, 0.2);
+
+  /* Intelligence panel */
+  --qi-decision-bg: linear-gradient(165deg, #1a2240 0%, #232d55 52%, #2f3a6c 100%);
+  --qi-decision-border: rgba(139, 125, 255, 0.42);
+
+  --qi-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* -----------------------------------------------------------------------------
+   A. Structural authority (layout only — no visual fade hacks)
+   ----------------------------------------------------------------------------- */
+
+.qc-legend .qi-institutional-grid .qa-intelligence-matrix-body,
+.qc-legend .qi-institutional-grid.qa-intelligence-matrix-body,
+#quantai-results-anchor.qa-intelligence-synthesis .qa-intelligence-matrix-body,
+.qc-legend .qa-intelligence-matrix-body.qa-intelligence-rows {
+  display: grid !important;
+  flex-direction: unset !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  max-width: none !important;
+  width: 100% !important;
+}
+
+.qc-legend .qi-institutional-grid .qc-entity-cell {
+  display: flex !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  border-bottom: none !important;
+  transform: none !important;
+}
+
+.qc-legend .qi-institutional-grid .qc-entity-cell::before {
+  display: none !important;
+}
+
+.qc-legend .qa-intelligence-matrix-row,
+.qc-legend .qa-intelligence-matrix-head-inner,
+.qc-legend .qa-intelligence-matrix-rail {
+  display: none !important;
+}
+
+.qc-legend .qc-portal-composition--command-core,
+.qc-legend .qc-galaxy-field-inner,
+.qc-legend .qi-institutional-matrix,
+#quantai-results-anchor {
+  transform: none !important;
+}
+
+@media (min-width: 1024px) {
+  .qc-legend .qc-cosmos-stage,
+  .qc-universe .qc-cosmos-stage {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   B. Shell & vertical rhythm
+   ----------------------------------------------------------------------------- */
+
+.qi-app-main,
+.qa-content-wrap,
+.qc-legend .qc-orbit-zone,
+.qc-legend .qc-orbit-zone--portal,
+.qc-legend .qc-orbit-zone--galaxy,
+.qc-legend .qc-orbit-zone--archive,
+.qc-legend .qc-orbit-zone--nexus,
+.qc-legend .qc-orbit-zone--bands,
+.qc-legend .qc-orbit-zone--appendix,
+.qc-legend .qc-orbit-zone--footer,
+.qc-legend .qc-galaxy-field.qa-intelligence-synthesis-wrap,
+#quantai-results-anchor.qa-intelligence-synthesis,
+.qc-universe .qc-clearance-nexus {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--qi-shell-max);
+  margin-inline: auto;
+  padding-inline: var(--qi-shell-pad);
+}
+
+.qi-app-main:has(.qi-dashboard-canvas),
+.qa-content-wrap:has(.qi-dashboard-canvas) {
+  max-width: none;
+  padding: 0;
+}
+
+.qc-universe.qc-legend,
+.qc-universe.qc-legend body,
+.qc-universe.qc-cosmos-root {
+  background: var(--qi-canvas);
+  color: var(--qi-ink);
+}
+
+.qc-universe.qc-legend body::before {
+  background:
+    radial-gradient(ellipse 92% 58% at 50% -8%, rgba(108, 92, 255, 0.16) 0%, transparent 62%),
+    radial-gradient(ellipse 48% 42% at 10% 48%, rgba(108, 92, 255, 0.07) 0%, transparent 65%),
+    linear-gradient(180deg, #ffffff 0%, var(--qi-canvas-mid) 50%, #efecff 100%) !important;
+}
+
+/* Section connectors — visual anchor between chambers */
+.qc-legend .qc-chamber {
+  position: relative;
+  isolation: isolate;
+}
+
+.qc-legend .qc-chamber::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 90% 50% at 50% 0%, rgba(108, 92, 255, 0.06), transparent 65%);
+  opacity: 1;
+}
+
+.qc-legend .qc-chamber-connector {
+  height: clamp(2.5rem, 5vh, 4rem);
+  max-width: var(--qi-shell-max);
+  margin-inline: auto;
+  position: relative;
+  background: linear-gradient(180deg, rgba(108, 92, 255, 0.14), rgba(108, 92, 255, 0.04) 45%, transparent);
+  mask-image: linear-gradient(90deg, transparent, black 18%, black 82%, transparent);
+}
+
+.qc-legend .qc-chamber-connector::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: var(--qi-purple);
+  box-shadow: 0 0 18px rgba(108, 92, 255, 0.55);
+}
+
+.qc-legend .qc-orbit-zone {
+  padding-block: var(--qi-space-5);
+}
+
+.qc-legend .qc-orbit-zone--portal {
+  padding-top: 0;
+  padding-bottom: var(--qi-space-6);
+}
+
+/* Prevent accidental wash-out on primary content */
+.qc-legend .qc-chamber,
+.qc-legend .qc-orbit-zone,
+.qc-legend .qc-portal-composition,
+.qc-legend .qi-institutional-card,
+.qc-legend .qi-access-layer,
+.qc-legend .qi-access-layer-inner {
+  opacity: 1;
+}
+
+/* -----------------------------------------------------------------------------
+   C. App chrome
+   ----------------------------------------------------------------------------- */
+
+.qa-page-canvas .qa-chrome-header {
+  background: linear-gradient(180deg, #ffffff 0%, rgba(248, 250, 255, 0.96) 100%);
+  border-bottom: 1px solid var(--qi-border-soft);
+  backdrop-filter: blur(16px) saturate(150%);
+}
+
+.qa-page-canvas .qa-chrome-brand,
+.qa-page-canvas .qa-nav-pill {
+  color: var(--qi-ink-secondary);
+}
+
+.qa-page-canvas .qa-nav-pill--active {
+  color: var(--qi-purple-deep);
+  border-color: var(--qi-border-strong);
+  background: var(--qi-purple-soft);
+}
+
+/* -----------------------------------------------------------------------------
+   D. Hero — cinematic, centered, embedded command
+   ----------------------------------------------------------------------------- */
+
+.qc-legend .qc-portal--prime {
+  min-height: min(82vh, 58rem);
+  padding-top: clamp(4.5rem, 9vh, 6rem);
+  padding-bottom: clamp(2rem, 4vh, 3rem);
+  position: relative;
+}
+
+.qc-legend .qc-portal-composition--command-core {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  grid-template-columns: unset !important;
+  gap: clamp(2rem, 4vh, 2.75rem);
+  max-width: min(68rem, 100%);
+  margin-inline: auto;
+  width: 100%;
+  text-align: center;
+}
+
+.qc-legend .qc-portal-manifest {
+  max-width: 72rem;
+  margin-inline: auto;
+}
+
+.qc-legend .qc-portal-badge,
+.qc-legend .qc-portal-epoch {
+  color: var(--qi-purple-deep);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-size: 0.625rem;
+}
+
+.qc-legend .qc-portal-title {
+  font-size: clamp(2.75rem, 6.2vw, 4.75rem);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.048em;
+  color: var(--qi-ink);
+  text-wrap: balance;
+}
+
+.qc-legend .qc-portal-title-accent {
+  display: block;
+  margin-top: 0.12em;
+  background: linear-gradient(118deg, #2f2b87 0%, #5549e9 38%, #6c5cff 62%, #9f92ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.qc-legend .qc-portal-lead {
+  max-width: 52rem;
+  margin-inline: auto;
+  font-size: clamp(1.05rem, 1.45vw, 1.2rem);
+  line-height: 1.6;
+  color: var(--qi-ink-muted);
+}
+
+/* Command nexus frame — solid, embedded */
+.qc-legend .qc-portal-command--nexus {
+  width: 100%;
+  max-width: min(66rem, 100%);
+  margin-inline: auto;
+  padding: clamp(0.65rem, 1.5vw, 1rem);
+  border-radius: calc(var(--qi-radius-panel) + 0.25rem);
+  border: 1px solid var(--qi-border-strong);
+  background: linear-gradient(168deg, #ffffff 0%, #f3f5ff 100%);
+  box-shadow: var(--qi-shadow-lg), var(--qi-glow-purple);
+}
+
+/* Search command — override globals dark deck with premium lavender glass */
+.qc-legend .qi-command-root.qi-command-nexus-focus {
+  width: 100%;
+  max-width: min(64rem, 100%);
+  margin-inline: auto;
+}
+
+.qc-legend .qi-command-root.qi-command-nexus-focus .qi-command-halo {
+  opacity: 1;
+  background: radial-gradient(ellipse at 50% 40%, rgba(108, 92, 255, 0.28) 0%, transparent 62%);
+}
+
+.qc-legend .qi-command-root.qi-command-nexus-focus .qi-command-floor {
+  opacity: 0.35;
+  background: radial-gradient(ellipse at center, rgba(108, 92, 255, 0.2), transparent 72%);
+}
+
+.qc-legend .qi-command-root.qi-command-nexus-focus .qi-command-deck {
+  background: linear-gradient(170deg, #ffffff 0%, #ecefff 100%);
+  border: 1px solid var(--qi-border-strong);
+  box-shadow: var(--qi-shadow-md);
+  backdrop-filter: blur(20px) saturate(140%);
+}
+
+.qc-legend .qi-command-root.qi-command-nexus-focus .qi-command-deck--active {
+  box-shadow: var(--qi-shadow-lg), 0 0 0 4px rgba(108, 92, 255, 0.12);
+}
+
+.qc-legend .qi-command-root.qi-command-nexus-focus .qi-command-glass--deep {
+  background: linear-gradient(168deg, rgba(255, 255, 255, 0.5) 0%, transparent 42%);
+}
+
+.qc-legend .qi-command-root.qi-command-nexus-focus .qi-command-field {
+  min-height: 4.25rem;
+  border: 1px solid var(--qi-border-strong);
+  background: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.qc-legend .qi-command-root.qi-command-nexus-focus .qi-command-field--focus {
+  border-color: rgba(108, 92, 255, 0.45);
+  box-shadow: 0 0 0 4px rgba(108, 92, 255, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.qc-legend .qi-command-root.qi-command-nexus-focus .qi-command-prefix {
+  color: var(--qi-purple-deep);
+}
+
+.qc-legend .qi-command-root.qi-command-nexus-focus .qi-command-input {
+  color: var(--qi-ink);
+  font-size: clamp(1.05rem, 1.35vw, 1.15rem);
+  font-weight: 600;
+}
+
+.qc-legend .qi-command-root.qi-command-nexus-focus .qi-command-input::placeholder {
+  color: rgba(69, 77, 99, 0.55);
+}
+
+.qc-legend .qi-command-root.qi-command-nexus-focus .qi-command-suggest-toggle,
+.qc-legend .qi-command-root.qi-command-nexus-focus .qi-command-chip {
+  background: #ffffff;
+  border-color: var(--qi-border-soft);
+  color: var(--qi-ink-secondary);
+}
+
+.qc-legend .qi-command-root.qi-command-nexus-focus .qi-command-suggestions-panel {
+  background: #ffffff;
+  border-color: var(--qi-border-soft);
+  box-shadow: var(--qi-shadow-md);
+}
+
+.qc-legend .qi-command-root.qi-command-nexus-focus .qi-command-execute {
+  min-height: 4.25rem;
+  min-width: 12.5rem;
+  background: linear-gradient(145deg, #4036bf 0%, #6c5cff 52%, #8f82ff 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 14px 40px rgba(108, 92, 255, 0.38);
+  border-radius: 1.1rem;
+}
+
+/* Decorative portal rings — visible but not dominant */
+.qc-legend .qc-portal--prime::before,
+.qc-legend .qc-portal-ring {
+  opacity: 0.55;
+}
+
+.qc-legend .qc-neural-portal-energy {
+  opacity: 0.65;
+}
+
+/* -----------------------------------------------------------------------------
+   E. Results field & product cards
+   ----------------------------------------------------------------------------- */
+
+.qc-legend .qc-galaxy-field-inner.qi-field-command-deck {
+  border: 1px solid var(--qi-border-soft);
+  background: linear-gradient(180deg, #ffffff 0%, #f0f3ff 100%);
+  box-shadow: var(--qi-shadow-md);
+  border-radius: var(--qi-radius-panel);
+  padding: clamp(0.85rem, 1.5vw, 1.35rem);
+}
+
+.qc-legend .qi-institutional-matrix-head {
+  margin-bottom: var(--qi-space-4);
+  padding-bottom: var(--qi-space-3);
+  border-bottom: 1px solid var(--qi-border);
+}
+
+.qc-legend .qi-institutional-matrix-epoch {
+  color: var(--qi-purple-deep);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.625rem;
+}
+
+.qc-legend .qi-institutional-matrix-title {
+  font-size: clamp(1.5rem, 2.4vw, 1.85rem);
+  font-weight: 800;
+  color: var(--qi-ink);
+  letter-spacing: -0.03em;
+}
+
+.qc-legend .qi-institutional-matrix-meta {
+  color: var(--qi-ink-muted);
+}
+
+.qc-legend .qi-field-live-bar {
+  margin-bottom: var(--qi-space-4);
+  padding: var(--qi-space-3);
+  border-radius: var(--qi-radius-panel);
+  background: var(--qi-surface-solid);
+  border: 1px solid var(--qi-border-soft);
+  box-shadow: var(--qi-shadow-sm);
+}
+
+.qc-legend .qi-institutional-grid.qa-intelligence-matrix-body {
+  gap: clamp(1rem, 1.6vw, 1.4rem);
+  padding: clamp(0.5rem, 1vw, 0.85rem);
+  border: 1px solid var(--qi-border-soft);
+  border-radius: var(--qi-radius-panel);
+  background: linear-gradient(180deg, #fafbff 0%, #f3f6ff 100%);
+}
+
+@media (min-width: 768px) {
+  .qc-legend .qi-institutional-grid.qa-intelligence-matrix-body {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .qc-legend .qi-institutional-grid.qa-intelligence-matrix-body {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.qc-legend .qi-institutional-card {
+  min-height: 28rem;
+  background: linear-gradient(168deg, #ffffff 0%, #f5f7ff 100%);
+  border: 1px solid var(--qi-border);
+  border-radius: var(--qi-radius-card);
+  box-shadow: var(--qi-shadow-md);
+  transition: box-shadow 0.35s var(--qi-ease), transform 0.35s var(--qi-ease);
+}
+
+.qc-legend .qi-institutional-card:hover,
+.qc-legend .qi-institutional-card--focused {
+  box-shadow: var(--qi-shadow-lg);
+  transform: translateY(-3px);
+}
+
+.qc-legend .qi-institutional-card-inner {
+  padding: 1.2rem;
+}
+
+.qc-legend .qi-card-image-zone {
+  min-height: 13.5rem;
+  background:
+    linear-gradient(180deg, #ffffff 0%, #eef2ff 100%),
+    radial-gradient(circle at 50% 32%, rgba(108, 92, 255, 0.14) 0%, transparent 58%);
+}
+
+.qc-legend .qi-card-title {
+  font-size: clamp(1.02rem, 1.25vw, 1.12rem);
+  font-weight: 800;
+  line-height: 1.38;
+  color: var(--qi-ink);
+}
+
+.qc-legend .qi-card-subtitle,
+.qc-legend .qi-card-merchant {
+  color: var(--qi-ink-muted);
+}
+
+.qc-legend .qi-card-metrics-ribbon {
+  margin-block: 0.85rem;
+}
+
+.qc-legend .qi-card-verdict-surface.qi-decision-intel-block {
+  background: var(--qi-decision-bg);
+  border: 1px solid var(--qi-decision-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 32px rgba(67, 56, 202, 0.2);
+}
+
+.qc-legend .qi-decision-intel-block .qi-card-verdict-overline {
+  color: rgba(200, 191, 255, 0.92);
+}
+
+.qc-legend .qi-decision-intel-block .qi-card-verdict-headline,
+.qc-legend .qi-decision-intel-block .qi-card-verdict-thesis {
+  color: #f5f7ff;
+}
+
+.qc-legend .qi-card-pricing-current {
+  font-size: clamp(1.65rem, 2.6vw, 1.85rem);
+  font-weight: 800;
+  color: var(--qi-ink);
+}
+
+.qc-legend .qi-card-action--primary {
+  font-weight: 700;
+  box-shadow: 0 12px 32px rgba(14, 17, 24, 0.22), 0 0 40px rgba(108, 92, 255, 0.14);
+}
+
+.qc-legend .qi-card-action--ghost {
+  border-color: var(--qi-border-soft);
+  color: var(--qi-ink-secondary);
+  background: #ffffff;
+}
+
+.qc-legend #quantai-results-anchor .qa-os-toolbar {
+  margin-inline: 0;
+  padding: var(--qi-space-3);
+  background: #ffffff;
+  border: 1px solid var(--qi-border-soft);
+  border-radius: var(--qi-radius-panel);
+  box-shadow: var(--qi-shadow-sm);
+}
+
+/* -----------------------------------------------------------------------------
+   F. Pricing — solid premium cards (fix dark-text-on-light conflict)
+   ----------------------------------------------------------------------------- */
+
+.qc-universe .qi-access-architecture {
+  display: grid;
+  gap: var(--qi-space-4);
+}
+
+@media (min-width: 1024px) {
+  .qc-universe .qi-access-architecture {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+  }
+}
+
+.qc-universe .qi-access-layer {
+  border-radius: var(--qi-radius-card);
+  border: 1px solid var(--qi-border-soft);
+  background: var(--qi-surface-solid);
+  box-shadow: var(--qi-shadow-md);
+  color: var(--qi-ink);
+}
+
+.qc-universe .qi-access-layer--featured {
+  border-color: var(--qi-border-strong);
+  box-shadow: var(--qi-shadow-lg), var(--qi-glow-purple);
+  transform: translateY(-4px);
+}
+
+.qc-universe .qi-access-layer-glow {
+  opacity: 0.85;
+  background: radial-gradient(ellipse 80% 55% at 50% 0%, rgba(108, 92, 255, 0.14), transparent 70%);
+}
+
+.qc-universe .qi-access-layer-inner {
+  background: linear-gradient(168deg, #ffffff 0%, #f4f6ff 100%);
+  border: 1px solid var(--qi-border-soft);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  color: var(--qi-ink);
+}
+
+.qc-universe .qi-access-layer--featured .qi-access-layer-inner {
+  border-color: var(--qi-border-strong);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 0 0 1px rgba(108, 92, 255, 0.08);
+}
+
+.qc-universe .qi-access-layer-num {
+  color: var(--qi-ink-whisper);
+}
+
+.qc-universe .qi-access-name {
+  color: var(--qi-ink);
+}
+
+.qc-universe .qi-access-clearance,
+.qc-universe .qi-access-invitation {
+  color: var(--qi-ink-muted);
+}
+
+.qc-universe .qi-access-capabilities li {
+  color: var(--qi-ink-secondary);
+}
+
+.qc-universe .qi-access-capabilities li::before {
+  background: var(--qi-purple);
+}
+
+.qc-universe .qi-access-price-label,
+.qc-universe .qi-access-footnote {
+  color: var(--qi-ink-whisper);
+}
+
+.qc-universe .qi-access-price {
+  color: var(--qi-ink);
+}
+
+.qc-universe .qi-access-price-unit {
+  color: var(--qi-ink-muted);
+}
+
+.qc-universe .qi-access-badge {
+  border-color: var(--qi-border-strong);
+  background: var(--qi-purple-soft);
+  color: var(--qi-purple-deep);
+}
+
+.qc-universe .qi-access-cta {
+  background: var(--qi-ink);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.qc-universe .qi-access-cta--ghost {
+  background: transparent;
+  color: var(--qi-ink-secondary);
+  border-color: var(--qi-border);
+}
+
+.qc-universe .qi-access-cta--ghost:hover:not(:disabled) {
+  background: var(--qi-surface-sunken);
+}
+
+.qc-universe .qi-access-layer--featured .qi-access-cta:not(.qi-access-cta--ghost) {
+  background: linear-gradient(145deg, #4338ca 0%, #6c5cff 52%, #8b7dff 100%);
+  box-shadow: 0 12px 34px rgba(108, 92, 255, 0.34);
+}
+
+.qc-universe .qc-clearance-nexus-header h1,
+.qc-universe .qc-clearance-nexus-header h2,
+.qc-universe .qc-portal-title {
+  color: var(--qi-ink);
+}
+
+/* -----------------------------------------------------------------------------
+   G. Dashboard command center
+   ----------------------------------------------------------------------------- */
+
+.qi-dashboard-canvas {
+  min-height: 100dvh;
+  background:
+    radial-gradient(ellipse 88% 56% at 50% -6%, rgba(108, 92, 255, 0.14) 0%, transparent 58%),
+    linear-gradient(180deg, #f8f9ff 0%, #f1f3ff 48%, #eceaff 100%);
+}
+
+.qi-dashboard-canvas .qi-shell {
+  width: 100%;
+  max-width: var(--qi-shell-max);
+  margin-inline: auto;
+  padding-inline: var(--qi-shell-pad);
+}
+
+.qi-dashboard-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.15rem, 2vw, 1.65rem);
+}
+
+.qi-dashboard-workspace .qi-dash-panel,
+.qi-dashboard-workspace .cockpit-glass-panel {
+  background: var(--qi-surface-solid);
+  border: 1px solid var(--qi-border-soft);
+  box-shadow: var(--qi-shadow-md);
+  border-radius: var(--qi-radius-panel);
+  color: var(--qi-ink);
+}
+
+.qi-dashboard-workspace .qi-dash-panel h1,
+.qi-dashboard-workspace .qi-dash-panel h2,
+.qi-dashboard-workspace .cockpit-glass-panel h1,
+.qi-dashboard-workspace .cockpit-glass-panel h2 {
+  color: var(--qi-ink);
+}
+
+.qi-dashboard-workspace .qi-dash-topbar {
+  background: var(--qi-surface-solid);
+  border: 1px solid var(--qi-border-soft);
+  border-radius: var(--qi-radius-panel);
+  box-shadow: var(--qi-shadow-sm);
+}
+
+.qi-dashboard-workspace .qi-dash-hero-title {
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+  color: var(--qi-ink);
+}
+
+.qi-dashboard-workspace .qi-dash-hero-lead {
+  color: var(--qi-ink-muted);
+  line-height: 1.55;
+}
+
+.qi-dashboard-workspace .qi-dash-kpi,
+.qi-dashboard-workspace .qi-dash-list-item,
+.qi-dashboard-workspace .qi-dash-summary {
+  background: var(--qi-surface-solid);
+  border: 1px solid var(--qi-border-soft);
+}
+
+.qi-dashboard-workspace .qi-dash-kpi-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--qi-ink);
+}
+
+.qi-dashboard-workspace .qi-dash-activity-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .qi-dashboard-workspace .qi-dash-activity-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   H. Responsive polish
+   ----------------------------------------------------------------------------- */
+
+@media (min-width: 1600px) {
+  .qc-legend .qi-institutional-grid.qa-intelligence-matrix-body {
+    gap: 1.65rem;
+  }
+
+  .qc-legend .qi-institutional-card {
+    min-height: 29rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .qc-legend .qc-portal--prime {
+    min-height: auto;
+    padding-top: 3.5rem;
+  }
+
+  .qc-legend .qi-command-root.qi-command-nexus-focus .qi-command-execute {
+    min-width: 100%;
+  }
+}

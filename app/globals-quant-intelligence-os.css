@@ -1,0 +1,367 @@
+/* QuantAI Intelligence OS — principal visual architecture (final authority) */
+
+:root {
+  --qa-io-ink: #0e1118;
+  --qa-io-ink-soft: #3a4256;
+  --qa-io-muted: #6b7289;
+  --qa-io-mist: #f4f6fb;
+  --qa-io-surface: rgba(255, 255, 255, 0.62);
+  --qa-io-surface-strong: rgba(255, 255, 255, 0.82);
+  --qa-io-accent: #4f5fd6;
+  --qa-io-accent-soft: rgba(79, 95, 214, 0.1);
+  --qa-io-line: rgba(30, 40, 70, 0.06);
+  --qa-io-glow: rgba(79, 95, 214, 0.14);
+  --qa-io-radius: 1.25rem;
+  --qa-io-space-section: clamp(3rem, 7vh, 5rem);
+}
+
+/* ---- Canvas ---- */
+.qc-universe.qc-legend body {
+  background: linear-gradient(180deg, #fcfdff 0%, #f3f5fa 55%, #eceff6 100%) !important;
+  color: var(--qa-io-ink) !important;
+}
+
+.qc-universe.qc-legend body::before {
+  background:
+    radial-gradient(ellipse 90% 55% at 50% -15%, rgba(79, 95, 214, 0.09), transparent 58%),
+    radial-gradient(ellipse 45% 38% at 100% 0%, rgba(99, 130, 200, 0.06), transparent 55%),
+    linear-gradient(180deg, #ffffff 0%, #f6f8fc 100%) !important;
+}
+
+.qc-legend .qa-backdrop-neural-grid {
+  opacity: 0.22 !important;
+  background-size: 56px 56px !important;
+}
+
+/* Restore subtle atmosphere (overrides unified hide) */
+.qc-legend .qi-command-inner-glow,
+.qc-legend .qi-command-halo,
+.qc-legend .qc-cinema-entity-glow {
+  display: block !important;
+  pointer-events: none !important;
+}
+
+.qc-legend .qi-command-halo {
+  opacity: 0.35 !important;
+  filter: blur(48px);
+}
+
+.qc-legend .qc-cinema-entity-glow {
+  opacity: 0 !important;
+  background: radial-gradient(ellipse 75% 55% at 50% 0%, var(--qa-io-glow), transparent 70%) !important;
+}
+
+.qc-legend .qc-cinema-entity:hover .qc-cinema-entity-glow {
+  opacity: 0.85 !important;
+}
+
+/* ---- Typography ---- */
+.qc-legend .qc-portal-title,
+.qc-legend .qc-galaxy-field-title,
+.qc-legend .cockpit-display {
+  font-weight: 600 !important;
+  letter-spacing: -0.04em !important;
+  color: var(--qa-io-ink) !important;
+}
+
+.qc-legend .qc-portal-lead,
+.qc-legend .cockpit-body {
+  font-size: 1.05rem !important;
+  line-height: 1.55 !important;
+  color: var(--qa-io-ink-soft) !important;
+  font-weight: 500 !important;
+}
+
+.qc-legend .qc-portal-badge,
+.qc-legend .qc-galaxy-field-epoch,
+.qc-legend .qc-cinema-classified,
+.qc-legend .qi-silent-overline {
+  font-size: 0.62rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.16em !important;
+  color: var(--qa-io-muted) !important;
+}
+
+/* ---- Intelligence command terminal ---- */
+.qc-legend .qa-intelligence-terminal.qc-neural-command {
+  max-width: 52rem;
+  margin-inline: auto;
+}
+
+.qc-legend .qa-intelligence-terminal .qi-command-deck {
+  border-radius: var(--qa-io-radius) !important;
+  background: var(--qa-io-surface-strong) !important;
+  box-shadow: 0 24px 64px -36px rgba(20, 28, 60, 0.12) !important;
+  backdrop-filter: blur(24px) saturate(140%);
+}
+
+.qc-legend .qa-intelligence-terminal .qi-command-field {
+  min-height: 4.25rem !important;
+  border: 1px solid var(--qa-io-line) !important;
+  border-radius: 1rem !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  box-shadow: none !important;
+}
+
+.qc-legend .qa-intelligence-terminal .qi-command-input {
+  font-size: 1.12rem !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.qc-legend .qa-intelligence-terminal .qi-command-input::placeholder {
+  color: rgba(107, 114, 137, 0.75) !important;
+  font-weight: 500 !important;
+}
+
+.qc-legend .qa-intelligence-terminal .qi-command-field--focus {
+  border-color: rgba(79, 95, 214, 0.28) !important;
+  box-shadow: 0 0 0 3px var(--qa-io-accent-soft) !important;
+  transform: none !important;
+}
+
+.qc-legend .qa-intelligence-terminal .qi-command-execute {
+  min-height: 4.25rem !important;
+  border-radius: 1rem !important;
+  background: var(--qa-io-ink) !important;
+  box-shadow: 0 12px 32px -14px rgba(14, 17, 24, 0.35) !important;
+}
+
+.qc-legend .qa-intelligence-terminal .qi-command-execute:hover:not(:disabled) {
+  background: #1a2030 !important;
+  transform: translateY(-1px) !important;
+}
+
+.qc-legend .qc-portal-command--nexus {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0.5rem 0 0 !important;
+}
+
+.qc-legend .qc-neural-portal-body {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.qc-legend .qc-neural-portal {
+  padding: 0 !important;
+  min-height: auto !important;
+}
+
+/* ---- Hero manifest ---- */
+.qc-legend .qc-portal--prime {
+  min-height: min(68vh, 48rem) !important;
+  padding-top: clamp(3rem, 7vh, 4.5rem) !important;
+}
+
+.qc-legend .qc-portal-title {
+  font-size: clamp(2.5rem, 5.8vw, 3.75rem) !important;
+  line-height: 1.02 !important;
+}
+
+.qc-legend .qc-portal-title-accent {
+  background: none !important;
+  -webkit-text-fill-color: var(--qa-io-accent) !important;
+  color: var(--qa-io-accent) !important;
+}
+
+/* ---- Intelligence field (results) ---- */
+.qc-legend .qc-galaxy-field {
+  padding-block: var(--qa-io-space-section) !important;
+}
+
+.qc-legend .qc-galaxy-field::before {
+  background: radial-gradient(ellipse 70% 45% at 50% 0%, rgba(79, 95, 214, 0.05), transparent 65%) !important;
+}
+
+.qc-legend .qc-intelligence-field .qc-cinema-grid,
+.qc-legend .qc-intelligence-field .qc-entity-grid {
+  gap: clamp(1.25rem, 2.5vw, 1.75rem) !important;
+}
+
+/* Intelligence nodes — superseded by field rows in globals-quant-intelligence-field.css */
+.qc-legend #quantai-results-anchor .qa-intelligence-node.qc-cinema-entity:not(.qa-intelligence-row) {
+  border: none !important;
+  border-radius: var(--qa-io-radius) !important;
+  background: var(--qa-io-surface) !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(12px);
+  transition: background 0.25s ease, transform 0.25s ease !important;
+}
+
+.qc-legend #quantai-results-anchor .qa-intelligence-node.qc-cinema-entity::before {
+  display: none !important;
+}
+
+.qc-legend #quantai-results-anchor .qa-intelligence-node:hover {
+  background: var(--qa-io-surface-strong) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 20px 48px -32px rgba(20, 28, 60, 0.14) !important;
+}
+
+.qc-legend #quantai-results-anchor .qa-intelligence-node .qi-product-card-inner {
+  background: transparent !important;
+}
+
+.qc-legend #quantai-results-anchor .qa-intelligence-node .qc-cinema-layout {
+  min-height: auto !important;
+  max-height: none !important;
+  padding: 1.1rem !important;
+  gap: 0.85rem !important;
+}
+
+.qc-legend #quantai-results-anchor .qa-intelligence-node .qc-cinema-visual-frame {
+  background: linear-gradient(180deg, #e8ebf4 0%, #d8dde8 100%) !important;
+  box-shadow: none !important;
+  border-radius: 0.85rem !important;
+}
+
+.qc-legend #quantai-results-anchor .qa-intelligence-node .qi-card-verdict-compact {
+  border: none !important;
+  border-left: 2px solid var(--qa-io-accent) !important;
+  border-radius: 0 !important;
+  background: var(--qa-io-accent-soft) !important;
+  box-shadow: none !important;
+  padding: 0.6rem 0.75rem !important;
+}
+
+.qc-legend #quantai-results-anchor .qa-intelligence-node .qi-editorial-title {
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.qc-legend #quantai-results-anchor .qa-intelligence-node .qc-cinema-zone--core {
+  border: none !important;
+  background: transparent !important;
+  padding: 0.5rem 0 0 !important;
+}
+
+.qc-legend #quantai-results-anchor .qa-intelligence-node .qi-intel-strip-pill {
+  border: none !important;
+  background: rgba(79, 95, 214, 0.08) !important;
+  box-shadow: none !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+}
+
+.qc-legend #quantai-results-anchor .qa-intelligence-node .qc-cinema-action--primary {
+  background: var(--qa-io-ink) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: none !important;
+}
+
+.qc-legend #quantai-results-anchor > .pointer-events-none {
+  display: none !important;
+}
+
+/* ---- Reduce white-box clutter globally ---- */
+.qc-legend .qa-market-galaxy--hero,
+.qc-legend .qa-decision-snapshot,
+.qc-legend .qa-io-surface {
+  border: 1px solid var(--qa-io-line) !important;
+  background: var(--qa-io-surface) !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(16px);
+}
+
+.qc-legend .qa-decision-snapshot {
+  border-radius: var(--qa-io-radius) !important;
+}
+
+/* ---- Intelligence rail ---- */
+.qc-legend .qa-intelligence-rail {
+  border: 1px solid var(--qa-io-line) !important;
+  background: rgba(252, 253, 255, 0.78) !important;
+  box-shadow: 4px 0 32px -16px rgba(20, 28, 60, 0.08) !important;
+}
+
+.qc-legend .qa-intelligence-rail .qc-nav-orb-link:hover {
+  color: var(--qa-io-accent) !important;
+  background: var(--qa-io-accent-soft) !important;
+  box-shadow: none !important;
+}
+
+/* ---- Institutional access ---- */
+.qc-legend .qa-institutional-access {
+  background:
+    linear-gradient(180deg, #e9ecf5 0%, #f4f6fb 40%, #fafbfd 100%) !important;
+  border-top: 1px solid var(--qa-io-line) !important;
+  padding-block: var(--qa-io-space-section) !important;
+}
+
+.qc-legend .qi-access-layer-inner {
+  border: 1px solid var(--qa-io-line) !important;
+  background: var(--qa-io-surface-strong) !important;
+  box-shadow: none !important;
+  border-radius: var(--qa-io-radius) !important;
+}
+
+.qc-legend .qi-access-layer--featured .qi-access-layer-inner {
+  border-color: rgba(79, 95, 214, 0.18) !important;
+  box-shadow: 0 24px 56px -32px rgba(79, 95, 214, 0.12) !important;
+}
+
+.qc-legend .qi-access-layer--institutional .qi-access-layer-inner {
+  background: linear-gradient(165deg, #161a26, #222836) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.qc-legend .qi-access-name {
+  font-size: 1.2rem !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.03em !important;
+}
+
+/* ---- Dashboard intelligence workspace ---- */
+.qc-legend .qa-intelligence-workspace .cockpit-glass-panel,
+.qc-legend .qa-dashboard-hero {
+  border: 1px solid var(--qa-io-line) !important;
+  background: var(--qa-io-surface-strong) !important;
+  box-shadow: none !important;
+  border-radius: var(--qa-io-radius) !important;
+  backdrop-filter: blur(16px);
+}
+
+.qc-legend .qa-intelligence-workspace .cockpit-glass-panel:hover {
+  border-color: rgba(79, 95, 214, 0.12) !important;
+}
+
+.qc-legend .qa-intelligence-workspace section ul li,
+.qc-legend .qa-intelligence-workspace .rounded-xl.border {
+  border-color: var(--qa-io-line) !important;
+  background: rgba(255, 255, 255, 0.55) !important;
+  box-shadow: none !important;
+}
+
+.qc-legend .qa-dashboard-canvas {
+  background: linear-gradient(180deg, #f8f9fc 0%, #eef1f7 100%) !important;
+}
+
+/* ---- Toolbar / filters — calmer ---- */
+.qc-legend .qa-os-toolbar,
+.qc-legend .qi-sys-results-loading {
+  border-color: var(--qa-io-line) !important;
+}
+
+@media (max-width: 1023px) {
+  .qc-legend .qc-portal--prime {
+    min-height: auto !important;
+    padding-top: 4.25rem !important;
+  }
+
+  .qc-legend .qa-intelligence-terminal .qi-command-field,
+  .qc-legend .qa-intelligence-terminal .qi-command-execute {
+    min-height: 3.5rem !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qc-legend #quantai-results-anchor .qa-intelligence-node:hover,
+  .qc-legend .qa-intelligence-terminal .qi-command-execute:hover:not(:disabled) {
+    transform: none !important;
+  }
+}

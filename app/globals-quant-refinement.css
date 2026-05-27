@@ -1,0 +1,323 @@
+/* QuantAI white luxury refinement — final pass (preserves DNA, no redesign) */
+
+:root {
+  --qa-ref-bg: #fafbff;
+  --qa-ref-bg-soft: #f4f1ff;
+  --qa-ref-surface: #ffffff;
+  --qa-ref-ink: #1a1f3a;
+  --qa-ref-muted: #5c6480;
+  --qa-ref-subtle: #8b93ad;
+  --qa-ref-border: rgba(109, 94, 252, 0.14);
+  --qa-ref-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 18px 44px -30px rgba(109, 94, 252, 0.2),
+    0 8px 20px -14px rgba(15, 23, 42, 0.08);
+}
+
+/* Canvas — enforce white luxury */
+.qc-universe.qc-legend,
+.qc-universe.qc-legend body,
+html.qc-legend body {
+  background: var(--qa-ref-bg) !important;
+  color: var(--qa-ref-ink) !important;
+}
+
+.qc-universe.qc-legend body::before {
+  background:
+    radial-gradient(ellipse 70% 42% at 14% -8%, rgba(196, 181, 253, 0.2), transparent 58%),
+    radial-gradient(ellipse 55% 36% at 92% 0%, rgba(191, 219, 254, 0.16), transparent 55%),
+    linear-gradient(180deg, #ffffff 0%, #fafbff 48%, #f4f1ff 100%) !important;
+}
+
+/* Typography */
+.qc-legend .qc-portal-title,
+.qc-legend .qc-galaxy-field-title,
+.qc-legend .qi-editorial-display,
+.qc-legend .cockpit-display {
+  font-family: var(--font-qa-display), var(--font-quantai), ui-sans-serif, sans-serif !important;
+  letter-spacing: -0.034em !important;
+  font-weight: 600 !important;
+}
+
+.qc-legend body,
+.qc-legend .qc-portal-lead,
+.qc-legend .cockpit-body {
+  font-family: var(--font-quantai), ui-sans-serif, sans-serif !important;
+  letter-spacing: -0.015em;
+}
+
+/* Hero */
+.qc-legend .qc-portal--prime {
+  padding: clamp(1.75rem, 3.5vw, 2.75rem) 1rem 1rem !important;
+}
+
+.qc-legend .qc-portal-badge {
+  border-color: rgba(109, 94, 252, 0.22) !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+  color: #6d5efc !important;
+  box-shadow: 0 8px 24px -16px rgba(109, 94, 252, 0.28) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.14em !important;
+}
+
+.qc-legend .qc-portal-title {
+  font-size: clamp(2.15rem, 5vw, 3.65rem) !important;
+  line-height: 1.06 !important;
+  color: var(--qa-ref-ink) !important;
+}
+
+.qc-legend .qc-portal-title-accent {
+  color: #6d5efc !important;
+  background: none !important;
+  -webkit-text-fill-color: #6d5efc !important;
+}
+
+.qc-legend .qc-portal-lead {
+  font-size: 1.02rem !important;
+  line-height: 1.55 !important;
+  color: var(--qa-ref-muted) !important;
+  max-width: 36rem;
+}
+
+.qc-legend .qc-portal-atmosphere {
+  opacity: 0.45 !important;
+}
+
+.qc-legend .qc-portal-ring {
+  border-color: rgba(109, 94, 252, 0.12) !important;
+}
+
+.qc-legend .qc-portal-command {
+  margin-top: 1.25rem !important;
+  border: 1px solid var(--qa-ref-border) !important;
+  border-radius: 1.5rem !important;
+  background: linear-gradient(165deg, #ffffff, #f8f9ff) !important;
+  box-shadow: var(--qa-ref-shadow) !important;
+  padding: 1rem 1.05rem !important;
+}
+
+.qc-legend .qc-neural-portal-body,
+.qc-legend .qi-command-deck,
+.qc-legend .qi-instrument-field {
+  border-radius: 1.15rem !important;
+  border-color: rgba(109, 94, 252, 0.12) !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  box-shadow: 0 10px 28px -20px rgba(109, 94, 252, 0.16) !important;
+}
+
+.qc-legend .qi-command-execute,
+.qc-legend .qi-instrument-submit {
+  background: linear-gradient(120deg, #7c6dfc, #6d5efc 45%, #5b8cff) !important;
+  box-shadow: 0 10px 24px -12px rgba(109, 94, 252, 0.35) !important;
+}
+
+/* Brand strip — thinner, closer to search */
+.qc-legend .qa-market-galaxy--hero {
+  margin-top: 0.55rem !important;
+  padding: 0.5rem 0.75rem !important;
+  border-color: rgba(109, 94, 252, 0.1) !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  box-shadow: 0 10px 28px -22px rgba(109, 94, 252, 0.18) !important;
+}
+
+.qc-legend .qa-market-galaxy--hero .qa-market-galaxy-head {
+  margin-bottom: 0.35rem !important;
+}
+
+.qc-legend .qa-market-galaxy--hero .qa-market-galaxy-overline {
+  font-size: 0.58rem !important;
+}
+
+.qc-legend .qa-market-galaxy--hero .qa-market-galaxy-title {
+  font-size: 0.72rem !important;
+  font-weight: 500 !important;
+  color: var(--qa-ref-muted) !important;
+}
+
+.qc-legend .qa-market-galaxy-chip {
+  padding: 0.22rem 0.62rem !important;
+  font-size: 0.66rem !important;
+  font-weight: 500 !important;
+  border-color: rgba(109, 94, 252, 0.12) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  color: var(--qa-ref-muted) !important;
+}
+
+/* Live ribbon — soft light */
+.qc-legend .qa-live-ribbon {
+  border: 1px solid var(--qa-ref-border) !important;
+  border-radius: 1.25rem !important;
+  background: linear-gradient(165deg, #ffffff, #f6f7ff) !important;
+  box-shadow: var(--qa-ref-shadow) !important;
+}
+
+.qc-legend .qa-live-ribbon-scan {
+  background: linear-gradient(90deg, transparent, rgba(109, 94, 252, 0.05), transparent) !important;
+  animation-duration: 8s !important;
+}
+
+.qc-legend .qa-live-ribbon-epoch {
+  color: #7c6dfc !important;
+  font-size: 0.6rem !important;
+  letter-spacing: 0.16em !important;
+}
+
+.qc-legend .qa-live-ribbon-state {
+  color: var(--qa-ref-muted) !important;
+  font-size: 0.64rem !important;
+}
+
+.qc-legend .qa-live-ribbon-metric {
+  border-color: rgba(109, 94, 252, 0.1) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+.qc-legend .qa-live-ribbon-metric-label {
+  color: var(--qa-ref-subtle) !important;
+}
+
+.qc-legend .qa-live-ribbon-metric-value {
+  color: var(--qa-ref-ink) !important;
+}
+
+.qc-legend .qa-live-ribbon-chip {
+  border-color: rgba(109, 94, 252, 0.12) !important;
+  background: rgba(244, 241, 255, 0.8) !important;
+  color: var(--qa-ref-muted) !important;
+}
+
+.qc-legend .qa-live-ribbon-pulse {
+  background: rgba(109, 94, 252, 0.35) !important;
+}
+
+.qc-legend .qa-live-ribbon-pulse--on {
+  background: #6d5efc !important;
+  box-shadow: 0 0 8px rgba(109, 94, 252, 0.35) !important;
+}
+
+/* Cards — denser, professional */
+.qc-legend #quantai-results-anchor .qc-cinema-layout {
+  min-height: 22.5rem !important;
+  max-height: 27.5rem !important;
+}
+
+.qc-legend .qc-cinema-visual-frame img,
+.qc-legend .qc-cinema-visual-frame [class*="aspect-"] {
+  max-height: 7.25rem !important;
+  min-height: 5.25rem !important;
+}
+
+.qc-legend #quantai-results-anchor .qc-cinema-entity,
+.qc-legend #quantai-results-anchor .qi-product-card-inner {
+  border-color: var(--qa-ref-border) !important;
+  background: linear-gradient(168deg, #ffffff, #f8f9ff) !important;
+  box-shadow: var(--qa-ref-shadow) !important;
+}
+
+.qc-legend #quantai-results-anchor .qc-cinema-entity:hover {
+  border-color: rgba(109, 94, 252, 0.26) !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 1) inset,
+    0 22px 48px -26px rgba(109, 94, 252, 0.24) !important;
+  transform: translateY(-1px);
+}
+
+.qc-legend .qc-cinema-zone--orbit {
+  background: rgba(248, 249, 255, 0.75) !important;
+}
+
+.qc-legend .qc-cinema-action--primary {
+  background: linear-gradient(120deg, #7c6dfc, #6d5efc) !important;
+  box-shadow: 0 8px 20px -10px rgba(109, 94, 252, 0.38) !important;
+}
+
+/* Sidebar — soft luxury SaaS */
+.qc-legend .qc-nav-orb {
+  border-right: 1px solid rgba(109, 94, 252, 0.12) !important;
+  background: rgba(255, 255, 255, 0.78) !important;
+  backdrop-filter: blur(16px);
+  box-shadow: 6px 0 28px -18px rgba(109, 94, 252, 0.12);
+}
+
+.qc-legend .qc-nav-orb-mark {
+  border: 1px solid rgba(109, 94, 252, 0.16) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 8px 20px -12px rgba(109, 94, 252, 0.2) !important;
+}
+
+.qc-legend .qc-nav-orb-link {
+  color: var(--qa-ref-muted) !important;
+}
+
+.qc-legend .qc-nav-orb-link:hover {
+  color: var(--qa-ref-ink) !important;
+}
+
+.qc-legend .qc-nav-mobile {
+  border-color: rgba(109, 94, 252, 0.12) !important;
+  background: rgba(255, 255, 255, 0.88) !important;
+}
+
+/* Verdict drawer — light analyst panel */
+.qc-legend .qc-verdict-drawer,
+.qc-legend .qa-os-drawer.qc-verdict-drawer {
+  border-color: rgba(109, 94, 252, 0.14) !important;
+  background: linear-gradient(180deg, #ffffff, #f6f8ff) !important;
+  box-shadow: -20px 0 48px -28px rgba(109, 94, 252, 0.22) !important;
+}
+
+.qc-legend .qc-verdict-overlay {
+  background: rgba(244, 241, 255, 0.55) !important;
+  backdrop-filter: blur(6px) !important;
+}
+
+.qc-legend .qc-verdict-drawer header,
+.qc-legend .qc-verdict-drawer footer {
+  border-color: rgba(109, 94, 252, 0.1) !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+}
+
+.qc-legend .qc-verdict-drawer .text-white,
+.qc-legend .qc-verdict-drawer .text-white\/95,
+.qc-legend .qc-verdict-drawer h3 {
+  color: var(--qa-ref-ink) !important;
+}
+
+.qc-legend .qc-verdict-drawer .text-slate-300,
+.qc-legend .qc-verdict-drawer .text-slate-400,
+.qc-legend .qc-verdict-drawer .text-slate-500 {
+  color: var(--qa-ref-muted) !important;
+}
+
+/* Dashboard workspace */
+.qc-legend .qa-intelligence-workspace .cockpit-glass-panel {
+  border: 1px solid var(--qa-ref-border) !important;
+  background: linear-gradient(165deg, #ffffff, #f8f9ff) !important;
+  box-shadow: var(--qa-ref-shadow) !important;
+}
+
+.qc-legend .qa-intelligence-workspace .text-white {
+  color: var(--qa-ref-ink) !important;
+}
+
+.qc-legend .qa-intelligence-workspace .text-slate-400,
+.qc-legend .qa-intelligence-workspace .text-slate-500 {
+  color: var(--qa-ref-muted) !important;
+}
+
+/* Section rhythm */
+.qc-legend .qc-chamber-connector {
+  height: 0.4rem !important;
+}
+
+.qc-legend .qc-galaxy-field {
+  padding-top: 0.75rem !important;
+  padding-bottom: 1rem !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qc-legend .qa-live-ribbon-scan,
+  .qc-legend .qa-market-galaxy-track {
+    animation: none !important;
+  }
+}

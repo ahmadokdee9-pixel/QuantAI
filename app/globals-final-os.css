@@ -1,0 +1,746 @@
+/**
+ * QuantAI Final OS — world-class unification + performance.
+ * Visual/motion/typography only. No search, ranking, or intelligence logic.
+ */
+
+:root {
+  /* Typography scale */
+  --qa-type-display: clamp(2.5rem, 6.5vw, 4.5rem);
+  --qa-type-h1: clamp(1.75rem, 3.2vw, 2.35rem);
+  --qa-type-h2: clamp(1.25rem, 2vw, 1.5rem);
+  --qa-type-h3: 1.125rem;
+  --qa-type-body: 0.9375rem;
+  --qa-type-body-sm: 0.8125rem;
+  --qa-type-caption: 0.6875rem;
+  --qa-type-overline: 0.625rem;
+
+  /* Rhythm */
+  --qa-space-section: clamp(2rem, 5vw, 3rem);
+  --qa-space-panel: clamp(1.25rem, 3vw, 2rem);
+  --qa-space-stack: 0.75rem;
+
+  /* Motion (faster perceived speed) */
+  --qa-motion-fast: 0.18s;
+  --qa-motion-ui: 0.32s;
+  --qa-motion-enter: 0.42s;
+
+  /* Surfaces (lighter glass for perf) */
+  --qa-glass-blur: blur(14px) saturate(130%);
+  --qa-glass-blur-heavy: blur(20px) saturate(138%);
+  --qa-edge-light: rgba(248, 250, 252, 0.06);
+  --qa-edge-soft: rgba(226, 232, 240, 0.03);
+  --qa-shadow-panel: 0 24px 54px -36px rgba(0, 0, 0, 0.8);
+  --qa-shadow-float: 0 18px 42px -28px rgba(0, 0, 0, 0.72);
+  --qa-accent-cool: rgba(148, 163, 184, 0.22);
+  --qa-accent-cool-soft: rgba(148, 163, 184, 0.08);
+}
+
+/* —— Scroll & page rhythm —— */
+html.qa-final-os {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.qa-final-os {
+    scroll-behavior: auto;
+  }
+}
+
+.qa-final-os #qa-main {
+  scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 4.25rem);
+}
+
+.qa-page-rhythm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qa-space-section);
+}
+
+.qa-scroll-region {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+}
+
+/* —— Typography unification —— */
+.qa-final-os .cockpit-display,
+.qa-final-os .qi-editorial-display {
+  font-size: var(--qa-type-h1);
+  font-weight: 580;
+  line-height: 1.14;
+  letter-spacing: -0.034em;
+  color: rgba(248, 250, 252, 0.98);
+}
+
+.qa-final-os .cockpit-body,
+.qa-final-os .qi-silent-whisper {
+  font-size: 0.84375rem;
+  line-height: 1.62;
+  letter-spacing: -0.009em;
+  color: var(--qa-v2-text-muted, rgba(148, 163, 184, 0.72));
+}
+
+.qa-final-os .cockpit-overline,
+.qa-final-os .qi-silent-overline,
+.qa-final-os .qi-hero-manifest,
+.qa-final-os .qi-cinematic-manifest {
+  font-size: var(--qa-type-overline);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  line-height: 1.3;
+}
+
+.qa-final-os .qi-hero-headline {
+  font-size: var(--qa-type-display);
+  line-height: 1.01;
+  letter-spacing: -0.042em;
+  text-wrap: balance;
+}
+
+.qa-final-os .qi-hero-lead {
+  font-size: clamp(1rem, 2vw, 1.125rem);
+  line-height: 1.62;
+}
+
+.qa-final-os .qa-section-title {
+  font-size: var(--qa-type-h2);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.qa-final-os .qa-section-lead {
+  font-size: var(--qa-type-body-sm);
+  line-height: 1.55;
+}
+
+/* —— Unified surfaces —— */
+.qa-final-os .cockpit-glass-panel,
+.qa-final-os .cockpit-glass-card,
+.qa-final-os .qa-premium-surface {
+  border-radius: 1.35rem;
+  border-color: transparent;
+  background:
+    radial-gradient(120% 88% at 0% -12%, var(--qa-accent-cool-soft), transparent 48%),
+    radial-gradient(90% 66% at 100% 0%, rgba(148, 163, 184, 0.04), transparent 42%),
+    linear-gradient(170deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.014) 28%, rgba(6, 8, 12, 0.94) 100%);
+  box-shadow:
+    0 0 0 1px var(--qa-edge-soft) inset,
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    var(--qa-shadow-panel);
+  backdrop-filter: var(--qa-glass-blur-heavy);
+  -webkit-backdrop-filter: var(--qa-glass-blur-heavy);
+}
+
+.qa-surface-panel {
+  border-radius: 1.35rem;
+}
+
+/* —— Button hierarchy —— */
+.qa-btn-primary {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.625rem 1.35rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #070d18;
+  background: linear-gradient(98deg, #e2e8f0, #cbd5e1 58%, #f1f5f9);
+  box-shadow: 0 14px 32px -24px rgba(148, 163, 184, 0.45);
+  transition:
+    filter var(--qa-motion-fast) ease,
+    box-shadow var(--qa-motion-ui) ease,
+    transform var(--qa-motion-fast) ease;
+}
+
+.qa-btn-primary:hover {
+  filter: brightness(1.03);
+  box-shadow: 0 16px 36px -22px rgba(148, 163, 184, 0.5);
+}
+
+.qa-btn-primary:active {
+  transform: translateY(1px) scale(0.995);
+}
+
+.qa-btn-secondary {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.625rem 1.25rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(248, 250, 252, 0.92);
+  background: rgba(255, 255, 255, 0.035);
+  transition:
+    background var(--qa-motion-fast) ease,
+    border-color var(--qa-motion-fast) ease;
+}
+
+.qa-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.065);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.qa-btn-secondary:active {
+  transform: translateY(1px);
+}
+
+/* —— Navigation identity —— */
+.qa-nav-shell {
+  transition: padding var(--qa-motion-ui) ease;
+}
+
+.qa-final-os .qa-nav-pill {
+  min-height: 2.25rem;
+  padding-inline: 0.82rem;
+  font-size: 0.78125rem;
+  letter-spacing: -0.01em;
+  color: rgba(203, 213, 225, 0.82);
+  border: 1px solid transparent;
+  transition:
+    color var(--qa-motion-fast) ease,
+    border-color var(--qa-motion-fast) ease,
+    background var(--qa-motion-fast) ease,
+    transform var(--qa-motion-fast) ease;
+}
+
+.qa-final-os .qa-nav-pill:hover {
+  color: rgba(248, 250, 252, 0.96);
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-1px);
+  box-shadow: var(--qa-shadow-float);
+}
+
+.qa-nav-cta {
+  min-height: 2.5rem;
+}
+
+.qa-nav-menu-btn {
+  min-height: 2.5rem;
+  min-width: 2.5rem;
+}
+
+.qa-nav-mobile-link {
+  border: 1px solid transparent;
+}
+
+.qa-nav-mobile-link:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* —— Console / command system —— */
+.qa-console-panel {
+  border-radius: 1.35rem;
+  overflow: hidden;
+  background:
+    radial-gradient(130% 95% at 8% -16%, rgba(148, 163, 184, 0.07), transparent 45%),
+    linear-gradient(168deg, rgba(10, 13, 18, 0.99), rgba(4, 6, 10, 1));
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.055) inset,
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 42px 100px -54px rgba(0, 0, 0, 0.92);
+}
+
+.qa-console-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.qa-console-panel-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.qa-console-list {
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.35rem 0.5rem 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.5) transparent;
+}
+
+.qa-console-label {
+  padding: 0.5rem 0.5rem 0.25rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(100, 116, 139, 0.85);
+}
+
+.qa-console-row {
+  display: flex;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 0.85rem;
+  border: 1px solid transparent;
+  padding: 0.55rem 0.75rem;
+  text-align: left;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgba(226, 232, 240, 0.92);
+  transition:
+    background var(--qa-motion-fast) ease,
+    border-color var(--qa-motion-fast) ease,
+    color var(--qa-motion-fast) ease,
+    transform var(--qa-motion-fast) ease;
+}
+
+.qa-console-row:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.qa-console-row--active {
+  border-color: rgba(148, 163, 184, 0.22);
+  background: rgba(148, 163, 184, 0.12);
+  color: rgba(241, 245, 249, 0.98);
+}
+
+.qa-console-chip {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0.4rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(148, 163, 184, 0.9);
+  background: rgba(255, 255, 255, 0.02);
+  transition:
+    background var(--qa-motion-fast) ease,
+    border-color var(--qa-motion-fast) ease,
+    color var(--qa-motion-fast) ease;
+}
+
+.qa-console-chip:hover:not(:disabled) {
+  border-color: rgba(148, 163, 184, 0.2);
+  background: rgba(148, 163, 184, 0.1);
+  color: rgba(226, 232, 240, 0.95);
+}
+
+.qa-console-suggest-btn {
+  min-height: 2.75rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: rgba(148, 163, 184, 0.92);
+  background: rgba(255, 255, 255, 0.02);
+  transition:
+    background var(--qa-motion-fast) ease,
+    border-color var(--qa-motion-fast) ease,
+    color var(--qa-motion-fast) ease;
+}
+
+.qa-console-suggest-btn:hover:not(:disabled) {
+  border-color: rgba(148, 163, 184, 0.2);
+  background: rgba(148, 163, 184, 0.1);
+  color: rgba(226, 232, 240, 0.95);
+}
+
+.qa-final-os .qa-console-panel svg,
+.qa-final-os .qa-nav-shell svg,
+.qa-final-os .qi-access-layer svg {
+  stroke-width: 1.5;
+}
+
+.qa-final-os .qi-command-prefix {
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  color: rgba(148, 163, 184, 0.72);
+}
+
+.qa-final-os .qi-command-input {
+  font-size: 1.02rem;
+  letter-spacing: -0.018em;
+}
+
+.qa-final-os .qi-command-input::placeholder {
+  color: rgba(100, 116, 139, 0.64);
+}
+
+.qa-final-os .qi-command-field--focus {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(148, 163, 184, 0.28),
+    0 14px 30px -24px rgba(148, 163, 184, 0.32);
+}
+
+.qa-final-os .qi-command-scan {
+  opacity: 0.13;
+}
+
+.qa-final-os .qi-command-deck {
+  backdrop-filter: var(--qa-glass-blur-heavy);
+  -webkit-backdrop-filter: var(--qa-glass-blur-heavy);
+}
+
+.qa-final-os .qi-command-suggest {
+  gap: 0.5rem;
+}
+
+.qa-final-os .qi-command-field {
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+.qa-final-os .qi-command-execute {
+  box-shadow: 0 12px 40px -20px rgba(255, 255, 255, 0.2);
+}
+
+/* —— Pricing / subscription —— */
+.qa-pricing-architecture {
+  gap: clamp(1rem, 2.5vw, 1.35rem);
+}
+
+.qa-clearance-module {
+  position: relative;
+}
+
+.qa-clearance-inner {
+  background:
+    radial-gradient(120% 90% at 0% -15%, rgba(148, 163, 184, 0.09), transparent 48%),
+    linear-gradient(170deg, rgba(255, 255, 255, 0.045), rgba(4, 8, 14, 0.98));
+}
+
+.qa-final-os .qi-access-layer-inner {
+  padding: clamp(1.25rem, 3vw, 1.65rem) clamp(1.15rem, 2.5vw, 1.45rem) clamp(1.1rem, 2vw, 1.35rem);
+  backdrop-filter: var(--qa-glass-blur);
+  -webkit-backdrop-filter: var(--qa-glass-blur);
+}
+
+.qa-final-os .qi-access-name {
+  font-size: clamp(1.2rem, 2.2vw, 1.35rem);
+  letter-spacing: -0.032em;
+}
+
+.qa-final-os .qi-access-clearance {
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  color: rgba(148, 163, 184, 0.68);
+}
+
+.qa-final-os .qi-access-invitation {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.qa-clearance-copy {
+  color: rgba(203, 213, 225, 0.74);
+}
+
+.qa-clearance-list li:nth-child(n + 6) {
+  opacity: 0.72;
+}
+
+.qa-final-os .qi-access-capabilities {
+  margin-top: 0.95rem;
+  padding-top: 0.85rem;
+  gap: 0.4rem;
+}
+
+.qa-final-os .qi-access-capabilities li {
+  font-size: 0.8125rem;
+  line-height: 1.42;
+  color: rgba(203, 213, 225, 0.78);
+}
+
+.qa-final-os .qi-access-footer {
+  margin-top: 1.15rem;
+  padding-top: 1rem;
+}
+
+.qa-final-os .qi-access-price {
+  font-size: clamp(1.75rem, 4vw, 2rem);
+  letter-spacing: -0.035em;
+}
+
+.qa-final-os .qi-access-footnote {
+  font-size: 0.6875rem;
+  line-height: 1.4;
+}
+
+.qa-final-os .qi-access-cta {
+  min-height: 2.75rem;
+  padding-block: 0.7rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition:
+    background var(--qa-motion-fast) ease,
+    box-shadow var(--qa-motion-ui) ease,
+    transform var(--qa-motion-fast) ease;
+}
+
+.qa-final-os .qi-access-layer--featured {
+  z-index: 1;
+}
+
+@media (min-width: 1024px) {
+  .qa-final-os .qi-access-layer--featured {
+    transform: translateY(-4px);
+  }
+}
+
+.qa-final-os .qi-access-layer--featured .qi-access-layer-inner {
+  border-color: rgba(203, 213, 225, 0.18);
+  box-shadow:
+    0 0 0 1px rgba(226, 232, 240, 0.08) inset,
+    0 36px 90px -52px rgba(0, 0, 0, 0.9);
+}
+
+.qa-final-os .qi-access-layer--featured .qi-access-name {
+  letter-spacing: -0.036em;
+}
+
+.qa-final-os .qi-access-layer--featured .qi-access-cta {
+  box-shadow: 0 14px 32px -26px rgba(148, 163, 184, 0.36);
+}
+
+/* —— Trust strip (global brands) —— */
+.qa-trust-strip {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01)),
+    rgba(5, 8, 12, 0.9);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+    0 20px 52px -36px rgba(0, 0, 0, 0.86);
+}
+
+.qa-trust-strip::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(2, 6, 14, 1) 0%, transparent 14%, transparent 86%, rgba(2, 6, 14, 1) 100%);
+}
+
+.qa-trust-track {
+  display: flex;
+  width: max-content;
+  align-items: center;
+  gap: 2.2rem;
+  padding: 0.85rem 1rem;
+  will-change: transform;
+}
+
+.qa-trust-logo {
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(203, 213, 225, 0.68);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .qa-trust-track {
+    animation: qa-trust-scroll 42s linear infinite;
+  }
+}
+
+.qa-final-os .qi-product-card-shell.qi-intel-surface {
+  border-color: rgba(226, 232, 240, 0.12);
+  background:
+    radial-gradient(140% 100% at 50% -30%, rgba(148, 163, 184, 0.14), transparent 54%),
+    linear-gradient(170deg, rgba(255, 255, 255, 0.075) 0%, rgba(14, 18, 26, 0.96) 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    0 28px 64px -34px rgba(0, 0, 0, 0.78);
+}
+
+.qa-final-os .qi-product-card-inner {
+  border-radius: 1.45rem;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 24px 56px -32px rgba(0, 0, 0, 0.82);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .qa-final-os .qi-product-card-shell:hover .qi-product-card-inner {
+    transform: translateY(-1px);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.07) inset,
+      0 24px 54px -30px rgba(0, 0, 0, 0.86);
+  }
+}
+
+@keyframes qa-trust-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* —— Results surface: visible stack (no clip on tray/grid) —— */
+.qa-final-os .qa-results-engine {
+  overflow: visible;
+  isolation: isolate;
+}
+
+.qa-final-os .qa-results-engine::before {
+  z-index: 0;
+  pointer-events: none;
+}
+
+.qa-final-os .qa-results-engine > .qa-results-stack {
+  position: relative;
+  z-index: 1;
+}
+
+.qa-final-os .qa-results-engine > .pointer-events-none {
+  z-index: 0;
+}
+
+.qa-final-os .qa-results-engine .intel-panel-shimmer {
+  margin-bottom: 1.1rem;
+}
+
+.qa-final-os .qa-modal-panel {
+  margin-top: max(0.35rem, env(safe-area-inset-top, 0px));
+  margin-bottom: max(0.35rem, env(safe-area-inset-bottom, 0px));
+}
+
+.qa-final-os .qa-os-drawer.qa-modal-panel {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* —— Faster results / loading —— */
+.qa-final-os .qa-results-reveal {
+  animation-duration: var(--qa-motion-enter);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .qa-final-os .qi-tray-atmosphere.qa-tray-stagger > *:nth-child(n) {
+    animation-duration: 0.38s;
+  }
+}
+
+.qa-final-os .qa-skeleton-shimmer,
+.qa-final-os .skeleton-cinematic {
+  animation-duration: 2s;
+}
+
+/* —— Performance: mobile & reduced effects —— */
+@media (max-width: 767px) {
+  :root {
+    --qa-glass-blur: blur(10px) saturate(124%);
+    --qa-glass-blur-heavy: blur(14px) saturate(128%);
+  }
+
+  .qa-final-os .cockpit-glass-panel,
+  .qa-final-os .cockpit-glass-card,
+  .qa-final-os .qa-os-toolbar,
+  .qa-final-os .qa-modal-panel,
+  .qa-final-os .qa-os-drawer,
+  .qa-final-os .qi-command-deck,
+  .qa-final-os .qi-intel-surface {
+    backdrop-filter: var(--qa-glass-blur);
+    -webkit-backdrop-filter: var(--qa-glass-blur);
+  }
+
+  .qa-cinematic .qi-cinematic-atmosphere-rays {
+    display: none;
+  }
+
+  .qa-cinematic .qi-cinematic-grid {
+    opacity: 0.18;
+    background-size: 48px 48px;
+  }
+
+  .qa-cinematic .qi-cinematic-orbit {
+    opacity: 0.28;
+  }
+
+  .qa-final-os .qi-access-layer--featured {
+    transform: none;
+  }
+
+  .qa-final-os .qi-access-architecture {
+    gap: 1rem;
+  }
+
+  .qa-final-os .qi-access-layer-inner {
+    padding: 1.15rem 1rem 1rem;
+  }
+
+  .qa-final-os .qi-access-price {
+    font-size: 1.7rem;
+  }
+
+  .qa-trust-track {
+    gap: 1.45rem;
+    padding: 0.72rem 0.78rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qa-final-os .qa-results-reveal,
+  .qa-final-os .qi-tray-atmosphere.qa-tray-stagger > * {
+    animation: none !important;
+  }
+}
+
+/* —— Sticky / mobile chrome —— */
+@media (max-width: 639px) {
+  .qa-final-os .qa-os-toolbar {
+    padding-bottom: 0.65rem;
+  }
+
+  .qa-final-os .qi-command-root {
+    margin-inline: -0.125rem;
+  }
+
+  .qa-final-os .qi-command-execute {
+    min-height: 3rem;
+  }
+
+  .qa-nav-shell {
+    gap: 0.75rem;
+  }
+
+  .qa-nav-cta {
+    min-height: 2.65rem;
+  }
+
+  .qa-final-os .qa-modal-panel {
+    border-radius: 1rem;
+  }
+}
+
+/* Contain fixed backdrop paint */
+.qa-final-os .qi-living-atmosphere {
+  contain: strict;
+  will-change: auto;
+}

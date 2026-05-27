@@ -1,0 +1,600 @@
+/**
+ * QuantAI OS NX — Geometric space-age luxury commerce operating system.
+ * Visual / motion / typography only. Intelligence core unchanged.
+ */
+
+:root {
+  /* Obsidian monochromatic palette */
+  --qn-void: #010102;
+  --qn-obsidian: #050608;
+  --qn-graphite: #0c0e12;
+  --qn-charcoal: #12151c;
+  --qn-titanium: #1a1e28;
+  --qn-steel: #2a303c;
+  --qn-silver: #94a3b8;
+  --qn-frost: #e2e8f0;
+  --qn-white: #f8fafc;
+
+  /* Structural light */
+  --qn-edge: rgba(248, 250, 252, 0.09);
+  --qn-edge-soft: rgba(226, 232, 240, 0.05);
+  --qn-edge-bright: rgba(248, 250, 252, 0.14);
+  --qn-ambient: rgba(148, 163, 184, 0.12);
+  --qn-ambient-deep: rgba(100, 116, 139, 0.08);
+  --qn-reflect: rgba(203, 213, 225, 0.06);
+
+  /* Typography */
+  --qn-type-display: clamp(2.35rem, 6.2vw, 4.25rem);
+  --qn-type-h1: clamp(1.65rem, 3vw, 2.2rem);
+  --qn-type-h2: clamp(1.2rem, 1.8vw, 1.45rem);
+  --qn-type-body: 0.9375rem;
+  --qn-type-caption: 0.6875rem;
+  --qn-type-overline: 0.625rem;
+
+  /* Spatial rhythm */
+  --qn-space-section: clamp(2.5rem, 6vw, 4rem);
+  --qn-space-panel: clamp(1.35rem, 3.2vw, 2.25rem);
+  --qn-space-inline: clamp(1rem, 2.4vw, 1.5rem);
+
+  /* Motion — expensive, restrained */
+  --qn-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --qn-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --qn-duration-fast: 0.2s;
+  --qn-duration-ui: 0.34s;
+  --qn-duration-enter: 0.48s;
+
+  /* Surfaces */
+  --qn-blur: blur(12px) saturate(118%);
+  --qn-shadow-panel: 0 32px 72px -40px rgba(0, 0, 0, 0.88);
+  --qn-shadow-module: 0 24px 56px -32px rgba(0, 0, 0, 0.82);
+  --qn-shadow-float: 0 16px 40px -24px rgba(0, 0, 0, 0.75);
+}
+
+/* —— Global root —— */
+html.qa-quant-nx {
+  scroll-behavior: smooth;
+  color-scheme: dark;
+}
+
+body.qa-quant-nx {
+  background-color: var(--qn-obsidian);
+  color: rgba(248, 250, 252, 0.94);
+  font-feature-settings: "kern" 1, "liga" 1, "ss01" 1;
+  text-rendering: optimizeLegibility;
+}
+
+.qa-quant-nx ::selection {
+  background: rgba(203, 213, 225, 0.22);
+  color: var(--qn-frost);
+}
+
+/* —— Atmospheric architecture —— */
+.qa-quant-nx .qi-os-atmosphere::before {
+  background:
+    linear-gradient(165deg, var(--qn-void) 0%, var(--qn-obsidian) 38%, var(--qn-graphite) 100%);
+}
+
+.qa-quant-nx .qi-living-atmosphere {
+  z-index: 0;
+}
+
+.qn-atmosphere-struct {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.55;
+  background:
+    linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.012) 48%, transparent 52%),
+    linear-gradient(255deg, transparent 0%, rgba(255, 255, 255, 0.008) 42%, transparent 46%);
+}
+
+.qn-atmosphere-plane {
+  pointer-events: none;
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.02), transparent 70%);
+}
+
+.qn-atmosphere-plane--a {
+  left: -8%;
+  top: 18%;
+  width: 42%;
+  height: 28%;
+  transform: skewY(-4deg) rotate(-2deg);
+  opacity: 0.35;
+}
+
+.qn-atmosphere-plane--b {
+  right: -6%;
+  top: 32%;
+  width: 36%;
+  height: 22%;
+  transform: skewY(3deg) rotate(1.5deg);
+  opacity: 0.28;
+}
+
+.qn-atmosphere-grid {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(ellipse 85% 60% at 50% 20%, black 0%, transparent 78%);
+  opacity: 0.4;
+}
+
+.qa-quant-nx .qi-cinematic-atmosphere-rays {
+  background: conic-gradient(
+    from 195deg at 50% -8%,
+    transparent 0deg,
+    rgba(203, 213, 225, 0.035) 50deg,
+    transparent 100deg,
+    rgba(148, 163, 184, 0.025) 160deg,
+    transparent 220deg
+  );
+  opacity: 0.45;
+}
+
+/* —— Hero terminal —— */
+.qa-quant-nx .qi-cinematic-hero,
+.qa-quant-nx .qn-hero-terminal {
+  position: relative;
+  overflow: clip;
+}
+
+.qa-quant-nx .qi-cinematic-grid {
+  background-size: 56px 56px;
+  opacity: 0.28;
+  mask-image: radial-gradient(ellipse 80% 58% at 50% 32%, black 0%, transparent 74%);
+}
+
+.qa-quant-nx .qi-cinematic-orbit {
+  border-color: rgba(226, 232, 240, 0.06);
+  box-shadow: none;
+  opacity: 0.22;
+}
+
+.qa-quant-nx .qi-cinematic-horizon {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(203, 213, 225, 0.06) 22%,
+    rgba(248, 250, 252, 0.22) 50%,
+    rgba(203, 213, 225, 0.06) 78%,
+    transparent 100%
+  );
+  box-shadow: 0 0 48px 1px rgba(203, 213, 225, 0.06);
+  opacity: 0.42;
+}
+
+.qa-quant-nx .qi-hero-aura {
+  background: radial-gradient(ellipse 70% 50% at 50% 0%, var(--qn-ambient), transparent 68%);
+  opacity: 0.5;
+}
+
+/* —— Typography system —— */
+.qa-quant-nx .qi-cinematic-manifest,
+.qa-quant-nx .qi-hero-manifest,
+.qa-quant-nx .qi-silent-overline {
+  font-size: var(--qn-type-overline);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.72);
+}
+
+.qa-quant-nx .qi-hero-headline {
+  font-size: var(--qn-type-display);
+  font-weight: 560;
+  line-height: 1.02;
+  letter-spacing: -0.048em;
+  color: var(--qn-white);
+  text-wrap: balance;
+}
+
+.qa-quant-nx .qi-hero-headline-accent {
+  color: rgba(226, 232, 240, 0.88);
+  font-weight: 520;
+}
+
+.qa-quant-nx .qi-hero-lead {
+  font-size: clamp(1rem, 1.9vw, 1.125rem);
+  line-height: 1.65;
+  letter-spacing: -0.012em;
+  color: rgba(148, 163, 184, 0.78);
+  max-width: 36rem;
+}
+
+.qa-quant-nx .cockpit-display,
+.qa-quant-nx .qi-editorial-display {
+  font-size: var(--qn-type-h1);
+  font-weight: 560;
+  letter-spacing: -0.038em;
+  line-height: 1.12;
+  color: rgba(248, 250, 252, 0.98);
+}
+
+.qa-quant-nx .cockpit-body,
+.qa-quant-nx .qi-silent-whisper {
+  font-size: 0.84375rem;
+  line-height: 1.62;
+  color: rgba(148, 163, 184, 0.74);
+}
+
+.qa-quant-nx .qi-editorial-title {
+  letter-spacing: -0.022em;
+  color: rgba(248, 250, 252, 0.96);
+}
+
+/* —— Unified engineered surfaces —— */
+.qa-quant-nx .cockpit-glass-panel,
+.qa-quant-nx .cockpit-glass-card,
+.qa-quant-nx .qa-premium-surface,
+.qa-quant-nx .qa-os-toolbar {
+  border: 1px solid var(--qn-edge-soft);
+  background:
+    linear-gradient(168deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.012) 28%, rgba(8, 10, 14, 0.94) 100%);
+  box-shadow:
+    var(--qn-shadow-panel),
+    inset 0 1px 0 var(--qn-edge);
+  backdrop-filter: var(--qn-blur);
+  -webkit-backdrop-filter: var(--qn-blur);
+}
+
+.qa-quant-nx .qi-intel-surface {
+  border-color: var(--qn-edge-soft);
+  background:
+    linear-gradient(172deg, rgba(255, 255, 255, 0.04) 0%, rgba(10, 12, 16, 0.96) 100%);
+}
+
+/* —— Command center / search terminal —— */
+.qa-quant-nx .qn-command-center .qi-command-halo {
+  background: radial-gradient(ellipse 90% 70% at 50% 100%, var(--qn-ambient-deep), transparent 68%);
+  opacity: 0.65;
+}
+
+.qa-quant-nx .qn-command-center .qi-command-floor {
+  background: radial-gradient(ellipse at center, rgba(148, 163, 184, 0.1), transparent 72%);
+}
+
+.qa-quant-nx .qi-command-deck {
+  border: 1px solid var(--qn-edge);
+  border-radius: 1.35rem;
+  background:
+    linear-gradient(180deg, rgba(18, 21, 28, 0.98) 0%, rgba(6, 8, 12, 0.99) 100%);
+  box-shadow:
+    var(--qn-shadow-float),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4);
+}
+
+.qa-quant-nx .qi-command-deck--active {
+  border-color: var(--qn-edge-bright);
+  box-shadow:
+    0 0 0 1px rgba(248, 250, 252, 0.04),
+    var(--qn-shadow-panel),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.qa-quant-nx .qi-command-field {
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.qa-quant-nx .qi-command-field--focus {
+  border-color: rgba(226, 232, 240, 0.18);
+  box-shadow: 0 0 0 1px rgba(248, 250, 252, 0.06);
+}
+
+.qa-quant-nx .qi-command-input {
+  color: var(--qn-frost);
+}
+
+.qa-quant-nx .qi-command-execute {
+  background: linear-gradient(180deg, #f1f5f9 0%, #cbd5e1 100%);
+  color: #0a0c10;
+  border: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.qa-quant-nx .qi-command-execute:hover {
+  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.qa-quant-nx .qa-console-chip,
+.qa-quant-nx .qa-console-suggest-btn {
+  border-color: var(--qn-edge-soft);
+  color: rgba(203, 213, 225, 0.82);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.qa-quant-nx .qa-console-chip:hover,
+.qa-quant-nx .qa-console-suggest-btn:hover {
+  border-color: var(--qn-edge);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--qn-frost);
+}
+
+/* —— Elite OS navigation —— */
+.qa-quant-nx .qa-chrome-header {
+  border-bottom: 1px solid var(--qn-edge-soft);
+  background: linear-gradient(180deg, rgba(5, 6, 8, 0.92), rgba(5, 6, 8, 0.78));
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+}
+
+.qa-quant-nx .qa-chrome-mark {
+  border: 1px solid var(--qn-edge);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.01));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.qa-quant-nx .qn-nav-mark {
+  color: rgba(226, 232, 240, 0.9);
+}
+
+.qa-quant-nx .qa-nav-pill {
+  color: rgba(148, 163, 184, 0.78);
+  border-radius: 0.65rem;
+  transition:
+    color var(--qn-duration-fast) var(--qn-ease),
+    background var(--qn-duration-fast) var(--qn-ease);
+}
+
+.qa-quant-nx .qa-nav-pill:hover {
+  color: var(--qn-frost);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.qa-quant-nx .qa-btn-primary {
+  background: linear-gradient(180deg, #f8fafc, #e2e8f0);
+  color: #080a0e;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: var(--qn-shadow-float);
+}
+
+.qa-quant-nx .qa-btn-ghost,
+.qa-quant-nx .qa-btn-secondary {
+  border-color: var(--qn-edge-soft);
+  color: rgba(203, 213, 225, 0.88);
+}
+
+/* —— Floating intelligence modules (product cards) —— */
+.qa-quant-nx .qn-intel-module.qi-product-card-shell {
+  border-radius: 1.65rem;
+  border-color: var(--qn-edge);
+  background:
+    linear-gradient(168deg, rgba(255, 255, 255, 0.055) 0%, rgba(12, 14, 20, 0.97) 100%);
+  box-shadow:
+    var(--qn-shadow-module),
+    inset 0 1px 0 var(--qn-edge-soft);
+}
+
+.qa-quant-nx .qn-intel-module .qi-product-card-inner {
+  border-radius: 1.58rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .qa-quant-nx .qn-intel-module.qi-product-card-shell:hover {
+    transform: translateY(-2px);
+    border-color: var(--qn-edge-bright);
+    transition:
+      transform var(--qn-duration-ui) var(--qn-ease),
+      border-color var(--qn-duration-ui) var(--qn-ease),
+      box-shadow var(--qn-duration-ui) var(--qn-ease);
+  }
+}
+
+.qa-quant-nx .qi-tray-atmosphere[data-tray-focus="true"] .qi-tray-peer-dim {
+  opacity: 0.82;
+  filter: saturate(0.92);
+}
+
+/* —— Results terminal —— */
+.qa-quant-nx .qa-results-engine::before {
+  background: radial-gradient(ellipse 80% 55% at 50% 0%, var(--qn-ambient-deep), transparent 72%);
+}
+
+.qa-quant-nx .qa-results-engine {
+  overflow: visible;
+}
+
+.qa-quant-nx .qi-sys-results-loading {
+  color: rgba(203, 213, 225, 0.78);
+  letter-spacing: 0.2em;
+}
+
+.qa-quant-nx .qi-sys-results-loading-fill {
+  background: linear-gradient(90deg, transparent, rgba(226, 232, 240, 0.85), transparent);
+}
+
+/* —— Intelligence access architecture (pricing) —— */
+.qa-quant-nx .qn-access-vault .qi-access-layer {
+  border: 1px solid var(--qn-edge-soft);
+  background: linear-gradient(175deg, rgba(255, 255, 255, 0.035) 0%, rgba(8, 10, 14, 0.96) 100%);
+  box-shadow: var(--qn-shadow-panel);
+}
+
+.qa-quant-nx .qn-access-vault .qi-access-layer--featured {
+  border-color: var(--qn-edge-bright);
+  box-shadow:
+    var(--qn-shadow-panel),
+    0 0 0 1px rgba(248, 250, 252, 0.04);
+}
+
+.qa-quant-nx .qn-access-vault .qi-access-layer-glow {
+  background: radial-gradient(ellipse at 50% 0%, var(--qn-reflect), transparent 65%);
+  opacity: 0.65;
+}
+
+.qa-quant-nx .qn-access-vault .qi-access-featured-pedestal {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent);
+}
+
+.qa-quant-nx .qn-access-vault .qi-access-price-value {
+  color: var(--qn-frost);
+  letter-spacing: -0.03em;
+}
+
+.qa-quant-nx .qn-access-vault .qi-access-cta--private,
+.qa-quant-nx .qn-access-vault .qi-access-cta:not(.qi-access-cta--ghost) {
+  background: linear-gradient(180deg, #f8fafc, #cbd5e1);
+  color: #080a0e;
+}
+
+/* —— Monochrome trust strip —— */
+.qa-quant-nx .qn-trust-strip,
+.qa-quant-nx .qa-trust-strip {
+  border: 1px solid var(--qn-edge-soft);
+  border-radius: 1rem;
+  background: linear-gradient(90deg, rgba(8, 10, 14, 0.95), rgba(12, 14, 20, 0.95));
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+}
+
+.qa-quant-nx .qa-trust-logo {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: rgba(203, 213, 225, 0.62);
+}
+
+/* —— Console / command palette —— */
+.qa-quant-nx .qa-console-panel {
+  border: 1px solid var(--qn-edge);
+  background: linear-gradient(180deg, rgba(14, 16, 22, 0.98), rgba(6, 8, 12, 0.99));
+  box-shadow: var(--qn-shadow-panel);
+}
+
+.qa-quant-nx .qa-console-row--active {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--qn-edge);
+}
+
+/* —— Cinematic pill / guest CTA —— */
+.qa-quant-nx .qa-cinematic-pill {
+  border-color: var(--qn-edge-soft);
+  background: rgba(255, 255, 255, 0.025);
+  box-shadow: var(--qn-shadow-float);
+}
+
+/* —— Neutralize legacy neon accents —— */
+.qa-quant-nx .text-cyan-200,
+.qa-quant-nx .text-cyan-300,
+.qa-quant-nx .text-cyan-50 {
+  color: rgba(226, 232, 240, 0.92) !important;
+}
+
+.qa-quant-nx .border-cyan-400\/14,
+.qa-quant-nx .border-cyan-400\/15,
+.qa-quant-nx .border-cyan-400\/20,
+.qa-quant-nx .border-cyan-400\/22 {
+  border-color: var(--qn-edge) !important;
+}
+
+.qa-quant-nx .bg-cyan-500\/\[0\.07\],
+.qa-quant-nx .bg-cyan-500\/10 {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* —— Motion philosophy —— */
+@media (prefers-reduced-motion: no-preference) {
+  .qa-quant-nx .qa-results-reveal {
+    animation: qn-results-enter var(--qn-duration-enter) var(--qn-ease) both;
+  }
+
+  .qa-quant-nx .qi-tray-atmosphere.qa-tray-stagger > * {
+    animation: qn-module-enter 0.4s var(--qn-ease-out) both;
+    opacity: 1;
+  }
+}
+
+@keyframes qn-results-enter {
+  from {
+    opacity: 1;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes qn-module-enter {
+  from {
+    opacity: 1;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qa-quant-nx *,
+  .qa-quant-nx *::before,
+  .qa-quant-nx *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* —— Mobile OS —— */
+@media (max-width: 767px) {
+  .qa-quant-nx {
+    --qn-blur: blur(8px) saturate(115%);
+  }
+
+  .qa-quant-nx .cockpit-glass-panel,
+  .qa-quant-nx .cockpit-glass-card,
+  .qa-quant-nx .qi-command-deck {
+    backdrop-filter: var(--qn-blur);
+    -webkit-backdrop-filter: var(--qn-blur);
+  }
+
+  .qa-quant-nx .qi-cinematic-orbit,
+  .qa-quant-nx .qn-atmosphere-plane {
+    display: none;
+  }
+
+  .qa-quant-nx .qi-hero-headline {
+    font-size: clamp(2rem, 9vw, 2.65rem);
+  }
+
+  .qa-quant-nx .qa-os-toolbar {
+    border-radius: 1rem;
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* —— Page rhythm —— */
+.qa-quant-nx .qn-page-os {
+  --qa-space-section: var(--qn-space-section);
+}
+
+.qa-quant-nx .qn-page-os > .relative.z-10 {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.qa-quant-nx .qn-results-terminal {
+  padding-top: 0.5rem;
+}
+
+/* —— Performance containment —— */
+.qa-quant-nx .qi-living-atmosphere {
+  contain: strict;
+  will-change: auto;
+}
+
+.qa-quant-nx .qa-trust-track {
+  will-change: transform;
+}

@@ -1,0 +1,389 @@
+/**
+ * QuantAI Titanium OS — classified intelligence presentation.
+ * Visual only. All card data, metrics, trust, and AI outputs unchanged.
+ */
+
+:root {
+  --qt-void: #010101;
+  --qt-obsidian: #040506;
+  --qt-graphite: #0a0b0e;
+  --qt-titanium: #14161c;
+  --qt-titanium-edge: #1e222b;
+  --qt-silver: #9ca3af;
+  --qt-frost: #e5e7eb;
+  --qt-breath: clamp(2.75rem, 7vh, 5.5rem);
+  --qt-ease-heavy: cubic-bezier(0.12, 1, 0.28, 1);
+  --qt-shadow-entity:
+    0 1px 0 rgba(255, 255, 255, 0.07) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.55) inset,
+    0 40px 80px -44px rgba(0, 0, 0, 0.95),
+    0 16px 32px -20px rgba(0, 0, 0, 0.88);
+}
+
+/* —— Global void —— */
+html.qt-os {
+  color-scheme: dark;
+}
+
+body.qt-os {
+  background: var(--qt-void);
+}
+
+.qt-os .qcc-page,
+.qt-os .qcc-os-root {
+  background: var(--qt-void);
+}
+
+/* —— Classified archive field —— */
+.qt-os .qt-classified-archive {
+  position: relative;
+  padding-block: var(--qt-breath);
+}
+
+.qt-os .qt-classified-archive::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3rem,
+      rgba(255, 255, 255, 0.008) 3rem,
+      rgba(255, 255, 255, 0.008) 3.02rem
+    );
+  mask-image: linear-gradient(180deg, black 0%, transparent 92%);
+  opacity: 0.5;
+}
+
+.qt-os .qcc-scan-stage {
+  gap: clamp(3.5rem, 8vh, 6rem);
+}
+
+.qt-os .qcc-primary-lane {
+  gap: clamp(2rem, 4vh, 3rem);
+}
+
+.qt-os .qcc-primary-lane-grid {
+  gap: clamp(2rem, 4vh, 3rem);
+}
+
+.qt-os .qcc-primary-lane-grid > * {
+  position: relative;
+  padding: 0.35rem 0;
+}
+
+.qt-os .qcc-primary-lane-grid > *::before {
+  content: "";
+  position: absolute;
+  left: -0.65rem;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  width: 2px;
+  border-radius: 1px;
+  background: linear-gradient(180deg, rgba(226, 232, 240, 0.35), rgba(226, 232, 240, 0.06));
+  opacity: 0.85;
+}
+
+.qt-os .qcc-signal-field-grid {
+  gap: clamp(1.75rem, 3.5vh, 2.5rem);
+}
+
+@media (min-width: 1280px) {
+  .qt-os .qcc-signal-field-grid {
+    grid-template-columns: 1fr;
+    max-width: 52rem;
+  }
+
+  .qt-os .qcc-signal-field-grid > *:nth-child(odd) {
+    transform: translateX(0);
+    margin-left: 0;
+  }
+
+  .qt-os .qcc-signal-field-grid > *:nth-child(even) {
+    transform: translateX(2.5rem);
+    max-width: calc(100% - 2.5rem);
+  }
+}
+
+.qt-os .qcc-lane-header {
+  border-bottom-color: rgba(255, 255, 255, 0.07);
+  padding-bottom: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.qt-os .qcc-lane-title {
+  font-size: 0.6875rem;
+  letter-spacing: 0.28em;
+  color: rgba(203, 213, 225, 0.65);
+}
+
+.qt-os .qcc-scan-rail-label {
+  letter-spacing: 0.26em;
+  color: rgba(148, 163, 184, 0.4);
+}
+
+/* —— Titanium intelligence entities (cards) —— */
+.qt-os .qt-intel-entity.qcc-intelligence-module {
+  border-radius: 1.15rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(168deg, rgba(30, 34, 42, 0.55) 0%, rgba(6, 7, 9, 0.98) 42%, rgba(2, 2, 3, 1) 100%);
+  box-shadow: var(--qt-shadow-entity);
+  transform: translate3d(0, 0, 0);
+  transition:
+    transform 0.55s var(--qt-ease-heavy),
+    border-color 0.45s ease,
+    box-shadow 0.55s var(--qt-ease-heavy);
+}
+
+.qt-os .qt-intel-entity::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    125deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    transparent 22%,
+    transparent 78%,
+    rgba(0, 0, 0, 0.35) 100%
+  );
+  z-index: 2;
+}
+
+.qt-os .qt-intel-entity .qi-product-card-inner {
+  background: transparent;
+  box-shadow: none;
+}
+
+.qt-os .qt-intel-entity .qcc-module-sensor {
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.45), rgba(255, 255, 255, 0.015));
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.qt-os .qt-intel-entity .qcc-module-read {
+  background: linear-gradient(180deg, rgba(18, 20, 26, 0.72), rgba(8, 9, 12, 0.35));
+}
+
+.qt-os .qt-intel-entity .qcc-module-rank {
+  font-size: 0.5625rem;
+  letter-spacing: 0.24em;
+  color: rgba(156, 163, 175, 0.8);
+  font-weight: 700;
+}
+
+/* Preserve intelligence density — elevate decision surfaces */
+.qt-os .qt-intel-entity .qi-decision-surface {
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.25));
+  padding: 0.85rem 1rem;
+  border-radius: 0.75rem;
+}
+
+.qt-os .qt-intel-entity .qi-posture-grid {
+  gap: 0.5rem;
+}
+
+.qt-os .qt-intel-entity .qi-posture-cell {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.28);
+  border-radius: 0.55rem;
+  padding: 0.55rem 0.65rem;
+}
+
+.qt-os .qt-intel-entity .qi-analyst-vault-panel {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* Monochrome QI rings — data unchanged, presentation restrained */
+.qt-os .qt-intel-entity .qi-qi-ring-luxury svg circle[stroke^="url"] {
+  filter: saturate(0.35) brightness(1.08);
+}
+
+.qt-os .qt-intel-entity .qi-qi-ring-luxury span {
+  color: rgba(226, 232, 240, 0.92) !important;
+}
+
+/* Remove SaaS glow on focus — depth only */
+.qt-os .qt-intel-entity.qi-tray-focus-active {
+  transform: translate3d(0, -3px, 0) scale(1.002);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow:
+    var(--qt-shadow-entity),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.qt-os .qt-intel-entity.qi-tray-focus-active .qi-product-card-inner {
+  box-shadow: none !important;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .qt-os .qt-intel-entity:hover {
+    transform: translate3d(0, -4px, 0);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+}
+
+/* Neutralize decorative neon buttons on entity */
+.qt-os .qt-intel-entity [class*="from-cyan"],
+.qt-os .qt-intel-entity [class*="to-violet"],
+.qt-os .qt-intel-entity [class*="bg-cyan-"],
+.qt-os .qt-intel-entity [class*="border-cyan-"] {
+  background-image: none !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.qt-os .qt-intel-entity button[class*="from-cyan"] {
+  background: linear-gradient(180deg, #f4f4f5, #d4d4d8) !important;
+  color: #09090b !important;
+}
+
+/* —— Command environment —— */
+.qt-os .qcc-command-environment {
+  min-height: min(94vh, 58rem);
+  padding-top: clamp(3rem, 10vh, 6rem);
+  padding-bottom: clamp(3rem, 8vh, 5rem);
+}
+
+.qt-os .qcc-env-terminal-frame {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.01));
+  box-shadow: 0 48px 100px -56px rgba(0, 0, 0, 0.98);
+}
+
+.qt-os .qcc-env-terminal-core {
+  background: linear-gradient(180deg, rgba(10, 11, 14, 0.99), rgba(2, 2, 3, 1));
+}
+
+.qt-os .qi-hero-headline {
+  font-weight: 500;
+  letter-spacing: -0.055em;
+}
+
+/* —— Clearance vault (pricing) —— */
+.qt-os .qt-clearance-vault {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.5rem, 3vh, 2.25rem);
+  max-width: 56rem;
+}
+
+@media (min-width: 1024px) {
+  .qt-os .qt-clearance-vault {
+    gap: 0;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 1.15rem;
+    overflow: hidden;
+    background: rgba(4, 5, 7, 0.96);
+  }
+
+  .qt-os .qt-clearance-vault .qi-access-layer {
+    border-radius: 0;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: none;
+  }
+
+  .qt-os .qt-clearance-vault .qi-access-layer:last-child {
+    border-bottom: none;
+  }
+
+  .qt-os .qt-clearance-vault .qi-access-layer--featured {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+    border-left: 2px solid rgba(226, 232, 240, 0.35);
+  }
+
+  .qt-os .qt-clearance-vault .qi-access-layer-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) auto;
+    gap: 2rem;
+    align-items: center;
+    padding: 2rem 2.25rem;
+  }
+
+  .qt-os .qt-clearance-vault .qi-access-capabilities {
+    margin: 0;
+  }
+
+  .qt-os .qt-clearance-vault .qi-access-footer {
+    display: contents;
+  }
+
+  .qt-os .qt-clearance-vault .qi-access-price-block {
+    text-align: right;
+  }
+
+  .qt-os .qt-clearance-vault .qi-access-cta-wrap {
+    align-self: center;
+    min-width: 11rem;
+  }
+}
+
+.qt-os .qt-clearance-vault .qi-access-layer-glow {
+  display: none;
+}
+
+.qt-os .qt-clearance-vault .qi-access-featured-pedestal {
+  display: none;
+}
+
+.qt-os .qt-clearance-vault .qi-access-name {
+  font-size: 1.35rem;
+  letter-spacing: -0.03em;
+  font-weight: 560;
+}
+
+.qt-os .qt-clearance-vault .qi-access-clearance {
+  color: rgba(156, 163, 175, 0.85);
+  letter-spacing: 0.02em;
+}
+
+/* —— Chambers & rhythm —— */
+.qt-os .qcc-chamber {
+  margin-top: clamp(5rem, 12vh, 9rem);
+  padding-block: clamp(4rem, 10vh, 7rem);
+}
+
+.qt-os .qcc-chamber::before {
+  width: 6rem;
+  background: rgba(212, 212, 216, 0.35);
+}
+
+/* —— Tray controls — institutional rail —— */
+.qt-os .qn-tray-controls {
+  border-radius: 0.85rem;
+  background: rgba(6, 7, 9, 0.92);
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+/* —— Mechanical motion —— */
+@media (prefers-reduced-motion: no-preference) {
+  .qt-os .qt-intel-entity {
+    animation: qt-entity-rise 0.62s var(--qt-ease-heavy) both;
+  }
+
+  .qt-os .qcc-primary-lane-grid > *:nth-child(1) .qt-intel-entity { animation-delay: 0.04s; }
+  .qt-os .qcc-primary-lane-grid > *:nth-child(2) .qt-intel-entity { animation-delay: 0.1s; }
+  .qt-os .qcc-primary-lane-grid > *:nth-child(3) .qt-intel-entity { animation-delay: 0.16s; }
+}
+
+@keyframes qt-entity-rise {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (max-width: 767px) {
+  .qt-os .qcc-signal-field-grid > *:nth-child(even) {
+    transform: none;
+    max-width: none;
+  }
+}
