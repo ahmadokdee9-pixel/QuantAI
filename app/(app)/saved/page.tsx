@@ -26,22 +26,28 @@ export default function SavedProductsPage() {
   const [items, setItems] = useState<SavedRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [errRetry, setErrRetry] = useState<(() => void) | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [removingLink, setRemovingLink] = useState<string | null>(null);
   const { setSession: setCopilotSession } = useCopilotSession();
 
   const load = useCallback(async () => {
     setLoading(true);
     setErr(null);
+    setErrRetry(null);
     try {
       const res = await fetch("/api/intelligence/saved-products", { credentials: "same-origin" });
       const parsed = await readApiJson<{ items?: SavedRow[]; error?: string }>(res);
       if (!res.ok || isApiFailure(parsed)) {
         setErr(apiErrorText(parsed, "Memory shelf sync failed."));
+        setErrRetry(() => () => void load());
         setItems([]);
         return;
       }
       setItems(Array.isArray(parsed.data?.items) ? (parsed.data.items ?? []) : []);
     } catch {
       setErr("Memory shelf sync failed.");
+      setErrRetry(() => () => void load());
       setItems([]);
     } finally {
       setLoading(false);
@@ -75,6 +81,12 @@ export default function SavedProductsPage() {
   }, [savedCopilotSession, setCopilotSession]);
 
   async function remove(link: string) {
+    const previous = items;
+    setRemovingLink(link);
+    setErr(null);
+    setErrRetry(null);
+    setNotice(null);
+    setItems((prev) => prev.filter((x) => x.link !== link));
     try {
       const res = await fetch(
         `/api/intelligence/saved-products?link=${encodeURIComponent(link)}`,
@@ -82,13 +94,18 @@ export default function SavedProductsPage() {
       );
       const parsed = await readApiJson<{ error?: string }>(res);
       if (!res.ok || isApiFailure(parsed)) {
+        setItems(previous);
         setErr(apiErrorText(parsed, "Anchor removal failed."));
+        setErrRetry(() => () => void remove(link));
         return;
       }
-      setItems((prev) => prev.filter((x) => x.link !== link));
-      setErr(null);
+      setNotice("Anchor released from memory shelf.");
     } catch {
+      setItems(previous);
       setErr("Anchor removal failed.");
+      setErrRetry(() => () => void remove(link));
+    } finally {
+      setRemovingLink(null);
     }
   }
 
@@ -114,7 +131,21 @@ export default function SavedProductsPage() {
         </div>
       </section>
 
-      {err && <p className="qa-ref-ws-alert">{err}</p>}
+      {err ? (
+        <div className="qa-ref-ws-alert flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <p>{err}</p>
+          {errRetry ? (
+            <button
+              type="button"
+              className="qa-ref-btn qa-ref-btn--ghost shrink-0"
+              onClick={() => void errRetry()}
+            >
+              Retry
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+      {notice && !err ? <p className="qi-sys-inline">{notice}</p> : null}
 
       {loading ? (
         <div className="qa-ref-ws-loading">
@@ -188,9 +219,11 @@ export default function SavedProductsPage() {
                   type="button"
                   onClick={() => void remove(item.link)}
                   className="qa-ref-ws-btn-danger"
+                  disabled={removingLink === item.link}
+                  aria-busy={removingLink === item.link}
                 >
                   <Trash2 className="size-3.5" aria-hidden />
-                  Release anchor
+                  {removingLink === item.link ? "Releasing…" : "Release anchor"}
                 </button>
               </div>
             </article>

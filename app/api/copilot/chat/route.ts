@@ -6,7 +6,7 @@ import { runOpenAiCopilot } from "@/lib/copilot/openaiCopilot";
 import type { CopilotSessionPayload } from "@/lib/copilot/sessionTypes";
 import { defaultCopilotSession } from "@/lib/copilot/sessionTypes";
 import { CopilotStructuredSchema } from "@/lib/copilot/structuredResponse";
-import { copilotRatelimit, enforceLimit } from "@/lib/rate-limit";
+import { copilotRatelimit, enforceLimit, guestCopilotRatelimit } from "@/lib/rate-limit";
 import { enforcePlanAiDailyLimit } from "@/lib/subscription/planAiUsage";
 import { logDevError } from "@/lib/log/devLog";
 
@@ -99,7 +99,9 @@ export async function POST(req: Request) {
       }
     }
     const rateId = userId ?? guestKey(req);
-    const limited = await enforceLimit(copilotRatelimit, rateId);
+    const limited = userId
+      ? await enforceLimit(copilotRatelimit, userId, { memoryPrefix: "quantai:copilot" })
+      : await enforceLimit(guestCopilotRatelimit, rateId, { memoryPrefix: "quantai:copilot:guest" });
     if (!limited.ok) {
       const h = buildHeuristicCopilotResponse(body.message, mergeSession(body.session));
       return jsonErr(

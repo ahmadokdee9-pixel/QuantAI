@@ -110,7 +110,19 @@ export function resolveInstitutionalState(
     };
   }
 
-  if (includesAny(lower, ["too many", "rate limit", "quota"])) {
+  if (includesAny(lower, ["guest daily", "daily search allowance", "guest search window"])) {
+    return {
+      headline: INSTITUTIONAL.trayRecalibrating,
+      supporting: "Guest intelligence throughput allowance reached for this period.",
+      detail: t,
+      recoveryHints: ["Sign in for expanded clearance and persistence"],
+      variant: "throughput",
+      ctaLabel: INSTITUTIONAL.resumeRead,
+      footnote: INSTITUTIONAL.noSessionLoss,
+    };
+  }
+
+  if (includesAny(lower, ["too many", "rate limit", "quota", "throughput limit", "cooling down"])) {
     const wait =
       opts?.retryAfter != null ? ` Throughput resets in ~${opts.retryAfter}s.` : "";
     return {

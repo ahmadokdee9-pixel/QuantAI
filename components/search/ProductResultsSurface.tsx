@@ -5,7 +5,9 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import InstitutionalFilteredPanel from "@/components/system/InstitutionalFilteredPanel";
+import InstitutionalStatePanel from "@/components/system/InstitutionalStatePanel";
 import InlineSystemNotice from "@/components/system/InlineSystemNotice";
+import { resolveInstitutionalState } from "@/lib/ui/systemStateLanguage";
 import { QuantAnalyticsEvents } from "@/lib/analytics/events";
 import { trackEvent } from "@/lib/analytics/track";
 import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
@@ -405,11 +407,33 @@ export default function ProductResultsSurface({
   }
 
   if (searchError && !loading && products.length === 0) {
+    const institutional = resolveInstitutionalState(searchError);
     return (
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-16" aria-live="polite">
-        <div className="qa-ui-search-error-inline rounded-2xl px-4 py-3 text-center text-sm font-medium">
-          Unable to complete intelligence read.
-        </div>
+      <section
+        id="quantai-results-anchor"
+        className="qa-ref-section qa-ref-section--results mx-auto max-w-7xl px-4 sm:px-6 pb-16"
+        aria-live="polite"
+      >
+        {institutional ? (
+          <InstitutionalStatePanel
+            state={institutional}
+            onAction={onRetrySearch}
+            className="mt-4"
+          />
+        ) : (
+          <div className="qa-ref-ws-alert mt-4 text-center">
+            <p>{searchError}</p>
+            {onRetrySearch ? (
+              <button
+                type="button"
+                className="qa-ref-btn qa-ref-btn--ghost mt-3"
+                onClick={onRetrySearch}
+              >
+                Retry intelligence read
+              </button>
+            ) : null}
+          </div>
+        )}
       </section>
     );
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Bookmark, Brain, Loader2, Radar, Search, Sparkles, TrendingUp } from "lucide-react";
 import type { SearchEntitlementsDTO } from "@/lib/subscription/entitlements";
@@ -102,77 +102,75 @@ export default function DashboardPage() {
     }
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      setLoading(true);
-      setErr(null);
-      try {
-        const [subRes, hRes, wRes, sRes, mRes, cRes] = await Promise.all([
-          fetch("/api/billing/subscription", { credentials: "same-origin" }),
-          fetch("/api/intelligence/search-history", { credentials: "same-origin" }),
-          fetch("/api/intelligence/watchlist", { credentials: "same-origin" }),
-          fetch("/api/intelligence/saved-products", { credentials: "same-origin" }),
-          fetch("/api/intelligence/user-memory", { credentials: "same-origin" }),
-          fetch("/api/intelligence/compare-history", { credentials: "same-origin" }),
-        ]);
+  const loadDashboard = useCallback(async () => {
+    setLoading(true);
+    setErr(null);
+    try {
+      const [subRes, hRes, wRes, sRes, mRes, cRes] = await Promise.all([
+        fetch("/api/billing/subscription", { credentials: "same-origin" }),
+        fetch("/api/intelligence/search-history", { credentials: "same-origin" }),
+        fetch("/api/intelligence/watchlist", { credentials: "same-origin" }),
+        fetch("/api/intelligence/saved-products", { credentials: "same-origin" }),
+        fetch("/api/intelligence/user-memory", { credentials: "same-origin" }),
+        fetch("/api/intelligence/compare-history", { credentials: "same-origin" }),
+      ]);
 
-        const [subP, hP, wP, sP, mP, cP] = await Promise.all([
-          readApiJson<{ tier?: string; entitlements?: SearchEntitlementsDTO }>(subRes),
-          readApiJson<{ items?: HistoryRow[] }>(hRes),
-          readApiJson<{ items?: WatchRow[] }>(wRes),
-          readApiJson<{ items?: SavedRow[] }>(sRes),
-          readApiJson<{ memory?: Record<string, unknown> }>(mRes),
-          readApiJson<{ items?: CompareHistoryRow[] }>(cRes),
-        ]);
+      const [subP, hP, wP, sP, mP, cP] = await Promise.all([
+        readApiJson<{ tier?: string; entitlements?: SearchEntitlementsDTO }>(subRes),
+        readApiJson<{ items?: HistoryRow[] }>(hRes),
+        readApiJson<{ items?: WatchRow[] }>(wRes),
+        readApiJson<{ items?: SavedRow[] }>(sRes),
+        readApiJson<{ memory?: Record<string, unknown> }>(mRes),
+        readApiJson<{ items?: CompareHistoryRow[] }>(cRes),
+      ]);
 
-        if (subP.notJson) logDevError("dashboard-api", new Error(subP.error ?? "subscription not JSON"));
-        if (!cancelled && !isApiFailure(subP) && subP.data) {
-          const s = subP.data;
-          if (typeof s.tier === "string") setTier(s.tier as QuantPlanTier);
-          if (s.entitlements) setEntitlements(s.entitlements);
-        }
-
-        if (!cancelled && !isApiFailure(hP) && hP.data) {
-          const h = hP.data;
-          setHistory(Array.isArray(h.items) ? h.items : []);
-        }
-
-        if (!cancelled && !isApiFailure(wP) && wP.data) {
-          const w = wP.data;
-          setWatchlist(Array.isArray(w.items) ? w.items : []);
-        }
-
-        if (!cancelled && !isApiFailure(sP) && sP.data) {
-          const sv = sP.data;
-          setSaved(Array.isArray(sv.items) ? sv.items : []);
-        }
-
-        if (!cancelled && !isApiFailure(mP) && mP.data) {
-          const mem = mP.data.memory ?? {};
-          const last =
-            typeof mem.lastQuery === "string"
-              ? mem.lastQuery
-              : typeof mem.lastCategory === "string"
-                ? `Recent category signal: ${String(mem.lastCategory)}`
-                : null;
-          setMemoryLine(last);
-        }
-
-        if (!cancelled && !isApiFailure(cP) && cP.data) {
-          const c = cP.data;
-          setCompareHistory(Array.isArray(c.items) ? c.items : []);
-        }
-      } catch {
-        if (!cancelled) setErr("Intelligence module sync incomplete.");
-      } finally {
-        if (!cancelled) setLoading(false);
+      if (subP.notJson) logDevError("dashboard-api", new Error(subP.error ?? "subscription not JSON"));
+      if (!isApiFailure(subP) && subP.data) {
+        const s = subP.data;
+        if (typeof s.tier === "string") setTier(s.tier as QuantPlanTier);
+        if (s.entitlements) setEntitlements(s.entitlements);
       }
-    })();
-    return () => {
-      cancelled = true;
-    };
+
+      if (!isApiFailure(hP) && hP.data) {
+        const h = hP.data;
+        setHistory(Array.isArray(h.items) ? h.items : []);
+      }
+
+      if (!isApiFailure(wP) && wP.data) {
+        const w = wP.data;
+        setWatchlist(Array.isArray(w.items) ? w.items : []);
+      }
+
+      if (!isApiFailure(sP) && sP.data) {
+        const sv = sP.data;
+        setSaved(Array.isArray(sv.items) ? sv.items : []);
+      }
+
+      if (!isApiFailure(mP) && mP.data) {
+        const mem = mP.data.memory ?? {};
+        const last =
+          typeof mem.lastQuery === "string"
+            ? mem.lastQuery
+            : typeof mem.lastCategory === "string"
+              ? `Recent category signal: ${String(mem.lastCategory)}`
+              : null;
+        setMemoryLine(last);
+      }
+
+      if (!isApiFailure(cP) && cP.data) {
+        const c = cP.data;
+        setCompareHistory(Array.isArray(c.items) ? c.items : []);
+      }
+    } catch {
+      setErr("Intelligence module sync incomplete.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadDashboard();
+  }, [loadDashboard]);
 
   const activitySummary = useMemo(() => {
     return [
@@ -271,7 +269,16 @@ export default function DashboardPage() {
           Loading intelligence modules…
         </div>
       ) : err ? (
-        <p className="qa-ref-ws-alert">{err}</p>
+        <div className="qa-ref-ws-alert flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <p>{err}</p>
+          <button
+            type="button"
+            className="qa-ref-btn qa-ref-btn--ghost shrink-0"
+            onClick={() => void loadDashboard()}
+          >
+            Retry sync
+          </button>
+        </div>
       ) : null}
 
       {!loading && !err ? (

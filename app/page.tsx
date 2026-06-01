@@ -14,6 +14,10 @@ import IntelligenceMetricCards from "../components/home/IntelligenceMetricCards"
 import GlobalCommerceIntelligenceNetwork from "../components/home/GlobalCommerceIntelligenceNetwork";
 import RetailerMarquee from "../components/home/RetailerMarquee";
 import SearchStreamRibbon from "../components/loading/SearchStreamRibbon";
+import SearchSignalCapsule from "@/components/system/SearchSignalCapsule";
+import ActionFeedbackBanner, {
+  type ActionFeedbackTone,
+} from "@/components/system/ActionFeedbackBanner";
 import { useCockpit } from "../components/cockpit/cockpitContext";
 import { useCopilotSession } from "../components/copilot/CopilotContext";
 import { calculateAIScore } from "./api/search/lib/aiScoring";
@@ -65,6 +69,7 @@ import { toCopilotProductBrief } from "@/lib/copilot/mapProduct";
 import type { CopilotSessionPayload } from "@/lib/copilot/sessionTypes";
 import { appendLocalRecentSearch, readLocalSignals, recordInterestTag } from "@/lib/personalization/localSignals";
 import { HERO_INPUT_PLACEHOLDERS, HERO_SEARCH_PROMPTS } from "@/lib/search/heroPrompts";
+import { clientThrottleMessage, createClientSearchThrottle } from "@/lib/search/clientSearchThrottle";
 import { useMobilePerf } from "@/lib/hooks/useMobilePerf";
 import { useReducedMotion, motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
@@ -102,7 +107,12 @@ export default function Home() {
   const [saved, setSaved] = useState<QuantProduct[]>([]);
   const [searchError, setSearchError] = useState<string | null>(null);
   /** Save/watchlist notices — must not reuse searchError (hero capsule treats that as search failure). */
-  const [, setActionNotice] = useState<string | null>(null);
+  const [actionNotice, setActionNotice] = useState<{
+    message: string;
+    tone: ActionFeedbackTone;
+    onRetry?: () => void;
+  } | null>(null);
+  const [actionBusy, setActionBusy] = useState<"save" | "remove" | "watchlist" | null>(null);
   const [resultsKey, setResultsKey] = useState(0);
   const [marketMemoryTick, setMarketMemoryTick] = useState(0);
   const [subscriptionTier, setSubscriptionTier] = useState<QuantPlanTier | null>(null);
@@ -113,6 +123,7 @@ export default function Home() {
   const searchAbortRef = useRef<AbortController | null>(null);
   /** Skip duplicate in-flight requests for the same trimmed query (double-submit / double-tap). */
   const searchInflightQueryRef = useRef<string | null>(null);
+  const clientSearchThrottleRef = useRef(createClientSearchThrottle());
   const [heroPlaceholderIdx, setHeroPlaceholderIdx] = useState(0);
   const [submitPulse, setSubmitPulse] = useState(false);
   const submitPulseTimerRef = useRef<number | null>(null);
@@ -122,6 +133,14 @@ export default function Home() {
     () => new Set(saved.map((s) => s.link)),
     [saved]
   );
+
+  const clearActionNotice = useCallback(() => setActionNotice(null), []);
+
+  useEffect(() => {
+    if (!actionNotice || actionNotice.tone !== "success") return;
+    const id = window.setTimeout(() => setActionNotice(null), 5200);
+    return () => window.clearTimeout(id);
+  }, [actionNotice]);
 
   const refreshSavedFromServer = useCallback(async () => {
     try {
@@ -151,7 +170,7 @@ export default function Home() {
     if (!q) return;
     bootedSearchFromUrl.current = true;
     startTransition(() => setQuery(q));
-    void search(q);
+    void search(q, { bypassClientThrottle: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bootstrap once when auth resolves
   }, [isSignedIn]);
 
@@ -286,9 +305,18 @@ export default function Home() {
 
   const activeFilterCount = countActiveFilters(filters);
 
-  async function search(overrideQuery?: string) {
+  async function search(overrideQuery?: string, opts?: { bypassClientThrottle?: boolean }) {
     const q = (overrideQuery ?? query).trim();
     if (!q) return;
+
+    if (!opts?.bypassClientThrottle) {
+      const throttle = clientSearchThrottleRef.current.check();
+      if (!throttle.allowed) {
+        setSearchError(clientThrottleMessage(throttle.waitMs));
+        trackEvent(QuantAnalyticsEvents.SEARCH_ERROR, { code: "client_throttle" });
+        return;
+      }
+    }
 
     if (loading && searchInflightQueryRef.current === q) return;
     searchInflightQueryRef.current = q;
@@ -306,6 +334,7 @@ export default function Home() {
     trackEvent(QuantAnalyticsEvents.SEARCH_RUN, { queryLength: q.length });
     setLoading(true);
     setSearchError(null);
+    setActionNotice(null);
 
     if (submitPulseTimerRef.current != null) {
       window.clearTimeout(submitPulseTimerRef.current);
@@ -433,6 +462,7 @@ export default function Home() {
     } finally {
       if (searchAbortRef.current === ac) {
         setLoading(false);
+        searchInflightQueryRef.current = null;
       }
     }
   }
@@ -462,11 +492,18 @@ export default function Home() {
 
   async function saveProduct(product: QuantProduct) {
     if (!isSignedIn) {
-      setActionNotice("Sign in to save products to your account.");
+      setActionNotice({
+        message: "Sign in to anchor products to your memory shelf.",
+        tone: "info",
+      });
       return;
     }
 
     if (saved.some((p) => p.link === product.link)) {
+      setActionNotice({
+        message: "This listing is already on your memory shelf.",
+        tone: "info",
+      });
       return;
     }
 
@@ -475,7 +512,9 @@ export default function Home() {
         ? product.qiComposite
         : calculateAIScore(product, sortedProducts).score;
 
+    const previousSaved = saved;
     setSaved([...saved, product]);
+    setActionBusy("save");
 
     try {
       const res = await fetch("/api/search/save-product", {
@@ -499,47 +538,84 @@ export default function Home() {
         const data = parsed.data;
         const msg =
           data?.code === "PLAN_SAVED_LIMIT"
-            ? `${apiErrorText(parsed, "Saved limit reached.")} Upgrade on the pricing page.`
-            : apiErrorText(parsed, "Could not save this product.");
-        setActionNotice(msg);
-        setSaved(saved.filter((p) => p.link !== product.link));
+            ? `${apiErrorText(parsed, "Memory shelf limit reached.")} Review access layers to elevate clearance.`
+            : apiErrorText(parsed, "Could not anchor this product to memory shelf.");
+        setActionNotice({
+          message: msg,
+          tone: "error",
+          onRetry: () => void saveProduct(product),
+        });
+        setSaved(previousSaved);
         trackEvent(QuantAnalyticsEvents.PRODUCT_SAVE_FAIL, {
           code: data?.code ?? "unknown",
         });
       } else {
-        setActionNotice(null);
+        setActionNotice({
+          message: "Product anchored to memory shelf.",
+          tone: "success",
+        });
         trackEvent(QuantAnalyticsEvents.PRODUCT_SAVE, { link: product.link });
         recordInterestTag("saved");
       }
     } catch (e) {
       logDevError("saveProduct", e);
-      setActionNotice("Could not save this product.");
-      setSaved(saved.filter((p) => p.link !== product.link));
+      setActionNotice({
+        message: "Could not anchor this product to memory shelf.",
+        tone: "error",
+        onRetry: () => void saveProduct(product),
+      });
+      setSaved(previousSaved);
       trackEvent(QuantAnalyticsEvents.PRODUCT_SAVE_FAIL, { code: "exception" });
+    } finally {
+      setActionBusy(null);
     }
   }
 
   async function removeSavedProduct(link: string) {
     if (!isSignedIn) return;
+    const previousSaved = saved;
     setSaved((prev) => prev.filter((p) => p.link !== link));
+    setActionBusy("remove");
     try {
       const res = await fetch(
         `/api/intelligence/saved-products?link=${encodeURIComponent(link)}`,
         { method: "DELETE", credentials: "same-origin" }
       );
-      if (!res.ok) {
-        await refreshSavedFromServer();
-      } else {
-        trackEvent(QuantAnalyticsEvents.PRODUCT_REMOVE_SAVE, { link });
+      const parsed = await readApiJson<{ error?: string }>(res);
+      if (!res.ok || isApiFailure(parsed)) {
+        setSaved(previousSaved);
+        const msg = apiErrorText(parsed, "Anchor removal failed.");
+        setActionNotice({
+          message: msg,
+          tone: "error",
+          onRetry: () => void removeSavedProduct(link),
+        });
+        return;
       }
-    } catch {
-      await refreshSavedFromServer();
+      setActionNotice({
+        message: "Anchor released from memory shelf.",
+        tone: "success",
+      });
+      trackEvent(QuantAnalyticsEvents.PRODUCT_REMOVE_SAVE, { link });
+    } catch (e) {
+      logDevError("removeSavedProduct", e);
+      setSaved(previousSaved);
+      setActionNotice({
+        message: "Anchor removal failed.",
+        tone: "error",
+        onRetry: () => void removeSavedProduct(link),
+      });
+    } finally {
+      setActionBusy(null);
     }
   }
 
   async function addToWatchlist(product: QuantProduct) {
     if (!isSignedIn) {
-      setActionNotice("Sign in to track price drops and market timing.");
+      setActionNotice({
+        message: "Sign in to activate price monitoring for this listing.",
+        tone: "info",
+      });
       return;
     }
     const targetPrice =
@@ -548,6 +624,7 @@ export default function Home() {
       product.qiBuyingDecision?.action === "PREMIUM_PRICING"
         ? Math.max(1, Math.round(product.price * 0.92))
         : null;
+    setActionBusy("watchlist");
     try {
       const res = await fetch("/api/intelligence/watchlist", {
         method: "POST",
@@ -577,27 +654,52 @@ export default function Home() {
       );
       const data = parsed.data;
       if (!res.ok || isApiFailure(parsed)) {
-        setSearchError(
+        const msg =
           data?.code === "PLAN_WATCHLIST_LIMIT"
-            ? `${apiErrorText(parsed, "Watchlist limit reached.")} See pricing to upgrade.`
-            : apiErrorText(parsed, "Watchlist is not available yet.")
-        );
+            ? `${apiErrorText(parsed, "Price monitoring limit reached.")} Review access layers to elevate clearance.`
+            : apiErrorText(parsed, "Price monitoring channel could not be activated.");
+        setActionNotice({
+          message: msg,
+          tone: "error",
+          onRetry: () => void addToWatchlist(product),
+        });
         trackEvent(QuantAnalyticsEvents.WATCHLIST_ADD_FAIL, {
           code: data?.code ?? "http",
         });
         return;
       }
       if (data?.duplicate) {
-        setActionNotice(null);
+        setActionNotice({
+          message: "This listing is already on the price monitoring channel.",
+          tone: "info",
+        });
         return;
       }
-      setActionNotice(null);
+      setActionNotice({
+        message: "Price monitoring channel activated for this listing.",
+        tone: "success",
+      });
       trackEvent(QuantAnalyticsEvents.WATCHLIST_ADD, { link: product.link });
-    } catch {
-      setActionNotice("Could not add to watchlist.");
+    } catch (e) {
+      logDevError("addToWatchlist", e);
+      setActionNotice({
+        message: "Price monitoring channel could not be activated.",
+        tone: "error",
+        onRetry: () => void addToWatchlist(product),
+      });
       trackEvent(QuantAnalyticsEvents.WATCHLIST_ADD_FAIL, { code: "exception" });
+    } finally {
+      setActionBusy(null);
     }
   }
+
+  const heroSearchState = useMemo(
+    () =>
+      searchError && !loading && products.length === 0
+        ? resolveInstitutionalState(searchError)
+        : null,
+    [searchError, loading, products.length]
+  );
 
   return (
     <main className="qa-ref-os qa-ref-os--phase7 qa-ref-os--decision-system qa-ref-os--intel-authority qa-ref-os--intel-v1 relative min-h-screen overflow-x-hidden">
@@ -605,6 +707,18 @@ export default function Home() {
 
       <div className="qa-ref-shell">
         <LandingNav />
+
+        {actionNotice ? (
+          <div className="qa-ref-section qa-ref-section--tight">
+            <ActionFeedbackBanner
+              message={actionNotice.message}
+              tone={actionNotice.tone}
+              onRetry={actionNotice.onRetry}
+              onDismiss={clearActionNotice}
+              className="mx-auto max-w-[54rem]"
+            />
+          </div>
+        ) : null}
 
         <div className="qa-ref-workspace">
         {/* Hero + Command */}
@@ -657,6 +771,14 @@ export default function Home() {
                     <div className="qa-ref-processing qa-ref-hero__search-processing">
                       <SearchStreamRibbon active={loading} searchQuery={query} />
                     </div>
+                  ) : null}
+
+                  {heroSearchState ? (
+                    <SearchSignalCapsule
+                      state={heroSearchState}
+                      onAction={() => void search()}
+                      className="qa-ref-hero__search-processing"
+                    />
                   ) : null}
 
                 </div>
@@ -734,8 +856,10 @@ export default function Home() {
                           type="button"
                           onClick={() => void removeSavedProduct(item.link)}
                           className="qa-ui-btn-ghost"
+                          disabled={actionBusy === "remove"}
+                          aria-busy={actionBusy === "remove"}
                         >
-                          Remove
+                          {actionBusy === "remove" ? "Releasing…" : "Remove"}
                         </button>
                       </div>
                     </article>

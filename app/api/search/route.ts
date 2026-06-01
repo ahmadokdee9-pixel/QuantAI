@@ -25,7 +25,11 @@ import { buildSearchIntelligence } from "@/lib/intelligence/searchDecisionEngine
 import { runLiveCommerceDiscovery, type LiveCommerceDiscoveryMeta } from "@/lib/intelligence/liveCommerceDiscovery";
 import { applyHardIdentityGate, buildIdentityDebugSummary, recoverSafeIdentityBreadth } from "@/lib/intelligence/productIdentity";
 import { intentMatchEnvelope } from "@/lib/intelligence/searchIntentV2";
-import { enforceLimit, searchRatelimit } from "@/lib/rate-limit";
+import {
+  enforceAuthSearchLimits,
+  enforceGuestSearchLimits,
+  MAX_SEARCH_QUERY_LENGTH,
+} from "@/lib/search/searchAbuseProtection";
 import { entitlementsForTier } from "@/lib/subscription/entitlements";
 import { planDefinition } from "@/lib/subscription/plans";
 import { resolveServerSubscriptionTier } from "@/lib/subscription/resolveTier";
@@ -532,6 +536,13 @@ async function handleSearch(
     if (!query) {
       return fail(400, "BAD_REQUEST", "Missing query");
     }
+    if (query.length > MAX_SEARCH_QUERY_LENGTH) {
+      return fail(
+        400,
+        "BAD_REQUEST",
+        `Query too long (max ${MAX_SEARCH_QUERY_LENGTH} characters).`
+      );
+    }
 
     const requestCanonicalQuery = buildCanonicalQuery(query);
     const pipelineKey = normalizeSearchCacheKey(requestCanonicalQuery.normalizedQuery || query);
@@ -550,9 +561,8 @@ async function handleSearch(
     let guestOperationalDegraded: Record<string, unknown> | null = null;
 
     if (!userId) {
-      const limited = await enforceLimit(searchRatelimit, `guest:${requestIdentifier(opts?.headers)}`, {
-        memoryPrefix: "quantai:search:guest",
-      });
+      const guestId = requestIdentifier(opts?.headers);
+      const limited = await enforceGuestSearchLimits(guestId);
       if (!limited.ok) {
         try {
           const cachedTray = await loadPipelineWithInflightDedupe(`guest:${pipelineKey}`, () =>
@@ -561,7 +571,7 @@ async function handleSearch(
           if (cachedTray.products.length > 0) {
             guestOperationalDegraded = {
               degraded: true,
-              reason: "guest_rate_limit_cached_tray",
+              reason: `guest_rate_limit_${limited.code.toLowerCase()}_cached_tray`,
               retryAfter: limited.retryAfter,
             };
           }
@@ -573,15 +583,19 @@ async function handleSearch(
             {
               success: false,
               error: "RATE_LIMIT",
-              message:
-                "Guest search is cooling down. Sign in for a larger intelligence window — or retry shortly for a cached tray if available.",
+              message: limited.message,
+              code: limited.code,
               data: emptySearchData(
                 searchDebugMeta({
                   products: [],
                   canonicalQuery: requestCanonicalQuery,
                   fallbackReason: "RATE_LIMIT",
                   errorState: "RATE_LIMIT",
-                  operationalState: { degraded: true, reason: "guest_rate_limit", retryAfter: limited.retryAfter },
+                  operationalState: {
+                    degraded: true,
+                    reason: limited.code,
+                    retryAfter: limited.retryAfter,
+                  },
                 })
               ),
               retryAfter: limited.retryAfter,
@@ -609,13 +623,14 @@ async function handleSearch(
         );
       }
 
-      const limited = await enforceLimit(searchRatelimit, userId, { memoryPrefix: "quantai:search" });
+      const limited = await enforceAuthSearchLimits(userId);
       if (!limited.ok) {
         return jsonSearch(
           {
             success: false,
             error: "RATE_LIMIT",
-            message: "Too many searches. Try again later.",
+            message: limited.message,
+            code: limited.code,
             data: emptySearchData(),
             retryAfter: limited.retryAfter,
           },
@@ -1720,7 +1735,7 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const q = searchParams.get("q");
-    return await handleSearch(q);
+    return await handleSearch(q, { headers: req.headers });
   } catch (e) {
     return NextResponse.json(
       {

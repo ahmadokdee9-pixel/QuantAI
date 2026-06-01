@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { clientThrottleMessage, createClientSearchThrottle } from "@/lib/search/clientSearchThrottle";
 import { Loader2, Search } from "lucide-react";
 import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
 import { readApiJson } from "@/lib/api/readJson";
@@ -23,9 +24,16 @@ export default function SearchBox() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<ShoppingHit[]>([]);
+  const clientSearchThrottleRef = useRef(createClientSearchThrottle());
 
   async function handleSearch() {
     if (!query.trim()) return;
+
+    const throttle = clientSearchThrottleRef.current.check();
+    if (!throttle.allowed) {
+      setError(clientThrottleMessage(throttle.waitMs));
+      return;
+    }
 
     setLoading(true);
     setError(null);
