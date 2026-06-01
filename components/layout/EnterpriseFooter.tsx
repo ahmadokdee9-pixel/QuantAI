@@ -30,9 +30,11 @@ const FOOTER_COLUMNS = [
 
     links: [
 
+      { label: "Privacy", href: "/legal/privacy" },
+
       { label: "Terms", href: "/legal/terms" },
 
-      { label: "Privacy", href: "/legal/privacy" },
+      { label: "AI disclaimer", href: "/legal/disclaimer" },
 
       { label: "Billing", href: "/legal/billing" },
 
@@ -54,7 +56,7 @@ const FOOTER_COLUMNS = [
 
       { label: "Status", href: "/legal/status" },
 
-      { label: "Contact", href: "mailto:trust@quantai.app" },
+      { label: "Contact", href: "/contact" },
 
     ],
 
@@ -129,6 +131,12 @@ export default function EnterpriseFooter() {
           </div>
 
         </div>
+
+        <p className="qa-ref-footer__legal">
+          QuantAI provides informational commerce intelligence only — not financial, legal, or
+          professional advice.{" "}
+          <Link href="/legal/disclaimer">AI &amp; information disclaimer</Link>
+        </p>
 
         <div className="qa-ref-footer__status-row">
           <span className="qa-ref-footer__status-item">

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { LayoutDashboard, Bookmark, CreditCard, Home, Sparkles } from "lucide-react";
 import AmbientBackdrop from "@/components/cockpit/AmbientBackdrop";
+import EnterpriseFooter from "@/components/layout/EnterpriseFooter";
 
 const nav = [
   { href: "/", label: "Home", icon: Home },
@@ -54,6 +55,9 @@ export default function AppChrome({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         <main className="qa-content-wrap qa-ref-workspace qa-ref-workspace-intel py-8 sm:py-10">{children}</main>
+        <div className="qa-content-wrap">
+          <EnterpriseFooter />
+        </div>
       </div>
     </div>
   );

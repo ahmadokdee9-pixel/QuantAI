@@ -7,6 +7,7 @@ import AmbientBackdrop from "@/components/cockpit/AmbientBackdrop";
 import LandingNav from "@/components/landing/LandingNav";
 import PricingCards from "@/components/subscription/PricingCards";
 import TrustRibbon from "@/components/trust/TrustRibbon";
+import EnterpriseFooter from "@/components/layout/EnterpriseFooter";
 import { isApiFailure } from "@/lib/api/apiResult";
 import { readApiJson } from "@/lib/api/readJson";
 import type { QuantPlanTier } from "@/lib/subscription/plans";
@@ -91,6 +92,7 @@ export default function PricingPage() {
             </Link>
           </p>
         </section>
+        <EnterpriseFooter />
       </div>
     </div>
   );

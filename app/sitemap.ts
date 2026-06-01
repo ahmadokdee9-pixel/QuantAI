@@ -1,10 +1,24 @@
 import type { MetadataRoute } from "next";
 import { appUrl } from "@/lib/stripe/config";
 
+const legalRoutes = [
+  "/legal/privacy",
+  "/legal/terms",
+  "/legal/disclaimer",
+  "/legal/billing",
+  "/legal/refund",
+  "/legal/cookies",
+  "/legal/security",
+  "/legal/trust",
+  "/legal/status",
+  "/contact",
+];
+
 const evergreenRoutes = [
   "",
   "/how-it-works",
   "/pricing",
+  ...legalRoutes,
   "/commerce-intelligence",
   "/commerce-intelligence/nl/electronics",
   "/commerce-intelligence/nl/furniture",

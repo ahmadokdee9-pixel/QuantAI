@@ -11344,3 +11344,66 @@
   background: rgba(255, 251, 235, 0.92) !important;
   color: #5c4a12 !important;
 }
+
+/* Governance / legal documents — typography only */
+.qa-ref-legal-page {
+  max-width: 52rem;
+  margin: 0 auto;
+}
+
+.qa-ref-legal-doc__head {
+  margin-bottom: 2rem;
+}
+
+.qa-ref-legal-doc__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.qa-ref-legal-doc__section {
+  padding-bottom: 0.25rem;
+}
+
+.qa-ref-legal-doc__heading {
+  margin: 0 0 0.65rem;
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--qa-ref-ink, #0f172a);
+}
+
+.qa-ref-legal-doc__p {
+  margin: 0 0 0.65rem;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--qa-ref-muted, #475569);
+}
+
+.qa-ref-legal-doc__list {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--qa-ref-muted, #475569);
+}
+
+.qa-ref-legal-doc__list li {
+  margin-bottom: 0.4rem;
+}
+
+.qa-ref-legal-doc__foot {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(42, 38, 104, 0.09);
+}
+
+.qa-ref-footer__legal a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.qa-ref-footer__legal a:hover {
+  color: var(--qa-ref-ink, #0f172a);
+}
