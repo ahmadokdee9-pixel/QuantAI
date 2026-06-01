@@ -1780,7 +1780,7 @@ export async function POST(req: Request) {
           products: [],
           results: [],
         },
-        { status: 200 }
+        { status: 400 }
       );
     }
     return await handleSearch(q, { commerceMemory, headers: req.headers });
@@ -1802,7 +1802,7 @@ export async function POST(req: Request) {
         products: [],
         results: [],
       },
-      { status: 200 }
+      { status: 500 }
     );
   }
 }

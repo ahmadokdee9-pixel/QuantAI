@@ -186,3 +186,54 @@ export async function PATCH(req: Request) {
     return jsonErr(500, "Watchlist update failed.");
   }
 }
+
+export async function DELETE(req: Request) {
+  const { userId } = await auth();
+  if (!userId) {
+    return jsonErr(401, "Unauthorized");
+  }
+  if (!supabaseAdmin) {
+    return jsonErr(503, "Watchlist storage is not configured.", { code: "STORAGE_UNAVAILABLE" });
+  }
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id")?.trim();
+    const link = searchParams.get("link")?.trim();
+    if (!id && !link) {
+      return jsonErr(400, "Missing watchlist id or product link");
+    }
+
+    if (id) {
+      const { error } = await supabaseAdmin
+        .from("shopping_watchlist")
+        .delete()
+        .eq("user_id", userId)
+        .eq("id", id);
+      if (error) return jsonErr(500, error.message);
+      return jsonOk({ ok: true });
+    }
+
+    const { data: rows, error: readError } = await supabaseAdmin
+      .from("shopping_watchlist")
+      .select("id, product")
+      .eq("user_id", userId);
+    if (readError) return jsonErr(500, readError.message);
+    const match = (rows ?? []).find((row) => {
+      const product = (row.product ?? {}) as Record<string, unknown>;
+      return typeof product.link === "string" && product.link === link;
+    });
+    if (!match?.id) {
+      return jsonErr(404, "Watchlist item not found");
+    }
+    const { error } = await supabaseAdmin
+      .from("shopping_watchlist")
+      .delete()
+      .eq("user_id", userId)
+      .eq("id", match.id);
+    if (error) return jsonErr(500, error.message);
+    return jsonOk({ ok: true });
+  } catch {
+    return jsonErr(400, "Invalid request");
+  }
+}

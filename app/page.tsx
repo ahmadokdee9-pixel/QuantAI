@@ -391,7 +391,7 @@ export default function Home() {
             ? ` Retry in ~${root.retryAfter}s.`
             : "";
         setProducts([]);
-        setSearchError(apiErrorText(parsed, "Too many searches.") + wait);
+        setSearchError(apiErrorText(parsed, INSTITUTIONAL.trayRecalibrating) + wait);
         const ent429 = root?.entitlements;
         if (ent429) setSearchEntitlements(ent429 as SearchEntitlementsDTO);
         trackEvent(QuantAnalyticsEvents.SEARCH_ERROR, { code: "rate_limit" });
