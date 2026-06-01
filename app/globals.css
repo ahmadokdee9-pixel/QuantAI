@@ -1,8 +1,10 @@
+@import url("https://api.fontshare.com/v2/css?f[]=satoshi@500,600,700,800&display=swap");
 @import "tailwindcss";
 
 :root {
-  --background: #020617;
-  --foreground: #f8fafc;
+  --background: #f7f8ff;
+  --foreground: #0b0f19;
+  --font-qa-display: "Satoshi", var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --qi-cyan: #22d3ee;
   --qi-violet: #a78bfa;
   --qi-emerald: #34d399;
@@ -27,7 +29,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans:
-    var(--font-quantai), var(--font-quantai-ar), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    var(--font-geist-sans, var(--font-quantai)), var(--font-quantai-ar), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     "Helvetica Neue", sans-serif;
 }
 
@@ -52,7 +54,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
-  font-weight: 400;
+  font-weight: 500;
   font-feature-settings: "kern" 1, "liga" 1;
   line-height: 1.6;
   letter-spacing: -0.011em;
@@ -1661,9 +1663,9 @@ textarea:focus-visible {
 }
 
 .qi-access-cta--private {
-  border-color: rgba(167, 139, 250, 0.22);
-  background: linear-gradient(165deg, rgba(167, 139, 250, 0.18) 0%, rgba(79, 70, 229, 0.12) 100%);
-  color: rgba(237, 233, 254, 0.95);
+  border-color: rgba(21, 32, 56, 0.18);
+  background: linear-gradient(165deg, rgba(15, 23, 42, 0.94) 0%, rgba(30, 41, 59, 0.92) 100%);
+  color: rgba(248, 250, 252, 0.96);
 }
 
 .qi-access-disclaimer {
@@ -1928,6 +1930,7 @@ textarea:focus-visible {
   color: rgba(255, 255, 255, 0.97);
 }
 
-@import "./globals-premium-os.css";
 @import "./globals-cohesion.css";
 @import "./globals-design-os-v2.css";
+@import "./globals-quantai-ui-system.css";
+@import "./globals-quantai-reference.css";

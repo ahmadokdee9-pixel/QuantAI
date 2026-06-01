@@ -39,11 +39,11 @@ type Props = {
 function signalTone(s: CompareSmartSignal["severity"]): string {
   switch (s) {
     case "risk":
-      return "border-rose-400/28 bg-rose-500/[0.07]";
+      return "qa-ui-signal qa-ui-signal--risk";
     case "warn":
-      return "border-amber-400/25 bg-amber-500/[0.06]";
+      return "qa-ui-signal qa-ui-signal--warn";
     default:
-      return "border-cyan-400/18 bg-cyan-500/[0.05]";
+      return "qa-ui-signal qa-ui-signal--info";
   }
 }
 
@@ -88,21 +88,18 @@ export default function CompareIntelligencePanel({
         role="region"
         aria-label="Compare intelligence"
       >
-        <div className="relative overflow-hidden rounded-[1.35rem] border border-cyan-400/18 bg-gradient-to-b from-[#0a1224]/98 via-[#050a14]/98 to-[#030712]/99 shadow-[0_0_48px_-20px_rgba(34,211,238,0.28),0_28px_80px_-40px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-[28px] transition-[box-shadow] duration-500 ease-out hover:shadow-[0_0_56px_-18px_rgba(34,211,238,0.22),0_32px_90px_-42px_rgba(0,0,0,0.88),inset_0_1px_0_rgba(255,255,255,0.07)]">
-          <div className="pointer-events-none absolute -left-24 top-0 h-40 w-40 rounded-full bg-cyan-400/10 blur-3xl" />
-          <div className="pointer-events-none absolute -right-16 bottom-0 h-36 w-36 rounded-full bg-violet-500/10 blur-3xl" />
-
-          <div className="relative z-[1] flex min-w-0 items-center justify-between gap-2 border-b border-white/[0.06] px-3 py-2.5 sm:px-4">
+        <div className="qa-ui-compare-terminal qa-ui-terminal">
+          <div className="qa-ui-terminal-header relative z-[1] flex min-w-0 items-center justify-between gap-2 px-3 py-2.5 sm:px-4">
             <button
               type="button"
               onClick={() => setExpanded((e) => !e)}
               className="flex min-w-0 flex-1 items-center gap-2 rounded-xl py-1 text-left transition hover:bg-white/[0.04]"
               aria-expanded={expanded}
             >
-              <GitCompare className="size-4 shrink-0 text-cyan-300" aria-hidden />
+              <GitCompare className="size-4 shrink-0 text-violet-300" aria-hidden />
               <div className="min-w-0">
                 <p className="cockpit-display truncate text-[13px] text-white/95">
-                  Decision Lab · {compareProducts.length}/3
+                  Compare · {compareProducts.length}/3
                 </p>
                 <p className="truncate text-[10px] text-slate-500">
                   Confidence {intelligence.comparisonConfidenceScore}%
@@ -125,24 +122,24 @@ export default function CompareIntelligencePanel({
                 type="button"
                 onClick={() => void onRunVerdict()}
                 disabled={verdictLoading}
-                className="inline-flex min-h-10 min-w-[7.5rem] items-center justify-center gap-1.5 rounded-full border border-cyan-400/32 bg-cyan-500/[0.14] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-cyan-50/95 shadow-[0_0_20px_-10px_rgba(34,211,238,0.35)] transition hover:bg-cyan-500/20 hover:shadow-[0_0_26px_-10px_rgba(34,211,238,0.28)] disabled:opacity-50"
+                className="qa-ui-btn-primary min-h-10 min-w-[7.5rem] px-3 py-1.5 text-[10px] uppercase tracking-wide disabled:opacity-50"
               >
                 {verdictLoading ? (
                   <>
                     <Loader2 className="size-3.5 animate-spin" aria-hidden />
-                    Analyst
+                    Reading
                   </>
                 ) : (
                   <>
-                    <Sparkles className="size-3.5 text-cyan-200/90" aria-hidden />
-                    Analyst verdict
+                    <Sparkles className="size-3.5 opacity-90" aria-hidden />
+                    Buying recommendation
                   </>
                 )}
               </button>
               <button
                 type="button"
                 onClick={onExportCompare}
-                className="min-h-10 rounded-full border border-white/12 bg-white/[0.06] px-2.5 py-1.5 text-[10px] font-semibold text-slate-200 transition hover:bg-white/[0.11]"
+                className="qa-ui-btn-ghost min-h-10 px-2.5 py-1.5"
               >
                 {compareExportFlash ? "Copied" : "Export"}
               </button>
@@ -170,10 +167,8 @@ export default function CompareIntelligencePanel({
                     {intelligence.verdictBadges.map((b) => (
                       <span
                         key={b.id}
-                        className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold ${
-                          b.id === intelligence.primaryVerdictId
-                            ? "border-cyan-400/35 bg-cyan-500/[0.14] text-cyan-50/95"
-                            : "border-white/[0.1] bg-black/30 text-slate-300/90"
+                        className={`qa-ui-badge inline-flex max-w-full items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                          b.id === intelligence.primaryVerdictId ? "qa-ui-badge--active" : ""
                         }`}
                       >
                         <span className="truncate">{COMPARE_VERDICT_LABEL_DISPLAY[b.id]}</span>
@@ -187,7 +182,7 @@ export default function CompareIntelligencePanel({
                 {intelligence.smartSignals.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                      Decision spread
+                      Signal spread
                     </p>
                     <ul className="space-y-2">
                       {intelligence.smartSignals.map((s) => (
@@ -204,8 +199,8 @@ export default function CompareIntelligencePanel({
                 )}
 
                 {trayInsightLines.length > 0 && (
-                  <div className="rounded-2xl border border-white/[0.07] bg-black/35 px-3 py-3 sm:px-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Market read</p>
+                  <div className="qa-ui-terminal-inset px-3 py-3 sm:px-4">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Buying recommendation</p>
                     <ul className="mt-2 space-y-2.5">
                       {trayInsightLines.map((line) => (
                         <li key={line.id} className="min-w-0">
@@ -230,7 +225,7 @@ export default function CompareIntelligencePanel({
                         initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ ...transition, delay: mobilePerf ? 0 : cIdx * 0.03 }}
-                        className="min-w-0 rounded-2xl border border-white/[0.09] bg-gradient-to-b from-white/[0.07] to-black/45 p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:p-4"
+                        className="qa-ui-terminal-inset min-w-0 p-3.5 sm:p-4"
                       >
                         <p className="cockpit-body text-[12px] font-semibold leading-snug text-white/[0.95] line-clamp-2">
                           {p.title}
@@ -241,21 +236,21 @@ export default function CompareIntelligencePanel({
                           <span className="tabular-nums text-slate-300">Trust {trustScore}</span>
                         </p>
                         <div className="mt-3.5 grid grid-cols-2 gap-2 sm:gap-2.5">
-                          <div className="rounded-xl border border-white/[0.07] bg-black/35 px-2.5 py-2">
+                          <div className="qa-ui-terminal-panel rounded-xl px-2.5 py-2">
                             <p className="cockpit-label text-[9px] text-slate-500">Price</p>
                             <p className="mt-0.5 text-sm font-semibold tabular-nums text-emerald-200/95">
                               {formatListingPrice(p.price, sym)}
                             </p>
                           </div>
-                          <div className="rounded-xl border border-white/[0.07] bg-black/35 px-2.5 py-2">
+                          <div className="qa-ui-terminal-panel rounded-xl px-2.5 py-2">
                             <p className="cockpit-label text-[9px] text-slate-500">QI</p>
-                            <p className="mt-0.5 text-sm font-semibold tabular-nums text-cyan-100">{qi}</p>
+                            <p className="qa-ui-compare-stat-value--accent mt-0.5 text-sm tabular-nums">{qi}</p>
                           </div>
-                          <div className="rounded-xl border border-white/[0.07] bg-black/35 px-2.5 py-2">
+                          <div className="qa-ui-terminal-panel rounded-xl px-2.5 py-2">
                             <p className="cockpit-label text-[9px] text-slate-500">Trust</p>
                             <p className="mt-0.5 text-sm font-semibold tabular-nums text-slate-200">{trustScore}</p>
                           </div>
-                          <div className="rounded-xl border border-white/[0.07] bg-black/35 px-2.5 py-2">
+                          <div className="qa-ui-terminal-panel rounded-xl px-2.5 py-2">
                             <p className="cockpit-label text-[9px] text-slate-500">Rating</p>
                             <p className="mt-0.5 text-sm font-semibold text-amber-200/90">
                               {ratingValue(p.rating) > 0 ? ratingValue(p.rating).toFixed(1) : "—"}
@@ -269,10 +264,10 @@ export default function CompareIntelligencePanel({
 
                 {verdictError ? <InlineSystemNotice message={verdictError} /> : null}
 
-                <details className="group rounded-2xl border border-white/[0.07] bg-black/25 open:border-cyan-400/20">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-3 text-[11px] font-semibold text-slate-200 transition hover:bg-white/[0.03] sm:px-4 [&::-webkit-details-marker]:hidden">
+                <details className="qa-ui-terminal-panel group">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-3 text-[11px] font-semibold transition sm:px-4 [&::-webkit-details-marker]:hidden">
                     <span className="flex items-center gap-2">
-                      <BarChart3 className="size-3.5 text-cyan-300/80" aria-hidden />
+                      <BarChart3 className="size-3.5 text-violet-300/90" aria-hidden />
                       Intelligence matrix
                     </span>
                     <ChevronDown className="size-4 text-slate-500 transition group-open:rotate-180" aria-hidden />
@@ -280,14 +275,14 @@ export default function CompareIntelligencePanel({
                   <div className="border-t border-white/[0.05] px-3 pb-3 pt-1 sm:px-4">
                     <ul className="max-h-[min(40vh,16rem)] space-y-2.5 overflow-y-auto pr-1 [-webkit-overflow-scrolling:touch]">
                       {intelligence.axisInsights.map((row) => (
-                        <li key={row.key} className="rounded-lg border border-white/[0.05] bg-black/20 px-2.5 py-2">
+                        <li key={row.key} className="qa-ui-terminal-panel rounded-lg px-2.5 py-2">
                           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{row.label}</p>
                           <p className="mt-0.5 text-[11px] font-medium text-slate-200/95">
                             <a
                               href={row.leaderLink}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-cyan-200/90 underline-offset-2 hover:underline"
+                              className="qa-ui-drawer-link"
                             >
                               {row.leaderTitleShort}
                             </a>
@@ -301,13 +296,13 @@ export default function CompareIntelligencePanel({
                   </div>
                 </details>
 
-                <details className="group rounded-2xl border border-violet-400/22 bg-gradient-to-b from-violet-500/[0.06] to-black/20 open:border-violet-400/35">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-3 text-[11px] font-semibold text-violet-100/95 transition hover:bg-white/[0.03] sm:px-4 [&::-webkit-details-marker]:hidden">
+                <details className="qa-ui-terminal-panel group">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-3 text-[11px] font-semibold transition sm:px-4 [&::-webkit-details-marker]:hidden">
                     <span className="flex min-w-0 items-center gap-2">
                       <Sparkles className="size-3.5 shrink-0 text-violet-200/80" aria-hidden />
-                      <span className="truncate">Analyst report</span>
+                      <span className="truncate">Full comparison</span>
                       {verdictSource ? (
-                        <span className="shrink-0 rounded-full border border-white/10 bg-black/35 px-2 py-0.5 text-[9px] uppercase tracking-wide text-slate-400">
+                        <span className="qa-ui-compare-source-badge">
                           {verdictSource}
                         </span>
                       ) : null}
@@ -328,7 +323,7 @@ export default function CompareIntelligencePanel({
                             href={verdict.winnerLink}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="font-semibold text-cyan-200 underline-offset-2 hover:underline"
+                            className="qa-ui-drawer-link font-semibold"
                           >
                             {verdict.winnerTitle}
                           </a>
@@ -365,7 +360,7 @@ export default function CompareIntelligencePanel({
                               {verdict.bestForPersonas.map((b) => (
                                 <li
                                   key={`${b.persona}-${b.pick}`}
-                                  className="rounded-lg border border-white/[0.06] bg-black/25 px-2.5 py-2"
+                                  className="qa-ui-terminal-panel rounded-lg px-2.5 py-2"
                                 >
                                   <span className="font-semibold text-slate-200">{b.persona.replace(/_/g, " ")}</span>
                                   <span className="text-slate-600"> · </span>
@@ -379,7 +374,7 @@ export default function CompareIntelligencePanel({
                         {(verdict.shortTermPick || verdict.longTermPick) && (
                           <div className="mt-3 grid gap-2 border-t border-white/[0.06] pt-3 sm:grid-cols-2">
                             {verdict.shortTermPick ? (
-                              <div className="rounded-lg border border-white/[0.06] bg-black/20 px-2.5 py-2">
+                              <div className="qa-ui-terminal-panel rounded-lg px-2.5 py-2">
                                 <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-200/80">
                                   Short-term
                                 </p>
@@ -387,7 +382,7 @@ export default function CompareIntelligencePanel({
                               </div>
                             ) : null}
                             {verdict.longTermPick ? (
-                              <div className="rounded-lg border border-white/[0.06] bg-black/20 px-2.5 py-2">
+                              <div className="qa-ui-terminal-panel rounded-lg px-2.5 py-2">
                                 <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-200/80">
                                   Long-term
                                 </p>

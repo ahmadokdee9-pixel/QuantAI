@@ -1,16 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Sans_Arabic, Plus_Jakarta_Sans } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
+import { IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import QuantShell from "@/components/shell/QuantShell";
 import { appUrl } from "@/lib/stripe/config";
 
-const fontLatin = Plus_Jakarta_Sans({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-quantai",
-  display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
-});
+const fontLatin = GeistSans;
 
 const fontArabic = IBM_Plex_Sans_Arabic({
   subsets: ["arabic"],
@@ -54,8 +50,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#020617",
-  colorScheme: "dark",
+  themeColor: "#f7f8ff",
+  colorScheme: "light",
 };
 
 export default function RootLayout({
@@ -65,8 +61,8 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang="en" className={`qa-os-v2 ${fontLatin.variable} ${fontArabic.variable} scroll-smooth`}>
-        <body className="qa-os-v2 min-h-dvh min-h-[100dvh] overflow-x-hidden bg-[#020617] pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-[env(safe-area-inset-top)] font-sans text-slate-100 antialiased selection:bg-cyan-500/30 selection:text-cyan-50">
+      <html lang="en" className={`qa-ui-v1 qa-ref-os--intel-v1 ${fontLatin.variable} ${fontArabic.variable} scroll-smooth`}>
+        <body className="qa-ui-v1 qa-dna-os qa-iconic-os min-h-dvh min-h-[100dvh] overflow-x-hidden pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-[env(safe-area-inset-top)] font-sans antialiased">
           <QuantShell>
             <div id="qa-main">{children}</div>
           </QuantShell>

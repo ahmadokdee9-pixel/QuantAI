@@ -45,14 +45,14 @@ function decisionSurfaceClass(code: CommerceBrainFinalCode): string {
     case "STRONG_BUY":
     case "BUY_READY":
     case "SAFE_BUY":
-      return "qi-decision-surface--positive";
+      return "qa-ui-verdict-block--positive";
     case "WAIT":
     case "COMPARE_ALTERNATIVES":
-      return "qi-decision-surface--caution";
+      return "qa-ui-verdict-block--caution";
     case "AVOID":
-      return "qi-decision-surface--risk";
+      return "qa-ui-verdict-block--risk";
     default:
-      return "qi-decision-surface--neutral";
+      return "qa-ui-verdict-block--neutral";
   }
 }
 

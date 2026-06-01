@@ -14,6 +14,7 @@ import {
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
 import type { SearchIntelligenceLevel } from "@/lib/subscription/plans";
 import Link from "next/link";
+import { readQualitySignal, searchIntelActionLabel } from "@/lib/ui/decisionLanguage";
 
 type Props = {
   intel: SearchIntelligenceDTO;
@@ -21,23 +22,24 @@ type Props = {
   displayLevel?: SearchIntelligenceLevel;
   /** Mobile / touch: deep tables & persona lane load behind an expand control. */
   performanceMode?: boolean;
+  /** Compact preview after product grid — no deep analyst layers. */
+  compact?: boolean;
 };
 
-function finalTone(kind: SearchIntelligenceDTO["finalRecommendation"]): string {
+function finalToneClass(kind: SearchIntelligenceDTO["finalRecommendation"]): string {
   switch (kind) {
     case "buy_now":
     case "best_trusted_option":
     case "smart_long_term_buy":
-      return "from-emerald-500/12 via-cyan-500/6 to-transparent border-emerald-400/18";
+      return "qa-ui-intel-hero--positive";
     case "wait":
-      return "from-rose-500/10 via-violet-500/6 to-transparent border-rose-400/18";
+      return "qa-ui-intel-hero--wait";
     case "risky_deal":
     case "cheapest_but_risky":
-      return "from-amber-500/10 via-orange-500/5 to-transparent border-amber-400/22";
     case "premium_but_overpriced":
-      return "from-violet-500/10 to-transparent border-violet-400/18";
+      return "qa-ui-intel-hero--caution";
     default:
-      return "from-cyan-500/8 to-transparent border-cyan-400/16";
+      return "";
   }
 }
 
@@ -52,34 +54,21 @@ export default function GlobalIntelligencePanel({
   intel,
   displayLevel = "full",
   performanceMode = false,
+  compact = false,
 }: Props) {
   const reduceMotion = useReducedMotion();
-  const showDeepLayers = displayLevel !== "summary";
-  const [deepOpen, setDeepOpen] = useState(displayLevel === "full");
+  const showDeepLayers = !compact && displayLevel !== "summary";
+  const [deepOpen, setDeepOpen] = useState(displayLevel === "full" && !compact);
   const confPct = Math.max(8, 100 - intel.buyerUncertaintyScore);
-  const radarVals = useMemo(() => {
-    const clarity = Math.max(10, 100 - intel.buyerUncertaintyScore);
-    const stressFlags = [
-      intel.marketIntel.aggressiveFakeDiscount,
-      intel.marketIntel.ratingInflationRisk,
-      intel.marketIntel.marketplaceVarianceRisk,
-      intel.marketIntel.cheapestNotSafest,
-    ].filter(Boolean).length;
-    const equilibrium = Math.max(18, 100 - stressFlags * 16);
-    const band =
-      intel.priceSpread.max > intel.priceSpread.min
-        ? Math.min(
-            100,
-            40 +
-              (1 -
-                (intel.priceSpread.median - intel.priceSpread.min) /
-                  (intel.priceSpread.max - intel.priceSpread.min)) *
-                60
-          )
-        : 72;
-    return [clarity, equilibrium, band] as const;
-  }, [intel]);
-
+  const spreadWide =
+    intel.priceSpread.max > intel.priceSpread.min &&
+    (intel.priceSpread.max - intel.priceSpread.min) / Math.max(intel.priceSpread.min, 1) > 0.35;
+  const readQuality = readQualitySignal({
+    confidencePct: confPct,
+    uncertainty: intel.buyerUncertaintyScore,
+    spreadWide,
+  });
+  const actionLabel = searchIntelActionLabel(intel.finalRecommendation);
   const heatRows = useMemo(() => {
     return intel.trustMatrix.slice(0, 8).map((row) => {
       const trustNorm = row.trust / 100;
@@ -89,36 +78,80 @@ export default function GlobalIntelligencePanel({
     });
   }, [intel.trustMatrix]);
 
+  if (compact) {
+    return (
+      <motion.section
+        initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 36 }}
+        className="qa-ref-decision-summary"
+        aria-label="Decision summary"
+      >
+        <p className="qa-ref-kicker">Decision summary</p>
+        <dl className="qa-ref-decision-summary__grid">
+          <div>
+            <dt>Recommended action</dt>
+            <dd
+              className={`qa-ref-decision-summary__action qa-ref-decision-summary__action--${actionLabel.replace(/\s+/g, "-").toLowerCase()}`}
+            >
+              {actionLabel}
+            </dd>
+          </div>
+          <div>
+            <dt>Confidence</dt>
+            <dd>{confPct}%</dd>
+          </div>
+        </dl>
+        <div className="qa-ref-decision-summary__block">
+          <p className="qa-ref-decision-summary__label">Reason</p>
+          <p className="qa-ref-decision-summary__text">{readQuality.reason}</p>
+        </div>
+        <div className="qa-ref-decision-summary__block">
+          <p className="qa-ref-decision-summary__label">Market observation</p>
+          <p className="qa-ref-decision-summary__text line-clamp-3">{intel.finalBody}</p>
+        </div>
+        <Link href="/pricing" className="qa-ref-decision-summary__link">
+          Unlock deeper buying intelligence
+          <ArrowRight className="size-4" aria-hidden />
+        </Link>
+      </motion.section>
+    );
+  }
+
   return (
     <motion.section
       initial={reduceMotion ? false : { opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 36 }}
-      className="space-y-8 md:space-y-10"
+      className="qa-ui-analyst-shell space-y-8 md:space-y-10"
       aria-label="Global shopping intelligence"
     >
       <div
-        className={`relative overflow-hidden rounded-[1.75rem] border bg-gradient-to-br p-7 sm:p-10 backdrop-blur-[28px] ${finalTone(intel.finalRecommendation)}`}
+        className={`qa-ui-intel-hero qa-ui-intelligence-surface relative overflow-hidden p-7 sm:p-10 ${finalToneClass(intel.finalRecommendation)}`}
       >
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_20%_0%,rgba(34,211,238,0.06),transparent_58%)]" />
         <div className="relative flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
           <div className="min-w-0 flex-1">
+            <p className="qa-ref-decision-badge qa-ref-decision-badge--intel">
+              {String(searchIntelActionLabel(intel.finalRecommendation))}
+            </p>
             <p className="text-[12px] font-medium tracking-tight text-slate-500/90">
               {intel.basketRegionBias === "unknown" || intel.basketRegionBias === "mixed"
                 ? "Mixed seller regions"
                 : `Seller mix leans ${intel.basketRegionBias.toUpperCase()}`}
             </p>
-            <h3 className="cockpit-display mt-4 text-[1.35rem] leading-[1.12] text-white sm:text-[1.65rem]">
+            <h3 className="cockpit-display mt-3 text-[1.35rem] leading-[1.12] text-white sm:text-[1.65rem]">
               {intel.finalHeadline}
             </h3>
-            <p className="cockpit-body mt-3 max-w-3xl text-[15px] leading-relaxed text-slate-400/95">{intel.finalBody}</p>
+            <p className="cockpit-body mt-2 max-w-3xl line-clamp-3 text-[14px] leading-relaxed text-slate-400/95">
+              {intel.finalBody}
+            </p>
             <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-2.5">
               {intel.globalDeal && (
                 <a
                   href={intel.globalDeal.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full border border-emerald-400/18 bg-emerald-500/[0.06] px-3.5 py-2 text-[13px] font-medium text-emerald-50/95 transition hover:bg-emerald-500/10"
+                  className="qa-ui-deal-chip qa-ui-deal-chip--positive"
                 >
                   Global value · {intel.globalDeal.store}
                   <ArrowRight className="size-3.5" aria-hidden />
@@ -129,7 +162,7 @@ export default function GlobalIntelligencePanel({
                   href={intel.localDeal.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full border border-cyan-400/16 bg-cyan-500/[0.05] px-3.5 py-2 text-[13px] font-medium text-cyan-50/95 transition hover:bg-cyan-500/10"
+                  className="qa-ui-deal-chip qa-ui-deal-chip--regional"
                 >
                   <MapPin className="size-3.5" aria-hidden />
                   Regional edge · {intel.localDeal.store}
@@ -140,7 +173,7 @@ export default function GlobalIntelligencePanel({
                   href={intel.cheapestReliable.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.035] px-3.5 py-2 text-[13px] font-medium text-slate-300/95 transition hover:border-white/[0.12]"
+                  className="qa-ui-deal-chip"
                 >
                   Trusted value · {intel.cheapestReliable.store}
                 </a>
@@ -150,7 +183,7 @@ export default function GlobalIntelligencePanel({
                   href={intel.mostTrustedListing.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full border border-violet-400/16 bg-violet-500/[0.05] px-3.5 py-2 text-[13px] font-medium text-violet-100/95 transition hover:bg-violet-500/10"
+                  className="qa-ui-deal-chip qa-ui-deal-chip--trusted"
                 >
                   <Shield className="size-3.5" aria-hidden />
                   Safest seller · {intel.mostTrustedListing.store}
@@ -158,26 +191,21 @@ export default function GlobalIntelligencePanel({
               )}
             </div>
           </div>
-          <div className="w-full shrink-0 lg:w-64">
-            <p className="cockpit-overline text-slate-500/80">Read quality</p>
-            <div className="mt-4 flex justify-center lg:justify-start">
-              <ConfidenceTriRadar
-                values={radarVals}
-                reduceMotion={!!reduceMotion}
-                disableInfinitePulse={!!reduceMotion || performanceMode}
-              />
+          <div className="w-full shrink-0 lg:w-56">
+            <div className="qa-ref-read-quality">
+              <p className="qa-ref-kicker">Read quality</p>
+              <dl className="qa-ref-read-quality__grid">
+                <div>
+                  <dt>Signal</dt>
+                  <dd>{readQuality.signal}</dd>
+                </div>
+                <div>
+                  <dt>Confidence</dt>
+                  <dd>{readQuality.confidence}</dd>
+                </div>
+              </dl>
+              <p className="qa-ref-read-quality__reason">{readQuality.reason}</p>
             </div>
-            <div className="mt-6 h-2 overflow-hidden rounded-full bg-black/40">
-              <motion.div
-                className="h-full rounded-full bg-gradient-to-r from-cyan-500/80 via-slate-400/70 to-emerald-500/75"
-                initial={reduceMotion ? false : { width: 0 }}
-                animate={{ width: `${confPct}%` }}
-                transition={{ duration: reduceMotion ? 0 : 0.85, ease: [0.22, 1, 0.36, 1] }}
-              />
-            </div>
-            <p className="mt-3 text-[12px] leading-relaxed text-slate-500/90">
-              {tierLabel(intel.confidenceTier)} · uncertainty {intel.buyerUncertaintyScore}/100
-            </p>
             {intel.insufficientDataWarnings.length > 0 && (
               <ul className="mt-3 space-y-1.5 text-[11px] text-amber-200/90">
                 {intel.insufficientDataWarnings.slice(0, 4).map((w) => (
@@ -193,20 +221,17 @@ export default function GlobalIntelligencePanel({
       </div>
 
       {!showDeepLayers && (
-        <div className="cockpit-glass-panel relative overflow-hidden p-6 sm:p-8">
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/[0.04] via-transparent to-white/[0.03]" />
+        <div className="qa-ui-glass-panel relative overflow-hidden p-6 sm:p-8">
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-                Intelligence preview
-              </p>
-              <p className="mt-1 max-w-xl text-sm font-medium text-white/90">
+              <p className="qa-ui-type-label">Intelligence preview</p>
+              <p className="qa-ui-drawer-body-text qa-ui-drawer-emphasis mt-1 max-w-xl text-sm font-medium">
               Pro and Power Buyer unlock richer seller graphs, market timing, and full global synthesis on every scan.
               </p>
             </div>
             <Link
               href="/pricing"
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-[0_12px_36px_-14px_rgba(15,23,42,0.55)] transition hover:brightness-[1.02]"
+              className="qa-ui-btn-primary inline-flex shrink-0 px-5 py-2.5 text-sm"
             >
               View intelligence plans
               <ArrowRight className="size-4" aria-hidden />
@@ -241,9 +266,9 @@ export default function GlobalIntelligencePanel({
                   €{intel.priceSpread.max.toFixed(0)}
                 </p>
                 <p className="mt-2 text-[13px] text-slate-500/95">Median €{intel.priceSpread.median.toFixed(0)}</p>
-                <div className="mt-5 flex h-2.5 overflow-hidden rounded-full bg-black/35">
+                <div className="qa-ui-confidence-band mt-5 h-2.5 overflow-hidden rounded-full">
                   <div
-                    className="bg-gradient-to-r from-emerald-400/75 to-amber-400/85"
+                    className="qa-ui-confidence-fill h-full"
                     style={{
                       width: `${
                         intel.priceSpread.max > intel.priceSpread.min
@@ -287,7 +312,7 @@ export default function GlobalIntelligencePanel({
             </div>
           </div>
 
-          <div className="cockpit-glass-panel bg-black/15 p-6 sm:p-8">
+          <div className="qa-ui-glass-panel p-6 sm:p-8">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
               <p className="text-[13px] font-semibold tracking-tight text-white/92">Seller landscape</p>
               <span className="text-[12px] text-slate-500/90">Price fit, trust, marketplace safety</span>
@@ -342,7 +367,7 @@ export default function GlobalIntelligencePanel({
                       href={card.suggestedLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-4 inline-flex items-center gap-1.5 text-[12px] font-medium text-cyan-300/95 hover:underline"
+                      className="qa-ui-drawer-link mt-4 inline-flex items-center gap-1.5 text-[12px] font-medium"
                     >
                       Open · {card.suggestedStore}
                       <ArrowRight className="size-3.5" />
@@ -371,76 +396,6 @@ export default function GlobalIntelligencePanel({
         </>
       )}
     </motion.section>
-  );
-}
-
-function triRadarPoints(values: readonly [number, number, number]): string {
-  const cx = 50;
-  const cy = 52;
-  const maxR = 34;
-  const angles = [-Math.PI / 2, (5 * Math.PI) / 6, Math.PI / 6] as const;
-  return values
-    .map((raw, i) => {
-      const v = Math.max(0, Math.min(100, raw)) / 100;
-      const r = maxR * v;
-      const x = cx + r * Math.cos(angles[i]!);
-      const y = cy + r * Math.sin(angles[i]!);
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(" ");
-}
-
-function ConfidenceTriRadar({
-  values,
-  reduceMotion,
-  disableInfinitePulse,
-}: {
-  values: readonly [number, number, number];
-  reduceMotion: boolean;
-  disableInfinitePulse?: boolean;
-}) {
-  const shell = triRadarPoints([100, 100, 100]);
-  const fill = triRadarPoints(values);
-  const pulseOff = reduceMotion || disableInfinitePulse;
-  return (
-    <div className="relative">
-      <svg width="132" height="124" viewBox="0 0 100 100" role="img" aria-label="Tri-axis confidence radar">
-        <defs>
-          <linearGradient id="qi-radar-fill" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="rgba(34,211,238,0.22)" />
-            <stop offset="50%" stopColor="rgba(148,163,184,0.18)" />
-            <stop offset="100%" stopColor="rgba(52,211,153,0.2)" />
-          </linearGradient>
-        </defs>
-        <polygon points={shell} fill="none" stroke="rgba(148,163,184,0.14)" strokeWidth="0.75" />
-        <motion.polygon
-          points={fill}
-          fill="url(#qi-radar-fill)"
-          stroke="rgba(148,163,184,0.28)"
-          strokeWidth="0.75"
-          initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }}
-          animate={
-            pulseOff
-              ? { opacity: 1, scale: 1 }
-              : { opacity: 1, scale: [1, 1.012, 1] }
-          }
-          transition={
-            pulseOff
-              ? { duration: 0 }
-              : {
-                  opacity: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
-                  scale: { duration: 5.5, repeat: Infinity, ease: "easeInOut" },
-                }
-          }
-          style={{ transformOrigin: "50px 52px" }}
-        />
-      </svg>
-      <div className="pointer-events-none absolute inset-x-0 bottom-1 flex justify-between px-1 text-[8px] font-semibold uppercase tracking-[0.14em] text-slate-500/75">
-        <span className="w-8 text-center leading-tight">Signal</span>
-        <span className="w-8 text-center leading-tight">Calm</span>
-        <span className="w-8 text-center leading-tight">Band</span>
-      </div>
-    </div>
   );
 }
 

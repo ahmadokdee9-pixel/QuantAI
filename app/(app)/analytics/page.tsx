@@ -14,7 +14,7 @@ export default function AnalyticsPage() {
         dashboard for recent activity and the cockpit on the home page for live intelligence.
       </p>
       <div className="mt-10">
-        <TrustRibbon />
+      <TrustRibbon variant="institutional" />
       </div>
       <div className="mt-8 flex flex-wrap gap-3">
         <Link

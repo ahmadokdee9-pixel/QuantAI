@@ -18,7 +18,7 @@ export default function InstitutionalStatePanel({ state, onAction, className = "
       initial={reduceMotion ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: reduceMotion ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
-      className={`qi-sys-panel mx-auto max-w-lg ${className}`}
+      className={`qa-ui-state-panel qi-sys-panel mx-auto max-w-lg ${className}`}
     >
       <span className="qi-sys-panel-rim" aria-hidden />
       <span className="qi-sys-panel-glow" aria-hidden />

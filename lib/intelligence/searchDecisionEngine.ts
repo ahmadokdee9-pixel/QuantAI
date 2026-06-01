@@ -351,7 +351,7 @@ function computeFinal(
   if (uncertainty >= 66) {
     return {
       kind: "compare_alternatives",
-      headline: "Two finalists worth lining up",
+      headline: "Two strong lanes worth comparing",
       body: "Signals disagree a little—pick two trusted rows, match the model, then choose between them.",
     };
   }
@@ -375,7 +375,7 @@ function computeFinal(
   if (intel.overpricedPremiumSignal && trust >= 82) {
     return {
       kind: "premium_but_overpriced",
-      headline: "Premium ask, modest proof",
+      headline: "Price runs high for the trust you get",
       body: "Some high-trust rows still look expensive for the reviews you get—make sure you are paying for specs you will use.",
     };
   }
@@ -422,7 +422,7 @@ function computeFinal(
 
   return {
     kind: "compare_alternatives",
-    headline: "Line up two finalists",
+    headline: "Compare top two lanes",
     body: "No single row wins every axis—compare price, seller, and delivery on a shortlist, then decide.",
   };
 }

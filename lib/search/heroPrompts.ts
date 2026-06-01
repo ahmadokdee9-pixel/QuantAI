@@ -3,24 +3,22 @@ export const HERO_COMMAND_SUGGESTION_CAP = 6 as const;
 /** Max recent-query chips in the main command card (no scroll). */
 export const HERO_COMMAND_HISTORY_CAP = 3 as const;
 
-/** One-tap examples — natural sentences QuantAI already understands. */
+/** One-tap examples — realistic purchase intents QuantAI understands. */
 export const HERO_SEARCH_PROMPTS: readonly string[] = [
-  "Feminine luxury perfume — trusted EU seller",
-  "Minimalist desk setup — monitor + keyboard",
-  "Best phone under €700",
-  "Trusted gaming laptop, not heavy",
-  "MacBook alternative, cheaper",
-  "Safest AirPods seller",
-  "OLED TV — real discount",
-  "Noise-cancelling headphones — value",
+  "Sony WH-1000XM5 — lowest price from a trusted EU seller",
+  "Standing desk under €400 — stable inventory preferred",
+  "MacBook Air M3 — compare Apple vs bol.com vs MediaMarkt",
+  "Dyson V15 — verify the discount is credible, not an outlier",
+  "IKEA PAX wardrobe — best total cost including delivery",
+  "Samsung OLED 55\" — buy-ready if under market average",
 ];
 
-/** Rotating placeholders — calm, minimal. */
+/** Rotating placeholders — natural shopping language. */
 export const HERO_INPUT_PLACEHOLDERS: readonly string[] = [
-  "What are you buying — budget, trust, region…",
-  "Quiet luxury watch under €400…",
-  "Safest seller for AirPods Pro…",
-  "Gaming laptop under €1200…",
-  "Compare OLED TVs…",
-  "Gift for a student — durable…",
+  "What are you looking to buy today?",
+  "AirPods Pro — safest seller under €220…",
+  "Ergonomic office chair — trusted retailer only…",
+  "Gaming monitor 1440p — real discount, not bait pricing…",
+  "Dyson Airwrap — compare trusted EU sources…",
+  "iPhone 16 — buy-ready verdict across retailers…",
 ];

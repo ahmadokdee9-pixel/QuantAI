@@ -310,7 +310,7 @@ function buildSmartSignals(
         id: `hidden-${p.link.slice(-24)}`,
         kind: "hidden_value",
         severity: "info",
-        title: "Hidden value posture",
+        title: "Strong value signal",
         body: `${shortTitle(p.title, 44)} prices below peer band while keeping composite respectable—verify warranty and seller identity.`,
         productLink: p.link,
       });

@@ -20,6 +20,15 @@ type Props = {
   className?: string;
 };
 
+const LAYER_STATUS: Record<
+  QuantPlanTier,
+  { label: string; tone: "essential" | "recommended" | "executive" }
+> = {
+  free: { label: "Entry Layer", tone: "essential" },
+  pro: { label: "Recommended Layer", tone: "recommended" },
+  premium: { label: "Executive Layer", tone: "executive" },
+};
+
 async function startCheckout(plan: "pro" | "premium"): Promise<void> {
   const res = await fetch("/api/stripe/checkout", {
     method: "POST",
@@ -51,50 +60,57 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
   const resolvedTier: QuantPlanTier | null = currentTier ?? (isSignedIn ? "free" : null);
 
   return (
-    <div className={`qi-access-architecture ${className}`}>
+    <div className={`qa-ref-access-grid ${className}`.trim()}>
       {LAYER_ORDER.map((id, index) => {
         const plan = QUANT_PLANS[id];
         const access = PLAN_ACCESS_PRESENTATION[id];
+        const status = LAYER_STATUS[id];
         const isCurrent = resolvedTier !== null && resolvedTier === id;
-        const isEntry = id === "free";
         const isIntelligence = id === "pro";
-        const isPrivate = id === "premium";
 
         return (
           <article
             key={id}
-            className={`qi-access-layer qi-access-layer--${id} ${
-              isEntry ? "qi-access-layer--entry" : ""
-            } ${isIntelligence ? "qi-access-layer--featured" : ""} ${
-              isPrivate ? "qi-access-layer--institutional" : ""
-            } ${isCurrent ? "qi-access-layer--active" : ""}`}
+            className={`qa-ref-tier qa-ref-tier--${id} ${
+              isIntelligence ? "qa-ref-tier--featured" : ""
+            } ${isCurrent ? "qa-ref-tier--active" : ""}`}
             style={{ "--qi-access-index": index } as CSSProperties}
           >
+            <div className="qa-ref-tier__layer-accent" aria-hidden />
             <div className="qi-access-layer-glow" aria-hidden />
             <div className="qi-access-layer-rim" aria-hidden />
-            {isIntelligence ? <div className="qi-access-featured-pedestal" aria-hidden /> : null}
 
-            <div className="qi-access-layer-inner">
+            <div className="qa-ref-tier__inner">
               <header className="qi-access-header">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="qi-access-layer-num">Layer {access.layerLabel}</p>
-                    <h3 className="qi-access-name mt-2">{access.accessName}</h3>
-                    <p className="qi-access-clearance mt-2">{access.clearance}</p>
-                  </div>
-                  {isEntry ? (
-                    <span className="qi-access-badge qi-access-badge--entry">Entry clearance</span>
-                  ) : isIntelligence ? (
-                    <span className="qi-access-badge qi-access-badge--analyst">Analyst clearance</span>
-                  ) : isPrivate ? (
-                    <span className="qi-access-private-seal">
-                      <Lock className="size-3 shrink-0 opacity-80" strokeWidth={1.5} aria-hidden />
-                      Private
-                    </span>
-                  ) : null}
+                <div className="qa-ref-tier__head-row">
+                  <p className="qi-access-layer-num">Intelligence layer {access.layerLabel}</p>
+                  <span className={`qa-ref-tier__status qa-ref-tier__status--${status.tone}`}>
+                    {id === "premium" ? (
+                      <>
+                        <Lock className="size-3 shrink-0 opacity-75" strokeWidth={1.5} aria-hidden />
+                        {status.label}
+                      </>
+                    ) : (
+                      status.label
+                    )}
+                  </span>
                 </div>
-                <p className="qi-access-invitation mt-4 hidden sm:block">{access.invitation}</p>
+                <h3 className="qi-access-name">{access.accessName}</h3>
+                <p className="qa-ref-tier__outcome">{access.clearance}</p>
               </header>
+
+              <div className="qi-access-price-block">
+                <p className="qi-access-price-label">Layer access</p>
+                <p className="qi-access-price">
+                  {plan.monthlyPriceEur == null ? "—" : `€${plan.monthlyPriceEur}`}
+                  {plan.monthlyPriceEur != null && (
+                    <span className="qi-access-price-unit"> / month</span>
+                  )}
+                </p>
+                <p className="qi-access-footnote">
+                  {plan.searchesPerDay} intelligence reads/day · {PLAN_SYNTHESIS_LABEL[id]}
+                </p>
+              </div>
 
               <ul className="qi-access-capabilities">
                 {plan.highlights.map((h) => (
@@ -103,19 +119,6 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
               </ul>
 
               <footer className="qi-access-footer">
-                <div className="qi-access-price-block">
-                  <p className="qi-access-price-label">Clearance</p>
-                  <p className="qi-access-price">
-                    {plan.monthlyPriceEur == null ? "—" : `€${plan.monthlyPriceEur}`}
-                    {plan.monthlyPriceEur != null && (
-                      <span className="qi-access-price-unit"> / month</span>
-                    )}
-                  </p>
-                  <p className="qi-access-footnote">
-                    {plan.searchesPerDay} reads/day throughput · {PLAN_SYNTHESIS_LABEL[id]}
-                  </p>
-                </div>
-
                 <div className="qi-access-cta-wrap">
                   {id === "free" &&
                     (isSignedIn && isCurrent ? (
@@ -124,19 +127,17 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
                         onClick={() =>
                           trackEvent(QuantAnalyticsEvents.PRICING_CTA_DASHBOARD, { plan: "free" })
                         }
-                        className="qi-access-cta qi-access-cta--ghost flex w-full items-center justify-center gap-2 py-3.5"
+                        className="qi-access-cta qi-access-cta--ghost flex w-full items-center justify-center gap-2"
                       >
                         Active workspace
                         <ArrowRight className="size-4 opacity-50" aria-hidden />
                       </Link>
                     ) : isSignedIn ? (
-                      <span className="flex w-full items-center justify-center py-3.5 text-sm text-slate-600">
-                        Current access
-                      </span>
+                      <span className="qa-ref-tier__current-label">Current access</span>
                     ) : (
                       <SignUpButton mode="modal" forceRedirectUrl="/dashboard">
-                        <button type="button" className="qi-access-cta qi-access-cta--ghost w-full py-3.5">
-                          Enter access layer
+                        <button type="button" className="qi-access-cta qi-access-cta--ghost w-full">
+                          Begin Layer 01
                         </button>
                       </SignUpButton>
                     ))}
@@ -144,7 +145,7 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
                     (isCurrent ? (
                       <Link
                         href="/billing?plan=pro&focus=manage"
-                        className="qi-access-cta flex w-full items-center justify-center gap-2 py-3.5"
+                        className="qi-access-cta flex w-full items-center justify-center gap-2"
                       >
                         Manage clearance
                         <ArrowRight className="size-4 opacity-50" aria-hidden />
@@ -162,21 +163,21 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
                             })
                             .finally(() => setCheckoutPlan(null));
                         }}
-                        className="qi-access-cta flex w-full items-center justify-center gap-2 py-3.5 disabled:opacity-60"
+                        className="qi-access-cta flex w-full items-center justify-center gap-2 disabled:opacity-60"
                       >
                         {checkoutPlan === "pro" ? (
                           <Loader2 className="size-4 animate-spin" aria-hidden />
                         ) : (
                           <>
-                            Request intelligence clearance
+                            Activate Layer 02
                             <ArrowRight className="size-4 opacity-50" aria-hidden />
                           </>
                         )}
                       </button>
                     ) : (
                       <SignInButton mode="modal" forceRedirectUrl="/pricing">
-                        <button type="button" className="qi-access-cta w-full py-3.5">
-                          Sign in to request
+                        <button type="button" className="qi-access-cta w-full">
+                          Activate Layer 02
                         </button>
                       </SignInButton>
                     ))}
@@ -184,7 +185,7 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
                     (isCurrent ? (
                       <Link
                         href="/billing?plan=premium&focus=manage"
-                        className="qi-access-cta qi-access-cta--private flex w-full items-center justify-center gap-2 py-3.5"
+                        className="qi-access-cta qi-access-cta--private flex w-full items-center justify-center gap-2"
                       >
                         Manage private clearance
                       </Link>
@@ -201,21 +202,18 @@ export default function PricingCards({ currentTier = null, className = "" }: Pro
                             })
                             .finally(() => setCheckoutPlan(null));
                         }}
-                        className="qi-access-cta qi-access-cta--private flex w-full items-center justify-center gap-2 py-3.5 disabled:opacity-60"
+                        className="qi-access-cta qi-access-cta--private flex w-full items-center justify-center gap-2 disabled:opacity-60"
                       >
                         {checkoutPlan === "premium" ? (
                           <Loader2 className="size-4 animate-spin" aria-hidden />
                         ) : (
-                          "Request private clearance"
+                          "Request Layer 03"
                         )}
                       </button>
                     ) : (
                       <SignInButton mode="modal" forceRedirectUrl="/pricing">
-                        <button
-                          type="button"
-                          className="qi-access-cta qi-access-cta--private w-full py-3.5"
-                        >
-                          Sign in to request
+                        <button type="button" className="qi-access-cta qi-access-cta--private w-full">
+                          Request Layer 03
                         </button>
                       </SignInButton>
                     ))}

@@ -65,7 +65,7 @@ export default function PricingPage() {
       <AmbientBackdrop />
       <div className="relative z-10">
         <LandingNav />
-        <section className="qi-access-page mx-auto max-w-6xl px-4 sm:px-6 py-16 sm:py-24">
+        <section className="qa-ui-section qi-access-page">
           <p className="qi-silent-overline text-center">Private access architecture</p>
           <h1 className="qi-editorial-display mt-6 text-center text-3xl text-white sm:text-4xl lg:text-[2.75rem]">
             Clearance into deeper intelligence

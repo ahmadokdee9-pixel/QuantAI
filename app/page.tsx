@@ -4,22 +4,23 @@ import { startTransition, useCallback, useEffect, useMemo, useRef, useState } fr
 import Image from "next/image";
 import Link from "next/link";
 import { SignInButton, useUser } from "@clerk/nextjs";
-import AmbientBackdrop from "../components/cockpit/AmbientBackdrop";
 import LandingNav from "../components/landing/LandingNav";
-import MarketingSections from "../components/landing/MarketingSections";
 import PricingCards from "../components/subscription/PricingCards";
-import TrustRibbon from "../components/trust/TrustRibbon";
-import QuantAITransparencySection from "../components/trust/QuantAITransparencySection";
 import DeferredBelowFold from "../components/home/DeferredBelowFold";
+import HeroAmbientField from "../components/home/HeroAmbientField";
+import HeroIntelligenceCanvas from "../components/home/HeroIntelligenceCanvas";
+import CommandSidebar from "../components/layout/CommandSidebar";
+import IntelligenceMetricCards from "../components/home/IntelligenceMetricCards";
+import GlobalCommerceIntelligenceNetwork from "../components/home/GlobalCommerceIntelligenceNetwork";
+import RetailerMarquee from "../components/home/RetailerMarquee";
 import SearchStreamRibbon from "../components/loading/SearchStreamRibbon";
 import { useCockpit } from "../components/cockpit/cockpitContext";
 import { useCopilotSession } from "../components/copilot/CopilotContext";
 import { calculateAIScore } from "./api/search/lib/aiScoring";
 import ProductResultsSurface from "../components/search/ProductResultsSurface";
 import HeroSearchCommand from "../components/search/HeroSearchCommand";
-import HeroIntelMicroStrip from "../components/search/HeroIntelMicroStrip";
 import EnterpriseFooter from "../components/layout/EnterpriseFooter";
-import SearchSignalCapsule from "../components/system/SearchSignalCapsule";
+import TrustRibbon from "@/components/trust/TrustRibbon";
 import { INSTITUTIONAL, resolveInstitutionalState } from "../lib/ui/systemStateLanguage";
 import {
   applyResultsFilters,
@@ -39,6 +40,7 @@ import {
   dedupeSearchTray,
   sortByCompositeRankEnhanced,
 } from "@/lib/intelligence/searchRankEnhance";
+import { filterRecommendationTray } from "@/lib/ui/listingOutlierFilter";
 import {
   getStoreTrustScore,
   sortByBestAIScore,
@@ -195,20 +197,26 @@ export default function Home() {
   const sortedProductsMemo = useMemo(() => {
     const filteredForSort = dedupeSearchTray(applyResultsFilters(products, filters));
     const sortedList = [...filteredForSort];
+    let ranked: QuantProduct[];
     switch (sort) {
       case "ai":
-        return sortByBestAIScore(sortedList);
+        ranked = sortByBestAIScore(sortedList);
+        break;
       case "cheap":
         sortedList.sort((a, b) => a.price - b.price);
-        return sortedList;
+        ranked = sortedList;
+        break;
       case "trust":
-        return sortByTrust(sortedList);
+        ranked = sortByTrust(sortedList);
+        break;
       case "deals":
-        return sortByVerifiedDealRank(sortedList, query);
+        ranked = sortByVerifiedDealRank(sortedList, query);
+        break;
       case "value":
       default:
-        return sortByCompositeRankEnhanced(sortedList, query);
+        ranked = sortByCompositeRankEnhanced(sortedList, query);
     }
+    return filterRecommendationTray(ranked);
   }, [products, filters, sort, query]);
 
   useEffect(() => {
@@ -317,12 +325,25 @@ export default function Home() {
       const commerceMemory = readCommerceSessionMemoryFromBrowser();
       const res = await fetch("/api/search", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "X-Requested-With": "quantai-web",
+        },
         credentials: "same-origin",
         signal: ac.signal,
         body: JSON.stringify({ query: q, commerceMemory }),
       });
       const parsed = await readApiJson(res);
+      if (parsed.notJson) {
+        console.error("[search] Non-JSON response", {
+          status: parsed.status,
+          contentType: parsed.contentType,
+          redirected: parsed.redirected,
+          responseUrl: parsed.responseUrl,
+          snippet: parsed.responseTextSnippet,
+        });
+      }
       const { envelope: root, payload: searchData, products: trayProducts } =
         parseSearchResponse<QuantProduct>(parsed);
 
@@ -578,107 +599,118 @@ export default function Home() {
     }
   }
 
-  const glassCard = "cockpit-glass-card";
-
   return (
-    <main className="qa-page-canvas qi-os-atmosphere qi-silent-luxury relative min-h-screen overflow-x-hidden bg-[#02040a] text-slate-100">
-      <AmbientBackdrop lite={mobilePerf} />
+    <main className="qa-ref-os qa-ref-os--phase7 qa-ref-os--decision-system qa-ref-os--intel-authority qa-ref-os--intel-v1 relative min-h-screen overflow-x-hidden">
+      <CommandSidebar />
 
-      <div className="relative z-10">
+      <div className="qa-ref-shell">
         <LandingNav />
 
-        {/* Hero */}
-        <section
-          className={`qi-hero-flagship relative px-4 sm:px-6 ${
-            products.length > 0 ? "pt-14 pb-16 sm:pt-16 sm:pb-20" : "pt-16 pb-28 sm:pt-24 sm:pb-36"
-          }`}
-        >
-          <div className="qi-hero-aura" aria-hidden />
-          <div className="mx-auto max-w-4xl text-center">
-            <p className="qi-hero-manifest motion-safe:animate-[fadeIn_0.5s_ease-out]">
-              QuantAI · Commerce intelligence
-            </p>
+        <div className="qa-ref-workspace">
+        {/* Hero + Command */}
+        <section className="qa-ref-hero qa-ref-hero--canvas">
+          <HeroAmbientField />
 
-            <h1 className="qi-hero-headline mt-10 motion-safe:animate-[fadeIn_0.6s_ease-out]">
-              <span className="block">Read the market</span>
-              <span className="qi-hero-headline-accent block">before you buy.</span>
-            </h1>
+          <div className="qa-ref-hero__canvas">
+            <div className="qa-ref-hero__surface">
+              <div className="qa-ref-hero__surface-ambient" aria-hidden />
+              <div className="qa-ref-hero__surface-scan" aria-hidden />
+              <div className="qa-ref-hero__surface-depth" aria-hidden />
 
-            <p className="qi-hero-lead mx-auto mt-6 max-w-xl motion-safe:animate-[fadeIn_0.65s_ease-out]">
-              Consequential purchases deserve one decisive read — context, not noise.
-            </p>
-
-            <HeroIntelMicroStrip className="max-sm:hidden" />
-
-            <div className="qi-hero-command-stage mx-auto mt-8 max-w-[54rem] sm:mt-10 motion-safe:animate-[fadeIn_0.7s_ease-out]">
-                <HeroSearchCommand
-                  query={query}
-                  onQueryChange={setQuery}
-                  onSubmit={() => void search()}
-                  onSubmitPreset={(preset) => void search(preset)}
-                  loading={loading}
-                  submitPulse={submitPulse}
-                  placeholder={HERO_INPUT_PLACEHOLDERS[heroPlaceholderIdx] ?? HERO_INPUT_PLACEHOLDERS[0]}
-                  hintOptions={heroHintOptions}
-                  registerInput={registerPrimarySearch}
-                  mobilePerf={mobilePerf}
-                />
-
-                {searchError &&
-                !loading &&
-                products.length === 0 &&
-                resolveInstitutionalState(searchError) ? (
-                  <SearchSignalCapsule
-                    state={resolveInstitutionalState(searchError)!}
-                    onAction={() => void search()}
-                  />
-                ) : null}
-
-                {loading ? (
-                  <div className="relative z-[1] mt-6 max-w-2xl text-left">
-                    <SearchStreamRibbon active={loading} />
-                  </div>
-                ) : null}
-            </div>
-
-
-            {!isSignedIn && (
-              <div className="mx-auto mt-8 flex max-w-md flex-col items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-5 py-4 backdrop-blur-md sm:flex-row sm:justify-center">
-                <p className="qi-silent-whisper text-center">
-                  Guest search available with limits — sign in for higher throughput, save, and sync.
+              <header className="qa-ref-hero__row qa-ref-hero__row--exec">
+                <h1 className="qa-ref-hero__exec-title">Institutional Commerce Decision Engine</h1>
+                <p className="qa-ref-hero__exec-lead">
+                  QuantAI transforms fragmented retail signals into institutional-grade buying intelligence.
+                  Analyze trust, pricing, inventory, and market signals before every purchase decision.
                 </p>
-                <SignInButton mode="modal" forceRedirectUrl="/dashboard">
-                  <button
-                    type="button"
-                    className="shrink-0 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
-                  >
-                    Sign in
-                  </button>
-                </SignInButton>
+              </header>
+
+              <div className="qa-ref-hero__row qa-ref-hero__row--metrics">
+                <IntelligenceMetricCards variant="nodes" />
               </div>
-            )}
+
+              <div className="qa-ref-hero__vein" aria-hidden>
+                <span className="qa-ref-hero__vein-line" />
+                <span className="qa-ref-hero__vein-node" />
+              </div>
+
+              <div className="qa-ref-hero__row qa-ref-hero__row--search">
+                <div className="qa-ref-hero__search-panel">
+                  <div className="qa-ref-hero__console-head">
+                    <span className="qa-ref-hero__console-pulse" aria-hidden />
+                    <p className="qa-ref-hero__console-kicker">Search intelligence console</p>
+                  </div>
+                  <HeroSearchCommand
+                    query={query}
+                    onQueryChange={setQuery}
+                    onSubmit={() => void search()}
+                    onSubmitPreset={(preset) => void search(preset)}
+                    loading={loading}
+                    submitPulse={submitPulse}
+                    placeholder={HERO_INPUT_PLACEHOLDERS[heroPlaceholderIdx] ?? HERO_INPUT_PLACEHOLDERS[0]}
+                    hintOptions={heroHintOptions}
+                    registerInput={registerPrimarySearch}
+                    mobilePerf={mobilePerf}
+                  />
+
+                  {loading ? (
+                    <div className="qa-ref-processing qa-ref-hero__search-processing">
+                      <SearchStreamRibbon active={loading} searchQuery={query} />
+                    </div>
+                  ) : null}
+
+                </div>
+
+                {!isSignedIn && (
+                  <div className="qa-ref-guest-banner qa-ref-hero__guest">
+                    <p>Guest mode — sign in for full intelligence synthesis and institutional decision memory.</p>
+                    <SignInButton mode="modal" forceRedirectUrl="/dashboard">
+                      <button type="button" className="qa-ref-btn qa-ref-btn--ghost">
+                        Sign in
+                      </button>
+                    </SignInButton>
+                  </div>
+                )}
+              </div>
+
+              <div className="qa-ref-hero__vein" aria-hidden>
+                <span className="qa-ref-hero__vein-line" />
+                <span className="qa-ref-hero__vein-node" />
+              </div>
+
+              <div className="qa-ref-hero__row qa-ref-hero__row--map">
+                <HeroIntelligenceCanvas />
+              </div>
+            </div>
           </div>
         </section>
 
+        <div className="qa-ref-flow-line qa-ref-flow-line--down" aria-hidden />
+
+        {products.length === 0 && !loading ? (
+          <section className="qa-ref-section qa-ref-section--tight">
+            <RetailerMarquee />
+          </section>
+        ) : null}
+
+        {(loading ||
+          products.length > 0 ||
+          (searchError != null && !loading)) && (
+          <div className="qa-ref-flow-line qa-ref-flow-line--down qa-ref-flow-line--results" aria-hidden />
+        )}
+
         {saved.length > 0 && (
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 pb-6 space-y-6">
-            <section className={`${glassCard} p-6 sm:p-8`}>
-                <div className="flex items-center justify-between gap-4 mb-6">
-                  <h2 className="text-lg font-semibold tracking-tight text-white/95">
-                    Saved products
-                  </h2>
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
-                      Private intelligence shelf
-                  </span>
+          <section className="qa-ref-section">
+            <div className="qa-ref-card">
+                <div className="qa-ref-card__header">
+                  <h2 className="qa-ref-h3">Saved products</h2>
+                  <span className="qa-ref-kicker">Private shelf</span>
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="qa-dna-grid qa-dna-grid--2">
                   {saved.map((item) => (
-                    <div
-                      key={item.link}
-                      className="group flex flex-col rounded-2xl border border-white/[0.06] bg-black/25 p-4 transition hover:border-cyan-400/20 hover:shadow-[0_20px_50px_-28px_rgba(34,211,238,0.12)] sm:flex-row sm:items-center sm:gap-4"
-                    >
-                      {item.image && (
-                        <div className="relative mx-auto size-20 shrink-0 overflow-hidden rounded-xl bg-white sm:mx-0">
+                    <article key={item.link} className="qa-dna-surface qa-dna-surface--tile group sm:flex sm:items-center sm:gap-4">
+                      {item.image ? (
+                        <div className="qa-dna-media-thumb relative mx-auto size-20 shrink-0 sm:mx-0">
                           <Image
                             src={item.image}
                             alt=""
@@ -688,36 +720,29 @@ export default function Home() {
                             unoptimized
                           />
                         </div>
-                      )}
+                      ) : null}
                       <div className="min-w-0 flex-1 text-center sm:text-left">
-                        <p className="font-medium text-white/90 line-clamp-2">{item.title}</p>
-                        <p className="mt-1 text-lg font-semibold text-emerald-300/90">
-                          â‚¬{item.price}
-                        </p>
-                        <p className="text-xs text-slate-500">{item.store}</p>
+                        <p className="qa-dna-tile-title line-clamp-2">{item.title}</p>
+                        <p className="qa-dna-tile-price mt-1">€{item.price}</p>
+                        <p className="qa-dna-meta">{item.store}</p>
                       </div>
-                      <div className="mt-3 flex flex-wrap justify-center gap-2 sm:mt-0 sm:flex-col sm:justify-end">
-                        <a
-                          href={item.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-900 transition hover:bg-slate-100"
-                        >
+                      <div className="qa-dna-tile-actions">
+                        <a href={item.link} target="_blank" rel="noopener noreferrer" className="qa-ui-btn-secondary">
                           Inspect
                         </a>
                         <button
                           type="button"
                           onClick={() => void removeSavedProduct(item.link)}
-                          className="min-h-11 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium text-rose-200/90 transition hover:bg-rose-500/10"
+                          className="qa-ui-btn-ghost"
                         >
                           Remove
                         </button>
                       </div>
-                    </div>
+                    </article>
                   ))}
                 </div>
-              </section>
-          </div>
+            </div>
+          </section>
         )}
 
         {(loading ||
@@ -753,41 +778,48 @@ export default function Home() {
         )}
 
         <DeferredBelowFold>
-          <MarketingSections />
+          <div className="qa-ref-flow-line qa-ref-flow-line--down" aria-hidden />
 
-          {/* Pricing */}
+          <section className="qa-ref-section qa-ref-section--gcin qa-ref-flow-node">
+            <GlobalCommerceIntelligenceNetwork />
+          </section>
+
+          <div className="qa-ref-flow-line qa-ref-flow-line--down" aria-hidden />
+
           <section
             id="pricing"
-            className="qi-access-vault-stage mx-auto max-w-6xl px-4 sm:px-6 py-24 sm:py-32 scroll-mt-24 border-t border-white/[0.05]"
+            className="qa-ref-section qa-ref-section--pricing scroll-mt-24 qa-ref-flow-node"
           >
-          <div className="text-center max-w-xl mx-auto mb-14 sm:mb-16">
-            <p className="qi-silent-overline mb-4">Private access architecture</p>
-            <h2 className="qi-editorial-display text-3xl sm:text-4xl text-white/95">
-              Intelligence layers, not subscriptions
-            </h2>
-            <p className="qi-silent-whisper mt-4 max-w-md mx-auto">
-              Deeper synthesis clearance for serious buyers.
-            </p>
-            <Link
-              href="/pricing"
-              className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-cyan-300 hover:text-cyan-200"
-            >
-              Open full pricing page
-              <ArrowRight className="size-4" aria-hidden />
-            </Link>
-          </div>
+            <div className="qa-ref-section-intro qa-ref-section-intro--intel-layers">
+              <p className="qa-ref-kicker">Intelligence layers</p>
+              <h2 className="qa-ref-h2">Commerce Intelligence Access Layers</h2>
+              <p className="qa-ref-lead qa-ref-lead--narrow">
+                Three progressively deeper intelligence layers designed for trust validation, market analysis,
+                and executive-grade purchase decisions.
+              </p>
+              <p className="qa-ref-intel-layers__capabilities">
+                <span>Trust Analysis</span>
+                <span>Price Validation</span>
+                <span>Seller Intelligence</span>
+                <span>Market Context</span>
+                <span>Decision Confidence</span>
+              </p>
+              <Link href="/pricing" className="qa-ref-link mt-4 inline-flex items-center gap-2">
+                Compare all plans
+                <ArrowRight className="size-4" aria-hidden />
+              </Link>
+            </div>
 
-          <PricingCards currentTier={subscriptionTier} className="mt-2" />
+            <PricingCards currentTier={subscriptionTier} className="mt-6" />
+          </section>
 
-        </section>
-
-        <div className="mx-auto w-full min-w-0 max-w-6xl px-4 sm:px-6 pb-8">
-          <QuantAITransparencySection />
-          <TrustRibbon />
-        </div>
+          <section className="qa-ref-section qa-ref-section--intel-notice" id="quantai-trust">
+            <TrustRibbon variant="institutional" />
+          </section>
         </DeferredBelowFold>
 
         <EnterpriseFooter />
+        </div>
       </div>
     </main>
   );

@@ -8,8 +8,6 @@ import {
   readCommerceSessionMemoryFromBrowser,
   writeCommerceSessionMemoryToBrowser,
 } from "@/lib/intelligence/commerceSessionStorage";
-import SearchSignalCapsule from "@/components/system/SearchSignalCapsule";
-import { resolveInstitutionalState } from "@/lib/ui/systemStateLanguage";
 
 type ShoppingHit = {
   title: string;
@@ -38,6 +36,8 @@ export default function SearchBox() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
+          "X-Requested-With": "quantai-web",
         },
         credentials: "same-origin",
         body: JSON.stringify({
@@ -54,6 +54,15 @@ export default function SearchBox() {
         retryAfter?: number;
       };
       const parsed = await readApiJson<SearchEnvelope>(res);
+      if (parsed.notJson) {
+        console.error("[search-box] Non-JSON response", {
+          status: parsed.status,
+          contentType: parsed.contentType,
+          redirected: parsed.redirected,
+          responseUrl: parsed.responseUrl,
+          snippet: parsed.responseTextSnippet,
+        });
+      }
       const envelope = parsed.data;
       const searchData =
         envelope && typeof envelope === "object" && envelope.data && typeof envelope.data === "object"
@@ -125,12 +134,8 @@ export default function SearchBox() {
         </button>
       </div>
 
-      {error && resolveInstitutionalState(error) ? (
-        <SearchSignalCapsule
-          state={resolveInstitutionalState(error)!}
-          onAction={handleSearch}
-          className="!mx-0 !mt-3 !max-w-none rounded-xl"
-        />
+      {error ? (
+        <p className="rounded-xl border border-amber-300/45 bg-amber-50 px-3 py-2 text-xs text-amber-900">{error}</p>
       ) : null}
 
       <div className="space-y-2">

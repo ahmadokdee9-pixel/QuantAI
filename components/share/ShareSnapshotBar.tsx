@@ -64,12 +64,12 @@ export default function ShareSnapshotBar({
   return (
     <>
       <div
-        className={`flex flex-wrap items-center gap-1.5 rounded-xl border border-white/[0.06] bg-black/20 px-2.5 py-1.5 backdrop-blur-md ${className}`}
+        className={`qa-ui-share-bar ${className}`}
       >
         <button
           type="button"
           onClick={() => void onCopy()}
-          className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-[11px] font-semibold text-slate-200 transition hover:border-cyan-400/25 hover:bg-cyan-500/10"
+          className="qa-ui-btn-ghost inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px]"
         >
           {flash === "copy" ? <Check className="size-3.5 text-emerald-300" aria-hidden /> : <Copy className="size-3.5" />}
           Copy summary
@@ -77,7 +77,7 @@ export default function ShareSnapshotBar({
         <button
           type="button"
           onClick={() => void onShare()}
-          className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/25 bg-cyan-500/10 px-3 py-1.5 text-[11px] font-semibold text-cyan-100 transition hover:bg-cyan-500/15"
+          className="qa-ui-btn-secondary inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px]"
         >
           {flash === "share" ? <Check className="size-3.5 text-emerald-300" aria-hidden /> : <Share2 className="size-3.5" />}
           Share snapshot
@@ -86,7 +86,7 @@ export default function ShareSnapshotBar({
           <button
             type="button"
             onClick={() => void onCopyIntel()}
-            className="inline-flex items-center gap-1.5 rounded-full border border-violet-400/22 bg-violet-500/10 px-3 py-1.5 text-[11px] font-semibold text-violet-100 transition hover:bg-violet-500/15"
+            className="qa-ui-btn-ghost inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px]"
           >
             <Copy className="size-3.5" aria-hidden />
             Copy AI briefing

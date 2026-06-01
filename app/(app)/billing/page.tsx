@@ -175,7 +175,7 @@ function BillingInner() {
           </Link>
         </div>
         <div className="mt-8">
-          <TrustRibbon />
+          <TrustRibbon variant="institutional" />
         </div>
       </section>
     </div>

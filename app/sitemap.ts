@@ -3,6 +3,7 @@ import { appUrl } from "@/lib/stripe/config";
 
 const evergreenRoutes = [
   "",
+  "/how-it-works",
   "/pricing",
   "/commerce-intelligence",
   "/commerce-intelligence/nl/electronics",

@@ -3,10 +3,10 @@
 import { motion, useReducedMotion } from "framer-motion";
 
 const PIPELINE = [
-  { title: "Market scan", body: "Reads retailer ecosystems in real time." },
-  { title: "Trust layer", body: "Seller trust weighted before price rank." },
-  { title: "Price intelligence", body: "Discount quality over fake markdowns." },
-  { title: "Decision engine", body: "Evidence becomes BUY · WAIT · AVOID." },
+  { title: "Query", body: "Intent parsed before retailer noise enters the tray." },
+  { title: "Synthesis", body: "Cross-market posture aligned to your purchase thesis." },
+  { title: "Signal", body: "Price integrity, seller trust, and volatility aligned." },
+  { title: "Decision", body: "Evidence before commitment — buy, wait, or avoid." },
 ] as const;
 
 type Props = { className?: string };
@@ -16,27 +16,20 @@ export default function HeroIntelMicroStrip({ className = "" }: Props) {
 
   return (
     <motion.div
-      className={`qi-micro-intel-strip qi-micro-intel-pipeline ${className}`.trim()}
+      className={`qa-ui-hero-pipeline ${className}`.trim()}
       initial={reduceMotion ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: reduceMotion ? 0 : 0.55, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
-      aria-label="Market intelligence pipeline"
+      aria-label="Intelligence pipeline"
     >
-      <span className="qi-micro-intel-pipeline-rail" aria-hidden />
       {PIPELINE.map((item, i) => (
-        <motion.div
-          key={item.title}
-          className="qi-micro-intel-cell"
-          whileHover={reduceMotion ? undefined : { y: -1, transition: { duration: 0.32 } }}
-        >
-          <span className="qi-micro-intel-cell-glow" aria-hidden />
-          <span className="qi-micro-intel-cell-illumination" aria-hidden />
-          <span className="qi-micro-intel-index" aria-hidden>
+        <article key={item.title} className="qa-ui-hero-pipeline-cell">
+          <span className="qa-ui-hero-pipeline-index" aria-hidden>
             {String(i + 1).padStart(2, "0")}
           </span>
-          <p className="qi-micro-intel-title">{item.title}</p>
-          <p className="qi-micro-intel-body">{item.body}</p>
-        </motion.div>
+          <h2 className="qa-ui-hero-pipeline-title">{item.title}</h2>
+          <p className="qa-ui-hero-pipeline-body">{item.body}</p>
+        </article>
       ))}
     </motion.div>
   );

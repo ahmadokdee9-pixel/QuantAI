@@ -130,7 +130,7 @@ export default function HeroSearchCommand({
 
   return (
     <motion.div
-      className="qi-command-root"
+      className="qa-ref-neural-root"
       initial={lite ? false : { opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: lite ? 0 : 0.65, ease: [0.22, 1, 0.36, 1] }}
@@ -152,7 +152,7 @@ export default function HeroSearchCommand({
       <div className="qi-command-floor" aria-hidden />
 
       <motion.div
-        className={`qi-command-deck ${active ? "qi-command-deck--active" : ""} ${submitPulse ? "qi-command-deck--pulse" : ""}`}
+        className={`qa-ref-neural-deck ${active ? "qa-ref-neural-deck--active" : ""} ${submitPulse ? "qa-ref-neural-deck--pulse" : ""}`}
         data-loading={loading ? "true" : "false"}
         animate={lite ? undefined : { y: active ? -2 : 0 }}
         transition={{ type: "spring", stiffness: 380, damping: 32 }}
@@ -178,18 +178,33 @@ export default function HeroSearchCommand({
           }
         />
 
-        <div className="relative z-[2] flex flex-col gap-3.5 p-4 sm:p-5">
+        <div className="relative z-[2] flex flex-col gap-3.5 p-4 sm:p-6">
+          <div className="qa-ref-neural-stages">
+            {["Intent", "Scan", "Synthesize", "Verdict"].map((stage) => (
+              <span key={stage} className="qa-ref-neural-stage">
+                {stage}
+              </span>
+            ))}
+          </div>
+          <p
+            className={`qa-ref-neural-engine-note ${active ? "qa-ref-neural-engine-note--active" : ""}`}
+            aria-live="polite"
+          >
+            {active
+              ? "Parsing purchase intent · mapping retail graph · calibrating confidence"
+              : "Describe what you want to buy — QuantAI scans retailers, scores trust, and returns buy-ready intelligence."}
+          </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
             <label className="sr-only" htmlFor={`${baseId}-q`}>
-              Query the market
+              Search commerce intelligence
             </label>
             <div
-              className={`qi-command-field qa-search-field relative flex min-h-[60px] flex-1 items-stretch overflow-hidden rounded-[1.15rem] ${
-                focused ? "qi-command-field--focus" : ""
+              className={`qa-ref-neural-field relative flex min-h-[66px] flex-1 items-stretch overflow-hidden ${
+                focused ? "qa-ref-neural-field--focus" : ""
               }`}
             >
-              <span className="qi-command-prefix hidden items-center pl-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500/75 sm:flex">
-                Query
+              <span className="qa-ref-neural-prefix hidden items-center pl-4 sm:flex">
+                Market
               </span>
               <input
                 ref={registerInput}
@@ -203,7 +218,7 @@ export default function HeroSearchCommand({
                 enterKeyHint="search"
                 autoComplete="off"
                 disabled={loading}
-                className="qi-command-input min-w-0 flex-1 bg-transparent px-4 py-4 outline-none disabled:opacity-45 sm:px-5 sm:py-[1.05rem]"
+                className="qa-ref-neural-input min-w-0 flex-1 bg-transparent px-4 py-4 text-[16px] font-semibold outline-none disabled:opacity-45 sm:px-5 sm:py-[1.05rem]"
               />
               <span className="qi-command-cursor-beam" aria-hidden />
               <span className="qi-command-field-glow" aria-hidden />
@@ -213,18 +228,18 @@ export default function HeroSearchCommand({
               type="button"
               onClick={runSubmit}
               disabled={loading}
-              className="qi-command-execute group relative flex min-h-[60px] w-full shrink-0 items-center justify-center gap-2 rounded-[1.15rem] px-8 sm:min-w-[10.5rem] sm:w-auto"
+              className="qa-ref-neural-execute group relative flex min-h-[64px] w-full shrink-0 items-center justify-center gap-2 px-8 sm:min-w-[12.5rem] sm:w-auto"
             >
               <span className="qi-command-execute-shine" aria-hidden />
               <span className="relative z-[1] flex items-center gap-2 text-[15px] font-semibold tracking-[-0.02em]">
                 {loading ? (
                   <>
                     <Loader2 className="size-4 animate-spin" aria-hidden />
-                    Scanning field
+                    Synthesizing
                   </>
                 ) : (
                   <>
-                    Execute read
+                    Run intelligence
                     <ArrowRight
                       className="size-4 opacity-80 transition group-hover:translate-x-0.5"
                       aria-hidden
@@ -236,7 +251,7 @@ export default function HeroSearchCommand({
           </div>
 
           {history.length > 0 ? (
-            <div className="flex flex-wrap gap-2 border-t border-white/[0.04] pt-2.5">
+            <div className="flex flex-wrap gap-2 border-t border-violet-100 pt-2.5">
               {history.map((item) => (
                 <button
                   key={`h-${item}`}
@@ -245,7 +260,7 @@ export default function HeroSearchCommand({
                   title={item}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => pickPreset(item)}
-                  className="max-w-full truncate rounded-lg border border-transparent px-3 py-1.5 text-left text-[12px] font-medium text-slate-500/90 transition hover:border-white/[0.06] hover:bg-white/[0.04] hover:text-slate-300/95 disabled:opacity-40"
+                  className="max-w-full truncate rounded-lg border border-violet-100 bg-white px-3 py-1.5 text-left text-[12px] font-medium text-slate-700 transition hover:border-violet-200 hover:bg-violet-50/70 hover:text-slate-900 disabled:opacity-40"
                 >
                   {item}
                 </button>
@@ -267,7 +282,7 @@ export default function HeroSearchCommand({
             className="text-[11px] font-medium tracking-[0.12em] uppercase text-slate-500/80 transition hover:text-slate-400/95 disabled:opacity-40"
           >
             <span className="inline-flex items-center gap-1.5">
-              {suggestionsOpen ? "Hide field examples" : "Field examples"}
+              {suggestionsOpen ? "Hide intelligence prompts" : "Intelligence prompts"}
               <ChevronDown
                 className={`size-3.5 transition-transform ${suggestionsOpen ? "rotate-180" : ""}`}
                 aria-hidden
@@ -290,7 +305,7 @@ export default function HeroSearchCommand({
                   title={item}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => pickPreset(item)}
-                  className="min-h-[2.85rem] rounded-xl border border-white/[0.05] bg-white/[0.02] px-3 py-2.5 text-left text-[12px] font-medium leading-snug text-slate-400/95 transition hover:border-cyan-400/12 hover:bg-cyan-500/[0.04] hover:text-slate-200/95 disabled:opacity-40"
+                  className="qa-ui-tray-adjacent-chip min-h-[2.85rem] disabled:opacity-40"
                 >
                   <span className="line-clamp-2">{item}</span>
                 </button>

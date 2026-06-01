@@ -219,11 +219,11 @@ export function resolveInstitutionalState(
 }
 
 export const PROCESSING_STAGES = [
-  { id: "normalize", label: "Normalizing retailer signals", sub: "Cross-store listing alignment" },
-  { id: "calibrate", label: "Calibrating comparison field", sub: "Price bands and offer spread" },
-  { id: "tray", label: "Stabilizing synthesis tray", sub: "Ranking and confidence assembly" },
-  { id: "layer", label: "Building intelligence layer", sub: "Trust vectors and market posture" },
-  { id: "align", label: "Aligning trust vectors", sub: "Final read for presentation" },
+  { id: "normalize", label: "Aligning listings", sub: "Cross-store offer alignment" },
+  { id: "calibrate", label: "Calibrating price field", sub: "Spread and median bands" },
+  { id: "tray", label: "Ranking results", sub: "Confidence-weighted order" },
+  { id: "layer", label: "Building intelligence", sub: "Trust and market posture" },
+  { id: "align", label: "Finalizing read", sub: "Presentation assembly" },
 ] as const;
 
 export function institutionalLoadingCaption(stageIndex: number): string {

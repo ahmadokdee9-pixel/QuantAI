@@ -164,7 +164,7 @@ export default function DashboardPage() {
           setCompareHistory(Array.isArray(c.items) ? c.items : []);
         }
       } catch {
-        if (!cancelled) setErr("Some dashboard data could not be loaded.");
+        if (!cancelled) setErr("Intelligence module sync incomplete.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -176,9 +176,24 @@ export default function DashboardPage() {
 
   const activitySummary = useMemo(() => {
     return [
-      { label: "Saved products", value: saved.length, href: "/saved" },
-      { label: "Watchlist", value: watchlist.length, href: "/dashboard#watchlist" },
-      { label: "Recent searches", value: history.length, href: "/dashboard#searches" },
+      {
+        label: "Memory shelf",
+        count: saved.length,
+        readyState: "Memory shelf ready",
+        href: "/saved",
+      },
+      {
+        label: "Price monitoring",
+        count: watchlist.length,
+        readyState: "Monitoring channel ready",
+        href: "/dashboard#watchlist",
+      },
+      {
+        label: "Query recall",
+        count: history.length,
+        readyState: "Recall channel ready",
+        href: "/dashboard#searches",
+      },
     ] as const;
   }, [saved.length, watchlist.length, history.length]);
 
@@ -195,136 +210,158 @@ export default function DashboardPage() {
   );
 
   return (
-    <div className="space-y-8">
+    <>
       <EntitlementBanner />
 
-      <section className="cockpit-glass-panel p-6 sm:p-8">
+      <section className="qa-ref-ws-panel">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-500/10 px-4 py-2 text-xs font-medium uppercase tracking-wider text-cyan-200">
-              <Brain className="size-4" aria-hidden />
-              Your cockpit
-            </div>
-            <h1 className="cockpit-display max-w-3xl text-3xl text-white md:text-4xl">
-              Your orbital view of saves, signals, and subscription.
+            <p className="qa-ref-ws-kicker qa-ref-ws-kicker--inline">
+              <Brain className="size-3.5" aria-hidden />
+              Commerce intelligence OS
+            </p>
+            <h1 className="qa-ref-ws-display max-w-3xl">
+              Workspace persistence layer
             </h1>
-            <p className="cockpit-body mt-4 max-w-2xl text-sm text-slate-400">
-              The cockpit on the home page runs live intelligence—this hub mirrors what your account already knows.
+            <p className="qa-ref-ws-lead max-w-2xl">
+              Live signals from Search, Compare, and Governance propagate here—the same intelligence infrastructure, continuous operational state.
             </p>
             {memoryLine && (
-              <p className="mt-3 max-w-xl text-xs text-slate-500">
-                <span className="font-semibold text-slate-400">Signal: </span>
+              <p className="qa-ref-ws-signal">
+                <strong>Live signal · </strong>
                 {memoryLine}
               </p>
             )}
           </div>
-          <Link
-            href="/"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 via-sky-400 to-violet-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-[0_0_32px_-6px_rgba(34,211,238,0.45)] transition hover:brightness-105"
-          >
-            Run intelligence
+          <Link href="/" className="qi-access-cta inline-flex items-center justify-center gap-2 px-6">
+            Launch search console
             <Search className="size-4" aria-hidden />
           </Link>
         </div>
       </section>
 
-      <section className="cockpit-glass-panel p-6 sm:p-8">
+      <section className="qa-ref-ws-panel qa-ref-ws-panel--compact">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Subscription</p>
-            <p className="mt-1 text-xl font-semibold capitalize text-white">{tier}</p>
+            <p className="qa-ref-ws-kicker">Access clearance</p>
+            <p className="qa-ref-ws-tier mt-1 capitalize">{tier} clearance</p>
             {entitlements && (
-              <p className="mt-2 text-xs text-slate-500">
-                Searches/day cap · <span className="tabular-nums text-slate-300">{entitlements.searchesPerDay}</span>
+              <p className="qa-ref-ws-meta mt-2">
+                Search throughput · <span className="tabular-nums font-semibold text-[#334155]">{entitlements.searchesPerDay}</span>
                 {" · "}
-                Global intelligence ·{" "}
-                <span className="capitalize text-slate-300">{entitlements.intelligenceLevel}</span>
+                Intelligence depth ·{" "}
+                <span className="capitalize font-semibold text-[#334155]">{entitlements.intelligenceLevel}</span>
               </p>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/pricing"
-              className="rounded-full border border-white/12 bg-white/[0.06] px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/[0.1]"
-            >
-              Compare plans
+          <div className="qa-ref-ws-actions">
+            <Link href="/pricing" className="qi-access-cta qi-access-cta--ghost inline-flex items-center px-4">
+              Access layers
             </Link>
-            <Link
-              href="/billing"
-              className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
-            >
-              Billing
+            <Link href="/billing" className="qi-access-cta inline-flex items-center px-4">
+              Clearance billing
             </Link>
           </div>
         </div>
       </section>
 
       {loading ? (
-        <div className="flex items-center justify-center gap-2 rounded-2xl border border-white/[0.08] py-16 text-slate-400">
+        <div className="qa-ref-ws-loading">
           <Loader2 className="size-5 animate-spin" aria-hidden />
-          Loading your activity…
+          Loading intelligence modules…
         </div>
       ) : err ? (
-        <p className="rounded-xl border border-amber-400/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">{err}</p>
+        <p className="qa-ref-ws-alert">{err}</p>
       ) : null}
 
-      <section className="grid gap-4 md:grid-cols-3">
-        {activitySummary.map((row) => (
-          <Link
-            key={row.label}
-            href={row.href}
-            className="cockpit-glass-panel flex flex-col p-5 transition hover:border-cyan-400/20"
-          >
-            <p className="text-xs font-medium uppercase tracking-wider text-slate-500">{row.label}</p>
-            <p className="mt-3 text-3xl font-semibold tabular-nums text-white">{row.value}</p>
-            <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-cyan-300">
-              Open <ArrowRight className="size-3" aria-hidden />
-            </span>
-          </Link>
-        ))}
-      </section>
-
-      {!loading && !err && digestLines.length > 0 ? (
-        <section className="cockpit-glass-panel p-6 sm:p-8" aria-label="AI digest">
-          <div className="mb-4 flex items-center gap-2">
-            <Sparkles className="size-4 text-cyan-200/85" strokeWidth={1.5} aria-hidden />
-            <h2 className="text-lg font-semibold text-white/95">Daily AI digest</h2>
-          </div>
-          <p className="text-xs text-slate-500">
-            Session-style briefing from your account signals only—no synthetic urgency or crowd counters.
-          </p>
-          <ul className="mt-4 space-y-2">
-            {digestLines.map((line) => (
-              <li
-                key={line.id}
-                className="rounded-xl border border-white/[0.06] bg-black/25 px-4 py-3 text-sm leading-relaxed text-slate-300"
+      {!loading && !err ? (
+        <section className="grid gap-4 md:grid-cols-3">
+          {activitySummary.map((row) => (
+            <Link key={row.label} href={row.href} className="qa-ref-ws-stat">
+              <p className="qa-ref-ws-stat__label">{row.label}</p>
+              <p
+                className={`qa-ref-ws-stat__value${row.count === 0 ? " qa-ref-ws-stat__value--ready" : ""}`}
               >
-                {line.text}
-              </li>
-            ))}
-          </ul>
+                {row.count === 0 ? row.readyState : row.count}
+              </p>
+              <span className="qa-ref-ws-stat__action">
+                Access module <ArrowRight className="size-3" aria-hidden />
+              </span>
+            </Link>
+          ))}
         </section>
       ) : null}
 
-      <section id="watchlist" className="cockpit-glass-panel scroll-mt-24 p-6 sm:p-8">
-        <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-white/95">Watchlist</h2>
-            <p className="text-xs text-slate-500">Price-drop alerts foundation — synced when Supabase is live.</p>
+      {!loading && !err ? (
+        <section className="qa-ref-ws-panel" aria-label="Session briefing">
+          <div className="mb-4 flex items-center gap-2">
+            <Sparkles className="size-4 text-[#2a2668]" strokeWidth={1.5} aria-hidden />
+            <h2 className="qa-ref-ws-title">Session briefing</h2>
           </div>
-          <Link href="/" className="text-xs font-medium text-cyan-300 hover:underline sm:shrink-0">
-            Add from search
+          <p className="qa-ref-ws-meta">
+            Platform synthesis from workspace signal density—no synthetic urgency or crowd counters.
+          </p>
+          {digestLines.length > 0 ? (
+            <ul className="qa-ref-ws-digest-list">
+              {digestLines.map((line) => (
+                <li key={line.id} className="qa-ref-ws-row">
+                  <p className="qa-ref-ws-row__title text-sm font-medium">{line.text}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <CockpitEmptyState
+              variant="embedded"
+              moduleLabel="Session briefing module"
+              readiness="Operational · Insufficient signal density"
+              title="Briefing synthesis standing by"
+              description="Workspace signals from Search, Compare, and monitoring modules consolidate here once density supports an executive session briefing."
+              context={[
+                "Synthesis derived from commerce OS signal state only",
+                "No synthetic urgency or crowd-derived counters",
+                "Density increases as intelligence modules receive ingest",
+              ]}
+              primaryLabel="Launch search console"
+              primaryHref="/"
+              secondaryLabel="Signal modules"
+              secondaryHref="/dashboard"
+              icon={<Sparkles className="size-6" strokeWidth={1.5} aria-hidden />}
+            />
+          )}
+        </section>
+      ) : null}
+
+      <section id="watchlist" className="qa-ref-ws-panel scroll-mt-24">
+        <div className="qa-ref-ws-section-head mb-6">
+          <div>
+            <h2 className="qa-ref-ws-title">Price monitoring</h2>
+            <p className="qa-ref-ws-meta">
+              {watchlist.length === 0
+                ? "Monitoring channel ready · Signal channel for price-drop posture—linked to Search ingest and Compare validation."
+                : "Signal channel for price-drop posture—linked to Search ingest and Compare validation."}
+            </p>
+          </div>
+          <Link href="/" className="qa-ref-ws-link sm:shrink-0">
+            Ingest from search
           </Link>
         </div>
         {watchlist.length === 0 ? (
           <CockpitEmptyState
-            title="Watchlist is your price-drop radar"
-            description="Save listings you are timing. QuantAI keeps the cockpit honest—when Supabase sync is on, this list travels with your account."
-            primaryLabel="Find listings to watch"
+            variant="embedded"
+            moduleLabel="Price monitoring module"
+            readiness="Armed · Awaiting listing ingest"
+            title="Monitoring channel open"
+            description="Price-drop intelligence activates when listings enter through the Search console. The channel remains armed across the commerce OS persistence layer."
+            context={[
+              "Target pricing posture attaches at Search save",
+              "Merchant divergence signals surface once mesh coverage exists",
+              "State propagates through Compare and Governance modules",
+            ]}
+            primaryLabel="Launch search console"
             primaryHref="/"
-            secondaryLabel="How alerts work"
+            secondaryLabel="Signal alerts"
             secondaryHref="/alerts"
-            icon={<Radar className="size-6 text-cyan-200/90" strokeWidth={1.5} aria-hidden />}
+            icon={<Radar className="size-6" strokeWidth={1.5} aria-hidden />}
           />
         ) : (
           <ul className="space-y-2">
@@ -340,17 +377,15 @@ export default function DashboardPage() {
               return (
                 <li
                   key={w.id ?? `${title}-${w.created_at ?? ""}`}
-                  className="flex flex-col gap-2 rounded-xl border border-white/[0.06] bg-black/25 px-4 py-3 text-sm sm:flex-row sm:items-start sm:justify-between"
+                  className="qa-ref-ws-row flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"
                 >
                   <div className="min-w-0 flex-1">
-                    <span className="font-medium leading-snug text-white/90 [overflow-wrap:anywhere]">
-                      {title}
-                    </span>
+                    <span className="qa-ref-ws-row__title text-sm">{title}</span>
                     {signals.length > 0 && (
-                      <ul className="mt-2 space-y-1 text-[11px] leading-relaxed text-slate-500">
+                      <ul className="mt-2 space-y-1">
                         {signals.map((s, i) => (
-                          <li key={i} className="[overflow-wrap:anywhere]">
-                            · {s}
+                          <li key={i} className="qa-ref-ws-row__meta [overflow-wrap:anywhere]">
+                            {s}
                           </li>
                         ))}
                       </ul>
@@ -361,9 +396,9 @@ export default function DashboardPage() {
                       href={link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="shrink-0 text-xs font-semibold text-cyan-300 hover:underline sm:pt-0.5"
+                      className="qa-ref-ws-link sm:pt-0.5"
                     >
-                      Open listing
+                      Open source
                     </a>
                   ) : null}
                 </li>
@@ -373,25 +408,37 @@ export default function DashboardPage() {
         )}
       </section>
 
-      <section id="compare-history" className="cockpit-glass-panel scroll-mt-24 p-6 sm:p-8">
-        <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <section id="compare-history" className="qa-ref-ws-panel scroll-mt-24">
+        <div className="qa-ref-ws-section-head mb-6">
           <div>
-            <h2 className="text-lg font-semibold text-white/95">Compare history</h2>
-            <p className="text-xs text-slate-500">Recent QuantAI verdicts from Compare lab (stored per account).</p>
+            <h2 className="qa-ref-ws-title">Verdict archive</h2>
+            <p className="qa-ref-ws-meta">
+              {compareHistory.length === 0
+                ? "Archive channel ready · Compare lab snapshots indexed to the intelligence persistence layer."
+                : "Compare lab snapshots indexed to the intelligence persistence layer."}
+            </p>
           </div>
-          <Link href="/" className="text-xs font-medium text-cyan-300 hover:underline sm:shrink-0">
-            Run compare on home
+          <Link href="/" className="qa-ref-ws-link sm:shrink-0">
+            Launch Compare lab
           </Link>
         </div>
         {compareHistory.length === 0 ? (
           <CockpitEmptyState
-            title="Compare history stays empty until you stress-test"
-            description="Pin two or three products in Compare lab on the home page, run a QuantAI verdict, and your rationale snapshots land here for receipts-driven buying."
-            primaryLabel="Open Compare lab"
+            variant="embedded"
+            moduleLabel="Verdict archive module"
+            readiness="Indexed · Awaiting Compare output"
+            title="Archive channel ready"
+            description="Verdict snapshots persist here after Compare lab stress-tests complete on the Search intelligence surface. The archive stays bound to the commerce OS state layer."
+            context={[
+              "Verdict rationale captured from Compare lab output",
+              "Executive brief excerpts attach after first stress-test",
+              "Archive compresses when product mesh coverage is sparse",
+            ]}
+            primaryLabel="Launch Compare lab"
             primaryHref="/"
-            secondaryLabel="Compare tips"
+            secondaryLabel="Compare posture"
             secondaryHref="/#compare"
-            icon={<Sparkles className="size-6 text-violet-200/90" strokeWidth={1.5} aria-hidden />}
+            icon={<Sparkles className="size-6" strokeWidth={1.5} aria-hidden />}
           />
         ) : (
           <ul className="space-y-2">
@@ -407,12 +454,9 @@ export default function DashboardPage() {
                 typeof row.payload.source === "string" ? row.payload.source : "";
               const when = row.created_at ? new Date(row.created_at).toLocaleString() : "";
               return (
-                <li
-                  key={row.id}
-                  className="rounded-xl border border-white/[0.06] bg-black/25 px-4 py-3 text-sm text-slate-300"
-                >
-                  <p className="font-medium leading-snug text-white/90 [overflow-wrap:anywhere]">{headline}</p>
-                  <p className="mt-1 text-[11px] text-slate-500">
+                <li key={row.id} className="qa-ref-ws-row">
+                  <p className="qa-ref-ws-row__title text-sm">{headline}</p>
+                  <p className="qa-ref-ws-row__meta">
                     {when}
                     {src ? ` · ${src}` : ""}
                   </p>
@@ -424,36 +468,45 @@ export default function DashboardPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-3">
-        <div id="searches" className="xl:col-span-2 cockpit-glass-panel scroll-mt-24 p-6">
-          <div className="mb-6 flex items-center justify-between gap-3">
+        <div id="searches" className="qa-ref-ws-panel scroll-mt-24 xl:col-span-2">
+          <div className="qa-ref-ws-section-head mb-6">
             <div>
-              <h2 className="text-lg font-semibold text-white/95">Recent searches</h2>
-              <p className="text-xs text-slate-500">Tap a query on the home page to re-run it.</p>
+              <h2 className="qa-ref-ws-title">Query recall</h2>
+              <p className="qa-ref-ws-meta">
+                {history.length === 0
+                  ? "Recall channel ready · Search console lineage available for rapid re-analysis."
+                  : "Search console lineage available for rapid re-analysis."}
+              </p>
             </div>
-            <Link href="/" className="text-xs font-medium text-cyan-300 hover:underline">
-              Go search
+            <Link href="/" className="qa-ref-ws-link">
+              Launch search console
             </Link>
           </div>
           {history.length === 0 ? (
             <CockpitEmptyState
-              title="No recent searches yet"
-              description="Your home cockpit logs every live query here when you are signed in—rerun a favorite or start a fresh intelligence pass."
-              primaryLabel="Run a search"
+              variant="embedded"
+              moduleLabel="Query recall module"
+              readiness="Linked · Awaiting Search ingest"
+              title="Recall channel open"
+              description="Queries captured from the Search intelligence console re-enter here for rapid re-analysis. The recall layer stays synchronized with live processing state."
+              context={[
+                "Query lineage retained in the commerce OS persistence layer",
+                "Result counts and timing attach at Search capture",
+                "Re-run restores live intelligence processing state",
+              ]}
+              primaryLabel="Launch search console"
               primaryHref="/"
-              secondaryLabel="View saved"
+              secondaryLabel="Memory shelf"
               secondaryHref="/saved"
-              icon={<Search className="size-6 text-cyan-200/90" strokeWidth={1.5} aria-hidden />}
+              icon={<Search className="size-6" strokeWidth={1.5} aria-hidden />}
             />
           ) : (
             <ul className="space-y-2">
               {history.slice(0, 12).map((h) => (
                 <li key={h.id ?? h.query}>
-                  <Link
-                    href={`/?q=${encodeURIComponent(h.query)}`}
-                    className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-black/25 px-4 py-3 text-sm transition hover:border-cyan-400/20"
-                  >
-                    <span className="truncate font-medium text-white/90">{h.query}</span>
-                    <span className="shrink-0 text-xs tabular-nums text-slate-500">
+                  <Link href={`/?q=${encodeURIComponent(h.query)}`} className="qa-ref-ws-row qa-ref-ws-row--link">
+                    <span className="truncate font-semibold">{h.query}</span>
+                    <span className="qa-ref-ws-row__aside">
                       {h.result_count != null ? `${h.result_count} results` : ""}
                     </span>
                   </Link>
@@ -463,56 +516,47 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="cockpit-glass-panel p-6">
-          <h2 className="text-lg font-semibold text-white/95">Shortcuts</h2>
-          <p className="mt-1 text-xs text-slate-500">Every link is wired to a working surface.</p>
+        <div className="qa-ref-ws-panel">
+          <h2 className="qa-ref-ws-title">System routing</h2>
+          <p className="qa-ref-ws-meta">Direct access to intelligence surfaces across the commerce OS.</p>
           <div className="mt-6 space-y-2">
-            <Link
-              href="/saved"
-              className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-black/25 px-4 py-3 text-sm transition hover:bg-white/[0.04]"
-            >
+            <Link href="/saved" className="qa-ref-ws-row qa-ref-ws-row--link">
               <span className="flex items-center gap-2">
-                <Bookmark className="size-4 text-cyan-300" aria-hidden />
-                Saved products
+                <Bookmark className="qa-ref-ws-shortcut-icon size-4" aria-hidden />
+                Memory shelf
               </span>
-              <ArrowRight className="size-4 text-slate-500" aria-hidden />
+              <ArrowRight className="qa-ref-ws-shortcut-chevron size-4" aria-hidden />
             </Link>
-            <Link
-              href="/alerts"
-              className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-black/25 px-4 py-3 text-sm transition hover:bg-white/[0.04]"
-            >
+            <Link href="/alerts" className="qa-ref-ws-row qa-ref-ws-row--link">
               <span className="flex items-center gap-2">
-                <Sparkles className="size-4 text-violet-300" aria-hidden />
-                Alerts roadmap
+                <Sparkles className="qa-ref-ws-shortcut-icon size-4" aria-hidden />
+                Signal alerts
               </span>
-              <ArrowRight className="size-4 text-slate-500" aria-hidden />
+              <ArrowRight className="qa-ref-ws-shortcut-chevron size-4" aria-hidden />
             </Link>
-            <Link
-              href="/analytics"
-              className="flex items-center justify-between rounded-xl border border-white/[0.08] bg-black/25 px-4 py-3 text-sm transition hover:bg-white/[0.04]"
-            >
+            <Link href="/analytics" className="qa-ref-ws-row qa-ref-ws-row--link">
               <span className="flex items-center gap-2">
-                <TrendingUp className="size-4 text-emerald-300" aria-hidden />
-                Analytics roadmap
+                <TrendingUp className="qa-ref-ws-shortcut-icon size-4" aria-hidden />
+                Market analytics
               </span>
-              <ArrowRight className="size-4 text-slate-500" aria-hidden />
+              <ArrowRight className="qa-ref-ws-shortcut-chevron size-4" aria-hidden />
             </Link>
           </div>
         </div>
       </section>
 
-      <section className="cockpit-glass-panel p-6">
-        <h2 className="text-lg font-semibold text-white/95">Next intelligent move</h2>
-        <p className="cockpit-body mt-3 text-sm text-slate-400">
+      <section className="qa-ref-ws-panel">
+        <h2 className="qa-ref-ws-title">Decision routing</h2>
+        <p className="qa-ref-ws-lead mt-3">
           {saved.length >= 3
-            ? "Strong shortlist—return to search, open Compare lab, and let the verdict layer stress-test finalists before checkout."
+            ? "Shortlist density supports Compare stress-testing—return to Search, run Compare lab, and let the verdict layer validate finalists before commitment."
             : saved.length > 0
-              ? "Add one or two more anchors from search, then compare on price, trust, and delivery language in one pass."
-              : "Run a live query, save what resonates, and the assistant will stay grounded in your tray—not generic advice."}
+              ? "Ingest one or two more anchors from Search, then route through Compare on price, trust, and delivery posture in one pass."
+              : "Launch Search, save resonant listings, and intelligence routing stays grounded in live signal state—not generic guidance."}
         </p>
       </section>
 
-      <TrustRibbon />
-    </div>
+      <TrustRibbon variant="institutional" />
+    </>
   );
 }

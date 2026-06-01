@@ -8,10 +8,10 @@ import AmbientBackdrop from "@/components/cockpit/AmbientBackdrop";
 
 const nav = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/saved", label: "Saved", icon: Bookmark },
-  { href: "/pricing", label: "Plans", icon: Sparkles },
-  { href: "/billing", label: "Billing", icon: CreditCard },
+  { href: "/dashboard", label: "Workspace", icon: LayoutDashboard },
+  { href: "/saved", label: "Memory shelf", icon: Bookmark },
+  { href: "/pricing", label: "Access layers", icon: Sparkles },
+  { href: "/billing", label: "Clearance", icon: CreditCard },
 ] as const;
 
 export default function AppChrome({ children }: { children: React.ReactNode }) {
@@ -26,7 +26,7 @@ export default function AppChrome({ children }: { children: React.ReactNode }) {
           <div className="qa-content-wrap flex min-w-0 flex-wrap items-center justify-between gap-3 py-3">
             <Link href="/dashboard" className="qa-chrome-brand shrink-0">
               <span className="qa-chrome-mark size-8">
-                <Sparkles className="size-4 text-cyan-200" aria-hidden />
+                <Sparkles className="size-4" aria-hidden />
               </span>
               QuantAI
             </Link>
@@ -53,7 +53,7 @@ export default function AppChrome({ children }: { children: React.ReactNode }) {
             </nav>
           </div>
         </header>
-        <main className="qa-content-wrap py-8 sm:py-10">{children}</main>
+        <main className="qa-content-wrap qa-ref-workspace qa-ref-workspace-intel py-8 sm:py-10">{children}</main>
       </div>
     </div>
   );

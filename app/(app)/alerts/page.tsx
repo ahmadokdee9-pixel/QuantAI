@@ -124,7 +124,7 @@ export default function AlertsPage() {
       </section>
 
       <div className="mt-10">
-        <TrustRibbon />
+        <TrustRibbon variant="institutional" />
       </div>
       <div className="mt-8 flex flex-wrap gap-3">
         <Link

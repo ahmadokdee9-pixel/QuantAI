@@ -30,18 +30,18 @@ export default function ResultsToolbar({
 }: Props) {
   return (
     <motion.div
-      className="qa-os-toolbar sticky top-[3.25rem] z-30 -mx-4 px-4 py-3 sm:-mx-6 sm:px-6 mb-8 touch-manipulation"
+      className="qa-ui-tray-console qa-os-toolbar sticky top-[3.25rem] z-30 -mx-4 mb-8 touch-manipulation px-4 py-3 sm:-mx-6 sm:px-6"
     >
-        <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="cockpit-overline flex items-center gap-1.5 text-slate-500/90">
-            <SlidersHorizontal className="size-3.5 text-cyan-400/50" aria-hidden />
+          <span className="cockpit-overline flex items-center gap-1.5">
+            <SlidersHorizontal className="size-3.5 opacity-60" aria-hidden />
             Tray controls
           </span>
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="min-h-11 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-2.5 text-[13px] font-medium text-white/92 outline-none transition duration-200 hover:border-cyan-400/18 focus:border-cyan-400/38 focus:ring-2 focus:ring-cyan-400/12 active:scale-[0.995]"
+            className="qa-ui-tray-control min-h-11"
           >
             <option value="value">Best value (QI composite)</option>
             <option value="deals">Smart deals (verified discounts)</option>
@@ -53,15 +53,13 @@ export default function ResultsToolbar({
           <button
             type="button"
             onClick={() => setFilterPanelOpen(!filterPanelOpen)}
-            className="inline-flex min-h-11 touch-manipulation items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-[13px] font-medium text-slate-200/95 transition duration-200 hover:border-cyan-400/18 hover:bg-white/[0.07] active:scale-[0.995]"
+            className="qa-ui-tray-control inline-flex min-h-11 touch-manipulation items-center gap-2"
             aria-expanded={filterPanelOpen}
           >
-            <Filter className="size-4 text-cyan-300/80" aria-hidden />
+            <Filter className="size-4 opacity-80" aria-hidden />
             Filters
             {activeFilterCount > 0 && (
-              <span className="rounded-full bg-cyan-400/25 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-cyan-100">
-                {activeFilterCount}
-              </span>
+              <span className="qa-ui-tray-filter-badge">{activeFilterCount}</span>
             )}
           </button>
 
@@ -69,7 +67,7 @@ export default function ResultsToolbar({
             <button
               type="button"
               onClick={onClearFilters}
-              className="inline-flex items-center gap-1 rounded-2xl border border-white/10 px-3 py-2 text-[12px] font-medium text-slate-400 transition hover:border-rose-400/25 hover:bg-rose-500/10 hover:text-rose-200"
+              className="qa-ui-btn-ghost inline-flex items-center gap-1 px-3 py-2 text-[12px]"
             >
               <X className="size-3.5" aria-hidden />
               Clear
@@ -78,8 +76,7 @@ export default function ResultsToolbar({
         </div>
 
         <p className="text-[12px] font-medium text-slate-500 lg:text-right">
-          <span className="tabular-nums text-slate-200">{resultCount}</span> live nodes · Compare lane ·
-          3 max
+          <span className="tabular-nums text-slate-700">{resultCount}</span> live nodes · Compare lane · 3 max
         </p>
       </div>
 
@@ -92,61 +89,45 @@ export default function ResultsToolbar({
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden"
           >
-            <div className="mt-4 grid gap-3 border-t border-white/[0.06] pt-4 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="mt-4 grid gap-3 border-t border-[var(--qui-border)] pt-4 sm:grid-cols-2 lg:grid-cols-5">
               <label className="block">
-                <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                  Min €
-                </span>
+                <span className="qa-ui-type-label mb-1.5 block">Min €</span>
                 <input
                   type="number"
                   min={0}
                   value={filters.minPrice}
-                  onChange={(e) =>
-                    setFilters((f) => ({ ...f, minPrice: e.target.value }))
-                  }
+                  onChange={(e) => setFilters((f) => ({ ...f, minPrice: e.target.value }))}
                   placeholder="0"
-                  className="w-full min-h-11 touch-manipulation rounded-xl border border-white/12 bg-black/30 px-3 py-2 text-[13px] text-white outline-none transition duration-200 focus:border-cyan-400/40 focus:ring-1 focus:ring-cyan-400/12"
+                  className="qa-ui-tray-control w-full min-h-11 touch-manipulation"
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                  Max €
-                </span>
+                <span className="qa-ui-type-label mb-1.5 block">Max €</span>
                 <input
                   type="number"
                   min={0}
                   value={filters.maxPrice}
-                  onChange={(e) =>
-                    setFilters((f) => ({ ...f, maxPrice: e.target.value }))
-                  }
+                  onChange={(e) => setFilters((f) => ({ ...f, maxPrice: e.target.value }))}
                   placeholder="∞"
-                  className="w-full min-h-11 touch-manipulation rounded-xl border border-white/12 bg-black/30 px-3 py-2 text-[13px] text-white outline-none transition duration-200 focus:border-cyan-400/40 focus:ring-1 focus:ring-cyan-400/12"
+                  className="qa-ui-tray-control w-full min-h-11 touch-manipulation"
                 />
               </label>
               <label className="block sm:col-span-2 lg:col-span-1">
-                <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                  Brand / keyword
-                </span>
+                <span className="qa-ui-type-label mb-1.5 block">Brand / keyword</span>
                 <input
                   type="search"
                   value={filters.brand}
-                  onChange={(e) =>
-                    setFilters((f) => ({ ...f, brand: e.target.value }))
-                  }
+                  onChange={(e) => setFilters((f) => ({ ...f, brand: e.target.value }))}
                   placeholder="In title…"
-                  className="w-full min-h-11 touch-manipulation rounded-xl border border-white/12 bg-black/30 px-3 py-2 text-[13px] text-white outline-none transition duration-200 focus:border-cyan-400/40 focus:ring-1 focus:ring-cyan-400/12"
+                  className="qa-ui-tray-control w-full min-h-11 touch-manipulation"
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                  Min rating
-                </span>
+                <span className="qa-ui-type-label mb-1.5 block">Min rating</span>
                 <select
                   value={filters.minRating}
-                  onChange={(e) =>
-                    setFilters((f) => ({ ...f, minRating: e.target.value }))
-                  }
-                  className="w-full min-h-11 touch-manipulation rounded-xl border border-white/12 bg-black/30 px-3 py-2 text-[13px] text-white outline-none transition duration-200 focus:border-cyan-400/40 focus:ring-1 focus:ring-cyan-400/12"
+                  onChange={(e) => setFilters((f) => ({ ...f, minRating: e.target.value }))}
+                  className="qa-ui-tray-control w-full min-h-11 touch-manipulation"
                 >
                   <option value="">Any</option>
                   <option value="3">3+</option>
@@ -156,15 +137,11 @@ export default function ResultsToolbar({
                 </select>
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                  Min store trust
-                </span>
+                <span className="qa-ui-type-label mb-1.5 block">Min store trust</span>
                 <select
                   value={filters.minTrust}
-                  onChange={(e) =>
-                    setFilters((f) => ({ ...f, minTrust: e.target.value }))
-                  }
-                  className="w-full min-h-11 touch-manipulation rounded-xl border border-white/12 bg-black/30 px-3 py-2 text-[13px] text-white outline-none transition duration-200 focus:border-cyan-400/40 focus:ring-1 focus:ring-cyan-400/12"
+                  onChange={(e) => setFilters((f) => ({ ...f, minTrust: e.target.value }))}
+                  className="qa-ui-tray-control w-full min-h-11 touch-manipulation"
                 >
                   <option value="">Any</option>
                   <option value="55">55+</option>

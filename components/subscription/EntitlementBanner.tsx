@@ -41,44 +41,38 @@ export default function EntitlementBanner() {
   const usage = data.usage;
 
   return (
-    <div className="cockpit-glass-panel mb-8 flex flex-col gap-4 border-cyan-400/12 p-5 sm:flex-row sm:items-center sm:justify-between">
+    <div className="qa-ref-ws-panel qa-ref-ws-panel--compact flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-start gap-3">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-cyan-400/25 bg-cyan-500/10">
-          <Sparkles className="size-5 text-cyan-200" aria-hidden />
+        <span className="qa-ref-ws-empty__icon !mb-0 !size-10 shrink-0">
+          <Sparkles className="size-4" aria-hidden />
         </span>
         <div>
-          <p className="cockpit-overline text-slate-500">Subscription field</p>
-          <p className="mt-1 text-sm font-semibold capitalize text-white">
-            {tier} plan
+          <p className="qa-ref-ws-kicker">Access clearance</p>
+          <p className="qa-ref-ws-tier mt-1">
+            {tier} clearance
             {ent?.intelligenceLevel && (
-              <span className="ml-2 text-xs font-normal text-slate-500">
-                · Global intel: {ent.intelligenceLevel}
+              <span className="ml-2 text-xs font-medium normal-case text-[rgba(71,85,105,0.68)]">
+                · Intelligence depth: {ent.intelligenceLevel}
               </span>
             )}
           </p>
           {usage?.searchesToday != null && usage.searchesLimit != null && (
-            <p className="cockpit-body mt-1 flex items-center gap-1.5 text-xs text-slate-400">
-              <TrendingUp className="size-3.5 text-slate-500" aria-hidden />
-              Searches today ·{" "}
-              <span className="tabular-nums text-slate-300">
+            <p className="qa-ref-ws-meta mt-1 flex items-center gap-1.5">
+              <TrendingUp className="size-3.5 opacity-70" aria-hidden />
+              Search throughput today ·{" "}
+              <span className="tabular-nums font-semibold text-[#334155]">
                 {usage.searchesToday}/{usage.searchesLimit}
               </span>
             </p>
           )}
         </div>
       </div>
-      <div className="flex flex-wrap gap-2">
-        <Link
-          href="/pricing"
-          className="rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-4 py-2 text-xs font-semibold text-slate-950 transition hover:brightness-105"
-        >
-          Upgrade
+      <div className="qa-ref-ws-actions">
+        <Link href="/pricing" className="qi-access-cta inline-flex items-center px-4">
+          Elevate clearance
         </Link>
-        <Link
-          href="/billing"
-          className="rounded-full border border-white/12 px-4 py-2 text-xs font-medium text-slate-300 transition hover:bg-white/[0.06]"
-        >
-          Manage billing
+        <Link href="/billing" className="qi-access-cta qi-access-cta--ghost inline-flex items-center px-4">
+          Clearance billing
         </Link>
       </div>
     </div>

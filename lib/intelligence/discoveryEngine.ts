@@ -144,7 +144,7 @@ export function buildDiscoveryIntelligenceForTray(
       discoveryRole === "best_match"
         ? "Best match: clean identity, strong merchant trust, and product confidence align."
         : discoveryRole === "best_value"
-          ? "Hidden value: priced below the tray while staying clean enough to trust."
+          ? "Best value among trusted sellers."
           : discoveryRole === "premium_choice"
             ? "Premium choice: higher price, but stronger brand/trust signals support it."
             : discoveryRole === "safe_pick"

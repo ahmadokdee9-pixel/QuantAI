@@ -1,23 +1,17 @@
 "use client";
 
-import { memo, useEffect, useId, useMemo, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { memo, useEffect, useId, useMemo } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowDownRight,
   ArrowUpRight,
   Ban,
   Check,
-  ChevronDown,
-  Copy,
-  ImageIcon,
   Minus,
-  PanelRight,
   PauseCircle,
   Percent,
   Scale,
   Shield,
-  Sparkles,
-  Store,
 } from "lucide-react";
 import MagneticSurface from "@/components/motion/MagneticSurface";
 import { calculateAIScore } from "@/app/api/search/lib/aiScoring";
@@ -31,9 +25,7 @@ import {
   shippingEstimateLabel,
   stockConfidencePct,
 } from "@/lib/commerce/cues";
-import { buildProductSnapshot, copyText } from "@/lib/share/intelligenceExport";
-import { recordViewedProductLink } from "@/lib/personalization/localSignals";
-import { isValidHttpOfferUrl, resolveOfferClickUrl } from "@/lib/commerce/offerClick";
+import { resolveOfferClickUrl } from "@/lib/commerce/offerClick";
 import type { PredictiveTimingSignalTone } from "@/lib/intelligence/commerceAnalysisTypes";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import {
@@ -60,12 +52,10 @@ import { buildCommerceTimingSupportLine } from "@/lib/intelligence/commerceDecis
 import { intelligenceMarketPulseLine } from "@/lib/ui/intelligencePresentation";
 import { buildCanonicalQuery } from "@/lib/search/canonicalQuery";
 import { buildCardIntelligenceLayer } from "@/lib/ui/cardIntelligenceLayer";
-import {
-  confidenceFootnote,
-  DECISION_DISCLAIMER,
-  DECISION_READ_OVERLINE,
-  formatVerdictHeadline,
-} from "@/lib/ui/trustFraming";
+import { deriveCardDecision } from "@/lib/ui/decisionLanguage";
+import { classifyListingOutlier } from "@/lib/ui/listingOutlierFilter";
+import IntelligenceCardBody from "./IntelligenceCardBody";
+import { recordViewedProductLink } from "@/lib/personalization/localSignals";
 
 function clip(s: string, max: number): string {
   const t = s.trim();
@@ -97,13 +87,13 @@ function qiRingGradientStops(tier: ReturnType<typeof qiConfidenceTier>): [string
 function qiCenterLabelClass(tier: ReturnType<typeof qiConfidenceTier>): string {
   switch (tier) {
     case "high":
-      return "text-emerald-100";
+      return "qa-ui-card-score-value--high";
     case "good":
-      return "text-cyan-100";
+      return "qa-ui-card-score-value--good";
     case "mid":
-      return "text-amber-100";
+      return "qa-ui-card-score-value--mid";
     default:
-      return "text-slate-200";
+      return "qa-ui-card-score-value--low";
   }
 }
 
@@ -151,47 +141,25 @@ function worthBuyingShort(w: ProductDealIntelligence["worthBuyingNow"], hasDisco
 }
 
 function stancePresentation(stance: BuyStance): {
-  border: string;
-  bg: string;
-  text: string;
+  chipClass: string;
   Icon: typeof Check;
 } {
   switch (stance) {
     case "buy":
-      return {
-        border: "border-emerald-400/30",
-        bg: "bg-emerald-500/[0.08]",
-        text: "text-emerald-100/95",
-        Icon: Check,
-      };
+      return { chipClass: "qa-ui-stance-chip--buy", Icon: Check };
     case "wait":
-      return {
-        border: "border-amber-400/28",
-        bg: "bg-amber-500/[0.08]",
-        text: "text-amber-100/90",
-        Icon: PauseCircle,
-      };
+      return { chipClass: "qa-ui-stance-chip--wait", Icon: PauseCircle };
     case "avoid":
-      return {
-        border: "border-rose-400/30",
-        bg: "bg-rose-500/[0.08]",
-        text: "text-rose-100/90",
-        Icon: Ban,
-      };
+      return { chipClass: "qa-ui-stance-chip--avoid", Icon: Ban };
     default:
-      return {
-        border: "border-cyan-400/25",
-        bg: "bg-cyan-500/[0.07]",
-        text: "text-cyan-50/95",
-        Icon: Scale,
-      };
+      return { chipClass: "qa-ui-stance-chip--neutral", Icon: Scale };
   }
 }
 
 function TrendIcon({ trend }: { trend: QuantProduct["priceTrend"] }) {
   if (trend === "down") {
     return (
-      <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-emerald-200/75">
+      <span className="qa-ui-card-trend qa-ui-card-trend--down">
         <ArrowDownRight className="size-3 opacity-80" strokeWidth={2} aria-hidden />
         Below ref
       </span>
@@ -199,14 +167,14 @@ function TrendIcon({ trend }: { trend: QuantProduct["priceTrend"] }) {
   }
   if (trend === "up") {
     return (
-      <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-rose-200/68">
+      <span className="qa-ui-card-trend qa-ui-card-trend--up">
         <ArrowUpRight className="size-3 opacity-80" strokeWidth={2} aria-hidden />
         Above ref
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-slate-500/85">
+    <span className="qa-ui-card-trend">
       <Minus className="size-3 opacity-70" strokeWidth={2} aria-hidden />
       Flat ref
     </span>
@@ -245,56 +213,6 @@ type Props = {
   onTrayFocus?: (link: string | null) => void;
 };
 
-const btnRow =
-  "min-h-[2.75rem] shrink-0 rounded-full text-[11px] font-semibold tracking-tight transition-transform duration-300 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400/40";
-
-function CardProductImage({
-  src,
-  reduceMotion,
-  fetchPriority,
-}: {
-  src: string;
-  reduceMotion: boolean | null;
-  fetchPriority: "high" | "low";
-}) {
-  const [loaded, setLoaded] = useState(false);
-  const [err, setErr] = useState(false);
-  if (err) {
-    return (
-      <div
-        className="flex aspect-[4/3] max-h-[11rem] min-h-[8.5rem] w-full flex-col items-center justify-center gap-2 rounded-[1.05rem] border border-dashed border-white/[0.12] bg-gradient-to-br from-slate-900/80 via-[#0a1220]/95 to-slate-900/90 text-center"
-        aria-hidden
-      >
-        <ImageIcon className="size-8 text-slate-600" strokeWidth={1.25} />
-        <span className="text-[10px] font-medium uppercase tracking-wider text-slate-600">No preview</span>
-      </div>
-    );
-  }
-  return (
-    <motion.div className="qi-museum-frame qi-product-object-frame relative aspect-[4/3] max-h-[13.25rem] min-h-[9.25rem] w-full">
-      <div className="qi-museum-spotlight" aria-hidden />
-      {!loaded && (
-        <div className="qi-image-shimmer absolute inset-0 z-[1] rounded-[inherit]" aria-hidden />
-      )}
-      <motion.img
-        src={src}
-        alt=""
-        loading={fetchPriority === "high" ? "eager" : "lazy"}
-        decoding="async"
-        fetchPriority={fetchPriority}
-        onLoad={() => setLoaded(true)}
-        onError={() => setErr(true)}
-        className="relative z-[2] mx-auto h-full w-full max-h-[11.5rem] object-contain object-center p-3 sm:p-4 drop-shadow-[0_28px_56px_rgba(0,0,0,0.62)]"
-        initial={false}
-        animate={{ opacity: loaded ? 1 : 0 }}
-        transition={{ duration: reduceMotion ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
-        whileHover={
-          reduceMotion ? undefined : { scale: 1.02, transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] } }
-        }
-      />
-    </motion.div>
-  );
-}
 function ProductResultCard({
   product: p,
   list,
@@ -322,26 +240,6 @@ function ProductResultCard({
   const reduceMotion = useReducedMotion();
   const lite = reduceMotion || lowPower;
   const ringGradId = useId().replace(/:/g, "");
-  const [intelOpen, setIntelOpen] = useState(false);
-  const [intelBodyReady, setIntelBodyReady] = useState(false);
-  const [cardCopyFlash, setCardCopyFlash] = useState(false);
-
-  useEffect(() => {
-    if (!intelOpen) return;
-    const id = window.requestAnimationFrame(() => setIntelBodyReady(true));
-    return () => window.cancelAnimationFrame(id);
-  }, [intelOpen]);
-
-  const toggleIntelOpen = () => {
-    setIntelOpen((prev) => {
-      if (!prev) {
-        setIntelBodyReady(false);
-      } else {
-        queueMicrotask(() => setIntelBodyReady(false));
-      }
-      return !prev;
-    });
-  };
   const ai = calculateAIScore(p, list);
   const score = p.qiComposite != null && Number.isFinite(p.qiComposite) ? p.qiComposite : ai.score;
   const scoreNorm = Math.min(100, Math.max(0, Number(score) || 0));
@@ -369,10 +267,6 @@ function ProductResultCard({
   const mkt = marketplaceVerifiedLabel(p);
   const riskHint = riskHintFromProduct(p);
   const ltHint = longTermValueHint(p, list);
-  const ringR = 22;
-  const ringC = 2 * Math.PI * ringR;
-  const ringDash = ringC * (1 - scoreNorm / 100);
-
   const canonicalQueryMemo = useMemo(
     () => (searchQuery.trim() ? buildCanonicalQuery(searchQuery) : null),
     [searchQuery]
@@ -504,6 +398,27 @@ function ProductResultCard({
     ]
   );
 
+  const derived = useMemo(
+    () =>
+      deriveCardDecision({
+        trustScore: trust,
+        weakRetailer,
+        pricePosture: cardIntel.posture.price,
+        suspiciousPrice:
+          classifyListingOutlier(p, list) != null ||
+          p.qiCommerce?.priceAnomaly === "suspicious_low" ||
+          p.qiCommerce?.priceAnomaly === "premium_outlier",
+        peerCount: list.length,
+        reasonFallback: clip(cardIntel.buyingThesis, 120) || undefined,
+      }),
+    [trust, weakRetailer, cardIntel.posture.price, cardIntel.buyingThesis, p, list]
+  );
+
+  const verdictLabel = derived.verdict;
+  const reasonLine = derived.reason;
+  const alignmentScore = derived.alignmentScore;
+  const trustMicro = derived.trustMicro;
+
   const signalsTerminalRisk = useMemo(() => {
     if (resolved.riskReason) return clip(resolved.riskReason, 112);
     if (riskHint) return clip(riskHint, 112);
@@ -517,7 +432,7 @@ function ProductResultCard({
     : { type: "spring" as const, stiffness: 320, damping: 36 };
 
   return (
-    <MagneticSurface className="h-full min-w-0" strength={0.08} disabled={lite}>
+    <MagneticSurface className="h-full min-h-0 w-full min-w-0" strength={0.08} disabled={lite}>
       <motion.article
         layout={false}
         initial={lite ? false : { opacity: 0, y: 20 }}
@@ -536,495 +451,36 @@ function ProductResultCard({
               }
         }
         data-qi-confidence={canonicalConfidenceAura}
-        className={`qi-product-card-shell qi-product-object qi-intel-surface group relative flex h-full min-w-0 flex-col overflow-hidden rounded-[1.85rem] p-px transition-[background,box-shadow,opacity,transform] duration-700 ease-out ${
+        className={`qa-ui-product-card qa-ref-product-card qa-ref-product-card--os qa-ref-intel-card qa-ref-intel-card--uniform group relative flex h-full min-w-0 flex-col overflow-hidden ${
           isTrayDimmed ? "qi-tray-peer-dim" : ""
         } ${isTrayFocused ? "qi-tray-focus-active" : ""} ${
           lite ? "" : "will-change-transform [transform:translateZ(0)]"
         }`}
       >
         <div className="qi-product-object-bezel pointer-events-none absolute inset-0 z-[1] rounded-[inherit]" aria-hidden />
-        <div
-          className={`qi-product-card-inner qi-product-object-body relative flex h-full min-h-0 flex-col overflow-hidden rounded-[1.78rem] border-0 bg-transparent transition-[box-shadow,transform] duration-500 ease-out ${
-            isTrayFocused
-              ? "shadow-[0_0_0_1px_rgba(34,211,238,0.1),0_28px_64px_-32px_rgba(34,211,238,0.16)]"
-              : ""
-          }`}
-        >
-          <div className="pointer-events-none absolute -right-20 -top-20 size-48 rounded-full bg-cyan-400/6 blur-3xl opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-55" />
-          <div className="pointer-events-none absolute -bottom-24 -left-16 size-44 rounded-full bg-violet-500/6 blur-3xl opacity-0 transition-opacity duration-700 ease-out group-hover:opacity-28" />
-
-          <div className="relative z-[2] flex justify-end px-4 pt-4 sm:px-5 sm:pt-5">
-            <button
-              type="button"
-              onClick={() => toggleCompare(p.link)}
-              disabled={!inCompare && compareLinks.length >= 3}
-              aria-pressed={inCompare}
-              className={`shrink-0 touch-manipulation rounded-full border px-3.5 py-2.5 text-[11px] font-medium tracking-tight transition duration-300 active:scale-[0.98] min-h-11 sm:min-h-10 ${
-                inCompare
-                  ? "border-cyan-400/20 bg-cyan-400/10 text-cyan-50/90"
-                  : "border-white/[0.07] bg-black/25 text-slate-500/95 hover:border-cyan-400/15 hover:bg-cyan-500/[0.05] hover:text-slate-200/95 disabled:opacity-40"
-              }`}
-            >
-              Compare
-            </button>
-          </div>
-
-          <div className="relative z-[2] mx-4 mt-3 min-w-0 sm:mx-5">
-            {p.image ? (
-              <CardProductImage
-                key={`${p.link}-${p.image}`}
-                src={p.image}
-                reduceMotion={lite}
-                fetchPriority={imagePriority}
-              />
-            ) : (
-              <div
-                className="flex aspect-[4/3] max-h-[11rem] min-h-[8.5rem] w-full flex-col items-center justify-center gap-2 rounded-[1.05rem] border border-dashed border-white/[0.12] bg-gradient-to-br from-slate-900/80 via-[#0a1220]/95 to-slate-900/90 text-center"
-                aria-hidden
-              >
-                <ImageIcon className="size-8 text-slate-600" strokeWidth={1.25} />
-                <span className="text-[10px] font-medium uppercase tracking-wider text-slate-600">
-                  No preview
-                </span>
-              </div>
-            )}
-          </div>
-
-          <div className="qi-product-object-deck relative z-[2] flex min-h-0 min-w-0 flex-1 flex-col px-4 pb-5 pt-5 sm:px-5 sm:pb-6 sm:pt-6">
-            <h3 className="qi-editorial-title line-clamp-2 text-[15px] sm:text-[16px]">{p.title}</h3>
-
-            <div className="mt-4 flex min-w-0 flex-wrap items-end justify-between gap-3 border-b border-white/[0.05] pb-4">
-              <div className="min-w-0 flex-1">
-                {p.displayPrice ? (
-                  <p className="text-[12px] font-medium text-slate-500/80">{p.displayPrice}</p>
-                ) : (
-                  <p className="text-[12px] font-medium text-slate-600/85">Listed price</p>
-                )}
-                <div className="mt-1 flex flex-wrap items-baseline gap-2">
-                  <p className="text-[1.55rem] font-semibold tabular-nums tracking-[-0.02em] text-white sm:text-[1.65rem]">
-                    {formatListingPrice(p.price, sym)}
-                  </p>
-                  {p.oldPrice != null && p.oldPrice > p.price && (
-                    <span className="text-xs text-slate-500 line-through tabular-nums">
-                      {formatListingPrice(p.oldPrice, sym)}
-                    </span>
-                  )}
-                  {deal.hasDiscount && deal.discountPct != null && (
-                    <span className="shrink-0 rounded-md border border-emerald-400/28 bg-emerald-500/12 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-emerald-100">
-                      −{deal.discountPct}%
-                    </span>
-                  )}
-                </div>
-                <div className="mt-1">
-                  <TrendIcon trend={p.priceTrend} />
-                </div>
-              </div>
-              <div className="flex shrink-0 flex-col items-end gap-0.5">
-                <div className="qi-qi-ring-luxury relative size-[3.15rem] shrink-0 opacity-[0.97] sm:size-[3.65rem]">
-                  <svg
-                    className="size-[3.15rem] -rotate-90 sm:size-[3.65rem]"
-                    viewBox="0 0 54 54"
-                    role="img"
-                    aria-label={`QI score ${Math.round(scoreNorm)} of 100`}
-                  >
-                    <defs>
-                      <linearGradient id={ringGradId} x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor={g0} />
-                        <stop offset="50%" stopColor={g1} />
-                        <stop offset="100%" stopColor={g2} />
-                      </linearGradient>
-                    </defs>
-                    <circle
-                      cx="27"
-                      cy="27"
-                      r={ringR}
-                      fill="none"
-                      className="stroke-white/[0.06]"
-                      strokeWidth="4"
-                    />
-                    <motion.circle
-                      cx="27"
-                      cy="27"
-                      r={ringR}
-                      fill="none"
-                      stroke={`url(#${ringGradId})`}
-                      strokeWidth="4"
-                      strokeLinecap="round"
-                      strokeDasharray={ringC}
-                      initial={lite ? false : { strokeDashoffset: ringC }}
-                      animate={{ strokeDashoffset: ringDash }}
-                      transition={
-                        lite ? { duration: 0 } : { duration: 1.05, ease: [0.22, 1, 0.36, 1] }
-                      }
-                    />
-                  </svg>
-                  <span
-                    className={`pointer-events-none absolute inset-0 flex items-center justify-center text-[10px] font-bold tabular-nums sm:text-[11px] ${qiCenterLabelClass(qiTier)}`}
-                  >
-                    {Math.round(scoreNorm)}
-                  </span>
-                </div>
-                <div className="max-w-[4.5rem] text-right sm:max-w-[5.5rem]">
-                  <p className="text-[8px] font-semibold uppercase leading-tight tracking-[0.08em] text-slate-500/80 sm:text-[9px]">
-                    {p.qiComposite != null ? "QI" : "Model"}
-                  </p>
-                  <p className="text-[9px] font-medium leading-tight text-slate-500/80 sm:text-[10px]">/ 100</p>
-                </div>
-              </div>
-            </div>
-
-            <div
-              className={`qi-decision-surface qi-decision-surface--canvas qi-analyst-verdict mt-4 ${cardIntel.decisionSurfaceClass}`}
-            >
-              <p className="qi-silent-overline">{DECISION_READ_OVERLINE}</p>
-              <p className="qi-decision-headline mt-1.5">
-                {formatVerdictHeadline(cardIntel.primaryLabel)}
-              </p>
-              <div
-                className="qi-confidence-pulse mt-2.5"
-                title={`Alignment ${decisionConfidence}%`}
-                aria-hidden
-              >
-                <span style={{ width: `${Math.min(100, Math.max(8, decisionConfidence))}%` }} />
-              </div>
-              <p className="mt-2 text-[10px] leading-snug text-slate-500/90">
-                {confidenceFootnote(decisionConfidence)}
-              </p>
-            </div>
-
-            <div className="qi-posture-grid qi-posture-grid--compact mt-3">
-              <div className="qi-posture-cell qi-posture-dimension qi-posture-dimension--trust">
-                <p className="qi-posture-label">Trust</p>
-                <p className="qi-posture-value">{cardIntel.posture.trust}</p>
-              </div>
-              <div className="qi-posture-cell qi-posture-dimension qi-posture-dimension--price">
-                <p className="qi-posture-label">Price</p>
-                <p className="qi-posture-value">{cardIntel.posture.price}</p>
-              </div>
-            </div>
-
-            <p className="qi-card-thesis">{cardIntel.buyingThesis}</p>
-
-            <div className="qi-trust-illumination mt-3 border-t border-white/[0.04] pt-2.5">
-              <span>
-                <Store className="size-3 opacity-45" strokeWidth={1.5} aria-hidden />
-                {p.store}
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={toggleIntelOpen}
-              className="qi-expand-trigger qi-analyst-vault-trigger mt-5 flex w-full min-w-0 items-center justify-between gap-2 text-left transition duration-200"
-              aria-expanded={intelOpen}
-            >
-              <span className="qi-silent-overline text-[10px] text-slate-500/80 group-hover:text-slate-400/90">
-                Deep analysis
-              </span>
-              <ChevronDown
-                className={`size-4 shrink-0 text-slate-500/90 transition duration-200 ${intelOpen ? "rotate-180" : ""}`}
-                strokeWidth={2}
-                aria-hidden
-              />
-            </button>
-            <AnimatePresence initial={false}>
-              {intelOpen && (
-                <motion.div
-                  initial={lite ? false : { height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: lite ? 0 : 0.24, ease: [0.22, 1, 0.36, 1] }}
-                  className="overflow-hidden"
-                >
-                  {!intelBodyReady ? (
-                    <div className="mt-2 space-y-2 rounded-2xl border border-white/[0.07] bg-black/22 px-3.5 py-5 sm:px-4">
-                      <div className="h-3 w-24 rounded-md bg-white/[0.06] animate-pulse" />
-                      <div className="h-20 rounded-xl bg-white/[0.05] animate-pulse" />
-                      <div className="h-16 rounded-xl bg-white/[0.04] animate-pulse" />
-                    </div>
-                  ) : (
-                  <div className="qi-analyst-vault-panel mt-2 rounded-2xl px-3 py-3.5 sm:px-4 sm:py-4">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">Purchase read</p>
-                      <span
-                        className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] ${stanceUi.border} ${stanceUi.bg} ${stanceUi.text}`}
-                      >
-                        <StanceIcon className="size-3 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
-                        {mergedBuyDecision.stanceLabel}
-                      </span>
-                    </div>
-                    {cardIntel.pills.length > 0 ? (
-                      <div className="qi-signal-cluster mt-3" role="list" aria-label="Supporting signals">
-                        {cardIntel.pills.map((pill) => (
-                          <span
-                            key={pill.label}
-                            role="listitem"
-                            className={`truncate ${pill.cls} ${pill.primary ? "qi-signal-pill--primary" : ""}`}
-                            title={pill.label}
-                          >
-                            {pill.label}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-                    <div className="qi-posture-grid mt-3">
-                      <div className="qi-posture-cell qi-posture-dimension qi-posture-dimension--market">
-                        <p className="qi-posture-label">Market</p>
-                        <p className="qi-posture-value">{cardIntel.posture.market}</p>
-                      </div>
-                      <div className="qi-posture-cell qi-posture-dimension qi-posture-dimension--risk">
-                        <p className="qi-posture-label">Risk</p>
-                        <p className="qi-posture-value">{cardIntel.posture.risk}</p>
-                      </div>
-                    </div>
-                    {cardIntel.reasonLines.length > 0 ? (
-                      <ul className="qi-card-reason mt-2">
-                        {cardIntel.reasonLines.map((line) => (
-                          <li key={line}>{line}</li>
-                        ))}
-                      </ul>
-                    ) : null}
-                    <p className="mt-3 text-[9px] leading-snug text-slate-500/85">{DECISION_DISCLAIMER}</p>
-                    <div className="mt-3 grid grid-cols-2 gap-3">
-                      <div>
-                        <p className="text-[9px] uppercase tracking-wider text-slate-500">Market fit</p>
-                        <p className="text-lg font-semibold tabular-nums text-white">{Math.round(scoreNorm)}</p>
-                        <div className="mt-1 h-1 overflow-hidden rounded-full bg-black/50">
-                          <div className="h-full rounded-full bg-cyan-400/80" style={{ width: `${scoreNorm}%` }} />
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-[9px] uppercase tracking-wider text-slate-500">
-                          {deal.hasDiscount ? "Markdown trust" : "Seller trust"}
-                        </p>
-                        <p className="text-lg font-semibold tabular-nums text-slate-100">{deal.discountConfidence}</p>
-                        <div className="mt-1 h-1 overflow-hidden rounded-full bg-black/50">
-                          <div
-                            className="h-full rounded-full bg-violet-400/80"
-                            style={{ width: `${deal.discountConfidence}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-3 border-t border-white/[0.05] pt-2.5">
-                      <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-500">Risk</p>
-                      <p className="mt-0.5 text-[10px] leading-snug text-amber-100/85">{signalsTerminalRisk}</p>
-                    </div>
-                    <div className="mt-2.5 flex flex-wrap gap-1.5 text-[9px] text-slate-500">
-                      <span className="rounded-full border border-white/[0.07] bg-black/30 px-2 py-0.5 tabular-nums">
-                        #{rank + 1}
-                      </span>
-                      <span className="rounded-full border border-white/[0.07] bg-black/30 px-2 py-0.5 tabular-nums">
-                        Trust {trust}
-                      </span>
-                      <span className="rounded-full border border-white/[0.07] bg-black/30 px-2 py-0.5 tabular-nums">
-                        Fulfillment {delPct}%
-                      </span>
-                      <span className="rounded-full border border-white/[0.07] bg-black/30 px-2 py-0.5 tabular-nums">
-                        Stock {stockPct}%
-                      </span>
-                      <span className="rounded-md border border-white/[0.06] bg-black/25 px-2 py-0.5">{mkt.label}</span>
-                    </div>
-                    {p.outboundRouteKind ? (
-                      <p className="mt-2 text-[9px] leading-snug text-slate-500/90">
-                        {p.outboundRouteKind === "direct_merchant"
-                          ? "Route: direct merchant"
-                          : p.outboundRouteKind === "merchant_search"
-                            ? "Route: merchant search"
-                            : p.outboundRouteKind === "google_interstitial"
-                              ? "Route: shopping bridge"
-                              : "Route: fallback"}
-                      </p>
-                    ) : null}
-                    <details className="group mt-3 overflow-hidden rounded-xl border border-white/[0.06] bg-black/25">
-                      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 transition hover:bg-white/[0.04] [&::-webkit-details-marker]:hidden">
-                        <span>Analyst depth</span>
-                        <ChevronDown
-                          className="size-3.5 shrink-0 text-slate-500 transition group-open:rotate-180"
-                          strokeWidth={2}
-                          aria-hidden
-                        />
-                      </summary>
-                      <div className="space-y-3 border-t border-white/[0.05] px-2.5 pb-3 pt-2.5">
-                        <div>
-                          <div className="flex items-center justify-between gap-2 text-[9px] font-medium text-slate-500">
-                            <span>Deal strength</span>
-                            <span className="tabular-nums text-slate-300">{deal.dealStrength}/100</span>
-                          </div>
-                          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-black/50">
-                            <div
-                              className="h-full rounded-full bg-gradient-to-r from-cyan-400/85 to-emerald-400/75"
-                              style={{ width: `${deal.dealStrength}%` }}
-                            />
-                          </div>
-                        </div>
-                        <p className="text-[10px] text-slate-500 [overflow-wrap:anywhere]">
-                          {clip(deal.historicalConfidenceLabel, 110)}
-                          {deal.liveRankExplanation ? ` · ${clip(deal.liveRankExplanation, 90)}` : ""}
-                        </p>
-                        <p className="text-[10px] text-slate-500/90 [overflow-wrap:anywhere]">{clip(buyDecision.rankWhy, 110)}</p>
-                        <p className="text-[10px] text-violet-200/75 [overflow-wrap:anywhere]">{clip(buyDecision.buyerFit, 100)}</p>
-                        <div className="space-y-2.5 text-[10px] leading-snug text-slate-400/95">
-                          <div>
-                            <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">Price engine</p>
-                            <p className="mt-1 [overflow-wrap:anywhere]">{clip(deal.whyDealGoodOrRisky, 140)}</p>
-                            <p className="mt-1 text-slate-500 [overflow-wrap:anywhere]">
-                              {clip(
-                                `Fair ≈ ${formatListingPrice(deal.fairMarketEstimate, sym)}${
-                                  deal.overpricedVsTray
-                                    ? " — high vs peers."
-                                    : deal.savingsVsFair != null && deal.savingsVsFair > 0
-                                      ? ` — ~${formatListingPrice(deal.savingsVsFair, sym)} under median.`
-                                      : " — near median."
-                                }${deal.inflatedAnchorSuspected ? " Anchor may be inflated." : ""}${
-                                  deal.urgencySuspected === "elevated" ? " Urgency wording in feed." : ""
-                                }`,
-                                180
-                              )}
-                            </p>
-                            <p className="mt-1 text-slate-500 [overflow-wrap:anywhere]">{clip(deal.timingSummary, 96)}</p>
-                          </div>
-                          <div className="grid gap-2 sm:grid-cols-2">
-                            <div>
-                              <p className="text-[9px] font-semibold uppercase text-emerald-200/70">Pros</p>
-                              <ul className="mt-1 space-y-0.5">
-                                {(buyDecision.pros.length ? buyDecision.pros : ["No standout edge vs peers."]).map(
-                                  (line, i) => (
-                                    <li key={`dpro-${i}`} className="[overflow-wrap:anywhere]">
-                                      · {clip(line, 100)}
-                                    </li>
-                                  )
-                                )}
-                              </ul>
-                            </div>
-                            <div>
-                              <p className="text-[9px] font-semibold uppercase text-rose-200/65">Verify</p>
-                              <ul className="mt-1 space-y-0.5">
-                                {(buyDecision.cons.length ? buyDecision.cons : ["Confirm seller before checkout."]).map(
-                                  (line, i) => (
-                                    <li key={`dcon-${i}`} className="[overflow-wrap:anywhere]">
-                                      · {clip(line, 100)}
-                                    </li>
-                                  )
-                                )}
-                              </ul>
-                            </div>
-                          </div>
-                          <p className="text-slate-500 [overflow-wrap:anywhere]">{clip(analystFrame.strengths, 130)}</p>
-                          <p className="text-amber-100/80 [overflow-wrap:anywhere]">{clip(analystFrame.verify, 110)}</p>
-                          <p className="text-slate-500 [overflow-wrap:anywhere]">
-                            {clip(
-                              p.qiReason?.trim() ||
-                                ai.reason ||
-                                "Blend of price, reviews, and seller trust in this set.",
-                              140
-                            )}
-                          </p>
-                          {ltHint ? (
-                            <p className="text-slate-500 [overflow-wrap:anywhere]">{clip(ltHint, 100)}</p>
-                          ) : null}
-                          {p.availability ? <p className="text-slate-500">Availability · {p.availability}</p> : null}
-                          {shipEst ? <p className="text-slate-500">Ship · {shipEst}</p> : null}
-                          <p className="text-[9px] text-slate-600 [overflow-wrap:anywhere]">
-                            {clip(deal.liveSignals.historicalPriceMemoryLabel, 100)}
-                          </p>
-                        </div>
-                      </div>
-                    </details>
-                  </div>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <motion.button
-              type="button"
-              onClick={() => {
-                recordViewedProductLink(p.link);
-                onOpenIntelligence(p);
-              }}
-              whileTap={{ scale: 0.99 }}
-              className="mt-4 flex w-full min-w-0 items-center justify-center gap-2 rounded-xl border border-cyan-400/18 bg-gradient-to-r from-cyan-400/[0.08] to-violet-500/[0.07] py-2.5 text-[11px] font-semibold text-slate-100/95 transition hover:border-cyan-400/26 hover:from-cyan-400/[0.11] hover:to-violet-500/[0.09]"
-            >
-              <Sparkles className="size-3.5 text-slate-400" strokeWidth={1.5} aria-hidden />
-              Open
-              <PanelRight className="size-3.5 opacity-80" strokeWidth={1.5} aria-hidden />
-            </motion.button>
-
-            <div className="mt-5 grid min-w-0 grid-cols-2 items-stretch justify-items-stretch gap-x-2 gap-y-2 sm:flex sm:flex-wrap sm:justify-center sm:gap-x-3 sm:gap-y-2">
-              <motion.button
-                type="button"
-                onClick={() => {
-                  void (async () => {
-                    const ok = await copyText(buildProductSnapshot(p, list));
-                    if (ok) {
-                      setCardCopyFlash(true);
-                      window.setTimeout(() => setCardCopyFlash(false), 2000);
-                    }
-                  })();
-                }}
-                whileHover={lite ? undefined : { scale: 1.015 }}
-                whileTap={{ scale: 0.985 }}
-                className={`${btnRow} inline-flex min-w-0 flex-[1_1_5.5rem] items-center justify-center gap-1.5 border border-white/[0.1] bg-white/[0.05] px-3.5 text-slate-300 hover:border-white/[0.15] hover:bg-white/[0.08]`}
-              >
-                {cardCopyFlash ? (
-                  <Check className="size-3.5 text-emerald-300" aria-hidden />
-                ) : (
-                  <Copy className="size-3.5 opacity-85" aria-hidden />
-                )}
-                {cardCopyFlash ? "Copied" : "Brief"}
-              </motion.button>
-              {isValidHttpOfferUrl(offerClickUrl) ? (
-              <motion.a
-                href={offerClickUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => recordViewedProductLink(offerClickUrl)}
-                whileHover={lite ? undefined : { scale: 1.015 }}
-                whileTap={{ scale: 0.985 }}
-                title="Opens the retailer page in a new tab"
-                className={`${btnRow} relative flex min-w-0 flex-[1.1_1_7rem] items-center justify-center overflow-hidden bg-gradient-to-r from-white via-slate-50 to-white px-4 text-slate-900 shadow-[0_10px_28px_-16px_rgba(15,23,42,0.45)] transition-shadow duration-500 hover:brightness-[1.03]`}
-              >
-                <span
-                  className="absolute inset-0 bg-gradient-to-r from-cyan-200/0 via-cyan-200/20 to-violet-200/0 opacity-0 transition group-hover:opacity-100"
-                  aria-hidden
-                />
-                <span className="relative">View retailer</span>
-              </motion.a>
-              ) : (
-                <motion.button
-                  type="button"
-                  disabled
-                  title="No reliable outbound link from this listing"
-                  className={`${btnRow} relative flex min-w-0 flex-[1.1_1_7rem] cursor-not-allowed items-center justify-center overflow-hidden bg-gradient-to-r from-white/40 via-slate-100/50 to-white/40 px-4 text-slate-600 opacity-55`}
-                >
-                  <span className="relative">View retailer</span>
-                </motion.button>
-              )}
-              {addToWatchlist && (
-                <motion.button
-                  type="button"
-                  onClick={() => addToWatchlist(p)}
-                  whileHover={lite ? undefined : { scale: 1.015 }}
-                  whileTap={{ scale: 0.985 }}
-                  className={`${btnRow} border border-violet-400/22 bg-violet-500/10 px-3.5 text-violet-100/90 hover:bg-violet-500/[0.14]`}
-                  title="Track price and timing"
-                >
-                  Track
-                </motion.button>
-              )}
-              <motion.button
-                type="button"
-                onClick={() => saveProduct(p)}
-                disabled={savedLinks.has(p.link)}
-                whileHover={lite ? undefined : { scale: 1.015 }}
-                whileTap={{ scale: 0.985 }}
-                className={`${btnRow} border border-cyan-400/22 bg-cyan-500/[0.1] px-3.5 text-cyan-50/95 hover:border-cyan-400/32 hover:bg-cyan-500/[0.14] disabled:opacity-45`}
-              >
-                {savedLinks.has(p.link) ? "Saved" : "Save"}
-              </motion.button>
-            </div>
-          </div>
+        <div className="qa-ref-intel-card__inner qi-product-card-inner relative flex h-full min-h-0 flex-col overflow-hidden">
+          <IntelligenceCardBody
+            product={p}
+            list={list}
+            rank={rank}
+            sym={sym}
+            trust={trust}
+            trustMicro={trustMicro}
+            deal={deal}
+            verdictLabel={verdictLabel}
+            reasonLine={reasonLine}
+            alignmentScore={alignmentScore}
+            inCompare={inCompare}
+            saved={savedLinks.has(p.link)}
+            compareDisabled={!inCompare && compareLinks.length >= 3}
+            imagePriority={imagePriority}
+            onOpenBrief={() => {
+              recordViewedProductLink(p.link);
+              onOpenIntelligence(p);
+            }}
+            onToggleCompare={() => toggleCompare(p.link)}
+            onSave={() => saveProduct(p)}
+          />
         </div>
       </motion.article>
     </MagneticSurface>

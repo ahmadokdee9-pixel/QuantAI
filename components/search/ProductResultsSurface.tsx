@@ -1,14 +1,11 @@
 ﻿"use client";
 
 import type { Dispatch, SetStateAction } from "react";
-import dynamic from "next/dynamic";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import InstitutionalStatePanel from "@/components/system/InstitutionalStatePanel";
 import InstitutionalFilteredPanel from "@/components/system/InstitutionalFilteredPanel";
 import InlineSystemNotice from "@/components/system/InlineSystemNotice";
-import { resolveInstitutionalState } from "@/lib/ui/systemStateLanguage";
 import { QuantAnalyticsEvents } from "@/lib/analytics/events";
 import { trackEvent } from "@/lib/analytics/track";
 import { apiErrorText, isApiFailure } from "@/lib/api/apiResult";
@@ -22,7 +19,6 @@ import {
   type ProductDealIntelligence,
 } from "@/lib/intelligence/dealIntelligenceEngine";
 import type { CompareVerdictPayload } from "@/lib/intelligence/compareVerdict";
-import { analyzeDealCluster } from "@/lib/deals";
 import type { DealClusterDTO } from "@/lib/deals/types";
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
 import type { SearchIntelligenceLevel } from "@/lib/subscription/plans";
@@ -34,24 +30,21 @@ import { extractHumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
 import { computeMarketAwarenessForTray } from "@/lib/intelligence/marketAwareness";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import CompareIntelligencePanel from "./CompareIntelligencePanel";
+import IntelligenceCommandCenter from "./IntelligenceCommandCenter";
+import LiveIntelligenceRail from "./LiveIntelligenceRail";
+import MarketSummaryBlock from "./MarketSummaryBlock";
 import ProductIntelligenceDrawer from "./ProductIntelligenceDrawer";
 import ProductResultCard from "./ProductResultCard";
 import ResultsToolbar from "./ResultsToolbar";
-import LiveIntelligenceLayer from "@/components/live/LiveIntelligenceLayer";
+import SellerCoverageStrip from "./SellerCoverageStrip";
 import { useMobilePerf } from "@/lib/hooks/useMobilePerf";
 import { relatedTrayQueries } from "@/lib/search/relatedTrayQueries";
 import { buildUnifiedMarketGroup } from "@/lib/intelligence/unifiedMarketMatching";
+import { INTEL_TERMS } from "@/lib/ui/intelligenceTerminology";
 import {
   loadMarketMemory,
   recordTrayPriceSnapshots,
 } from "@/lib/intelligence/marketMemory";
-
-const MultiStoreDealAdvisor = dynamic(() => import("@/components/deals/MultiStoreDealAdvisor"), {
-  ssr: false,
-  loading: () => (
-    <div className="h-36 max-w-5xl rounded-2xl border border-white/[0.06] bg-white/[0.03] animate-pulse" aria-hidden />
-  ),
-});
 
 type Props = {
   products: QuantProduct[];
@@ -85,19 +78,23 @@ type Props = {
 
 function ResultSkeleton() {
   return (
-    <div className="grid gap-7 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="qa-ui-results-grid">
       {Array.from({ length: 8 }).map((_, i) => (
         <div
           key={i}
           style={i < 6 ? { animationDelay: `${i * 55}ms` } : undefined}
           className="cockpit-glass-panel skeleton-cinematic overflow-hidden border-white/[0.07] p-5 motion-safe:animate-[fadeIn_0.45s_ease-out_both]"
         >
-          <div className="qa-skeleton-shimmer h-40 rounded-2xl" />
-          <div className="qa-skeleton-shimmer mt-4 h-4 w-[82%] rounded-lg" />
-          <div className="qa-skeleton-shimmer mt-2 h-3 w-3/5 rounded" />
-          <div className="qa-skeleton-shimmer mt-4 h-3 w-full rounded" />
+          <div className="qa-skeleton-shimmer h-14 rounded-xl" />
+          <div className="qa-skeleton-shimmer mt-3 h-3 w-full rounded" />
+          <div className="grid grid-cols-3 gap-2 mt-3">
+            <div className="qa-skeleton-shimmer h-12 rounded-lg" />
+            <div className="qa-skeleton-shimmer h-12 rounded-lg" />
+            <div className="qa-skeleton-shimmer h-12 rounded-lg" />
+          </div>
+          <div className="qa-skeleton-shimmer mt-3 h-3 w-4/5 rounded" />
           <div className="qa-skeleton-shimmer mt-2 h-3 w-2/3 rounded" />
-          <div className="qa-skeleton-shimmer mt-6 h-11 rounded-full" />
+          <div className="qa-skeleton-shimmer mt-4 h-10 rounded-full" />
         </div>
       ))}
     </div>
@@ -194,7 +191,6 @@ export default function ProductResultsSurface({
     () => computeMarketAwarenessForTray(searchQuery?.trim() ?? "", sortedProducts),
     [sortedProducts, searchQuery]
   );
-  const marketPulse = useMemo(() => sortedProducts[0]?.qiMarketPulse ?? null, [sortedProducts]);
   const marketComparison = searchMeta?.marketComparison as
     | {
         merchantCount?: number;
@@ -207,50 +203,22 @@ export default function ProductResultsSurface({
         };
       }
     | undefined;
-  const marketComparisonSignals = marketComparison?.comparisonSignals;
-
   const unifiedMarketByLink = useMemo(
     () => buildUnifiedMarketGroup(sortedProducts, searchQuery.trim()).byLink,
     [sortedProducts, searchQuery]
   );
-  const leadFamilyInsight = useMemo(() => {
-    let best: ReturnType<typeof unifiedMarketByLink.get> | null = null;
-    for (const p of compositeRanked) {
-      const insight = unifiedMarketByLink.get(p.link);
-      if (!insight || insight.storeCount < 2) continue;
-      if (
-        !best ||
-        insight.storeCount > best.storeCount ||
-        (insight.storeCount === best.storeCount && insight.merchantDiversityScore > best.merchantDiversityScore)
-      ) {
-        best = insight;
-      }
-    }
-    return best;
-  }, [compositeRanked, unifiedMarketByLink]);
-
   const compactTray = sortedProducts.length > 0 && sortedProducts.length <= 4;
   const sparseTray = sortedProducts.length > 0 && sortedProducts.length <= 3;
   const relatedQueries = useMemo(
     () => (sparseTray && searchQuery.trim() ? relatedTrayQueries(searchQuery, 5) : []),
     [sparseTray, searchQuery]
   );
-  const gridCols =
+  const resultsGridClass =
     sortedProducts.length === 1
-      ? "grid-cols-1 sm:grid-cols-1 max-w-md mx-auto"
-      : "sm:grid-cols-2 xl:grid-cols-3";
+      ? "qa-ui-results-grid qa-ui-results-grid--single"
+      : "qa-ui-results-grid";
   const gridMax =
     sortedProducts.length === 2 ? "max-w-4xl mx-auto" : sortedProducts.length === 3 ? "max-w-6xl mx-auto" : "";
-
-  const filteredDealClusters = useMemo(() => {
-    if (!dealClusters.length) return [];
-    const allow = new Set(sortedProducts.map((p) => p.link));
-    return dealClusters.flatMap((c) => {
-      const next = c.listings.filter((p) => allow.has(p.link));
-      if (next.length < 2) return [];
-      return [analyzeDealCluster(c.id, next)];
-    });
-  }, [dealClusters, sortedProducts]);
 
   const transition = reduceMotion
     ? { duration: 0 }
@@ -426,47 +394,22 @@ export default function ProductResultsSurface({
         aria-busy="true"
         aria-label="Loading search results"
       >
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-cyan-500/8 to-transparent blur-2xl" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-slate-900/5 to-transparent blur-2xl" />
         <div className="qa-os-toolbar sticky top-[3.25rem] z-30 -mx-4 px-4 py-3 sm:-mx-6 sm:px-6 mb-6">
           <div className="h-12 max-w-2xl rounded-2xl border border-white/[0.06] bg-gradient-to-r from-white/[0.07] via-white/[0.04] to-white/[0.07] animate-pulse" />
         </div>
-        <div className="mb-8 max-w-2xl">
-          <p className="qi-sys-results-loading" aria-live="polite">
-            Stabilizing synthesis tray
-          </p>
-          <div className="qi-sys-results-loading-bar" aria-hidden>
-            <div className="qi-sys-results-loading-fill" />
-          </div>
-        </div>
+        <LiveIntelligenceRail live searchQuery={searchQuery} className="mb-6" />
         <ResultSkeleton />
       </section>
     );
   }
 
   if (searchError && !loading && products.length === 0) {
-    const state = resolveInstitutionalState(searchError);
-    if (!state) return null;
-    const trayExpl = searchMeta?.trayExplanation as
-      | { headline?: string; supporting?: string; hints?: string[] }
-      | null
-      | undefined;
-    const mergedState = {
-      ...state,
-      supporting:
-        typeof trayExpl?.supporting === "string" && trayExpl.supporting.trim()
-          ? trayExpl.supporting.trim()
-          : state.supporting,
-      recoveryHints:
-        Array.isArray(trayExpl?.hints) && trayExpl.hints.length > 0
-          ? trayExpl.hints
-          : state.recoveryHints,
-    };
     return (
       <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-16" aria-live="polite">
-        <InstitutionalStatePanel state={mergedState} onAction={onRetrySearch} />
-        <p className="qi-silent-whisper mx-auto mt-4 max-w-lg text-center text-[11px] text-slate-500/85">
-          QuantAI provides decision intelligence from retailer listings in this tray — not financial advice.
-        </p>
+        <div className="qa-ui-search-error-inline rounded-2xl px-4 py-3 text-center text-sm font-medium">
+          Unable to complete intelligence read.
+        </div>
       </section>
     );
   }
@@ -499,23 +442,26 @@ export default function ProductResultsSurface({
   }
 
   const advisorPad =
-    mobilePerf && filteredDealClusters.length === 0
-      ? compactTray
-        ? "pb-12"
-        : "pb-16"
-      : filteredDealClusters.length > 0
-        ? "pb-[min(40rem,52vh)] sm:pb-60"
-        : compactTray
-          ? "pb-16"
-          : "pb-24";
+    compactTray
+      ? "pb-8"
+      : "pb-12";
 
   return (
     <section
       id="quantai-results-anchor"
-      className={`relative mx-auto max-w-7xl scroll-mt-[max(5.5rem,env(safe-area-inset-top,0px)+3rem)] px-4 sm:px-6 ${advisorPad}`}
+      className={`qa-ref-results qa-ref-section qa-ref-section--results relative scroll-mt-[max(5.5rem,env(safe-area-inset-top,0px)+3rem)] ${loading ? "qa-ref-results--scanning" : ""} ${advisorPad}`}
       ref={anchorRef}
     >
-      <div className="pointer-events-none absolute inset-x-0 -top-8 h-48 bg-[radial-gradient(ellipse_80%_55%_at_50%_0%,rgba(34,211,238,0.08),transparent_68%)]" />
+      <div className="pointer-events-none absolute inset-x-0 -top-8 h-40 bg-[radial-gradient(ellipse_80%_55%_at_50%_0%,rgba(91,111,217,0.06),transparent_70%)]" />
+
+      <IntelligenceCommandCenter
+        products={sortedProducts}
+        searchQuery={searchQuery}
+        searchIntelligence={searchIntelligence}
+        marketComparison={marketComparison ?? null}
+      />
+
+      <SellerCoverageStrip products={sortedProducts} />
 
       <ResultsToolbar
         sort={sort}
@@ -529,34 +475,23 @@ export default function ProductResultsSurface({
         onClearFilters={onClearFilters}
       />
 
-      {marketComparison && !searchIntelligence ? (
-        <div className="mb-6 grid gap-2 rounded-[1.25rem] border border-white/[0.06] bg-white/[0.02] p-3 sm:grid-cols-4 sm:p-3.5">
-          {[
-            ["Market depth", `${marketComparison.merchantCount ?? sortedProducts.length} merchants`],
-            ["Trusted lanes", `${marketComparison.trustedMerchantCount ?? 0} verified`],
-            ["Balance", `${marketComparisonSignals?.merchantBalanceScore ?? 0}/100`],
-            ["Regional fit", `${Math.round((marketComparisonSignals?.regionalFit01 ?? 0) * 100)}% local`],
-          ].map(([label, value]) => (
-            <div key={label} className="rounded-2xl border border-white/[0.055] bg-black/20 px-3 py-2.5">
-              <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</p>
-              <p className="mt-1 text-[13px] font-semibold text-slate-100">{value}</p>
-            </div>
-          ))}
-        </div>
-      ) : null}
-
       {loading && products.length > 0 ? (
         <div
-          className="mb-4 flex items-center justify-center gap-2.5 rounded-xl border border-cyan-400/14 bg-cyan-500/[0.07] px-4 py-3 text-center text-[12px] font-medium text-cyan-50/92 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-opacity duration-300"
+          className="qa-ui-processing-panel qa-ui-tray-status mb-3 flex items-center justify-center gap-2.5 px-4 py-2.5 text-center text-[12px] font-medium"
           role="status"
           aria-live="polite"
         >
-          <Loader2 className="size-3.5 shrink-0 animate-spin text-cyan-200/90" aria-hidden />
-          Updating trayâ€¦
+          <Loader2 className="size-3.5 shrink-0 animate-spin opacity-70" aria-hidden />
+          Updating results…
         </div>
       ) : null}
 
-      <div className={compactTray ? "mb-5" : "mb-8"}>
+      <div className="qa-ref-results-grid-head">
+        <p className="qa-ref-kicker">{INTEL_TERMS.intelligenceResults}</p>
+        <p className="qa-ref-results-grid-head__count">{sortedProducts.length} intelligence assets in tray</p>
+      </div>
+
+      <div className={compactTray ? "mb-3 mt-3" : "mb-4 mt-4"}>
         <ShareSnapshotBar
           query={searchQuery}
           products={sortedProducts}
@@ -564,33 +499,9 @@ export default function ProductResultsSurface({
         />
       </div>
 
-      {!searchIntelligence ? (
-        <LiveIntelligenceLayer
-          key={searchQuery}
-          query={searchQuery}
-          products={sortedProducts}
-          marketPulse={marketPulse}
-          familyInsight={leadFamilyInsight}
-          defaultCollapsed
-        />
-      ) : null}
-      {sortedProducts.length >= 2 && compareLinks.length === 0 ? (
-        <div className="mb-7 flex justify-center">
-          <button
-            type="button"
-            onClick={() => setCompareLinks(sortedProducts.slice(0, 2).map((p) => p.link))}
-            className="rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-[11px] font-medium text-slate-400 transition hover:border-cyan-400/15 hover:text-slate-200"
-          >
-            Compare top two
-          </button>
-        </div>
-      ) : null}
-
       {sparseTray && onRunRelatedQuery && relatedQueries.length > 0 ? (
-        <div className="mb-8 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3.5 sm:px-5">
-          <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500">
-            Adjacent scans
-          </p>
+        <div className="qa-ui-live-ribbon mb-8">
+          <p className="qa-ui-live-ribbon-label">Adjacent scans</p>
           <div className="mt-2.5 flex flex-wrap gap-2">
             {relatedQueries.map((rq) => (
               <button
@@ -598,7 +509,7 @@ export default function ProductResultsSurface({
                 type="button"
                 disabled={loading}
                 onClick={() => onRunRelatedQuery(rq)}
-                className="max-w-[min(100%,20rem)] rounded-full border border-white/[0.1] bg-black/30 px-3 py-1.5 text-left text-[11px] font-medium leading-snug text-slate-200 transition hover:border-cyan-400/22 hover:bg-white/[0.05] disabled:opacity-40"
+                className="qa-ui-tray-adjacent-chip disabled:opacity-40"
               >
                 {rq}
               </button>
@@ -606,27 +517,6 @@ export default function ProductResultsSurface({
           </div>
         </div>
       ) : null}
-
-      {searchIntelligence && (
-        <motion.div
-          initial={reduceMotion || mobilePerf ? { opacity: 1, y: 0 } : { opacity: 0.88, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={
-            reduceMotion || mobilePerf
-              ? { duration: 0 }
-              : { type: "spring", stiffness: 300, damping: 36 }
-          }
-          className={`intel-panel-shimmer relative z-0 min-w-0 overflow-hidden rounded-[1.5rem] ${compactTray ? "mb-8" : "mb-14"}`}
-        >
-          <div className="relative z-[1] min-w-0">
-            <GlobalIntelligencePanel
-              intel={searchIntelligence}
-              displayLevel={intelligenceLevel}
-              performanceMode={mobilePerf}
-            />
-          </div>
-        </motion.div>
-      )}
 
       {compareProducts.length > 0 && (
         <CompareIntelligencePanel
@@ -665,11 +555,13 @@ export default function ProductResultsSurface({
         list={sortedProducts}
         open={detailProduct != null}
         onClose={() => setDetailProduct(null)}
+        onSave={saveProduct}
+        saved={detailProduct != null && savedLinks.has(detailProduct.link)}
       />
 
       {mobilePerf ? (
         <div
-          className={`qi-tray-atmosphere grid min-w-0 ${gridCols} ${compactTray ? "gap-6 sm:gap-7" : "gap-8 sm:gap-9"} ${gridMax}`}
+          className={`qi-tray-atmosphere min-w-0 ${resultsGridClass} ${gridMax}`}
           data-tray-focus={trayFocusLink ? "true" : "false"}
         >
           {sortedProducts.map((p, index) => {
@@ -711,7 +603,7 @@ export default function ProductResultsSurface({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className={`qi-tray-atmosphere grid min-w-0 ${gridCols} ${compactTray ? "gap-6 sm:gap-7" : "gap-8 sm:gap-9"} ${gridMax}`}
+            className={`qi-tray-atmosphere min-w-0 ${resultsGridClass} ${gridMax}`}
             data-tray-focus={trayFocusLink ? "true" : "false"}
           >
             {sortedProducts.map((p, index) => {
@@ -748,17 +640,37 @@ export default function ProductResultsSurface({
         </AnimatePresence>
       )}
 
-      {compareProducts.length > 0 ? (
-        <div className="pointer-events-none h-[min(11rem,26dvh)] sm:h-36" aria-hidden />
-      ) : null}
+      <MarketSummaryBlock
+        products={sortedProducts}
+        searchIntelligence={searchIntelligence}
+        marketComparison={marketComparison ?? null}
+      />
 
-      {filteredDealClusters.length > 0 && (
-        <MultiStoreDealAdvisor
-          clusters={filteredDealClusters}
-          sortedProducts={sortedProducts}
-          compareBarActive={compareProducts.length > 0}
-        />
+      {searchIntelligence && (
+        <motion.div
+          initial={reduceMotion || mobilePerf ? { opacity: 1, y: 0 } : { opacity: 0.88, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={
+            reduceMotion || mobilePerf
+              ? { duration: 0 }
+              : { type: "spring", stiffness: 300, damping: 36 }
+          }
+          className={`qa-ref-intel-preview qa-ui-analyst-tray qa-ui-analyst-shell relative z-0 mt-6 min-w-0 overflow-hidden rounded-[1.5rem] ${compactTray ? "mb-6" : "mb-8"}`}
+        >
+          <div className="relative z-[1] min-w-0">
+            <GlobalIntelligencePanel
+              intel={searchIntelligence}
+              displayLevel={intelligenceLevel}
+              performanceMode={mobilePerf}
+              compact
+            />
+          </div>
+        </motion.div>
       )}
+
+      {compareProducts.length > 0 ? (
+        <div className="pointer-events-none h-20 sm:h-24" aria-hidden />
+      ) : null}
     </section>
   );
 }
