@@ -51,6 +51,8 @@ import { buildLatencyBudgetReport } from "@/lib/search/latencyBudget";
 import { PipelineTrace } from "@/lib/search/pipelineTrace";
 import { rebuildSearchTrayArtifacts, verifyTrayMetaCoherence } from "@/lib/search/searchTrayArtifacts";
 import { composeProductionMeta } from "@/lib/search/productionMetaComposer";
+import { applySearchIntelligenceUpgrade } from "@/lib/search/searchIntelligenceUpgrade";
+import { sparseExpansionQueriesForFetch } from "@/lib/search/sparseResultIntelligence";
 import { scanControlledStackRegistry } from "@/lib/governance/controlledStackRegistry";
 import { runUnifiedControlledStack } from "@/lib/governance/unifiedControlledStackKernel";
 import {
@@ -313,6 +315,7 @@ async function fetchShoppingProductsWithFallback(
     productSpecificFallback,
     semanticFallback,
     categoryFallback,
+    ...sparseExpansionQueriesForFetch(query, canonicalQuery),
     canonicalQuery.upstreamQuery,
     canonicalQuery.normalizedQuery,
     query,
@@ -1495,6 +1498,11 @@ async function handleSearch(
     products = applyMerchantDiversitySafeguard(products);
     traceStage("merchant_diversity_final", stageBefore, products.length);
 
+    stageBefore = products.length;
+    const intelligenceUpgrade = applySearchIntelligenceUpgrade(products, query, canonicalQuery);
+    products = intelligenceUpgrade.products;
+    traceStage("search_intelligence_upgrade", stageBefore, products.length);
+
     const marketAwareness = computeMarketAwarenessForTray(query, products);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
     const trayMetaCoherence = verifyTrayMetaCoherence(products, dealClusters);
@@ -1533,6 +1541,15 @@ async function handleSearch(
         commerceAiEngine: resolveCommerceAiEngine(),
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),
         canonicalQuery: canonicalQueryForDebug(canonicalQuery),
+        decisionBrief: intelligenceUpgrade.meta.decisionBrief,
+        extractedIntent: intelligenceUpgrade.meta.extractedIntent,
+        comparisonIntelligence: intelligenceUpgrade.meta.comparisonIntelligence,
+        discountIntelligence: intelligenceUpgrade.meta.discountIntelligence,
+        sparseResult: intelligenceUpgrade.meta.sparseResult,
+        searchIntelligenceUpgrade: {
+          version: intelligenceUpgrade.meta.version,
+          rankingAdjustmentsApplied: intelligenceUpgrade.meta.rankingAdjustmentsApplied,
+        },
         identityDebug: debugMeta.identityDebug,
         liveDiscovery,
         liveDiscoveryStatus: liveDiscovery.status,

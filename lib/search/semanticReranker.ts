@@ -85,6 +85,9 @@ function keywordCoverage(text: string, keywords: string[]): number {
 function categoryFit(q: SemanticQueryUnderstanding, text: string): number {
   switch (q.productCategory) {
     case "shoes":
+      if (/\b(running|flat\s+feet|stability)\b/i.test(q.envelope) && /\b(air\s+force|handball|spezial|3mc|lifestyle)\b/i.test(text) && !/\b(running|support|stability|gel|kayano|guide)\b/i.test(text)) {
+        return 0.1;
+      }
       return /\b(shoe|sneaker|trainer|boot|yeezy|jordan|dunk|air force)\b/i.test(text) ? 1 : 0.15;
     case "phone":
       return /\b(phone|iphone|galaxy|pixel|smartphone|mobile)\b/i.test(text) ? 1 : 0.12;
@@ -107,7 +110,10 @@ function categoryFit(q: SemanticQueryUnderstanding, text: string): number {
       return watchCue ? 1 : 0.18;
     }
     case "desk_setup":
-      return /\b(desk|workspace|monitor|keyboard|mouse|lamp|stand|organizer)\b/i.test(text) ? 1 : 0.22;
+      if (/\b(sofa|couch|loveseat|sectional|futon)\b/i.test(text) && !/\b(desk|organizer|monitor|keyboard|mount)\b/i.test(text)) {
+        return 0.05;
+      }
+      return /\b(desk|workspace|monitor|keyboard|mouse|lamp|stand|organizer|mount|sit[-\s]?stand|cable)\b/i.test(text) ? 1 : 0.22;
     case "beauty":
       return /\b(beauty|makeup|skincare|serum|cream|cosmetic)\b/i.test(text) ? 1 : 0.24;
     case "fashion":
@@ -115,7 +121,13 @@ function categoryFit(q: SemanticQueryUnderstanding, text: string): number {
     case "home":
       return /\b(home|kitchen|decor|bedroom|living room|furniture)\b/i.test(text) ? 1 : 0.24;
     case "electronics":
-      return /\b(electronic|monitor|gpu|camera|tablet|console|tv|display)\b/i.test(text) ? 1 : 0.24;
+      if (/\b(rtx|gtx|geforce|graphics\s+card|gpu)\b/i.test(q.envelope) && /\b(camera|instax|fujifilm)\b/i.test(text) && !/\b(gpu|graphics|geforce|rtx|gtx)\b/i.test(text)) {
+        return 0.08;
+      }
+      if (/\b(mechanical\s+keyboard|keyboard)\b/i.test(q.envelope) && /\b(camera|instax)\b/i.test(text) && !/\b(keyboard|keycap|switch)\b/i.test(text)) {
+        return 0.08;
+      }
+      return /\b(electronic|monitor|gpu|camera|tablet|console|tv|display|keyboard|headset|graphics)\b/i.test(text) ? 1 : 0.24;
     default:
       return 0.55;
   }

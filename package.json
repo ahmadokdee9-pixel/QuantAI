@@ -17,6 +17,7 @@
     "test:beta-supabase-migrations": "node scripts/verify-supabase-migrations.mjs",
     "test:beta-latency-probe": "node scripts/prod-latency-probe.mjs",
     "test:beta-stabilization": "node scripts/test-production-stabilization.mjs",
+    "test:search-intelligence-upgrade": "npx --yes tsx scripts/test-search-intelligence-upgrade.mjs",
     "test:merchant-diversity": "npx --yes tsx scripts/test-merchant-diversity.mjs",
     "test:beta-cache-dedupe": "node scripts/verify-beta-cache-dedupe.mjs",
     "test:public-beta-30-qa": "node scripts/run-public-beta-30-query-qa.mjs",

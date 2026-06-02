@@ -133,6 +133,11 @@ function detectCategory(s: string): SemanticProductCategory {
   if (/قلاية\s+هوائية|ماكينة\s+قهوة|مكنسة|روبوت\s+مكنسة|عربة\s+اطفال|عربة\s+أطفال/.test(s)) return "home";
   if (/يد\s+تحكم|كنترولر|بلايستيشن|شاشة|تلفزيون|كاميرا/.test(s)) return "electronics";
   if (hasAny(s, /\b(yeezy|jordan|dunk|air force|samba|gazelle|adidas|nike|sneakers?|trainers?|shoes?|boots?|بوط|حذاء)\b/i)) return "shoes";
+  if (hasAny(s, /\b(running\s+shoe|flat\s+feet|stability\s+shoe|overpronation)\b/i)) return "shoes";
+  if (hasAny(s, /\b(yoga\s+mat|dumbbell|adjustable\s+dumbbell|home\s+gym)\b/i)) return "home";
+  if (hasAny(s, /\b(desk\s+organizer|cable\s+management|monitor\s+arm|dual\s+monitor|standing\s+desk|sit[-\s]?stand|mechanical\s+keyboard)\b/i)) return "electronics";
+  if (hasAny(s, /\b(gaming\s+headset|wireless\s+gaming|ps5\s+headset|controller\s+charging|charging\s+dock)\b/i)) return "electronics";
+  if (hasAny(s, /\b(\d{2,3}\s*inch\s*(?:4k\s*)?(?:smart\s*)?tv|smart\s+tv|television|qled|oled\s+tv)\b/i)) return "electronics";
   if (hasAny(s, /(iphone|ايفون|آيفون|\bgalaxy\b|\bpixel\b|\bphone\b|\bsmartphone\b|هاتف|جوال|موبايل)/i)) return "phone";
   if (hasAny(s, /\b(gaming laptop|laptop|notebook|macbook|thinkpad|chromebook|ultrabook|لابتوب|لاب\s*توب)\b/i)) return "laptop";
   if (hasAny(s, /\b(headphones?|earbuds?|airpods?|bose|sony wh|noise cancelling|bluetooth speaker|soundbar|سماعات?|ايربودز|headset)\b/i)) return "audio";

@@ -18,6 +18,15 @@ export function hardCategoryMismatch(query: string, title: string): boolean {
     /\b(sneaker|trainer|air\s*force|jordan|yeezy|running\s+shoe|footwear|nike\s+shoe|adidas\s+shoe)\b/;
   const perfume = /\b(perfume|fragrance|parfum|cologne|eau\s+de|edt|edp)\b/;
   const gpuCpu = /\b(gpu|graphics|rtx|gtx|processor|cpu|motherboard)\b/;
+  const camera = /\b(camera|instax|fujifilm|dslr|mirrorless|webcam)\b/;
+  const keyboard = /\b(keyboard|mechanical\s+keyboard|keycap)\b/;
+  const deskAccessory =
+    /\b(desk\s+organizer|cable\s+management|monitor\s+arm|monitor\s+mount|dual\s+monitor|standing\s+desk|sit[-\s]?stand)\b/;
+  const runningShoe = /\b(running\s+shoe|flat\s+feet|stability\s+shoe|overpronation)\b/;
+  const lifestyleShoe = /\b(air\s+force|handball\s+spezial|3mc|lifestyle\s+sneaker|dunk|samba)\b/;
+  const beautyExact = /\b(lipstick|ruby\s+woo|cerave|retinol|moisturiz)/;
+  const sticker = /\b(sticker|decal|pin|badge|poster|patch)\b/;
+  const gamingHeadset = /\b(gaming\s+headset|wireless\s+gaming\s+headset|ps5\s+headset)\b/;
 
   if (compute.test(q) && furniture.test(t)) return true;
   if (mobile.test(q) && furniture.test(t)) return true;
@@ -28,6 +37,15 @@ export function hardCategoryMismatch(query: string, title: string): boolean {
   if (perfume.test(q) && (furniture.test(t) || gpuCpu.test(t) || /\b(laptop|phone|iphone)\b/.test(t))) return true;
   if (gpuCpu.test(q) && perfume.test(t)) return true;
   if (/\b(laptop|gaming\s+laptop)\b/.test(q) && sneakers.test(t)) return true;
+
+  // Phase 3 — hard category protection (QA audit failures)
+  if (gpuCpu.test(q) && camera.test(t) && !gpuCpu.test(t)) return true;
+  if (keyboard.test(q) && camera.test(t) && !keyboard.test(t)) return true;
+  if (deskAccessory.test(q) && furniture.test(t) && !deskAccessory.test(t)) return true;
+  if (runningShoe.test(q) && lifestyleShoe.test(t) && !/\b(running|support|stability|gel|kayano)\b/.test(t)) return true;
+  if (beautyExact.test(q) && sticker.test(t)) return true;
+  if (gamingHeadset.test(q) && camera.test(t)) return true;
+  if (gpuCpu.test(q) && keyboard.test(t) && !gpuCpu.test(t)) return true;
 
   return false;
 }
