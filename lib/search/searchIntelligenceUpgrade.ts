@@ -11,7 +11,6 @@ import { assessPriceSanity, isHardPriceSanityReject } from "@/lib/intelligence/p
 import { buildComparisonIntelligence } from "@/lib/intelligence/recommendationClassification";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getStoreTrustScore } from "@/lib/shoppingScore";
-import { getMarketplaceSellerRiskTier } from "@/lib/retailTrust";
 import type { CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 import {
   assessConstraintViolations,
@@ -20,6 +19,10 @@ import {
 } from "@/lib/search/constraintExtractionEngine";
 import { extractSearchIntent } from "@/lib/search/intentExtractionEngine";
 import { assessSparseResults } from "@/lib/search/sparseResultIntelligence";
+import {
+  isSpecialtyPurchaseIntent,
+  scoreSpecialtyListing,
+} from "@/lib/search/specialtyRankingIntelligence";
 
 export type TrustRankingMeta = {
   applied: boolean;
@@ -28,12 +31,14 @@ export type TrustRankingMeta = {
     store: string;
     trustScore: number;
     adjustment: number;
+    specialtyScore?: number;
+    weakListingPenalty?: number;
     hardReject: boolean;
   }>;
 };
 
 export type SearchIntelligenceUpgradeMeta = {
-  version: "phase3-v1";
+  version: "phase8-v1";
   extractedIntent: ReturnType<typeof extractSearchIntent>;
   constraints: ReturnType<typeof extractSearchConstraints>;
   trustRanking: TrustRankingMeta;
@@ -44,36 +49,9 @@ export type SearchIntelligenceUpgradeMeta = {
   rankingAdjustmentsApplied: number;
 };
 
-function runningShoeSpecialtyBoost(title: string, intent: ReturnType<typeof extractSearchIntent>): number {
-  if (intent.productType !== "running_shoes" && intent.performanceIntent !== "stability_running") return 0;
-  const text = title.toLowerCase();
-  let boost = 0;
-  if (/\b(stability|support|overpronation|motion\s+control|structured|guide|kayano|beast|adrenaline|ghost|pegasus)\b/i.test(text)) {
-    boost += 10;
-  }
-  if (/\b(air\s+force|handball|spezial|3mc|dunk|samba|walking\s+shoe|lifestyle)\b/i.test(text) && !/\b(running|stability|support)\b/i.test(text)) {
-    boost -= 14;
-  }
-  return boost;
-}
-
 function categoryProtectionPenalty(query: string, title: string): number {
   if (hardCategoryMismatch(query, title)) return 55;
   return 0;
-}
-
-function trustRankingAdjustment(store: string, title: string): number {
-  const trust = getStoreTrustScore(store);
-  const mp = getMarketplaceSellerRiskTier(store, title);
-  let adj = 0;
-  if (trust >= 82) adj += 4;
-  else if (trust >= 72) adj += 2;
-  else if (trust < 55) adj -= 8;
-  else if (trust < 62) adj -= 4;
-  if (mp === "high") adj -= 10;
-  else if (mp === "medium") adj -= 3;
-  if (/\b(made-in-china|wish\.|temu|aliexpress)\b/i.test(store)) adj -= 6;
-  return adj;
 }
 
 /** Final intelligence pass: rerank products and compose institutional meta. */
@@ -85,6 +63,7 @@ export function applySearchIntelligenceUpgrade(
   const intent = extractSearchIntent(query, canonicalQuery);
   const constraints = extractSearchConstraints(query, canonicalQuery);
   const trayPrices = products.map((p) => p.price).filter((n) => n > 0);
+  const specialtyIntent = isSpecialtyPurchaseIntent(intent, query);
 
   const scored = products.map((p, index) => {
     const violations = assessConstraintViolations(p.title, p.price, constraints, intent);
@@ -92,22 +71,31 @@ export function applySearchIntelligenceUpgrade(
     const categoryPen = categoryProtectionPenalty(query, p.title);
     const priceSanity = assessPriceSanity(p, trayPrices, query);
     const pricePen = priceSanity.penalty;
-    const trustAdj = trustRankingAdjustment(p.store, p.title);
-    const specialtyBoost = runningShoeSpecialtyBoost(p.title, intent);
+    const specialty = scoreSpecialtyListing(p.title, p.store, intent, query);
+    const trustAdj = specialty.trustAdjustment;
+    const specialtyBoost = specialtyIntent ? specialty.totalAdjustment : specialty.trustAdjustment;
     const hardReject =
       categoryPen >= 50 ||
       violations.some((v) => v.severity === "hard" && v.penalty >= 35) ||
-      isHardPriceSanityReject(priceSanity);
+      isHardPriceSanityReject(priceSanity) ||
+      (specialtyIntent && specialty.weakListingPenalty >= 22 && specialty.specialtyScore < 8);
 
     const base =
       (p.qiBuyingDecision?.confidence ?? p.qiComposite ?? 50) -
       constraintPen -
       categoryPen -
       pricePen +
-      trustAdj +
       specialtyBoost;
 
-    return { p, index, score: base, hardReject, trustAdj, specialtyBoost };
+    return {
+      p,
+      index,
+      score: base,
+      hardReject,
+      trustAdj,
+      specialtyBoost,
+      specialtySignals: specialty,
+    };
   });
 
   const survivors = scored.filter((x) => !x.hardReject);
@@ -117,6 +105,13 @@ export function applySearchIntelligenceUpgrade(
 
   const sorted = pool
     .sort((a, b) => {
+      if (specialtyIntent) {
+        const specDelta =
+          b.specialtySignals.specialtyScore +
+          b.specialtySignals.totalAdjustment -
+          (a.specialtySignals.specialtyScore + a.specialtySignals.totalAdjustment);
+        if (Math.abs(specDelta) > 2) return specDelta;
+      }
       const da = discountRankingNudge(a.p, discountPreview);
       const db = discountRankingNudge(b.p, discountPreview);
       const d = b.score + db - (a.score + da);
@@ -127,7 +122,7 @@ export function applySearchIntelligenceUpgrade(
 
   const ranked = sorted.map((p, i) => ({ ...p, qiRank: i }));
   const discountIntelligence = buildDiscountIntelligence(ranked, query);
-  const comparisonIntelligence = buildComparisonIntelligence(ranked, intent, discountIntelligence);
+  const comparisonIntelligence = buildComparisonIntelligence(ranked, intent, discountIntelligence, query);
   const sparseResult = assessSparseResults(query, ranked, intent, constraints, canonicalQuery);
   const decisionBrief = buildDecisionBrief({
     query,
@@ -144,7 +139,9 @@ export function applySearchIntelligenceUpgrade(
     adjustments: scored.slice(0, 12).map((s) => ({
       store: s.p.store,
       trustScore: getStoreTrustScore(s.p.store),
-      adjustment: s.trustAdj + s.specialtyBoost,
+      adjustment: s.specialtyBoost,
+      specialtyScore: s.specialtySignals.specialtyScore,
+      weakListingPenalty: s.specialtySignals.weakListingPenalty,
       hardReject: s.hardReject,
     })),
   };
@@ -152,7 +149,7 @@ export function applySearchIntelligenceUpgrade(
   return {
     products: ranked,
     meta: {
-      version: "phase3-v1",
+      version: "phase8-v1",
       extractedIntent: intent,
       constraints,
       trustRanking,

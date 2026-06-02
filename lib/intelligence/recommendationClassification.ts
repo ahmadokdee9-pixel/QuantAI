@@ -6,6 +6,10 @@ import type { QuantProduct } from "@/lib/shoppingScore";
 import { getFinalComposite, getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
 import type { DiscountIntelligenceResult } from "@/lib/intelligence/discountIntelligenceLayer";
 import type { ExtractedSearchIntent } from "@/lib/search/intentExtractionEngine";
+import {
+  isSpecialtyPurchaseIntent,
+  scoreSpecialtyListing,
+} from "@/lib/search/specialtyRankingIntelligence";
 
 export type RecommendationClass = "best_overall" | "best_value" | "best_budget" | "best_premium";
 
@@ -60,7 +64,8 @@ function toRec(
 export function buildComparisonIntelligence(
   products: QuantProduct[],
   intent: ExtractedSearchIntent,
-  discount: DiscountIntelligenceResult
+  discount: DiscountIntelligenceResult,
+  query?: string
 ): ComparisonIntelligenceResult {
   if (!products.length) {
     return { bestOverall: null, bestValue: null, bestBudget: null, bestPremium: null, classifications: [] };
@@ -69,14 +74,29 @@ export function buildComparisonIntelligence(
   const priced = products.filter((p) => p.price > 0);
   const med = median(priced.map((p) => p.price));
 
-  const overall = [...products].sort(
-    (a, b) => getFinalComposite(b, products) - getFinalComposite(a, products)
-  )[0]!;
+  const q = query ?? "";
+  const specialtyMode = q.length > 0 && isSpecialtyPurchaseIntent(intent, q);
+  const overall = specialtyMode
+    ? [...products].sort((a, b) => {
+        const sa = scoreSpecialtyListing(a.title, a.store, intent, q);
+        const sb = scoreSpecialtyListing(b.title, b.store, intent, q);
+        const delta =
+          sb.specialtyScore + sb.totalAdjustment - (sa.specialtyScore + sa.totalAdjustment);
+        if (Math.abs(delta) > 1) return delta;
+        return getFinalComposite(b, products) - getFinalComposite(a, products);
+      })[0]!
+    : [...products].sort((a, b) => getFinalComposite(b, products) - getFinalComposite(a, products))[0]!;
   const overallConf = Math.min(96, Math.round(getFinalComposite(overall, products)));
   const overallReasons = [
-    "Strong composite score across trust and relevance",
+    specialtyMode
+      ? "Top specialty-intent match for this query"
+      : "Strong composite score across trust and relevance",
     getStoreTrustScore(overall.store) >= 75 ? "Verified retailer trust" : "Acceptable seller trust",
   ];
+  if (specialtyMode) {
+    const sig = scoreSpecialtyListing(overall.title, overall.store, intent, q);
+    overallReasons.push(...sig.reasons.slice(0, 2));
+  }
   if (discount.bestVerifiedDiscount?.link === overall.link) {
     overallReasons.push("Best verified discount in tray");
   }

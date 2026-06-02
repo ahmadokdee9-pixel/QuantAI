@@ -19,6 +19,7 @@
     "test:beta-stabilization": "node scripts/test-production-stabilization.mjs",
     "test:search-intelligence-upgrade": "npx --yes tsx scripts/test-search-intelligence-upgrade.mjs",
     "test:phase6-intelligence-hardening": "npx --yes tsx scripts/phase6-intelligence-hardening-validation.mjs",
+    "test:phase8-ranking-validation": "npx --yes tsx scripts/phase8-ranking-validation-suite.mjs",
     "test:merchant-diversity": "npx --yes tsx scripts/test-merchant-diversity.mjs",
     "test:beta-cache-dedupe": "node scripts/verify-beta-cache-dedupe.mjs",
     "test:public-beta-30-qa": "node scripts/run-public-beta-30-query-qa.mjs",

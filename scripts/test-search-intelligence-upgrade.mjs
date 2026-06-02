@@ -79,13 +79,28 @@ assert.equal(gpuTray.meta.decisionBrief.headline, "QuantAI Recommendation");
 // Running shoes — lifestyle demoted
 const shoeTray = applySearchIntelligenceUpgrade(
   [
+    mockProduct("Running Shoes Trendy Original Light Shock Absorption M7212", "Baasploa", 45, {
+      qiBuyingDecision: { confidence: 84 },
+    }),
     mockProduct("Nike Air Force 1 Women size 39", "Zalando", 96, { qiBuyingDecision: { confidence: 74 } }),
-    mockProduct("Brooks Ghost 15 Running Shoe Men", "Running Warehouse", 120, { qiBuyingDecision: { confidence: 68 } }),
+    mockProduct("ASICS Gel-Kayano 30 Men Stability Running Shoes", "Running Warehouse", 165, {
+      qiBuyingDecision: { confidence: 62 },
+    }),
     mockProduct("adidas 3MC", "Zalando", 75, { qiBuyingDecision: { confidence: 82 } }),
   ],
   "running shoes flat feet men"
 );
-assert.match(shoeTray.products[0].title, /Brooks|Running|Ghost/i);
+assert.match(shoeTray.products[0].title, /Kayano|ASICS|Brooks|stability|Arahi|Hoka/i);
+assert.equal(shoeTray.meta.version, "phase8-v1");
+
+const headsetTray = applySearchIntelligenceUpgrade(
+  [
+    mockProduct("Ntech Gaming Headset RGB Light", "unknown-shop", 25, { qiBuyingDecision: { confidence: 80 } }),
+    mockProduct("SteelSeries Arctis Nova 7P Wireless PS5 Headset", "bol.com", 149, { qiBuyingDecision: { confidence: 64 } }),
+  ],
+  "wireless gaming headset ps5"
+);
+assert.match(headsetTray.products[0].title, /SteelSeries|Arctis|Pulse|HyperX|Logitech/i);
 assert.ok(shoeTray.meta.trustRanking?.applied);
 assert.ok(shoeTray.meta.constraints);
 
@@ -102,10 +117,10 @@ assert.match(deskGated[0].title, /standing desk/i);
 
 const headsetQuery = "wireless gaming headset ps5";
 const headsetCq = buildCanonicalQuery(headsetQuery);
-const headsetTray = [
+const headsetGateTray = [
   mockProduct("SteelSeries Arctis 7P Wireless Gaming Headset PS5", "bol.com", 129),
 ];
-const headsetGated = applyHardIdentityGate(headsetTray, headsetCq);
+const headsetGated = applyHardIdentityGate(headsetGateTray, headsetCq);
 assert.equal(headsetGated.length, 1);
 const headsetNovaGated = applyHardIdentityGate(
   [mockProduct("SteelSeries Arctis Nova 7P Wireless PS5", "bol.com", 159)],

@@ -7,6 +7,11 @@ import type { DiscountIntelligenceResult } from "@/lib/intelligence/discountInte
 import type { ExtractedSearchIntent } from "@/lib/search/intentExtractionEngine";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getStoreTrustScore } from "@/lib/shoppingScore";
+import {
+  isSpecialtyPurchaseIntent,
+  pickSpecialtyLeaderIndex,
+  scoreSpecialtyListing,
+} from "@/lib/search/specialtyRankingIntelligence";
 
 export type DecisionBriefDTO = {
   headline: string;
@@ -32,10 +37,37 @@ export function buildDecisionBrief(args: {
   discount: DiscountIntelligenceResult;
   sparseTray: boolean;
 }): DecisionBriefDTO | null {
-  const { products, intent, comparison, discount, sparseTray } = args;
+  const { query, products, intent, comparison, discount, sparseTray } = args;
   if (!products.length) return null;
 
-  const pick = comparison.bestOverall ?? comparison.bestValue;
+  const specialtyMode = isSpecialtyPurchaseIntent(intent, query);
+  const leaderIdx = specialtyMode ? pickSpecialtyLeaderIndex(products, intent, query) : 0;
+  const leader = products[leaderIdx]!;
+  const comparisonPick = comparison.bestOverall ?? comparison.bestValue;
+
+  const pick =
+    specialtyMode && leader
+      ? {
+          label: "Best Overall",
+          title: leader.title,
+          store: leader.store,
+          link: leader.link,
+          price: leader.price,
+          confidence: comparisonPick?.confidence ?? 78,
+          reasons: scoreSpecialtyListing(leader.title, leader.store, intent, query).reasons,
+        }
+      : comparisonPick
+        ? {
+            label: comparisonPick.label,
+            title: comparisonPick.title,
+            store: comparisonPick.store,
+            link: comparisonPick.link,
+            price: comparisonPick.price,
+            confidence: comparisonPick.confidence,
+            reasons: comparisonPick.reasons,
+          }
+        : null;
+
   if (!pick) return null;
 
   const why: string[] = [...pick.reasons.slice(0, 4)];
@@ -46,6 +78,11 @@ export function buildDecisionBrief(args: {
   }
   if (intent.performanceIntent) {
     why.push(`Matched to ${intent.performanceIntent.replace(/_/g, " ")} intent`);
+  }
+  if (specialtyMode && leaderIdx === 0) {
+    why.unshift("Specialty-intent leader in tray ranking");
+  } else if (specialtyMode && leaderIdx > 0) {
+    why.unshift("Best specialty match after expert-category scoring");
   }
 
   let discountNote: string | null = null;

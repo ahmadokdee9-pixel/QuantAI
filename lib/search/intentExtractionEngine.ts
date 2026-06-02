@@ -61,17 +61,28 @@ function detectProductType(category: SemanticProductCategory, envelope: string):
   if (/\b(running\s+shoe|flat\s+feet|overpronation|stability\s+shoe)\b/i.test(e)) {
     return { type: "running_shoes", subtype: "stability_running" };
   }
+  if (/\b(kayano|gel[-\s]?nimbus|wave\s+inspire|ghost\s+\d|pegasus|adrenaline\s+gts|bondi|clifton)\b/i.test(e)) {
+    return { type: "running_shoes", subtype: "performance_running" };
+  }
   if (/\b(gaming\s+headset|wireless\s+gaming\s+headset)\b/i.test(e)) {
     return { type: "gaming_headset", subtype: "wireless" };
   }
   if (/\b(graphics\s+card|gpu|rtx\s*\d+|gtx\s*\d+)\b/i.test(e)) {
     return { type: "graphics_card", subtype: e.match(/\b(rtx\s*\d{3,4}|gtx\s*\d{3,4})\b/i)?.[0]?.replace(/\s+/g, " ") ?? null };
   }
-  if (/\b(mechanical\s+keyboard)\b/i.test(e)) return { type: "mechanical_keyboard", subtype: null };
+  if (/\b(mechanical\s+keyboard|mx\s+keys|keychron|quiet\s+tactile)\b/i.test(e)) return { type: "mechanical_keyboard", subtype: null };
+  if (/\b(coffee\s+maker|espresso\s+machine|drip\s+coffee)\b/i.test(e)) return { type: "coffee_maker", subtype: null };
+  if (/\b(cookware|nonstick|induction\s+pan)\b/i.test(e)) return { type: "cookware", subtype: null };
+  if (/\b(crossbody\s+bag|handbag|chinos|slim\s+fit\s+pants)\b/i.test(e)) return { type: "fashion", subtype: null };
+  if (/\b(webcam|gopro|hero\s+\d+)\b/i.test(e)) return { type: "webcam", subtype: null };
+  if (/\b(stand\s+mixer|kitchenaid)\b/i.test(e)) return { type: "stand_mixer", subtype: null };
   if (/\b(monitor\s+arm|dual\s+monitor)\b/i.test(e)) return { type: "monitor_mount", subtype: "dual" };
   if (/\b(desk\s+organizer|cable\s+management)\b/i.test(e)) return { type: "desk_accessory", subtype: "cable_management" };
   if (/\b(standing\s+desk|sit[-\s]?stand)\b/i.test(e)) return { type: "standing_desk", subtype: "electric" };
   if (/\b(smart\s+tv|4k\s+tv|oled|qled|\d+\s*inch\s+tv)\b/i.test(e)) return { type: "television", subtype: null };
+  if (/\b(programming|coder|developer|software\s+engineer)\b/i.test(e) && /\bmonitor\b/i.test(e)) {
+    return { type: "programming_monitor", subtype: "productivity" };
+  }
   if (/\b(gaming\s+monitor|\d+\s*hz)\b/i.test(e)) return { type: "gaming_monitor", subtype: null };
   if (/\b(charging\s+dock|controller\s+dock)\b/i.test(e)) return { type: "controller_accessory", subtype: "charging_dock" };
   if (/\b(robot\s+vacuum)\b/i.test(e)) return { type: "robot_vacuum", subtype: null };
@@ -142,6 +153,10 @@ function detectBrand(envelope: string, canonical?: CanonicalQueryContract): stri
 function detectPerformanceIntent(envelope: string, productType: string): string | null {
   if (/\bflat\s+feet\b/i.test(envelope)) return "stability_running";
   if (/\brunning\b/i.test(envelope) && productType.includes("shoe")) return "performance_running";
+  if (productType === "programming_monitor" || (/\b(programming|coder|developer)\b/i.test(envelope) && /\bmonitor\b/i.test(envelope))) {
+    return "programming_work";
+  }
+  if (/\b(ergonomic|lumbar)\b/i.test(envelope) && productType === "office_chair") return "ergonomic_support";
   if (/\bgaming\b/i.test(envelope)) return "gaming";
   if (/\bfocus\b|\bnoise\s+cancell/i.test(envelope)) return "focus_work";
   if (/\bbest\s+value\b/i.test(envelope)) return "value_optimization";
