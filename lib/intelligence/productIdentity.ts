@@ -251,7 +251,12 @@ function categoryEvidence(p: QuantProduct, canonicalQuery?: CanonicalQueryContra
   const query = canonicalQuery.originalQuery.toLowerCase();
   if (category === "phone") return /\b(phone|iphone|galaxy|pixel|smartphone|mobile|telefoon|mobiel)\b/i.test(blob);
   if (category === "audio") return /\b(airpods?|earbuds?|headphones?|wireless audio|noise cancelling|koptelefoon|oordopjes|oortjes)\b/i.test(blob);
-  if (category === "shoes") return /\b(shoe|sneaker|trainer|samba|gazelle|air force|adidas|nike)\b/i.test(blob);
+  if (category === "shoes") {
+    if (/\b(running\s+shoe|flat\s+feet|stability\s+shoe|overpronation)\b/i.test(query)) {
+      return /\b(running|trainer|sneaker|stability|support|overpronation|gel|kayano|ghost|pegasus|structure|motion|beast|adrenaline)\b/i.test(blob);
+    }
+    return /\b(shoe|sneaker|trainer|samba|gazelle|air force|adidas|nike)\b/i.test(blob);
+  }
   if (category === "furniture") {
     if (/(?:كرسي|كراسي|كرسي\s*مكتب)/i.test(query)) {
       return /(?:كرسي|chair|stoel|office|desk|kantoor|ergonomic|gaming\s+chair)/i.test(blob);
@@ -264,7 +269,33 @@ function categoryEvidence(p: QuantProduct, canonicalQuery?: CanonicalQueryContra
     }
     return /\b(sofa|sofa bed|sectional|loveseat|settee|couch|corner sofa|recliner|chaise|hoekbank|bankstel|loungebank|fauteuil|chair|stoel|table|tafel|tuinset|tuinmeubel|loungeset|furniture|meubel|meubels|كنبة|طاولة)\b/i.test(blob);
   }
-  if (category === "electronics") return /\b(monitor|display|beeldscherm|scherm|gpu|camera|tablet|console|tv|electronics?)\b/i.test(blob);
+  if (category === "electronics") {
+    if (/\b(standing\s+desk|sit[-\s]?stand|height\s+adjustable|electric\s+desk)\b/i.test(query)) {
+      return /\b(standing\s+desk|sit[-\s]?stand|height\s+adjustable|electric\s+desk|desk\s+frame|bureau|workstation)\b/i.test(blob);
+    }
+    if (/\b(gaming\s+headset|wireless\s+gaming|ps5\s+headset)\b/i.test(query)) {
+      return (
+        /\b(gaming\s+headset|headset|headphones?|koptelefoon|arctis|pulse|cloud|void|blackshark|g\s*pro)\b/i.test(blob) ||
+        (/\b(wireless|bluetooth)\b/i.test(blob) && /\b(ps5|playstation)\b/i.test(blob))
+      );
+    }
+    if (/\b(mechanical\s+keyboard)\b/i.test(query)) {
+      return /\b(mechanical\s+keyboard|keyboard|keycap|switch)\b/i.test(blob);
+    }
+    if (/\b(monitor\s+arm|dual\s+monitor|desk\s+mount)\b/i.test(query)) {
+      return /\b(monitor\s+arm|desk\s+mount|mount|stand|vesa)\b/i.test(blob);
+    }
+    if (/\b(desk\s+organizer|cable\s+management)\b/i.test(query)) {
+      return /\b(organizer|cable\s+management|desk\s+tray|grommet|cord)\b/i.test(blob);
+    }
+    if (/\b(rtx|gtx|geforce|graphics\s+card|gpu)\b/i.test(query)) {
+      return /\b(gpu|graphics|geforce|rtx|gtx|video\s+card)\b/i.test(blob);
+    }
+    if (/\b(gaming\s+monitor|\d+\s*hz)\b/i.test(query)) {
+      return /\b(monitor|beeldscherm|display|\d+\s*hz)\b/i.test(blob);
+    }
+    return /\b(monitor|display|beeldscherm|scherm|gpu|camera|tablet|console|tv|keyboard|headset|electronics?)\b/i.test(blob);
+  }
   if (category === "fragrance") {
     const perfumeCue = /\b(perfume|fragrance|parfum|cologne|eau de parfum|eau de toilette|عطر)\b/i.test(blob);
     if (/\b(libre)\b/i.test(query)) {

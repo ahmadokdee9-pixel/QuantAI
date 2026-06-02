@@ -1543,6 +1543,8 @@ async function handleSearch(
         canonicalQuery: canonicalQueryForDebug(canonicalQuery),
         decisionBrief: intelligenceUpgrade.meta.decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
+        constraints: intelligenceUpgrade.meta.constraints,
+        trustRanking: intelligenceUpgrade.meta.trustRanking,
         comparisonIntelligence: intelligenceUpgrade.meta.comparisonIntelligence,
         discountIntelligence: intelligenceUpgrade.meta.discountIntelligence,
         sparseResult: intelligenceUpgrade.meta.sparseResult,

@@ -144,8 +144,17 @@ export function assessConstraintViolations(
   }
 
   if (intent.performanceIntent === "stability_running" || intent.productType === "running_shoes") {
-    if (/\b(air\s+force|handball|spezial|3mc|lifestyle|dunk|samba)\b/i.test(text) && !/\b(running|support|stability|gel|kayano|guide|motion)\b/i.test(text)) {
+    if (
+      /\b(air\s+force|handball|spezial|3mc|lifestyle|dunk|samba|walking\s+shoe|walkers?)\b/i.test(text) &&
+      !/\b(running|support|stability|gel|kayano|guide|motion|overpronation|flat\s+feet)\b/i.test(text)
+    ) {
       violations.push({ code: "lifestyle_not_running", severity: "hard", penalty: 45 });
+    }
+    if (
+      (intent.performanceIntent === "stability_running" || intent.technicalRequirements.includes("flat_feet_support")) &&
+      /\b(stability|support|overpronation|motion\s+control|structured|guide|kayano|beast|adrenaline)\b/i.test(text)
+    ) {
+      violations.push({ code: "flat_feet_support_match", severity: "soft", penalty: -8 });
     }
     if (intent.gender === "men" && /\b(dames|women'?s?|womens|female|maat:\s*3[0-9])\b/i.test(text)) {
       violations.push({ code: "gender_mismatch", severity: "hard", penalty: 40 });

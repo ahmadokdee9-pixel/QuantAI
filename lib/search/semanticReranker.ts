@@ -85,8 +85,15 @@ function keywordCoverage(text: string, keywords: string[]): number {
 function categoryFit(q: SemanticQueryUnderstanding, text: string): number {
   switch (q.productCategory) {
     case "shoes":
-      if (/\b(running|flat\s+feet|stability)\b/i.test(q.envelope) && /\b(air\s+force|handball|spezial|3mc|lifestyle)\b/i.test(text) && !/\b(running|support|stability|gel|kayano|guide)\b/i.test(text)) {
+      if (
+        /\b(running|flat\s+feet|stability)\b/i.test(q.envelope) &&
+        /\b(air\s+force|handball|spezial|3mc|lifestyle|walking\s+shoe|walkers?)\b/i.test(text) &&
+        !/\b(running|support|stability|gel|kayano|guide|motion|overpronation)\b/i.test(text)
+      ) {
         return 0.1;
+      }
+      if (/\b(running|flat\s+feet|stability)\b/i.test(q.envelope) && /\b(stability|support|overpronation|kayano|ghost|pegasus|motion)\b/i.test(text)) {
+        return 1;
       }
       return /\b(shoe|sneaker|trainer|boot|yeezy|jordan|dunk|air force)\b/i.test(text) ? 1 : 0.15;
     case "phone":

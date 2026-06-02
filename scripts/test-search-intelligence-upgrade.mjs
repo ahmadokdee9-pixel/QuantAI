@@ -8,6 +8,8 @@ import { extractSearchIntent } from "../lib/search/intentExtractionEngine.ts";
 import { extractSearchConstraints } from "../lib/search/constraintExtractionEngine.ts";
 import { assessPriceSanity, isHardPriceSanityReject } from "../lib/intelligence/priceSanityEngine.ts";
 import { applySearchIntelligenceUpgrade } from "../lib/search/searchIntelligenceUpgrade.ts";
+import { buildCanonicalQuery } from "../lib/search/canonicalQuery.ts";
+import { applyHardIdentityGate } from "../lib/intelligence/productIdentity.ts";
 
 function mockProduct(title, store, price, extra = {}) {
   return {
@@ -84,5 +86,31 @@ const shoeTray = applySearchIntelligenceUpgrade(
   "running shoes flat feet men"
 );
 assert.match(shoeTray.products[0].title, /Brooks|Running|Ghost/i);
+assert.ok(shoeTray.meta.trustRanking?.applied);
+assert.ok(shoeTray.meta.constraints);
+
+// Phase 6 — identity gate must not zero trays for desk/headset electronics queries
+const deskQuery = "standing desk electric height adjustable";
+const deskCq = buildCanonicalQuery(deskQuery);
+const deskTray = [
+  mockProduct("YESHOMY Electric Standing Desk Height Adjustable", "Amazon.nl", 199),
+  mockProduct("IKEA GLOSTAD 2-seat sofa", "IKEA", 99),
+];
+const deskGated = applyHardIdentityGate(deskTray, deskCq);
+assert.ok(deskGated.length >= 1, "standing desk listings survive identity gate");
+assert.match(deskGated[0].title, /standing desk/i);
+
+const headsetQuery = "wireless gaming headset ps5";
+const headsetCq = buildCanonicalQuery(headsetQuery);
+const headsetTray = [
+  mockProduct("SteelSeries Arctis 7P Wireless Gaming Headset PS5", "bol.com", 129),
+];
+const headsetGated = applyHardIdentityGate(headsetTray, headsetCq);
+assert.equal(headsetGated.length, 1);
+const headsetNovaGated = applyHardIdentityGate(
+  [mockProduct("SteelSeries Arctis Nova 7P Wireless PS5", "bol.com", 159)],
+  headsetCq
+);
+assert.equal(headsetNovaGated.length, 1, "headset without literal 'headset' in title");
 
 console.log("Phase 3 search intelligence upgrade tests passed.");
