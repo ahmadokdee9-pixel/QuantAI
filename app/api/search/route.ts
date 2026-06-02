@@ -45,6 +45,7 @@ import {
   searchFallbackQueryCap,
   searchPrimaryMinProducts,
 } from "@/lib/search/productionStabilization";
+import type { SearchPipelineTray } from "@/lib/search/productionStabilizationEnv";
 import { applyMerchantDiversitySafeguard } from "@/lib/search/merchantDiversityRerank";
 import { semanticRerankSearchResults } from "@/lib/search/semanticReranker";
 import { buildLatencyBudgetReport } from "@/lib/search/latencyBudget";
@@ -52,6 +53,19 @@ import { PipelineTrace } from "@/lib/search/pipelineTrace";
 import { rebuildSearchTrayArtifacts, verifyTrayMetaCoherence } from "@/lib/search/searchTrayArtifacts";
 import { composeProductionMeta } from "@/lib/search/productionMetaComposer";
 import { applySearchIntelligenceUpgrade } from "@/lib/search/searchIntelligenceUpgrade";
+import {
+  circuitSnapshot,
+  getGuestStaleTray,
+  isCircuitOpen,
+  markCircuitFailure,
+  markCircuitSuccess,
+  markRateLimited429,
+  markSearchRequest,
+  reliabilityTelemetrySnapshot,
+  saveGuestStaleTray,
+  searchRequestTimeoutMs,
+  withTimeout,
+} from "@/lib/search/searchReliabilityGuardrails";
 import { sparseExpansionQueriesForFetch } from "@/lib/search/sparseResultIntelligence";
 import { scanControlledStackRegistry } from "@/lib/governance/controlledStackRegistry";
 import { runUnifiedControlledStack } from "@/lib/governance/unifiedControlledStackKernel";
@@ -534,6 +548,7 @@ async function handleSearch(
     );
 
   try {
+    markSearchRequest();
     const searchStarted = Date.now();
     const query = q?.trim();
     if (!query) {
@@ -563,6 +578,7 @@ async function handleSearch(
 
     let guestOperationalDegraded: Record<string, unknown> | null = null;
 
+    let preloadedGuestTray: SearchPipelineTray | null = null;
     if (!userId) {
       const guestId = requestIdentifier(opts?.headers);
       const limited = await enforceGuestSearchLimits(guestId);
@@ -577,11 +593,25 @@ async function handleSearch(
               reason: `guest_rate_limit_${limited.code.toLowerCase()}_cached_tray`,
               retryAfter: limited.retryAfter,
             };
+            preloadedGuestTray = cachedTray;
           }
         } catch {
           // no cached tray — fall through to rate-limit response
         }
         if (!guestOperationalDegraded) {
+          const staleTray = getGuestStaleTray(pipelineKey);
+          if (staleTray?.products.length) {
+            guestOperationalDegraded = {
+              degraded: true,
+              reason: `guest_rate_limit_${limited.code.toLowerCase()}_stale_tray`,
+              retryAfter: limited.retryAfter,
+              stale: true,
+            };
+            preloadedGuestTray = staleTray;
+          }
+        }
+        if (!guestOperationalDegraded) {
+          markRateLimited429({ servedDegraded: false, emptyOn429: true });
           return jsonSearch(
             {
               success: false,
@@ -598,6 +628,7 @@ async function handleSearch(
                     degraded: true,
                     reason: limited.code,
                     retryAfter: limited.retryAfter,
+                    telemetry: reliabilityTelemetrySnapshot(),
                   },
                 })
               ),
@@ -609,6 +640,7 @@ async function handleSearch(
             }
           );
         }
+        markRateLimited429({ servedDegraded: true, emptyOn429: false });
       }
     }
 
@@ -676,8 +708,12 @@ async function handleSearch(
     const traceStage = (stage: string, before: number, after: number) => {
       pipelineTrace.trace(stage, before, after);
     };
+    const circuitKey = "search_pipeline";
     const loadPipelineTray = async () => {
       const isGuestPipeline = !userId;
+      if (isCircuitOpen(circuitKey)) {
+        throw new Error(`${SEARCH_UPSTREAM_PREFIX}503:Circuit breaker open for search pipeline.`);
+      }
       const tray = await loadPipelineWithInflightDedupe(
         `${isGuestPipeline ? "guest" : "auth"}:${pipelineKey}`,
         () =>
@@ -690,12 +726,26 @@ async function handleSearch(
       searchIntelligence = tray.searchIntelligence;
       commerceMeta = tray.commerceMeta;
       liveDiscovery = tray.liveDiscovery;
+      markCircuitSuccess(circuitKey);
+      if (isGuestPipeline) {
+        saveGuestStaleTray(pipelineKey, tray);
+      }
       traceStage("pipeline_enrichment_and_ai", liveDiscovery.fusedRows, products.length);
     };
 
     try {
-      await loadPipelineTray();
+      if (preloadedGuestTray) {
+        products = preloadedGuestTray.products;
+        dealClusters = preloadedGuestTray.dealClusters;
+        searchIntelligence = preloadedGuestTray.searchIntelligence;
+        commerceMeta = preloadedGuestTray.commerceMeta;
+        liveDiscovery = preloadedGuestTray.liveDiscovery;
+        traceStage("rate_limit_preloaded_recovery", 0, products.length);
+      } else {
+        await withTimeout("search_pipeline", searchRequestTimeoutMs(), loadPipelineTray);
+      }
     } catch (e) {
+      markCircuitFailure(circuitKey);
       const msg = e instanceof Error ? e.message : "";
       if (msg.startsWith(SEARCH_UPSTREAM_PREFIX)) {
         const rest = msg.slice(SEARCH_UPSTREAM_PREFIX.length);
@@ -730,6 +780,24 @@ async function handleSearch(
         } catch {
           recovered = false;
         }
+        if (!recovered && !userId) {
+          const staleTray = getGuestStaleTray(pipelineKey);
+          if (staleTray?.products.length) {
+            products = staleTray.products;
+            dealClusters = staleTray.dealClusters;
+            searchIntelligence = staleTray.searchIntelligence;
+            commerceMeta = staleTray.commerceMeta;
+            liveDiscovery = staleTray.liveDiscovery;
+            guestOperationalDegraded = {
+              degraded: true,
+              reason: "upstream_fail_stale_tray",
+              upstreamStatus: httpStatus,
+              stale: true,
+            };
+            traceStage("upstream_fail_stale_recovery", 0, products.length);
+            recovered = true;
+          }
+        }
         if (!recovered) {
           return fail(httpStatus, "SEARCH_FAILED", message || "Search upstream failed.", {
             data: emptySearchData(
@@ -744,6 +812,39 @@ async function handleSearch(
           });
         }
       } else {
+        const timeoutErr =
+          e &&
+          typeof e === "object" &&
+          "code" in e &&
+          (e as { code?: string }).code === "SEARCH_PIPELINE_TIMEOUT";
+        if (timeoutErr && !userId) {
+          const staleTray = getGuestStaleTray(pipelineKey);
+          if (staleTray?.products.length) {
+            products = staleTray.products;
+            dealClusters = staleTray.dealClusters;
+            searchIntelligence = staleTray.searchIntelligence;
+            commerceMeta = staleTray.commerceMeta;
+            liveDiscovery = staleTray.liveDiscovery;
+            guestOperationalDegraded = {
+              degraded: true,
+              reason: "pipeline_timeout_stale_tray",
+              stale: true,
+              timeoutMs: searchRequestTimeoutMs(),
+            };
+            traceStage("pipeline_timeout_stale_recovery", 0, products.length);
+          } else {
+            return fail(504, "SEARCH_TIMEOUT", "Search timed out and no fallback tray was available.", {
+              data: emptySearchData(
+                searchDebugMeta({
+                  products: [],
+                  canonicalQuery: requestCanonicalQuery,
+                  fallbackReason: "SEARCH_TIMEOUT",
+                  errorState: "SEARCH_TIMEOUT",
+                })
+              ),
+            });
+          }
+        } else {
         return fail(
           500,
           "SEARCH_FAILED",
@@ -759,6 +860,7 @@ async function handleSearch(
             ),
           }
         );
+        }
       }
     }
 
@@ -1639,6 +1741,10 @@ async function handleSearch(
               ? buildDegradedTrayNotice(String(guestOperationalDegraded.reason ?? ""))
               : null,
         operationalState: guestOperationalDegraded,
+        reliability: {
+          telemetry: reliabilityTelemetrySnapshot(),
+          circuitBreaker: circuitSnapshot(circuitKey),
+        },
         tasteGrammarShadow,
         tasteWatchCanary,
         tasteFragranceCanary,

@@ -33,6 +33,10 @@ assert.ok(route.includes("createGuestPipelineCache"), "guest pipeline cache wire
 assert.ok(route.includes("loadPipelineWithInflightDedupe"), "in-flight dedupe wired");
 assert.ok(route.includes("applyBetaDiscoveryDefaults"), "discovery defaults at pipeline start");
 assert.ok(route.includes("searchFallbackQueryCap"), "fallback query cap wired");
+assert.ok(route.includes("markRateLimited429"), "429 telemetry hook wired");
+assert.ok(route.includes("getGuestStaleTray"), "stale fallback serving wired");
+assert.ok(route.includes("withTimeout"), "request timeout guard wired");
+assert.ok(route.includes("isCircuitOpen"), "circuit-breaker guard wired");
 
 const env = { NODE_ENV: "production" };
 applyBetaDiscoveryDefaults(env);
