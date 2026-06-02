@@ -68,7 +68,16 @@ function detectProductType(category: SemanticProductCategory, envelope: string):
     return { type: "gaming_headset", subtype: "wireless" };
   }
   if (/\b(graphics\s+card|gpu|rtx\s*\d+|gtx\s*\d+)\b/i.test(e)) {
-    return { type: "graphics_card", subtype: e.match(/\b(rtx\s*\d{3,4}|gtx\s*\d{3,4})\b/i)?.[0]?.replace(/\s+/g, " ") ?? null };
+    const gpuSubtype = e.match(/\b(rtx\s*\d{3,4}|gtx\s*\d{3,4})\b/i)?.[0]?.replace(/\s+/g, " ") ?? null;
+    // Detect AI / ML training intent on GPU queries
+    if (/\b(ai|machine\s+learning|ml|deep\s+learning|llm|training|cuda|vram|tensor)\b/i.test(e)) {
+      return { type: "graphics_card", subtype: "ai_training" };
+    }
+    return { type: "graphics_card", subtype: gpuSubtype };
+  }
+  // GPU query without explicit model token but with ai/training intent
+  if (/\b(ai|machine\s+learning|ml|deep\s+learning|llm|tensor)\b/i.test(e) && /\b(gpu|graphics\s+card|video\s+card)\b/i.test(e)) {
+    return { type: "graphics_card", subtype: "ai_training" };
   }
   if (/\b(mechanical\s+keyboard|mx\s+keys|keychron|quiet\s+tactile)\b/i.test(e)) return { type: "mechanical_keyboard", subtype: null };
   if (/\b(coffee\s+maker|espresso\s+machine|drip\s+coffee)\b/i.test(e)) return { type: "coffee_maker", subtype: null };
@@ -116,6 +125,9 @@ function detectTechnicalRequirements(envelope: string): string[] {
     [/\binduction\b/i, "induction_compatible"],
     [/\bflat\s+feet\b|\boverpronation\b/i, "flat_feet_support"],
     [/\bquiet\s+tactile\b|\bmechanical\b/i, "mechanical_switch"],
+    [/\btactile\b/i, "tactile_switch"],
+    [/\blinear\b/i, "linear_switch"],
+    [/\b(ai\s+training|cuda|vram|deep\s+learning|machine\s+learning|tensor)\b/i, "ai_training"],
     [/\blumbar\s+support\b/i, "lumbar_support"],
     [/\b6\s*quart\b|\b6l\b|\b6\s*l\b/i, "capacity_6qt"],
   ];
@@ -155,6 +167,9 @@ function detectPerformanceIntent(envelope: string, productType: string): string 
   if (/\brunning\b/i.test(envelope) && productType.includes("shoe")) return "performance_running";
   if (productType === "programming_monitor" || (/\b(programming|coder|developer)\b/i.test(envelope) && /\bmonitor\b/i.test(envelope))) {
     return "programming_work";
+  }
+  if (productType === "graphics_card" && /\b(ai|machine\s+learning|ml|deep\s+learning|llm|training|cuda|vram|tensor)\b/i.test(envelope)) {
+    return "ai_training";
   }
   if (/\b(ergonomic|lumbar)\b/i.test(envelope) && productType === "office_chair") return "ergonomic_support";
   if (/\bgaming\b/i.test(envelope)) return "gaming";

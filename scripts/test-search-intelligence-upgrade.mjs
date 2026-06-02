@@ -128,4 +128,115 @@ const headsetNovaGated = applyHardIdentityGate(
 );
 assert.equal(headsetNovaGated.length, 1, "headset without literal 'headset' in title");
 
-console.log("Phase 3 search intelligence upgrade tests passed.");
+// ── Phase 8.5 — AI GPU: modern RTX must outrank legacy GRID ──────────────────
+const aiGpuTray = applySearchIntelligenceUpgrade(
+  [
+    mockProduct("J0G94A HP NVIDIA GRID K1 Quad GPU Module", "it-market.com", 565, {
+      qiBuyingDecision: { confidence: 80 },
+    }),
+    mockProduct("GIGABYTE Nvidia GeForce RTX 4070 Ti SUPER Gaming OC 16GB", "Ubuy", 1526, {
+      qiBuyingDecision: { confidence: 62 },
+    }),
+    mockProduct("PNY Quadro RTX 2000 Ada 16GB", "grafikkarten.com", 630, {
+      qiBuyingDecision: { confidence: 70 },
+    }),
+  ],
+  "best gpu for ai training"
+);
+assert.ok(
+  /RTX|Quadro\s+RTX|GeForce/i.test(aiGpuTray.products[0].title),
+  `AI GPU top result should be modern RTX, got: ${aiGpuTray.products[0].title}`
+);
+assert.ok(!/GRID\s*K[1-9]/i.test(aiGpuTray.products[0].title), "GRID K1 must not rank #1 for AI training");
+
+// ── Phase 8.5 — Programming monitor: USB-C/IPS must outrank budget generic ──
+const progMonTray = applySearchIntelligenceUpgrade(
+  [
+    mockProduct(
+      "KTC Monitor 27 Inch 100Hz Budget IPS No USB-C",
+      "Amazon.nl - Seller",
+      129,
+      { qiBuyingDecision: { confidence: 88 } }
+    ),
+    mockProduct(
+      "Dell UltraSharp U2723QE 27 USB-C Hub IPS Monitor",
+      "Coolblue",
+      449,
+      { qiBuyingDecision: { confidence: 65 } }
+    ),
+    mockProduct(
+      "32 inch Smart TV 4K Android Television",
+      "Coolblue",
+      299,
+      { qiBuyingDecision: { confidence: 72 } }
+    ),
+  ],
+  "monitor for programming 27 inch"
+);
+assert.match(
+  progMonTray.products[0].title,
+  /ultrasharp|usb[-\s]?c|proart|ips\s+monitor|eizo|lg\s+27|benq|dell\s+u\d/i,
+  `Programming monitor top result should be productivity/IPS, got: ${progMonTray.products[0].title}`
+);
+
+// ── Phase 8.5 — Tactile keyboard: tactile switch must outrank linear ────────
+const tactileKbTray = applySearchIntelligenceUpgrade(
+  [
+    mockProduct(
+      "Perixx PERIBOARD-108M Mechanical Full-Size Keyboard Quiet Linear Red",
+      "Perixx EU",
+      44,
+      { qiBuyingDecision: { confidence: 82 } }
+    ),
+    mockProduct(
+      "be quiet! Dark Mount Silent Tactile Mechanical Keyboard",
+      "Azerty",
+      239,
+      { qiBuyingDecision: { confidence: 60 } }
+    ),
+    mockProduct(
+      "X-Bows Knight Ergonomic Mechanical Silent Brown Tactile Switch",
+      "X-bows",
+      265,
+      { qiBuyingDecision: { confidence: 58 } }
+    ),
+  ],
+  "mechanical keyboard quiet tactile"
+);
+assert.ok(
+  /tactile|silent\s+brown|brown\s+switch|silent\s+tactile/i.test(tactileKbTray.products[0].title),
+  `Tactile keyboard top result must have tactile switch, got: ${tactileKbTray.products[0].title}`
+);
+assert.ok(
+  !/linear\s+red/i.test(tactileKbTray.products[0].title),
+  `Top result must not be linear red for tactile query`
+);
+
+// ── Phase 8 protected-query regressions ────────────────────────────────────
+// Running shoes: stability still wins
+const regressionShoeTray = applySearchIntelligenceUpgrade(
+  [
+    mockProduct("Running Shoes Trendy Original Shock Absorption M7212", "Baasploa", 45, {
+      qiBuyingDecision: { confidence: 84 },
+    }),
+    mockProduct("ASICS Gel-Kayano 30 Men Stability Running Shoes", "Running Warehouse", 165, {
+      qiBuyingDecision: { confidence: 62 },
+    }),
+  ],
+  "running shoes flat feet men"
+);
+assert.match(regressionShoeTray.products[0].title, /Kayano|ASICS|Arahi|Hoka|stability/i, "running shoes regression");
+
+// Headset: SteelSeries still beats Ntech
+const regressionHeadsetTray = applySearchIntelligenceUpgrade(
+  [
+    mockProduct("Ntech Gaming Headset RGB Light", "unknown-shop", 25, { qiBuyingDecision: { confidence: 80 } }),
+    mockProduct("SteelSeries Arctis Nova 7P Wireless PS5 Headset", "bol.com", 149, {
+      qiBuyingDecision: { confidence: 64 },
+    }),
+  ],
+  "wireless gaming headset ps5"
+);
+assert.match(regressionHeadsetTray.products[0].title, /SteelSeries|Arctis|Pulse|HyperX/i, "headset regression");
+
+console.log("Phase 3 + Phase 8.5 search intelligence upgrade tests passed.");

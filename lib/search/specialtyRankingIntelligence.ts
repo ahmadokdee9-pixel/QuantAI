@@ -69,8 +69,8 @@ export function isSpecialtyPurchaseIntent(intent: ExtractedSearchIntent, query: 
   if (intent.brand) return true;
   if (SPECIALTY_PRODUCT_TYPES.has(intent.productType)) return true;
   if (intent.productType !== "unknown" && intent.productType !== "headphones") return true;
-  if (intent.technicalRequirements.some((t) => /flat_feet|lumbar|programming|high_refresh|gpu_model/i.test(t))) return true;
-  if (/\b(flat\s+feet|overpronation|stability|ergonomic|lumbar|programming|ps5|144hz|rtx|galaxy|macbook|cerave|libre|perfume)\b/i.test(query)) return true;
+  if (intent.technicalRequirements.some((t) => /flat_feet|lumbar|programming|high_refresh|gpu_model|tactile_switch|ai_training/i.test(t))) return true;
+  if (/\b(flat\s+feet|overpronation|stability|ergonomic|lumbar|programming|ps5|144hz|rtx|galaxy|macbook|cerave|libre|perfume|ai\s+training|deep\s+learning|cuda|tactile|quiet\s+tactile)\b/i.test(query)) return true;
   return false;
 }
 
@@ -264,6 +264,192 @@ function scoreProgrammingMonitor(title: string, env: string): { score: number; r
   return { score, reasons };
 }
 
+/** GPU scoring — distinguishes AI-training class from gaming-only, legacy datacenter, or accessory. */
+function scoreGpu(title: string, intent: ExtractedSearchIntent, env: string): { score: number; reasons: string[] } {
+  const text = title.toLowerCase();
+  const reasons: string[] = [];
+  let score = 0;
+  const isAiTrainingQuery =
+    intent.performanceIntent === "ai_training" ||
+    intent.subtype === "ai_training" ||
+    /\b(ai\s+training|machine\s+learning|deep\s+learning|cuda|vram|tensor|llm|ml)\b/i.test(env);
+
+  // Camera / wrong product
+  if (/\b(instax|camera|fujifilm|dslr|mirrorless)\b/i.test(text)) {
+    score -= 40;
+    reasons.push("camera_not_gpu");
+    return { score, reasons };
+  }
+
+  // Modern RTX / Quadro Ada / Blackwell — high-VRAM, ideal for AI
+  if (/\b(rtx\s*(?:4090|4080|4070\s*ti|4070|4060|3090|3080|3070)|quadro\s+rtx|rtx\s+pro|blackwell|rtx\s+\d{4})\b/i.test(text)) {
+    score += 30;
+    reasons.push("modern_rtx_gpu");
+    if (isAiTrainingQuery) {
+      if (/\b(4090|3090|rtx\s+pro|blackwell|a\d{4}|h\d{3}|rtx\s+4500|rtx\s+4000)\b/i.test(text)) {
+        score += 18;
+        reasons.push("high_vram_ai_suitable");
+      }
+    }
+  }
+
+  // Pro / workstation Quadro / Tesla / Ada — excellent for AI
+  if (/\b(quadro|tesla|a100|h100|a\d{3,4}|l40|l4\b|rtx\s+\d{4}\s+ada|professional\s+gpu|workstation\s+gpu)\b/i.test(text)) {
+    score += 20;
+    reasons.push("pro_workstation_gpu");
+    if (isAiTrainingQuery) {
+      score += 14;
+      reasons.push("professional_ai_hardware");
+    }
+  }
+
+  // Legacy / obsolete for AI training: GRID K1/K2, Kepler/Maxwell generation
+  if (/\b(grid\s+k[1-4]|quadro\s+k\d{3,4}|gtx\s*[5-9]\d{2}\b|gtx\s*[1-4]\d{2}\b|grid\s+m\d+|p40\b|m40\b|m60\b)\b/i.test(text)) {
+    score -= 22;
+    reasons.push("legacy_datacenter_gpu");
+    if (isAiTrainingQuery) {
+      score -= 18;
+      reasons.push("obsolete_for_ai_training");
+    }
+  }
+
+  // VRAM callout — good signal for AI
+  if (/\b(24\s*gb|20\s*gb|16\s*gb|48\s*gb)\b/i.test(text) && isAiTrainingQuery) {
+    score += 10;
+    reasons.push("high_vram_callout");
+  }
+
+  // Generic GPU brand match (always good, neutral)
+  if (/\b(rtx|gtx|geforce|nvidia)\b/i.test(text) && score === 0) {
+    score += 14;
+    reasons.push("gpu_model_match");
+  }
+
+  return { score, reasons };
+}
+
+/** Mechanical keyboard scoring — resolves tactile vs linear conflict. */
+function scoreMechanicalKeyboard(title: string, intent: ExtractedSearchIntent, env: string): { score: number; reasons: string[] } {
+  const text = title.toLowerCase();
+  const reasons: string[] = [];
+  let score = 0;
+
+  const wantsTactile =
+    intent.technicalRequirements.includes("tactile_switch") ||
+    /\btactile\b/i.test(env);
+  const wantsQuiet = /\b(quiet|silent)\b/i.test(env);
+  const wantsLinear = intent.technicalRequirements.includes("linear_switch") && !wantsTactile;
+
+  // Tactile switch types: brown, clicky-tactile, Box Brown, Silent Brown, MX Brown, Topre, etc.
+  const hasTactileSwitch =
+    /\b(tactile|brown\s+switch|mx\s+brown|silent\s+brown|topre|silent\s+tactile|quiet\s+tactile|box\s+brown|gateron\s+brown|kailh\s+brown|holy\s+panda)\b/i.test(text);
+  // Linear switch types: red, speed, silver, linear switch
+  const hasLinearSwitch =
+    /\b(linear\s+red|red\s+switch|speed\s+silver|mx\s+red|gateron\s+red|kailh\s+red|linear\s+switch|cherry\s+mx\s+red)\b/i.test(text) &&
+    !/\btactile\b/i.test(text);
+
+  if (wantsTactile && hasTactileSwitch) {
+    score += 28;
+    reasons.push("tactile_switch_match");
+  } else if (wantsTactile && hasLinearSwitch) {
+    score -= 22;
+    reasons.push("linear_not_tactile_mismatch");
+  } else if (hasTactileSwitch && wantsQuiet) {
+    score += 20;
+    reasons.push("quiet_tactile_match");
+  } else if (!wantsTactile && !wantsLinear) {
+    // Generic mechanical: any switch is acceptable
+    if (/\b(quiet|silent)\b/i.test(text)) {
+      score += 16;
+      reasons.push("quiet_keyboard_match");
+    } else if (/\b(tactile|brown)\b/i.test(text)) {
+      score += 14;
+      reasons.push("switch_preference_match");
+    }
+  }
+
+  // Linear is fine when quiet is wanted but tactile not explicitly required
+  if (wantsQuiet && !wantsTactile && hasLinearSwitch) {
+    score += 12;
+    reasons.push("quiet_linear_acceptable");
+  }
+
+  if (EXPERT_BRANDS.mechanical_keyboard!.test(text)) {
+    score += 12;
+    reasons.push("expert_keyboard_brand");
+  }
+
+  return { score, reasons };
+}
+
+/** Programming monitor — stronger differentiation: productivity traits vs gaming-only/budget. */
+function scoreProgrammingMonitorV2(title: string, env: string): { score: number; reasons: string[] } {
+  const text = title.toLowerCase();
+  const reasons: string[] = [];
+  let score = 0;
+
+  // Hard penalty: TV or smart-TV in title but no monitor keyword
+  if (/\b(smart\s+tv|television|\btv\b)\b/i.test(text) && !/\b(monitor|display|beeldscherm)\b/i.test(text)) {
+    score -= 28;
+    reasons.push("tv_not_monitor");
+    return { score, reasons };
+  }
+
+  // Strong productivity signals
+  if (/\b(ultrasharp|proart|ultrafine|flexscan|sw\d{3}|ev\d{4})\b/i.test(text)) {
+    score += 30;
+    reasons.push("pro_monitor_model_line");
+  }
+  if (/\busb[-\s]?c\b/i.test(text)) {
+    score += 20;
+    reasons.push("usb_c_connectivity");
+  }
+  if (/\b(ips|oled|nano\s+ips|ips\s+black)\b/i.test(text)) {
+    score += 12;
+    reasons.push("ips_panel_type");
+  }
+  if (/\b(4k|qhd|2k|3840|2560|uhd)\b/i.test(text)) {
+    score += 10;
+    reasons.push("high_resolution");
+  }
+  if (/\b(height\s+adjust|tilt|pivot|swivel|ergonomic\s+stand|vesa)\b/i.test(text)) {
+    score += 8;
+    reasons.push("ergonomic_stand");
+  }
+  if (/\b(srgb|dci[-\s]?p3|factory\s+calibrat|color\s+accurate)\b/i.test(text)) {
+    score += 8;
+    reasons.push("colour_accuracy");
+  }
+  if (/\b(displayport|dp\s+\d|thunderbolt)\b/i.test(text)) {
+    score += 6;
+    reasons.push("dp_thunderbolt");
+  }
+
+  // Pro brands
+  if (/\b(dell\s+ultrasharp|dell\s+u\d|lg\s+27|lg\s+32|benq\s+sw|benq\s+pd|asus\s+proart|eizo|apple\s+studio\s+display|viewsonic\s+vp)\b/i.test(text)) {
+    score += 14;
+    reasons.push("pro_monitor_brand");
+  } else if (EXPERT_BRANDS.gaming_monitor!.test(text)) {
+    score += 6;
+    reasons.push("monitor_brand");
+  }
+
+  // Penalise pure budget / gaming-only listings when programming is the intent
+  if (/\b(ktc|misura|koorui|viotek|sceptre|cheap|budget)\b/i.test(text) && !/\b(ips|qhd|usb[-\s]?c)\b/i.test(text)) {
+    score -= 12;
+    reasons.push("budget_generic_monitor");
+  }
+  if (/\b(gaming\s+monitor|165hz|240hz|360hz|freesync|g[-\s]?sync)\b/i.test(text) && !/\b(ips|usb[-\s]?c|ultrasharp|proart)\b/i.test(text)) {
+    score -= 8;
+    reasons.push("gaming_only_no_productivity");
+  }
+
+  // Base points for being a monitor at all
+  if (/\b(monitor|display|beeldscherm)\b/i.test(text)) score += 6;
+
+  return { score, reasons };
+}
+
 function scoreByProductType(
   title: string,
   intent: ExtractedSearchIntent,
@@ -277,12 +463,12 @@ function scoreByProductType(
     case "office_chair":
       return scoreOfficeChair(title, env);
     case "programming_monitor":
-      return scoreProgrammingMonitor(title, env);
+      return scoreProgrammingMonitorV2(title, env);
     case "gaming_monitor":
-      if (/\b(programming|coder|developer)\b/i.test(env)) return scoreProgrammingMonitor(title, env);
+      if (/\b(programming|coder|developer)\b/i.test(env)) return scoreProgrammingMonitorV2(title, env);
       return scoreProgrammingMonitor(title, env);
     case "electronics":
-      if (/\b(programming|coder|developer|ultrasharp)\b/i.test(env)) return scoreProgrammingMonitor(title, env);
+      if (/\b(programming|coder|developer|ultrasharp)\b/i.test(env)) return scoreProgrammingMonitorV2(title, env);
       break;
     case "phone":
     case "laptop": {
@@ -322,21 +508,7 @@ function scoreByProductType(
       return { score, reasons };
     }
     case "graphics_card":
-      if (/\b(rtx|gtx|geforce)\b/i.test(env)) {
-        const text = title.toLowerCase();
-        const reasons: string[] = [];
-        let score = 0;
-        if (/\b(rtx|gtx|geforce)\b/i.test(text)) {
-          score += 24;
-          reasons.push("gpu_model_match");
-        }
-        if (/\b(instax|camera)\b/i.test(text)) {
-          score -= 30;
-          reasons.push("camera_not_gpu");
-        }
-        return { score, reasons };
-      }
-      break;
+      return scoreGpu(title, intent, env);
     case "desk_accessory": {
       const text = title.toLowerCase();
       let score = 0;
@@ -352,21 +524,7 @@ function scoreByProductType(
       return { score, reasons };
     }
     case "mechanical_keyboard":
-      if (/\bquiet|tactile\b/i.test(env)) {
-        const text = title.toLowerCase();
-        let score = 0;
-        const reasons: string[] = [];
-        if (/\b(quiet|silent|tactile|brown|mx\s+brown)\b/i.test(text)) {
-          score += 18;
-          reasons.push("switch_preference_match");
-        }
-        if (EXPERT_BRANDS.mechanical_keyboard!.test(text)) {
-          score += 12;
-          reasons.push("expert_keyboard_brand");
-        }
-        return { score, reasons };
-      }
-      break;
+      return scoreMechanicalKeyboard(title, intent, env);
     default:
       break;
   }

@@ -108,6 +108,17 @@ export const PHASE8_VALIDATION_CASES = [
   { id: "gen-19", query: "go pro hero 12", specialty: true, goodTitle: "GoPro HERO12 Black Action Camera", badTitle: "Action Camera Waterproof Case Only" },
   { id: "gen-20", query: "logitech c920 webcam", specialty: true, goodTitle: "Logitech C920 HD Pro Webcam", badTitle: "Webcam Cover Slider 3 pack" },
 
+  // Phase 8.5 — AI GPU, programming monitor, tactile keyboard (9)
+  { id: "p85-gpu-01", query: "best gpu for ai training", specialty: true, goodTitle: "GIGABYTE Nvidia GeForce RTX 4070 Ti SUPER Gaming OC 16GB", badTitle: "J0G94A HP NVIDIA GRID K1 Quad GPU Module" },
+  { id: "p85-gpu-02", query: "gpu for deep learning cuda", specialty: true, goodTitle: "NVIDIA GeForce RTX 4090 24GB GDDR6X", badTitle: "PNY Quadro K2200 4GB Legacy Card" },
+  { id: "p85-gpu-03", query: "best nvidia card for machine learning", specialty: true, goodTitle: "MSI GeForce RTX 4080 SUPER 16GB VRAM", badTitle: "HP NVIDIA GRID M40 Module Legacy" },
+  { id: "p85-mon-01", query: "monitor for programming 27 inch", specialty: true, goodTitle: "Dell UltraSharp U2723QE 27 USB-C Hub IPS Monitor", badTitle: "KTC Monitor 27 Inch 100Hz Budget IPS No USB-C" },
+  { id: "p85-mon-02", query: "best monitor coding developer usb-c 27", specialty: true, goodTitle: "LG 27US550-W 4K UHD UltraFine IPS USB-C Monitor", badTitle: "msi mp273a 27 Full HD 100Hz Generic Monitor" },
+  { id: "p85-mon-03", query: "programming monitor ips qhd 27 inch", specialty: true, goodTitle: "ASUS ProArt PA279CRV 27 4K IPS USB-C Monitor", badTitle: "MISURA 27 IPS monitor 120Hz Basic" },
+  { id: "p85-kb-01", query: "mechanical keyboard quiet tactile", specialty: true, goodTitle: "be quiet! Dark Mount Silent Tactile Mechanical Keyboard", badTitle: "Perixx PERIBOARD-108M Mechanical Keyboard Quiet Linear Red" },
+  { id: "p85-kb-02", query: "quiet tactile mechanical keyboard brown switch", specialty: true, goodTitle: "Keychron Q1 Pro Brown Tactile Switch Keyboard", badTitle: "Mechanical Keyboard Cherry MX Red Linear Switch" },
+  { id: "p85-kb-03", query: "silent tactile switch keyboard office", specialty: true, goodTitle: "X-Bows Knight Ergonomic Silent Brown Tactile Switch", badTitle: "Full Size Gaming Keyboard Linear Red LED" },
+
   // Additional specialty depth (10)
   { id: "extra-01", query: "hoka bondi stability men", specialty: true, goodTitle: "Hoka Bondi 8 Men's Road Running Shoe", badTitle: "Casual Sneakers Men Fashion Sport" },
   { id: "extra-02", query: "playstation official headset wireless", specialty: true, goodTitle: "PlayStation Official Pulse 3D Wireless Headset", badTitle: "Gaming Headset Compatible PS5 RGB" },

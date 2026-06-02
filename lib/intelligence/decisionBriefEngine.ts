@@ -76,8 +76,15 @@ export function buildDecisionBrief(args: {
   if (intent.userGoal === "best_value" || intent.budgetConstraints.bestValue) {
     why.push("Aligned with best-value purchase intent");
   }
-  if (intent.performanceIntent) {
+  if (intent.performanceIntent === "ai_training") {
+    why.push("Recommended for AI/ML training workloads — modern CUDA architecture and high VRAM");
+  } else if (intent.performanceIntent === "programming_work") {
+    why.push("Optimised for programming productivity: IPS/QHD colour accuracy, USB-C connectivity");
+  } else if (intent.performanceIntent) {
     why.push(`Matched to ${intent.performanceIntent.replace(/_/g, " ")} intent`);
+  }
+  if (intent.technicalRequirements.includes("tactile_switch")) {
+    why.push("Tactile switch type aligned with stated preference");
   }
   if (specialtyMode && leaderIdx === 0) {
     why.unshift("Specialty-intent leader in tray ranking");

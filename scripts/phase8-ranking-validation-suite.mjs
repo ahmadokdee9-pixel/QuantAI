@@ -14,7 +14,7 @@ import {
   scoreSpecialtyListing,
 } from "../lib/search/specialtyRankingIntelligence.ts";
 
-assert.equal(PHASE8_VALIDATION_CASES.length, 100, "corpus must be 100 queries");
+assert.equal(PHASE8_VALIDATION_CASES.length, 109, "corpus must be 109 queries (100 Phase 8 + 9 Phase 8.5)");
 
 function mockProduct(title, store, price, extra = {}) {
   return {
