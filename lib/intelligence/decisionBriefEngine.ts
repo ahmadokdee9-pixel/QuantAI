@@ -35,6 +35,11 @@ export type DecisionBriefDTO = {
   alternativesSummary?: string;
   /** Phase 10.3 — purchase timing and pricing context summary */
   marketContextSummary?: string;
+  /** Phase 10.4 — why primary beats strongest alternatives */
+  competitiveSummary?: string;
+  competitiveAdvantages?: string[];
+  tradeoffs?: string[];
+  whyPrimaryWins?: string;
 };
 
 export function buildDecisionBrief(args: {

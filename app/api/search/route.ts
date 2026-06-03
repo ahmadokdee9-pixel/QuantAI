@@ -61,6 +61,7 @@ import { applyVerdictIntelligence } from "@/lib/intelligence/verdictEngine";
 import { applyExplainabilityIntelligence } from "@/lib/intelligence/explainabilityEngine";
 import { applyAlternativeIntelligence } from "@/lib/intelligence/alternativeIntelligenceEngine";
 import { applyMarketContextIntelligence } from "@/lib/intelligence/marketContextEngine";
+import { applyCompetitiveIntelligence } from "@/lib/intelligence/competitiveIntelligenceEngine";
 import {
   circuitSnapshot,
   getGuestStaleTray,
@@ -1690,6 +1691,18 @@ async function handleSearch(
     });
     traceStage("phase103_market_context", products.length, products.length);
 
+    const competitiveIntelligence = applyCompetitiveIntelligence({
+      products,
+      decisionBrief: marketContextIntelligence.decisionBrief,
+      phase93: phase93TrustDiscount.meta,
+      verdictIntelligence: explainability.verdictIntelligence,
+      explainability: explainability.meta,
+      alternativeIntelligence: alternativeIntelligence.meta,
+      comparison: intelligenceUpgrade.meta.comparisonIntelligence,
+      marketContext: marketContextIntelligence.meta,
+    });
+    traceStage("phase104_competitive_intelligence", products.length, products.length);
+
     const marketAwareness = computeMarketAwarenessForTray(query, products);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
     const trayMetaCoherence = verifyTrayMetaCoherence(products, dealClusters);
@@ -1747,6 +1760,7 @@ async function handleSearch(
         explainability: explainability.meta,
         alternativeIntelligence: alternativeIntelligence.meta,
         marketContext: marketContextIntelligence.meta,
+        competitiveIntelligence: competitiveIntelligence.meta,
         identityDebug: debugMeta.identityDebug,
         liveDiscovery,
         liveDiscoveryStatus: liveDiscovery.status,

@@ -48,6 +48,8 @@ assert.ok(route.includes("applyAlternativeIntelligence"), "phase 10.2 alternativ
 assert.ok(route.includes("alternativeIntelligence: alternativeIntelligence.meta"), "phase 10.2 meta exposed");
 assert.ok(route.includes("applyMarketContextIntelligence"), "phase 10.3 market context wired");
 assert.ok(route.includes("marketContext: marketContextIntelligence.meta"), "phase 10.3 meta exposed");
+assert.ok(route.includes("applyCompetitiveIntelligence"), "phase 10.4 competitive intelligence wired");
+assert.ok(route.includes("competitiveIntelligence: competitiveIntelligence.meta"), "phase 10.4 meta exposed");
 assert.ok(route.includes("explainability: explainability.meta"), "phase 10.1 meta exposed");
 assert.ok(route.includes("verdictIntelligence: verdictIntelligence.meta"), "phase 10.0 meta exposed");
 assert.ok(route.includes("phase95CommerceMemory.meta"), "phase 9.5 meta exposed");

@@ -25,6 +25,7 @@
     "test:phase101-explainability": "npx --yes tsx scripts/test-phase101-explainability.mjs",
     "test:phase102-alternatives": "npx --yes tsx scripts/test-phase102-alternatives.mjs",
     "test:phase103-market-context": "npx --yes tsx scripts/test-phase103-market-context.mjs",
+    "test:phase104-competitive-intelligence": "npx --yes tsx scripts/test-phase104-competitive-intelligence.mjs",
     "test:search-intelligence-upgrade": "npx --yes tsx scripts/test-search-intelligence-upgrade.mjs",
     "test:phase6-intelligence-hardening": "npx --yes tsx scripts/phase6-intelligence-hardening-validation.mjs",
     "test:phase8-ranking-validation": "npx --yes tsx scripts/phase8-ranking-validation-suite.mjs",
