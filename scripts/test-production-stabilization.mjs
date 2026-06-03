@@ -48,6 +48,8 @@ assert.ok(route.includes("buildTasteIntelligence"), "phase 12.2 taste intelligen
 assert.ok(route.includes("tasteIntelligence"), "phase 12.2 tasteIntelligence meta exposed");
 assert.ok(route.includes("buildLifestyleIntelligence"), "phase 12.3 lifestyle intelligence wired");
 assert.ok(route.includes("lifestyleIntelligence"), "phase 12.3 lifestyleIntelligence meta exposed");
+assert.ok(route.includes("buildContextIntelligence"), "phase 12.4 context intelligence wired");
+assert.ok(route.includes("contextIntelligence"), "phase 12.4 contextIntelligence meta exposed");
 assert.ok(route.includes("applyPhase95CommerceMemory"), "phase 9.5 commerce memory wired");
 assert.ok(route.includes("applyVerdictIntelligence"), "phase 10.0 verdict intelligence wired");
 assert.ok(route.includes("applyExplainabilityIntelligence"), "phase 10.1 explainability wired");
