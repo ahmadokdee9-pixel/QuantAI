@@ -21,6 +21,7 @@
     "test:phase9-trust-discount": "npx --yes tsx scripts/test-phase93-trust-discount.mjs",
     "test:phase94-query-intelligence": "npx --yes tsx scripts/test-phase94-query-intelligence.mjs",
     "test:phase95-commerce-memory": "npx --yes tsx scripts/test-phase95-commerce-memory.mjs",
+    "test:phase10-verdict": "npx --yes tsx scripts/test-phase10-verdict.mjs",
     "test:search-intelligence-upgrade": "npx --yes tsx scripts/test-search-intelligence-upgrade.mjs",
     "test:phase6-intelligence-hardening": "npx --yes tsx scripts/phase6-intelligence-hardening-validation.mjs",
     "test:phase8-ranking-validation": "npx --yes tsx scripts/phase8-ranking-validation-suite.mjs",

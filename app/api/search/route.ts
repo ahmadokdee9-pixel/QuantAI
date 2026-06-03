@@ -57,6 +57,7 @@ import { applySearchIntelligenceUpgrade } from "@/lib/search/searchIntelligenceU
 import { applyPhase92TrayIntegrity } from "@/lib/search/phase92TrayIntegrity";
 import { applyPhase93TrustDiscountHardening } from "@/lib/intelligence/phase93TrustDiscountHardening";
 import { applyPhase95CommerceMemory } from "@/lib/intelligence/phase95CommerceMemory";
+import { applyVerdictIntelligence } from "@/lib/intelligence/verdictEngine";
 import {
   circuitSnapshot,
   getGuestStaleTray,
@@ -1637,6 +1638,22 @@ async function handleSearch(
     products = phase95CommerceMemory.products;
     traceStage("phase95_commerce_memory", products.length, products.length);
 
+    const verdictIntelligence = applyVerdictIntelligence({
+      query,
+      products,
+      decisionBrief: phase95CommerceMemory.decisionBrief,
+      phase93: phase93TrustDiscount.meta,
+      phase92: phase92Integrity.meta,
+      queryIntelligence: phase94QueryIntelligence.meta,
+      commerceMemory: phase95CommerceMemory.meta,
+      comparison: intelligenceUpgrade.meta.comparisonIntelligence,
+      intent: intelligenceUpgrade.meta.extractedIntent,
+      canonicalQuery,
+      sparse: intelligenceUpgrade.meta.sparseResult,
+      trustRanking: intelligenceUpgrade.meta.trustRanking,
+    });
+    traceStage("phase10_verdict_intelligence", products.length, products.length);
+
     const marketAwareness = computeMarketAwarenessForTray(query, products);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
     const trayMetaCoherence = verifyTrayMetaCoherence(products, dealClusters);
@@ -1676,7 +1693,7 @@ async function handleSearch(
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),
         canonicalQuery: canonicalQueryForDebug(canonicalQuery),
         queryIntelligence: phase94QueryIntelligence.meta,
-        decisionBrief: phase95CommerceMemory.decisionBrief,
+        decisionBrief: verdictIntelligence.decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,
         trustRanking: intelligenceUpgrade.meta.trustRanking,
@@ -1690,6 +1707,7 @@ async function handleSearch(
         phase92TrayIntegrity: phase92Integrity.meta,
         phase93TrustDiscount: phase93TrustDiscount.meta,
         commerceMemory: phase95CommerceMemory.meta,
+        verdictIntelligence: verdictIntelligence.meta,
         identityDebug: debugMeta.identityDebug,
         liveDiscovery,
         liveDiscoveryStatus: liveDiscovery.status,
