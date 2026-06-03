@@ -38,6 +38,7 @@
     "test:phase123-lifestyle-intelligence": "npx --yes tsx scripts/test-phase123-lifestyle-intelligence.mjs",
     "test:phase124-context-intelligence": "npx --yes tsx scripts/test-phase124-context-intelligence.mjs",
     "test:phase125-intent-confidence": "npx --yes tsx scripts/test-phase125-intent-confidence.mjs",
+    "test:phase126-memory-preparation": "npx --yes tsx scripts/test-phase126-memory-preparation.mjs",
     "test:search-intelligence-upgrade": "npx --yes tsx scripts/test-search-intelligence-upgrade.mjs",
     "test:phase6-intelligence-hardening": "npx --yes tsx scripts/phase6-intelligence-hardening-validation.mjs",
     "test:phase8-ranking-validation": "npx --yes tsx scripts/phase8-ranking-validation-suite.mjs",
