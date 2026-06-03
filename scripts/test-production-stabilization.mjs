@@ -52,6 +52,8 @@ assert.ok(route.includes("applyCompetitiveIntelligence"), "phase 10.4 competitiv
 assert.ok(route.includes("competitiveIntelligence: competitiveIntelligence.meta"), "phase 10.4 meta exposed");
 assert.ok(route.includes("applyConfidenceIntelligence"), "phase 10.5 confidence intelligence wired");
 assert.ok(route.includes("confidenceIntelligence: confidenceIntelligence.meta"), "phase 10.5 meta exposed");
+assert.ok(route.includes("applyIntentAlignmentIntelligence"), "phase 10.6 intent alignment wired");
+assert.ok(route.includes("intentAlignment: intentAlignmentIntelligence.meta"), "phase 10.6 meta exposed");
 assert.ok(route.includes("explainability: explainability.meta"), "phase 10.1 meta exposed");
 assert.ok(route.includes("verdictIntelligence: verdictIntelligence.meta"), "phase 10.0 meta exposed");
 assert.ok(route.includes("phase95CommerceMemory.meta"), "phase 9.5 meta exposed");
