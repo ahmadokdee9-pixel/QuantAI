@@ -65,6 +65,7 @@ import { applyCompetitiveIntelligence } from "@/lib/intelligence/competitiveInte
 import { applyConfidenceIntelligence } from "@/lib/intelligence/confidenceEngine";
 import { applyIntentAlignmentIntelligence } from "@/lib/intelligence/intentAlignmentEngine";
 import { applyPersonalizationIntelligence } from "@/lib/intelligence/personalizationEngine";
+import { applyRetailerIntelligence } from "@/lib/intelligence/retailerIntelligenceEngine";
 import {
   circuitSnapshot,
   getGuestStaleTray,
@@ -1749,6 +1750,23 @@ async function handleSearch(
     });
     traceStage("phase107_personalization", products.length, products.length);
 
+    const retailerIntelligence = applyRetailerIntelligence({
+      products,
+      decisionBrief: personalizationIntelligence.decisionBrief,
+      phase92: phase92Integrity.meta,
+      phase93: phase93TrustDiscount.meta,
+      sparse: intelligenceUpgrade.meta.sparseResult,
+      verdictIntelligence: explainability.verdictIntelligence,
+      explainability: explainability.meta,
+      alternativeIntelligence: alternativeIntelligence.meta,
+      marketContext: marketContextIntelligence.meta,
+      competitiveIntelligence: competitiveIntelligence.meta,
+      confidenceIntelligence: confidenceIntelligence.meta,
+      intentAlignment: intentAlignmentIntelligence.meta,
+      personalization: personalizationIntelligence.meta,
+    });
+    traceStage("phase108_retailer_intelligence", products.length, products.length);
+
     const marketAwareness = computeMarketAwarenessForTray(query, products);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
     const trayMetaCoherence = verifyTrayMetaCoherence(products, dealClusters);
@@ -1788,7 +1806,7 @@ async function handleSearch(
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),
         canonicalQuery: canonicalQueryForDebug(canonicalQuery),
         queryIntelligence: phase94QueryIntelligence.meta,
-        decisionBrief: personalizationIntelligence.decisionBrief,
+        decisionBrief: retailerIntelligence.decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,
         trustRanking: intelligenceUpgrade.meta.trustRanking,
@@ -1810,6 +1828,7 @@ async function handleSearch(
         confidenceIntelligence: confidenceIntelligence.meta,
         intentAlignment: intentAlignmentIntelligence.meta,
         personalization: personalizationIntelligence.meta,
+        retailerIntelligence: retailerIntelligence.meta,
         identityDebug: debugMeta.identityDebug,
         liveDiscovery,
         liveDiscoveryStatus: liveDiscovery.status,

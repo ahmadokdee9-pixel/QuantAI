@@ -48,6 +48,8 @@ export type DecisionBriefDTO = {
   intentAlignmentSummary?: string;
   /** Phase 10.7 — personalization alignment summary */
   personalizationSummary?: string;
+  /** Phase 10.8 — retailer trust and checkout quality summary */
+  retailerSummary?: string;
 };
 
 export function buildDecisionBrief(args: {
