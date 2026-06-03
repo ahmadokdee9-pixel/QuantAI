@@ -56,6 +56,7 @@ import { buildBrandAffinity } from "@/lib/intelligence/brandAffinityEngine";
 import { buildProductAttributeAffinity } from "@/lib/intelligence/productAttributeAffinityEngine";
 import { buildRetailerTrust } from "@/lib/intelligence/retailerTrustEngine";
 import { buildReviewCredibility } from "@/lib/intelligence/reviewCredibilityEngine";
+import { buildRealDiscount } from "@/lib/intelligence/realDiscountEngine";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import {
   applyBetaDiscoveryDefaults,
@@ -771,6 +772,15 @@ async function handleSearch(
       intentConfidence,
       productAttributeAffinity,
       retailerTrust,
+    });
+    const realDiscount = buildRealDiscount({
+      query,
+      buyerModel,
+      shopperPsychology,
+      dealSensitivity,
+      productAttributeAffinity,
+      retailerTrust,
+      reviewCredibility,
     });
     const requestCanonicalQuery = queryIntelligenceBundle.canonicalQuery;
     const pipelineKey = normalizeSearchCacheKey(requestCanonicalQuery.normalizedQuery || query);
@@ -2059,6 +2069,7 @@ async function handleSearch(
         productAttributeAffinity,
         retailerTrust,
         reviewCredibility,
+        realDiscount,
         decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,
