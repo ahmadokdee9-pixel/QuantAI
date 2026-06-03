@@ -31,6 +31,11 @@ import {
   countActiveFilters,
   defaultResultsFilters,
 } from "@/lib/resultsFilters";
+import {
+  applyRankedResultsDisplayBridge,
+  isExecutedRankingActive,
+} from "@/lib/ranking/rankedResultsDisplayBridge";
+import type { ExecutedRankingMeta } from "@/lib/ranking/controlledRankingExecution";
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
 import type { SearchEntitlementsDTO } from "@/lib/subscription/entitlements";
 import type { QuantPlanTier } from "@/lib/subscription/plans";
@@ -215,6 +220,17 @@ export default function Home() {
 
   const sortedProductsMemo = useMemo(() => {
     const filteredForSort = dedupeSearchTray(applyResultsFilters(products, filters));
+    const executedRanking = searchMeta?.executedRanking as ExecutedRankingMeta | undefined;
+
+    if (isExecutedRankingActive(executedRanking)) {
+      return filterRecommendationTray(
+        applyRankedResultsDisplayBridge({
+          products: filteredForSort,
+          executedRanking,
+        })
+      );
+    }
+
     const sortedList = [...filteredForSort];
     let ranked: QuantProduct[];
     switch (sort) {
@@ -236,7 +252,7 @@ export default function Home() {
         ranked = sortByCompositeRankEnhanced(sortedList, query);
     }
     return filterRecommendationTray(ranked);
-  }, [products, filters, sort, query]);
+  }, [products, filters, sort, query, searchMeta]);
 
   useEffect(() => {
     if (sortedProductsMemo.length === 0) return;
