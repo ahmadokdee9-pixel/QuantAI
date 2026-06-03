@@ -46,6 +46,8 @@ export type DecisionBriefDTO = {
   confidenceDrivers?: string[];
   /** Phase 10.6 — intent alignment summary for primary recommendation */
   intentAlignmentSummary?: string;
+  /** Phase 10.7 — personalization alignment summary */
+  personalizationSummary?: string;
 };
 
 export function buildDecisionBrief(args: {
