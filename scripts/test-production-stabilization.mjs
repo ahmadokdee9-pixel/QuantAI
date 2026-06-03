@@ -67,6 +67,8 @@ assert.ok(route.includes("buildPurchaseFriction"), "phase 12.11 purchase frictio
 assert.ok(route.includes("purchaseFriction"), "phase 12.11 purchaseFriction meta exposed");
 assert.ok(route.includes("buildConversionProbability"), "phase 12.12 conversion probability wired");
 assert.ok(route.includes("conversionProbability"), "phase 12.12 conversionProbability meta exposed");
+assert.ok(route.includes("buildDealSensitivity"), "phase 12.13 deal sensitivity wired");
+assert.ok(route.includes("dealSensitivity"), "phase 12.13 dealSensitivity meta exposed");
 assert.ok(route.includes("applyPhase95CommerceMemory"), "phase 9.5 commerce memory wired");
 assert.ok(route.includes("applyVerdictIntelligence"), "phase 10.0 verdict intelligence wired");
 assert.ok(route.includes("applyExplainabilityIntelligence"), "phase 10.1 explainability wired");

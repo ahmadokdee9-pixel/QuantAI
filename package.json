@@ -45,6 +45,7 @@
     "test:phase1210-decision-readiness": "npx --yes tsx scripts/test-phase1210-decision-readiness.mjs",
     "test:phase1211-purchase-friction": "npx --yes tsx scripts/test-phase1211-purchase-friction.mjs",
     "test:phase1212-conversion-probability": "npx --yes tsx scripts/test-phase1212-conversion-probability.mjs",
+    "test:phase1213-deal-sensitivity": "npx --yes tsx scripts/test-phase1213-deal-sensitivity.mjs",
     "test:search-intelligence-upgrade": "npx --yes tsx scripts/test-search-intelligence-upgrade.mjs",
     "test:phase6-intelligence-hardening": "npx --yes tsx scripts/phase6-intelligence-hardening-validation.mjs",
     "test:phase8-ranking-validation": "npx --yes tsx scripts/phase8-ranking-validation-suite.mjs",
