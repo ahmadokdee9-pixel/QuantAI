@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-25T23:58:57.270Z",
+  "generatedAt": "2026-06-03T01:02:40.102Z",
   "baseUrl": "https://quant-ai-app.vercel.app",
   "rows": [
     {
@@ -17,16 +17,16 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 2535,
+      "latencyMs": 2923,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 560,
-      "productCount": 20,
+      "mobileLatencyMs": 338,
+      "productCount": 14,
       "canonicalCategory": "phone",
       "top3Titles": [
-        "iPhone 16 Plus 128GB - Blauwgroen - Simlockvrij",
         "Apple iPhone 16",
-        "Apple iPhone 16"
+        "Apple iPhone 16",
+        "iPhone 16 128GB - Ultramarijn - Simlockvrij"
       ],
       "issues": [
         {
@@ -35,65 +35,79 @@
           "severity": "medium"
         }
       ],
-      "degraded": false
+      "degraded": true
     },
     {
       "id": 2,
       "query": "airpods",
       "bucket": "electronics",
       "lang": "en",
-      "verdict": "PASS",
+      "verdict": "FAIL",
       "criteria": {
         "A": true,
         "B": true,
         "C": true,
-        "D": true,
+        "D": false,
         "E": true,
         "F": true
       },
       "critical": false,
-      "latencyMs": 1069,
+      "latencyMs": 1292,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 613,
+      "mobileLatencyMs": 445,
       "productCount": 24,
       "canonicalCategory": "audio",
       "top3Titles": [
-        "AirPods Pro 3 Wireless Earbuds Bluetooth Headphones with Active Noise Cancelling",
-        "Restored Apple AirPods Bluetooth Wireless",
-        "Apple AirPods Pro 3"
+        "Apple AirPods 4",
+        "Apple AirPods Pro 3",
+        "AirPods Pro 3 Wireless Earbuds Bluetooth Headphones with Active Noise Cancelling"
       ],
-      "issues": [],
-      "degraded": false
+      "issues": [
+        {
+          "type": "duplicate",
+          "code": "top3_same_merchant",
+          "severity": "medium",
+          "detail": "apple×2"
+        }
+      ],
+      "degraded": true
     },
     {
       "id": 3,
       "query": "gaming monitor for PS5 under 500",
       "bucket": "electronics",
       "lang": "en",
-      "verdict": "PASS",
+      "verdict": "FAIL",
       "criteria": {
         "A": true,
         "B": true,
         "C": true,
-        "D": true,
+        "D": false,
         "E": true,
         "F": true
       },
       "critical": false,
-      "latencyMs": 1539,
+      "latencyMs": 1378,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 523,
-      "productCount": 19,
+      "mobileLatencyMs": 1048,
+      "productCount": 21,
       "canonicalCategory": "electronics",
       "top3Titles": [
-        "Amzfast 27 inch gebogen gamingmonitor, 2k QHD (2560 x 1440), 180 Hz monitor, 1 m",
-        "Samsung Ips Led 240hz Gaming monitor",
-        "ASUS VA259HGA monitor"
+        "Great voell Curved Gaming Monitor 24 inch, 3000R, FHD 1080p, 100Hz, FreeSync, HD",
+        "CronusPro 24 inch gebogen gaming PC monitor, 200 Hz, FHD 1920 x 1080, gaming mon",
+        "Gawfolk 27 inch FHD monitor gebogen"
       ],
-      "issues": [],
-      "degraded": false
+      "issues": [
+        {
+          "type": "duplicate",
+          "code": "top3_same_merchant",
+          "severity": "medium",
+          "detail": "amazon.nl - seller×3"
+        }
+      ],
+      "degraded": true
     },
     {
       "id": 4,
@@ -110,54 +124,48 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 924,
+      "latencyMs": 900,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 484,
-      "productCount": 24,
+      "mobileLatencyMs": 602,
+      "productCount": 25,
       "canonicalCategory": "phone",
       "top3Titles": [
-        "Apple iPhone 15 Pro Max 256GB White Titanium",
-        "Apple iPhone 15 Pro Max Titanium",
-        "iPhone 15 Pro Max - 256GB - Black Titanium - Like"
+        "Apple Iphone 15 Pro Max 256gb Natural Titanium",
+        "Apple iPhone 15 Pro Max Blue Titanium 256GB like , 87% battery health",
+        "Apple iPhone 15 Pro Max"
       ],
       "issues": [],
-      "degraded": false
+      "degraded": true
     },
     {
       "id": 5,
       "query": "compare airpods pro vs airpods 4",
       "bucket": "comparison",
       "lang": "en",
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "criteria": {
         "A": true,
         "B": true,
         "C": true,
-        "D": false,
+        "D": true,
         "E": true,
         "F": true
       },
       "critical": false,
-      "latencyMs": 2362,
+      "latencyMs": 1016,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 475,
+      "mobileLatencyMs": 362,
       "productCount": 22,
       "canonicalCategory": "audio",
       "top3Titles": [
-        "Apple AirPods Pro 2",
         "Apple AirPods Pro 3e generatie (2025) - Wireless (USB-C)-oplaadcase Wit",
-        "Apple AirPods Pro 3"
+        "Apple AirPods Pro 3",
+        "Apple AirPods Pro - 1e Gen (Verlengd)"
       ],
-      "issues": [
-        {
-          "type": "duplicate",
-          "code": "top3_near_duplicate_title",
-          "severity": "medium"
-        }
-      ],
-      "degraded": false
+      "issues": [],
+      "degraded": true
     },
     {
       "id": 6,
@@ -174,178 +182,199 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 948,
+      "latencyMs": 694,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 554,
-      "productCount": 20,
+      "mobileLatencyMs": 373,
+      "productCount": 19,
       "canonicalCategory": "audio",
       "top3Titles": [
         "Raycon Everyday Headphones Over The Ear Headphones Noise Cancelling",
-        "Audio-Technica ATH-M50X headphones",
-        "ANC wireless headphone Berlinger Haus FTV-0017"
+        "ANC wireless headphone Berlinger Haus FTV-0019",
+        "Audio Technica ATH-M50X Headphones"
       ],
       "issues": [],
-      "degraded": false
+      "degraded": true
     },
     {
       "id": 7,
       "query": "adidas samba",
       "bucket": "fashion",
       "lang": "en",
-      "verdict": "PASS",
+      "verdict": "SKIP",
       "criteria": {
-        "A": true,
-        "B": true,
+        "A": false,
+        "B": false,
         "C": true,
         "D": true,
-        "E": true,
+        "E": false,
         "F": true
       },
-      "critical": false,
-      "latencyMs": 1130,
+      "critical": true,
+      "latencyMs": 1328,
       "latencyOutlier": false,
-      "mobileOk": true,
-      "mobileLatencyMs": 524,
-      "productCount": 26,
+      "mobileOk": false,
+      "mobileLatencyMs": 1076,
+      "productCount": 0,
       "canonicalCategory": "shoes",
-      "top3Titles": [
-        "adidas Originals Samba Xlg Trainers",
-        "Adult adidas Originals Samba Super Suede Trainers",
-        "kids adidas Samba Jane Vrouwen,Kinderen"
-      ],
-      "issues": [],
-      "degraded": false
+      "top3Titles": [],
+      "issues": [
+        {
+          "type": "broken",
+          "code": "empty_tray",
+          "severity": "critical"
+        },
+        {
+          "type": "broken",
+          "code": "error_state",
+          "severity": "critical",
+          "detail": "RATE_LIMIT"
+        }
+      ]
     },
     {
       "id": 8,
       "query": "nike shoes like vomero but cheaper",
       "bucket": "fashion",
       "lang": "en",
-      "verdict": "FAIL",
+      "verdict": "SKIP",
       "criteria": {
-        "A": true,
-        "B": true,
+        "A": false,
+        "B": false,
         "C": true,
-        "D": false,
-        "E": true,
+        "D": true,
+        "E": false,
         "F": true
       },
-      "critical": false,
-      "latencyMs": 944,
+      "critical": true,
+      "latencyMs": 5963,
       "latencyOutlier": false,
-      "mobileOk": true,
-      "mobileLatencyMs": 497,
-      "productCount": 22,
+      "mobileOk": false,
+      "mobileLatencyMs": 2023,
+      "productCount": 0,
       "canonicalCategory": "shoes",
-      "top3Titles": [
-        "Nike Vomero 18 Women's Neutral Running Shoes - pink, 9 US",
-        "Nike Vomero Plus Women's Neutral Running Shoes - purple, 11.5 US",
-        "Nike Air Zoom Vomero 11 Women's Running Shoe - Black"
-      ],
+      "top3Titles": [],
       "issues": [
         {
-          "type": "duplicate",
-          "code": "top3_same_merchant",
-          "severity": "medium",
-          "detail": "misterrunning.com×2"
+          "type": "broken",
+          "code": "empty_tray",
+          "severity": "critical"
+        },
+        {
+          "type": "broken",
+          "code": "error_state",
+          "severity": "critical",
+          "detail": "SEARCH_FAILED"
         }
-      ],
-      "degraded": false
+      ]
     },
     {
       "id": 9,
       "query": "minimal white sneakers like Common Projects",
       "bucket": "fashion",
       "lang": "en",
-      "verdict": "PASS",
+      "verdict": "SKIP",
       "criteria": {
-        "A": true,
-        "B": true,
+        "A": false,
+        "B": false,
         "C": true,
         "D": true,
-        "E": true,
+        "E": false,
         "F": true
       },
-      "critical": false,
-      "latencyMs": 607,
+      "critical": true,
+      "latencyMs": 2116,
       "latencyOutlier": false,
-      "mobileOk": true,
-      "mobileLatencyMs": 324,
-      "productCount": 11,
+      "mobileOk": false,
+      "mobileLatencyMs": 1133,
+      "productCount": 0,
       "canonicalCategory": "shoes",
-      "top3Titles": [
-        "Nike Sportswear AIR FORCE 1 07 Sneakers laag, Dames, Maat: 39, Black - Leer",
-        "Diadora Sneaker Game L Low White",
-        "Oliver Cabell Low 1 Sneaker for Unisex Adult-"
-      ],
-      "issues": [],
-      "degraded": false
+      "top3Titles": [],
+      "issues": [
+        {
+          "type": "broken",
+          "code": "empty_tray",
+          "severity": "critical"
+        },
+        {
+          "type": "broken",
+          "code": "error_state",
+          "severity": "critical",
+          "detail": "SEARCH_FAILED"
+        }
+      ]
     },
     {
       "id": 10,
       "query": "sofa",
       "bucket": "furniture",
       "lang": "en",
-      "verdict": "PASS",
+      "verdict": "SKIP",
       "criteria": {
-        "A": true,
-        "B": true,
+        "A": false,
+        "B": false,
         "C": true,
         "D": true,
-        "E": true,
+        "E": false,
         "F": true
       },
-      "critical": false,
-      "latencyMs": 1130,
+      "critical": true,
+      "latencyMs": 1146,
       "latencyOutlier": false,
-      "mobileOk": true,
-      "mobileLatencyMs": 595,
-      "productCount": 27,
+      "mobileOk": false,
+      "mobileLatencyMs": 1068,
+      "productCount": 0,
       "canonicalCategory": "furniture",
-      "top3Titles": [
-        "Corner sofa Comfivo Ficus Available Available",
-        "Modular Shaped Couch with Chaise Modern 3-Seater Sofa",
-        "Corner Chaise Module Sofia Beige Fabric B 185 x D 92 cm"
-      ],
-      "issues": [],
-      "degraded": false
+      "top3Titles": [],
+      "issues": [
+        {
+          "type": "broken",
+          "code": "empty_tray",
+          "severity": "critical"
+        },
+        {
+          "type": "broken",
+          "code": "error_state",
+          "severity": "critical",
+          "detail": "RATE_LIMIT"
+        }
+      ]
     },
     {
       "id": 11,
       "query": "luxury looking sofa under 1000",
       "bucket": "furniture",
       "lang": "en",
-      "verdict": "FAIL",
+      "verdict": "SKIP",
       "criteria": {
-        "A": true,
-        "B": true,
+        "A": false,
+        "B": false,
         "C": true,
-        "D": false,
-        "E": true,
+        "D": true,
+        "E": false,
         "F": true
       },
-      "critical": false,
-      "latencyMs": 1125,
+      "critical": true,
+      "latencyMs": 2099,
       "latencyOutlier": false,
-      "mobileOk": true,
-      "mobileLatencyMs": 603,
-      "productCount": 22,
+      "mobileOk": false,
+      "mobileLatencyMs": 2009,
+      "productCount": 0,
       "canonicalCategory": "furniture",
-      "top3Titles": [
-        "Signature Design by Ashley Darcy Fabric Sofa in Cobblestone",
-        "Serta Benrama 67\" Soft Modern Sofa, Square Track Arms, Solid Wood Legs, Easy Ass",
-        "Mid-Century Convertible Tufted Fabric Sofa for Cozy Living"
-      ],
+      "top3Titles": [],
       "issues": [
         {
-          "type": "duplicate",
-          "code": "top3_same_merchant",
-          "severity": "medium",
-          "detail": "ubuy×2"
+          "type": "broken",
+          "code": "empty_tray",
+          "severity": "critical"
+        },
+        {
+          "type": "broken",
+          "code": "error_state",
+          "severity": "critical",
+          "detail": "SEARCH_FAILED"
         }
-      ],
-      "degraded": false
+      ]
     },
     {
       "id": 12,
@@ -362,16 +391,16 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 1323,
+      "latencyMs": 1050,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 518,
-      "productCount": 23,
+      "mobileLatencyMs": 533,
+      "productCount": 24,
       "canonicalCategory": "desk_setup",
       "top3Titles": [
-        "Furinno Simplistic A Frame Computer Desk",
-        "Maclean Office chairs MC-872",
-        "FLASH FURNITURE BL-ZP-8805-BK-GG Office Chair,42.25 In H,Gray 420G10"
+        "Desk with top and metal legs LOFT white-honey",
+        "Belleze Modern Simple Home Office Computer Laptop Writing Desk Wood Study Table",
+        "Mark Adler Ma-leader 7.6 Electric Gaming Desk gammresto"
       ],
       "issues": [],
       "degraded": false
@@ -391,26 +420,26 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 1052,
+      "latencyMs": 5243,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 949,
-      "productCount": 24,
+      "mobileLatencyMs": 910,
+      "productCount": 25,
       "canonicalCategory": "furniture",
       "top3Titles": [
-        "Corner Sofa Luna Fabric B 280 x D 184 cm",
-        "White Modern L-Shaped Corner Sectional Sofa for Living Room Faux Leather Upholst",
-        "Doart 2850mm Cotton & Linen 4-Seater Modern Corner Modular Sectional Sofa L-Shap"
+        "Homcom Corner Sofa-Polyester Staal-242L x 87-156B x 87H cm",
+        "Deseo Spring Corner Sofa",
+        "Buy Coventry L-Shaped Sofa for Living Room - Nismaaya Decor"
       ],
       "issues": [
         {
           "type": "duplicate",
           "code": "top3_same_merchant",
           "severity": "medium",
-          "detail": "homary.com×2"
+          "detail": "bol.com×2"
         }
       ],
-      "degraded": false
+      "degraded": true
     },
     {
       "id": 14,
@@ -427,26 +456,26 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 996,
+      "latencyMs": 4871,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 927,
+      "mobileLatencyMs": 906,
       "productCount": 24,
       "canonicalCategory": "furniture",
       "top3Titles": [
         "IKEA FLINTAN office chair with armrests",
-        "IKEA FLINTAN office chair",
-        "Enrico C54 Boss Chair Cellbell Boss Chairs & Office Chairs"
+        "IKEA LÅNGFJÄLL conference chair",
+        "IKEA TOSSBERG / MALSKÄR swivel chair"
       ],
       "issues": [
         {
           "type": "duplicate",
           "code": "top3_same_merchant",
           "severity": "medium",
-          "detail": "ikea×2"
+          "detail": "ikea×3"
         }
       ],
-      "degraded": false
+      "degraded": true
     },
     {
       "id": 15,
@@ -460,29 +489,29 @@
         "C": true,
         "D": false,
         "E": true,
-        "F": true
+        "F": false
       },
       "critical": false,
-      "latencyMs": 1186,
-      "latencyOutlier": false,
+      "latencyMs": 15411,
+      "latencyOutlier": true,
       "mobileOk": true,
-      "mobileLatencyMs": 1112,
+      "mobileLatencyMs": 1206,
       "productCount": 24,
       "canonicalCategory": "furniture",
       "top3Titles": [
         "CellBell Callisto C83 Executive Chair Freeshipping",
-        "كرسي مكتب مريح للألعاب مع مسند قدمين، كرسي مكتب عالي الظهر من الجلد الصناعي، مسا",
-        "كرسي الألعاب المريح | كرسي مكتبي تنفيذي بظهر عالي مع دعم قطني ووسادة رأس | قابل "
+        "Grazia C57 Boss Chair Cellbell Boss Chairs & Office Chairs",
+        "كرسي مكتب شبكي متوسط الحجم Mahmayi TJ ، دوار مريح ، ارتفاع قابل للتعديل ، مادة س"
       ],
       "issues": [
         {
           "type": "duplicate",
           "code": "top3_same_merchant",
           "severity": "medium",
-          "detail": "b mart | منصة بي مارت للتسوق الإلكتروني×2"
+          "detail": "cellbell.in×2"
         }
       ],
-      "degraded": false
+      "degraded": true
     },
     {
       "id": 16,
@@ -499,113 +528,132 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 735,
+      "latencyMs": 363,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 570,
-      "productCount": 21,
+      "mobileLatencyMs": 670,
+      "productCount": 13,
       "canonicalCategory": "phone",
       "top3Titles": [
-        "Apple iPhone 15 Pro Titanium",
-        "Apple iPhone 15 Plus",
-        "Apple iPhone 15 Pro Max 256GB White Titanium"
+        "Apple iPhone 15 Pro Max 256gb Natural Titanium",
+        "Apple iPhone 15 Pro Max",
+        "Apple iphone 15 Pro Max"
       ],
       "issues": [
         {
           "type": "duplicate",
-          "code": "top3_same_merchant",
-          "severity": "medium",
-          "detail": "back market×2"
+          "code": "top3_near_duplicate_title",
+          "severity": "medium"
         }
       ],
-      "degraded": false
+      "degraded": true
     },
     {
       "id": 17,
       "query": "luxury ساعة under 300",
       "bucket": "luxury",
       "lang": "mixed",
-      "verdict": "PASS",
+      "verdict": "FAIL",
       "criteria": {
         "A": true,
         "B": true,
         "C": true,
-        "D": true,
+        "D": false,
         "E": true,
         "F": true
       },
       "critical": false,
-      "latencyMs": 1213,
+      "latencyMs": 661,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 1062,
-      "productCount": 24,
+      "mobileLatencyMs": 900,
+      "productCount": 23,
       "canonicalCategory": "watch",
       "top3Titles": [
-        "Quality Men Watch Luxury High Man Quartz Wristwatch Waterproof",
-        "OLEVS Men Automatic Watch Skeleton 5 Hands Mechanical Classic Luxury Multi Calen",
-        "OLEVS 9910 Tourbillon Self-Winding Sports Luxury Watch (Color: BLUE)"
+        "Forsining Fsg8130 Fancy Design Fashion Casual Men's Style Watch Automatic Mechan",
+        "LTP-1234GLL-7ADF Women's Leather Watch LTP-1234GLL-7ADF",
+        "Cross-Border Shandushi BV Couple Automatic Mechanical Watch Steel Belt Baked Blu"
       ],
-      "issues": [],
-      "degraded": false
+      "issues": [
+        {
+          "type": "duplicate",
+          "code": "top3_same_merchant",
+          "severity": "medium",
+          "detail": "made-in-china.com×2"
+        }
+      ],
+      "degraded": true
     },
     {
       "id": 18,
       "query": "ساعة شكلها luxury بس سعرها معقول",
       "bucket": "luxury AR",
       "lang": "ar",
-      "verdict": "PASS",
+      "verdict": "FAIL",
       "criteria": {
         "A": true,
         "B": true,
         "C": true,
-        "D": true,
+        "D": false,
         "E": true,
         "F": true
       },
       "critical": false,
-      "latencyMs": 778,
+      "latencyMs": 2582,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 658,
-      "productCount": 18,
+      "mobileLatencyMs": 332,
+      "productCount": 9,
       "canonicalCategory": "watch",
       "top3Titles": [
-        "Casio Watch AE-1200WHD-1AVEF Men's",
-        "Casio Watch Men's",
-        "Casio Women's Watch"
+        "Lux Watch in Synthetic Leather Black",
+        "Lux Watch in Synthetic Leather Dark Blue",
+        "LTP-1234GLL-7ADF Women's Leather Watch LTP-1234GLL-7ADF"
       ],
-      "issues": [],
-      "degraded": false
+      "issues": [
+        {
+          "type": "duplicate",
+          "code": "top3_same_merchant",
+          "severity": "medium",
+          "detail": "miss trend×2"
+        }
+      ],
+      "degraded": true
     },
     {
       "id": 19,
       "query": "yves saint laurent libre edp 90ml",
       "bucket": "fragrance",
       "lang": "en",
-      "verdict": "PASS",
+      "verdict": "FAIL",
       "criteria": {
         "A": true,
         "B": true,
         "C": true,
-        "D": true,
+        "D": false,
         "E": true,
         "F": true
       },
       "critical": false,
-      "latencyMs": 346,
+      "latencyMs": 5272,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 170,
+      "mobileLatencyMs": 1386,
       "productCount": 3,
       "canonicalCategory": "fragrance",
       "top3Titles": [
-        "Yves Saint Laurent Libre Eau de Parfum",
-        "Yves Saint Laurent Libre gift Set",
-        "Yves Saint Laurent Libre Flowers & Flames Eau de Parfum"
+        "Saint Laurent Yves Libre Eau De Parfum",
+        "Yves Saint Laurent Libre Eau de Parfum For Woman",
+        "Yves Saint Laurent Libre Eau de Parfum Intense"
       ],
-      "issues": [],
-      "degraded": false
+      "issues": [
+        {
+          "type": "duplicate",
+          "code": "top3_near_duplicate_title",
+          "severity": "medium"
+        }
+      ],
+      "degraded": true
     },
     {
       "id": 20,
@@ -622,23 +670,23 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 967,
+      "latencyMs": 1017,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 883,
-      "productCount": 23,
+      "mobileLatencyMs": 1093,
+      "productCount": 24,
       "canonicalCategory": "shoes",
       "top3Titles": [
-        "Nike Vomero Plus Men's Neutral Running Shoes - green, 9 US",
-        "Nike Vomero Plus Men's Neutral Running Shoes - grey, 10 US",
-        "Nike Vomero Plus Men's Running Shoes"
+        "Nike Vomero Plus Men's Neutral Running Shoes - green, 9.5 US",
+        "Nike Vomero Plus Men's Neutral Running Shoes - white, 12 US",
+        "Nike Vomero Plus Men's Neutral Running Shoes - black, 11.5 US"
       ],
       "issues": [
         {
           "type": "duplicate",
           "code": "top3_same_merchant",
           "severity": "medium",
-          "detail": "misterrunning.com×2"
+          "detail": "misterrunning.com×3"
         },
         {
           "type": "duplicate",
@@ -646,36 +694,43 @@
           "severity": "medium"
         }
       ],
-      "degraded": false
+      "degraded": true
     },
     {
       "id": 21,
       "query": "ايفون 16 رخيص",
       "bucket": "budget AR",
       "lang": "ar",
-      "verdict": "PASS",
+      "verdict": "FAIL",
       "criteria": {
         "A": true,
         "B": true,
         "C": true,
-        "D": true,
+        "D": false,
         "E": true,
         "F": true
       },
       "critical": false,
-      "latencyMs": 693,
+      "latencyMs": 5165,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 565,
-      "productCount": 18,
+      "mobileLatencyMs": 4874,
+      "productCount": 4,
       "canonicalCategory": "phone",
       "top3Titles": [
-        "Apple iPhone 16",
-        "Zakelijke Apple iPhone 16 128GB Ultramarijn met een Onbeperkt internet en Onbepe",
-        "Apple Iphone 16 A3081 T-mobile Only 128gb Ultramarine Very Good"
+        "Apple Iphone 16 A3081 Xfinity Only 128gb Ultramarine Very Good",
+        "Apple Iphone 16 128gb White Mydr3j/a Factory Unlocked - Dual Sim -",
+        "Apple iPhone 16 Plus"
       ],
-      "issues": [],
-      "degraded": false
+      "issues": [
+        {
+          "type": "duplicate",
+          "code": "top3_same_merchant",
+          "severity": "medium",
+          "detail": "ebay - yywirelesss×2"
+        }
+      ],
+      "degraded": true
     },
     {
       "id": 22,
@@ -692,19 +747,19 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 1069,
+      "latencyMs": 3858,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 698,
-      "productCount": 24,
+      "mobileLatencyMs": 888,
+      "productCount": 26,
       "canonicalCategory": "audio",
       "top3Titles": [
-        "AirPods Pro 3 Wireless Earbuds Bluetooth Headphones with Active Noise Cancelling",
+        "Earbuds met Bluetooth 5.3 A7 Pro Headset AirPods Pro Alternatief",
         "Apple AirPods Pro 3",
-        "Apple AirPods 4 Black Matte Edition"
+        "AirPods Pro 3 Wireless Earbuds Bluetooth Headphones with Active Noise Cancelling"
       ],
       "issues": [],
-      "degraded": false
+      "degraded": true
     },
     {
       "id": 23,
@@ -721,55 +776,48 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 1408,
+      "latencyMs": 6027,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 450,
-      "productCount": 24,
+      "mobileLatencyMs": 263,
+      "productCount": 10,
       "canonicalCategory": "home",
       "top3Titles": [
-        "iRobot Roomba 105 Combo + Black Robot Vacuum",
-        "Dreame X50 Ultra RobotstofzuigerWhite - te huur",
-        "Xiaomi E5 Robot Vacuum"
+        "Tianbi Robotstofzuiger 3-in-1 Intelligente Robotstofzuiger 1200mAh Stofzuiger Ac",
+        "THEROB Smart robot stofzuiger met UV licht. (wit)",
+        "Self-Charging Robot Vacuum Cleaner Automatic Cleaning Robot Mopping Machine Floo"
       ],
       "issues": [],
-      "degraded": false
+      "degraded": true
     },
     {
       "id": 24,
       "query": "cheap but luxury looking sofa",
       "bucket": "furniture",
       "lang": "en",
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "criteria": {
         "A": true,
         "B": true,
         "C": true,
-        "D": false,
+        "D": true,
         "E": true,
         "F": true
       },
       "critical": false,
-      "latencyMs": 986,
+      "latencyMs": 9329,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 497,
+      "mobileLatencyMs": 498,
       "productCount": 23,
       "canonicalCategory": "furniture",
       "top3Titles": [
-        "Signature Design by Ashley Darcy Fabric Sofa in Cobblestone",
-        "Signature Design by Ashley Telora Faux Leather Sofa 2 Bolster Pillows Loose Cush",
-        "2780mm Modern Leath-Aire 3 Seater Deep Sofa with Adjustable Backrest Sailboat"
+        "Benzara Rumi Sofa Gray Faux Leather",
+        "KARE Design Sofa water lily 2-seater",
+        "Deon 3 Seater Sofa Online"
       ],
-      "issues": [
-        {
-          "type": "duplicate",
-          "code": "top3_same_merchant",
-          "severity": "medium",
-          "detail": "ubuy×2"
-        }
-      ],
-      "degraded": false
+      "issues": [],
+      "degraded": true
     },
     {
       "id": 25,
@@ -786,19 +834,19 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 387,
+      "latencyMs": 4096,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 227,
-      "productCount": 9,
+      "mobileLatencyMs": 206,
+      "productCount": 7,
       "canonicalCategory": "phone",
       "top3Titles": [
-        "imoshion Color Backcover - Geschikt voor Apple iPhone 16 - Telefoonhoesje Donker",
-        "Caseme Telefoonhoesje geschikt voor Apple iPhone 16E",
-        "OtterBox iPhone 16 Case Symmetry Series for MagSafe"
+        "Apple iPhone 16",
+        "Apple iPhone 16 Plus",
+        "Accezz Liquid Silicone Backcover met MagSafe Apple iPhone 16"
       ],
       "issues": [],
-      "degraded": false
+      "degraded": true
     },
     {
       "id": 26,
@@ -815,48 +863,55 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 716,
+      "latencyMs": 6475,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 349,
-      "productCount": 18,
+      "mobileLatencyMs": 329,
+      "productCount": 15,
       "canonicalCategory": "audio",
       "top3Titles": [
         "JBL Tune 770NC Wireless Headphones",
-        "Audio-Technica ATH-M50X headphones",
+        "JBL Live 670NC Wireless Headphones",
         "Nuroum OpenEar Pro 2 Wireless Headset with mic for Work Open Ear Headphone with "
       ],
       "issues": [],
-      "degraded": false
+      "degraded": true
     },
     {
       "id": 27,
       "query": "gaming monitor",
       "bucket": "electronics",
       "lang": "en",
-      "verdict": "PASS",
+      "verdict": "FAIL",
       "criteria": {
         "A": true,
         "B": true,
         "C": true,
-        "D": true,
+        "D": false,
         "E": true,
         "F": true
       },
       "critical": false,
-      "latencyMs": 800,
+      "latencyMs": 4224,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 453,
-      "productCount": 20,
+      "mobileLatencyMs": 478,
+      "productCount": 21,
       "canonicalCategory": "electronics",
       "top3Titles": [
-        "Z-Edge Gaming Monitor 27 inch 200 Hz, 1 ms, FreeSync, Scherm FHD 1080P met DP-ka",
-        "Msi mag 27cq6f 27 Qhd Va Lcd 180hz Gaming Monitor",
-        "Dell G2723HN FreeSync Monitor 27\" FHD IPS 165Hz Display"
+        "Minifire 25 Inch Gaming Monitor, 180Hz/200Hz Gaming Monitor, IPS, 1Ms, FHD 1080P",
+        "MSI MAG 27CQ6F Computer Monitor 68.6 Cm 2560 X 1440 Pixels",
+        "Z-Edge Gaming Monitor 27 inch 200 Hz 1 ms FreeSync Scherm FHD 1080P met DP-kabel"
       ],
-      "issues": [],
-      "degraded": false
+      "issues": [
+        {
+          "type": "duplicate",
+          "code": "top3_same_merchant",
+          "severity": "medium",
+          "detail": "amazon.nl - seller×2"
+        }
+      ],
+      "degraded": true
     },
     {
       "id": 28,
@@ -873,45 +928,45 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 1015,
+      "latencyMs": 539,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 466,
-      "productCount": 24,
+      "mobileLatencyMs": 380,
+      "productCount": 10,
       "canonicalCategory": "home",
       "top3Titles": [
-        "iRobot Roomba 105 Combo + Black Robot Vacuum",
-        "Dreame X50 Ultra RobotstofzuigerWhite - te huur",
-        "Xiaomi E5 Robot Vacuum"
+        "Tianbi Robotstofzuiger 3-in-1 Intelligente Robotstofzuiger 1200mAh Stofzuiger Ac",
+        "THEROB Smart robot stofzuiger met UV licht. (wit)",
+        "Self-Charging Robot Vacuum Cleaner Automatic Cleaning Robot Mopping Machine Floo"
       ],
       "issues": [],
-      "degraded": false
+      "degraded": true
     },
     {
       "id": 29,
       "query": "adidas samba white",
       "bucket": "fashion",
       "lang": "en",
-      "verdict": "PASS",
+      "verdict": "FAIL",
       "criteria": {
         "A": true,
         "B": true,
         "C": true,
         "D": true,
         "E": true,
-        "F": true
+        "F": false
       },
       "critical": false,
-      "latencyMs": 937,
-      "latencyOutlier": false,
+      "latencyMs": 14931,
+      "latencyOutlier": true,
       "mobileOk": true,
-      "mobileLatencyMs": 392,
+      "mobileLatencyMs": 505,
       "productCount": 25,
       "canonicalCategory": "shoes",
       "top3Titles": [
-        "Baby adidas Originals white/black Samba Og Comfort Closure Elastic Lace Infant T",
-        "adidas Originals Samba OG Unisex Trainers offwhite/silver green/gum",
-        "adidas Originals - Samba OG in White/Grey White/Grey / 10 M / 11 W"
+        "Adidas Samba Og Cloud White Core Black UK 9",
+        "Adidas Samba OG 'White Clear Granite' UK 8",
+        "adidas - Samba OG in White and Black WHITE/BLACK / 5"
       ],
       "issues": [],
       "degraded": true
@@ -931,16 +986,16 @@
         "F": true
       },
       "critical": false,
-      "latencyMs": 881,
+      "latencyMs": 4325,
       "latencyOutlier": false,
       "mobileOk": true,
-      "mobileLatencyMs": 507,
-      "productCount": 24,
+      "mobileLatencyMs": 533,
+      "productCount": 23,
       "canonicalCategory": "watch",
       "top3Titles": [
-        "PAGANI DESIGN Men's Automatic Watches PD-1752 Mechanical Stainless Steel Luxury ",
-        "PAGANI DESIGN PD-1733 Men's Automatic Watches Luxury Mechanical Business Sports ",
-        "Lige Male Gold Mechanical Automatic Wristwatch (men's Leather"
+        "LTP-1234GLL-7ADF Women's Leather Watch LTP-1234GLL-7ADF",
+        "RollsTimi RT-128 Men's Automatic Watches 39mm Stainless Steel Mechanical Wrist W",
+        "DUKA Luxury Men's Automatic Watches full Stainless Steel Business Waterproof Wri"
       ],
       "issues": [
         {
@@ -957,7 +1012,7 @@
     "guest": {
       "search401boundary": null,
       "search": true,
-      "products": 20
+      "products": 26
     },
     "signedIn": {
       "skipped": true,
@@ -976,7 +1031,7 @@
     "outbound": {
       "ok": true,
       "status": 302,
-      "location": "https://www.google.com/search?ibp=oshop&q=apple+iphone+16+phone+Galaxus+IKEA+Kaufland+Marktplaats+phone+apple+iphone+16+"
+      "location": "https://www.google.com/search?ibp=oshop&q=apple+iphone+16+phone&prds=catalogid%3A5985887138621973823%2Cproductid%3A14520"
     }
   },
   "mobilePages": {
@@ -984,19 +1039,19 @@
       "status": 200,
       "ok": true,
       "hasViewport": true,
-      "bytes": 63806
+      "bytes": 86072
     },
     "mobile": {
       "status": 200,
       "ok": true,
       "hasViewport": true,
-      "bytes": 63806
+      "bytes": 86072
     },
     "mobileSearch": {
       "status": 200,
       "ok": true,
       "hasViewport": true,
-      "bytes": 63806
+      "bytes": 86072
     }
   },
   "broken": [],
@@ -1009,27 +1064,20 @@
       "severity": "medium"
     },
     {
-      "id": 5,
-      "query": "compare airpods pro vs airpods 4",
-      "type": "duplicate",
-      "code": "top3_near_duplicate_title",
-      "severity": "medium"
-    },
-    {
-      "id": 8,
-      "query": "nike shoes like vomero but cheaper",
+      "id": 2,
+      "query": "airpods",
       "type": "duplicate",
       "code": "top3_same_merchant",
       "severity": "medium",
-      "detail": "misterrunning.com×2"
+      "detail": "apple×2"
     },
     {
-      "id": 11,
-      "query": "luxury looking sofa under 1000",
+      "id": 3,
+      "query": "gaming monitor for PS5 under 500",
       "type": "duplicate",
       "code": "top3_same_merchant",
       "severity": "medium",
-      "detail": "ubuy×2"
+      "detail": "amazon.nl - seller×3"
     },
     {
       "id": 13,
@@ -1037,7 +1085,7 @@
       "type": "duplicate",
       "code": "top3_same_merchant",
       "severity": "medium",
-      "detail": "homary.com×2"
+      "detail": "bol.com×2"
     },
     {
       "id": 14,
@@ -1045,7 +1093,7 @@
       "type": "duplicate",
       "code": "top3_same_merchant",
       "severity": "medium",
-      "detail": "ikea×2"
+      "detail": "ikea×3"
     },
     {
       "id": 15,
@@ -1053,15 +1101,37 @@
       "type": "duplicate",
       "code": "top3_same_merchant",
       "severity": "medium",
-      "detail": "b mart | منصة بي مارت للتسوق الإلكتروني×2"
+      "detail": "cellbell.in×2"
     },
     {
       "id": 16,
       "query": "iphone 15 برو max titanium",
       "type": "duplicate",
+      "code": "top3_near_duplicate_title",
+      "severity": "medium"
+    },
+    {
+      "id": 17,
+      "query": "luxury ساعة under 300",
+      "type": "duplicate",
       "code": "top3_same_merchant",
       "severity": "medium",
-      "detail": "back market×2"
+      "detail": "made-in-china.com×2"
+    },
+    {
+      "id": 18,
+      "query": "ساعة شكلها luxury بس سعرها معقول",
+      "type": "duplicate",
+      "code": "top3_same_merchant",
+      "severity": "medium",
+      "detail": "miss trend×2"
+    },
+    {
+      "id": 19,
+      "query": "yves saint laurent libre edp 90ml",
+      "type": "duplicate",
+      "code": "top3_near_duplicate_title",
+      "severity": "medium"
     },
     {
       "id": 20,
@@ -1069,7 +1139,7 @@
       "type": "duplicate",
       "code": "top3_same_merchant",
       "severity": "medium",
-      "detail": "misterrunning.com×2"
+      "detail": "misterrunning.com×3"
     },
     {
       "id": 20,
@@ -1079,12 +1149,20 @@
       "severity": "medium"
     },
     {
-      "id": 24,
-      "query": "cheap but luxury looking sofa",
+      "id": 21,
+      "query": "ايفون 16 رخيص",
       "type": "duplicate",
       "code": "top3_same_merchant",
       "severity": "medium",
-      "detail": "ubuy×2"
+      "detail": "ebay - yywirelesss×2"
+    },
+    {
+      "id": 27,
+      "query": "gaming monitor",
+      "type": "duplicate",
+      "code": "top3_same_merchant",
+      "severity": "medium",
+      "detail": "amazon.nl - seller×2"
     },
     {
       "id": 30,
@@ -1096,13 +1174,260 @@
     }
   ],
   "hallucinations": [],
-  "latencyOutliers": [],
-  "mobileIssues": [],
+  "latencyOutliers": [
+    {
+      "id": 15,
+      "query": "كرسي مكتب مريح وفخم",
+      "bucket": "furniture AR",
+      "lang": "ar",
+      "verdict": "FAIL",
+      "criteria": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": false,
+        "E": true,
+        "F": false
+      },
+      "critical": false,
+      "latencyMs": 15411,
+      "latencyOutlier": true,
+      "mobileOk": true,
+      "mobileLatencyMs": 1206,
+      "productCount": 24,
+      "canonicalCategory": "furniture",
+      "top3Titles": [
+        "CellBell Callisto C83 Executive Chair Freeshipping",
+        "Grazia C57 Boss Chair Cellbell Boss Chairs & Office Chairs",
+        "كرسي مكتب شبكي متوسط الحجم Mahmayi TJ ، دوار مريح ، ارتفاع قابل للتعديل ، مادة س"
+      ],
+      "issues": [
+        {
+          "type": "duplicate",
+          "code": "top3_same_merchant",
+          "severity": "medium",
+          "detail": "cellbell.in×2"
+        }
+      ],
+      "degraded": true
+    },
+    {
+      "id": 29,
+      "query": "adidas samba white",
+      "bucket": "fashion",
+      "lang": "en",
+      "verdict": "FAIL",
+      "criteria": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": true,
+        "E": true,
+        "F": false
+      },
+      "critical": false,
+      "latencyMs": 14931,
+      "latencyOutlier": true,
+      "mobileOk": true,
+      "mobileLatencyMs": 505,
+      "productCount": 25,
+      "canonicalCategory": "shoes",
+      "top3Titles": [
+        "Adidas Samba Og Cloud White Core Black UK 9",
+        "Adidas Samba OG 'White Clear Granite' UK 8",
+        "adidas - Samba OG in White and Black WHITE/BLACK / 5"
+      ],
+      "issues": [],
+      "degraded": true
+    }
+  ],
+  "mobileIssues": [
+    {
+      "id": 7,
+      "query": "adidas samba",
+      "bucket": "fashion",
+      "lang": "en",
+      "verdict": "SKIP",
+      "criteria": {
+        "A": false,
+        "B": false,
+        "C": true,
+        "D": true,
+        "E": false,
+        "F": true
+      },
+      "critical": true,
+      "latencyMs": 1328,
+      "latencyOutlier": false,
+      "mobileOk": false,
+      "mobileLatencyMs": 1076,
+      "productCount": 0,
+      "canonicalCategory": "shoes",
+      "top3Titles": [],
+      "issues": [
+        {
+          "type": "broken",
+          "code": "empty_tray",
+          "severity": "critical"
+        },
+        {
+          "type": "broken",
+          "code": "error_state",
+          "severity": "critical",
+          "detail": "RATE_LIMIT"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "query": "nike shoes like vomero but cheaper",
+      "bucket": "fashion",
+      "lang": "en",
+      "verdict": "SKIP",
+      "criteria": {
+        "A": false,
+        "B": false,
+        "C": true,
+        "D": true,
+        "E": false,
+        "F": true
+      },
+      "critical": true,
+      "latencyMs": 5963,
+      "latencyOutlier": false,
+      "mobileOk": false,
+      "mobileLatencyMs": 2023,
+      "productCount": 0,
+      "canonicalCategory": "shoes",
+      "top3Titles": [],
+      "issues": [
+        {
+          "type": "broken",
+          "code": "empty_tray",
+          "severity": "critical"
+        },
+        {
+          "type": "broken",
+          "code": "error_state",
+          "severity": "critical",
+          "detail": "SEARCH_FAILED"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "query": "minimal white sneakers like Common Projects",
+      "bucket": "fashion",
+      "lang": "en",
+      "verdict": "SKIP",
+      "criteria": {
+        "A": false,
+        "B": false,
+        "C": true,
+        "D": true,
+        "E": false,
+        "F": true
+      },
+      "critical": true,
+      "latencyMs": 2116,
+      "latencyOutlier": false,
+      "mobileOk": false,
+      "mobileLatencyMs": 1133,
+      "productCount": 0,
+      "canonicalCategory": "shoes",
+      "top3Titles": [],
+      "issues": [
+        {
+          "type": "broken",
+          "code": "empty_tray",
+          "severity": "critical"
+        },
+        {
+          "type": "broken",
+          "code": "error_state",
+          "severity": "critical",
+          "detail": "SEARCH_FAILED"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "query": "sofa",
+      "bucket": "furniture",
+      "lang": "en",
+      "verdict": "SKIP",
+      "criteria": {
+        "A": false,
+        "B": false,
+        "C": true,
+        "D": true,
+        "E": false,
+        "F": true
+      },
+      "critical": true,
+      "latencyMs": 1146,
+      "latencyOutlier": false,
+      "mobileOk": false,
+      "mobileLatencyMs": 1068,
+      "productCount": 0,
+      "canonicalCategory": "furniture",
+      "top3Titles": [],
+      "issues": [
+        {
+          "type": "broken",
+          "code": "empty_tray",
+          "severity": "critical"
+        },
+        {
+          "type": "broken",
+          "code": "error_state",
+          "severity": "critical",
+          "detail": "RATE_LIMIT"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "query": "luxury looking sofa under 1000",
+      "bucket": "furniture",
+      "lang": "en",
+      "verdict": "SKIP",
+      "criteria": {
+        "A": false,
+        "B": false,
+        "C": true,
+        "D": true,
+        "E": false,
+        "F": true
+      },
+      "critical": true,
+      "latencyMs": 2099,
+      "latencyOutlier": false,
+      "mobileOk": false,
+      "mobileLatencyMs": 2009,
+      "productCount": 0,
+      "canonicalCategory": "furniture",
+      "top3Titles": [],
+      "issues": [
+        {
+          "type": "broken",
+          "code": "empty_tray",
+          "severity": "critical"
+        },
+        {
+          "type": "broken",
+          "code": "error_state",
+          "severity": "critical",
+          "detail": "SEARCH_FAILED"
+        }
+      ]
+    }
+  ],
   "qualityNotes": [],
   "finalVerdict": {
     "label": "FAIL",
-    "passCount": 19,
-    "failCount": 11,
-    "criticalFails": 0
+    "passCount": 10,
+    "failCount": 15,
+    "criticalFails": 5
   }
 }

@@ -53,6 +53,7 @@ import { PipelineTrace } from "@/lib/search/pipelineTrace";
 import { rebuildSearchTrayArtifacts, verifyTrayMetaCoherence } from "@/lib/search/searchTrayArtifacts";
 import { composeProductionMeta } from "@/lib/search/productionMetaComposer";
 import { applySearchIntelligenceUpgrade } from "@/lib/search/searchIntelligenceUpgrade";
+import { applyPhase92TrayIntegrity } from "@/lib/search/phase92TrayIntegrity";
 import {
   circuitSnapshot,
   getGuestStaleTray,
@@ -1605,6 +1606,16 @@ async function handleSearch(
     products = intelligenceUpgrade.products;
     traceStage("search_intelligence_upgrade", stageBefore, products.length);
 
+    stageBefore = products.length;
+    const phase92Integrity = applyPhase92TrayIntegrity(
+      products,
+      query,
+      intelligenceUpgrade.meta.extractedIntent,
+      canonicalQuery
+    );
+    products = phase92Integrity.products;
+    traceStage("phase92_tray_integrity", stageBefore, products.length);
+
     const marketAwareness = computeMarketAwarenessForTray(query, products);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
     const trayMetaCoherence = verifyTrayMetaCoherence(products, dealClusters);
@@ -1654,6 +1665,7 @@ async function handleSearch(
           version: intelligenceUpgrade.meta.version,
           rankingAdjustmentsApplied: intelligenceUpgrade.meta.rankingAdjustmentsApplied,
         },
+        phase92TrayIntegrity: phase92Integrity.meta,
         identityDebug: debugMeta.identityDebug,
         liveDiscovery,
         liveDiscoveryStatus: liveDiscovery.status,

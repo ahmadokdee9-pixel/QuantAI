@@ -9,6 +9,10 @@ import {
   topNeedsMerchantDiversity,
   merchantCountsInTop,
 } from "../lib/search/merchantDiversityRerank.ts";
+import {
+  applyTop3DiversityProtection,
+  countNearDuplicateTitlesInTop,
+} from "../lib/search/top3DiversityIntegrity.ts";
 
 function p(title, store, qiComposite, link = "https://example.com/x") {
   return { id: 1, title, store, price: 10, displayPrice: "€10", rating: 4, link, image: "", reviewsCount: 1, shipping: null, availability: null, oldPrice: null, priceTrend: "stable", extensions: [], qiComposite };
@@ -50,6 +54,21 @@ assert.ok(
   "adidas.nl capped in top5"
 );
 assert.ok(sambaOut.slice(0, 3).filter((x) => normalizeMerchantKey(x) === "adidas.nl").length <= 2);
+
+const top3Strict = applyTop3DiversityProtection(sambaOut);
+for (const n of Object.values(top3Strict.meta.top3MerchantCounts)) {
+  assert.ok(n <= 1, `phase9 top3 merchant count ${n} > 1`);
+}
+
+const dupeTray = [
+  p("Apple iPhone 16 Pro Max 256GB Titanium", "apple.com", 95),
+  p("Apple iPhone 16 Pro Max 256GB Titanium Natural", "apple.com", 94),
+  p("Apple iPhone 16 Pro Max 256GB Titanium Desert", "apple.com", 93),
+  p("Samsung Galaxy S24 Ultra", "samsung.com", 88),
+];
+assert.ok(countNearDuplicateTitlesInTop(dupeTray) >= 1);
+const dupeOut = applyTop3DiversityProtection(dupeTray);
+assert.equal(countNearDuplicateTitlesInTop(dupeOut.products), 0);
 
 const alreadyOk = [
   p("A", "a", 90),

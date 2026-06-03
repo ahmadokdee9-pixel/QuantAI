@@ -37,6 +37,7 @@ assert.ok(route.includes("markRateLimited429"), "429 telemetry hook wired");
 assert.ok(route.includes("getGuestStaleTray"), "stale fallback serving wired");
 assert.ok(route.includes("withTimeout"), "request timeout guard wired");
 assert.ok(route.includes("isCircuitOpen"), "circuit-breaker guard wired");
+assert.ok(route.includes("applyPhase92TrayIntegrity"), "phase 9.2 tray integrity wired");
 
 const env = { NODE_ENV: "production" };
 applyBetaDiscoveryDefaults(env);
