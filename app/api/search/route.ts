@@ -58,6 +58,7 @@ import { applyPhase92TrayIntegrity } from "@/lib/search/phase92TrayIntegrity";
 import { applyPhase93TrustDiscountHardening } from "@/lib/intelligence/phase93TrustDiscountHardening";
 import { applyPhase95CommerceMemory } from "@/lib/intelligence/phase95CommerceMemory";
 import { applyVerdictIntelligence } from "@/lib/intelligence/verdictEngine";
+import { applyExplainabilityIntelligence } from "@/lib/intelligence/explainabilityEngine";
 import {
   circuitSnapshot,
   getGuestStaleTray,
@@ -1654,6 +1655,16 @@ async function handleSearch(
     });
     traceStage("phase10_verdict_intelligence", products.length, products.length);
 
+    const explainability = applyExplainabilityIntelligence({
+      phase92: phase92Integrity.meta,
+      phase93: phase93TrustDiscount.meta,
+      queryIntelligence: phase94QueryIntelligence.meta,
+      commerceMemory: phase95CommerceMemory.meta,
+      verdictIntelligence: verdictIntelligence.meta,
+      decisionBrief: verdictIntelligence.decisionBrief,
+    });
+    traceStage("phase101_explainability", products.length, products.length);
+
     const marketAwareness = computeMarketAwarenessForTray(query, products);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
     const trayMetaCoherence = verifyTrayMetaCoherence(products, dealClusters);
@@ -1693,7 +1704,7 @@ async function handleSearch(
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),
         canonicalQuery: canonicalQueryForDebug(canonicalQuery),
         queryIntelligence: phase94QueryIntelligence.meta,
-        decisionBrief: verdictIntelligence.decisionBrief,
+        decisionBrief: explainability.decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,
         trustRanking: intelligenceUpgrade.meta.trustRanking,
@@ -1707,7 +1718,8 @@ async function handleSearch(
         phase92TrayIntegrity: phase92Integrity.meta,
         phase93TrustDiscount: phase93TrustDiscount.meta,
         commerceMemory: phase95CommerceMemory.meta,
-        verdictIntelligence: verdictIntelligence.meta,
+        verdictIntelligence: explainability.verdictIntelligence,
+        explainability: explainability.meta,
         identityDebug: debugMeta.identityDebug,
         liveDiscovery,
         liveDiscoveryStatus: liveDiscovery.status,

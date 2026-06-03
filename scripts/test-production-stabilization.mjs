@@ -43,6 +43,8 @@ assert.ok(route.includes("buildPhase94QueryIntelligence"), "phase 9.4 query inte
 assert.ok(route.includes("queryIntelligence: phase94QueryIntelligence.meta"), "phase 9.4 meta exposed");
 assert.ok(route.includes("applyPhase95CommerceMemory"), "phase 9.5 commerce memory wired");
 assert.ok(route.includes("applyVerdictIntelligence"), "phase 10.0 verdict intelligence wired");
+assert.ok(route.includes("applyExplainabilityIntelligence"), "phase 10.1 explainability wired");
+assert.ok(route.includes("explainability: explainability.meta"), "phase 10.1 meta exposed");
 assert.ok(route.includes("verdictIntelligence: verdictIntelligence.meta"), "phase 10.0 meta exposed");
 assert.ok(route.includes("phase95CommerceMemory.meta"), "phase 9.5 meta exposed");
 

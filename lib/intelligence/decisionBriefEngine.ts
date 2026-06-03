@@ -27,6 +27,10 @@ export type DecisionBriefDTO = {
   discountNote: string | null;
   confidence: number;
   sparseTrayWarning: string | null;
+  /** Phase 10.1 — institutional explanation summary */
+  explanationSummary?: string;
+  /** Phase 10.1 — top user-facing reasons for the verdict */
+  keyReasons?: string[];
 };
 
 export function buildDecisionBrief(args: {
