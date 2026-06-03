@@ -54,6 +54,8 @@ assert.ok(route.includes("buildIntentConfidence"), "phase 12.5 intent confidence
 assert.ok(route.includes("intentConfidence"), "phase 12.5 intentConfidence meta exposed");
 assert.ok(route.includes("buildMemoryPreparation"), "phase 12.6 memory preparation wired");
 assert.ok(route.includes("memoryPreparation"), "phase 12.6 memoryPreparation meta exposed");
+assert.ok(route.includes("buildUniversalBuyerModel"), "phase 12.7 universal buyer model wired");
+assert.ok(route.includes("buyerModel"), "phase 12.7 buyerModel meta exposed");
 assert.ok(route.includes("applyPhase95CommerceMemory"), "phase 9.5 commerce memory wired");
 assert.ok(route.includes("applyVerdictIntelligence"), "phase 10.0 verdict intelligence wired");
 assert.ok(route.includes("applyExplainabilityIntelligence"), "phase 10.1 explainability wired");
