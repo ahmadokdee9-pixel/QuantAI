@@ -60,6 +60,7 @@ import { applyPhase95CommerceMemory } from "@/lib/intelligence/phase95CommerceMe
 import { applyVerdictIntelligence } from "@/lib/intelligence/verdictEngine";
 import { applyExplainabilityIntelligence } from "@/lib/intelligence/explainabilityEngine";
 import { applyAlternativeIntelligence } from "@/lib/intelligence/alternativeIntelligenceEngine";
+import { applyMarketContextIntelligence } from "@/lib/intelligence/marketContextEngine";
 import {
   circuitSnapshot,
   getGuestStaleTray,
@@ -1678,6 +1679,17 @@ async function handleSearch(
     });
     traceStage("phase102_alternative_intelligence", products.length, products.length);
 
+    const marketContextIntelligence = applyMarketContextIntelligence({
+      products,
+      decisionBrief: alternativeIntelligence.decisionBrief,
+      phase93: phase93TrustDiscount.meta,
+      sparse: intelligenceUpgrade.meta.sparseResult,
+      verdictIntelligence: explainability.verdictIntelligence,
+      explainability: explainability.meta,
+      alternativeIntelligence: alternativeIntelligence.meta,
+    });
+    traceStage("phase103_market_context", products.length, products.length);
+
     const marketAwareness = computeMarketAwarenessForTray(query, products);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
     const trayMetaCoherence = verifyTrayMetaCoherence(products, dealClusters);
@@ -1717,7 +1729,7 @@ async function handleSearch(
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),
         canonicalQuery: canonicalQueryForDebug(canonicalQuery),
         queryIntelligence: phase94QueryIntelligence.meta,
-        decisionBrief: alternativeIntelligence.decisionBrief,
+        decisionBrief: marketContextIntelligence.decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,
         trustRanking: intelligenceUpgrade.meta.trustRanking,
@@ -1734,6 +1746,7 @@ async function handleSearch(
         verdictIntelligence: explainability.verdictIntelligence,
         explainability: explainability.meta,
         alternativeIntelligence: alternativeIntelligence.meta,
+        marketContext: marketContextIntelligence.meta,
         identityDebug: debugMeta.identityDebug,
         liveDiscovery,
         liveDiscoveryStatus: liveDiscovery.status,

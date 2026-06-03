@@ -33,6 +33,8 @@ export type DecisionBriefDTO = {
   keyReasons?: string[];
   /** Phase 10.2 — institutional summary of tray alternatives */
   alternativesSummary?: string;
+  /** Phase 10.3 — purchase timing and pricing context summary */
+  marketContextSummary?: string;
 };
 
 export function buildDecisionBrief(args: {
