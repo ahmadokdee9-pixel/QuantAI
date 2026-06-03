@@ -62,6 +62,7 @@ import { applyExplainabilityIntelligence } from "@/lib/intelligence/explainabili
 import { applyAlternativeIntelligence } from "@/lib/intelligence/alternativeIntelligenceEngine";
 import { applyMarketContextIntelligence } from "@/lib/intelligence/marketContextEngine";
 import { applyCompetitiveIntelligence } from "@/lib/intelligence/competitiveIntelligenceEngine";
+import { applyConfidenceIntelligence } from "@/lib/intelligence/confidenceEngine";
 import {
   circuitSnapshot,
   getGuestStaleTray,
@@ -1703,6 +1704,20 @@ async function handleSearch(
     });
     traceStage("phase104_competitive_intelligence", products.length, products.length);
 
+    const confidenceIntelligence = applyConfidenceIntelligence({
+      products,
+      decisionBrief: competitiveIntelligence.decisionBrief,
+      phase92: phase92Integrity.meta,
+      phase93: phase93TrustDiscount.meta,
+      sparse: intelligenceUpgrade.meta.sparseResult,
+      verdictIntelligence: explainability.verdictIntelligence,
+      explainability: explainability.meta,
+      alternativeIntelligence: alternativeIntelligence.meta,
+      marketContext: marketContextIntelligence.meta,
+      competitiveIntelligence: competitiveIntelligence.meta,
+    });
+    traceStage("phase105_confidence_intelligence", products.length, products.length);
+
     const marketAwareness = computeMarketAwarenessForTray(query, products);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
     const trayMetaCoherence = verifyTrayMetaCoherence(products, dealClusters);
@@ -1742,7 +1757,7 @@ async function handleSearch(
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),
         canonicalQuery: canonicalQueryForDebug(canonicalQuery),
         queryIntelligence: phase94QueryIntelligence.meta,
-        decisionBrief: marketContextIntelligence.decisionBrief,
+        decisionBrief: confidenceIntelligence.decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,
         trustRanking: intelligenceUpgrade.meta.trustRanking,
@@ -1761,6 +1776,7 @@ async function handleSearch(
         alternativeIntelligence: alternativeIntelligence.meta,
         marketContext: marketContextIntelligence.meta,
         competitiveIntelligence: competitiveIntelligence.meta,
+        confidenceIntelligence: confidenceIntelligence.meta,
         identityDebug: debugMeta.identityDebug,
         liveDiscovery,
         liveDiscoveryStatus: liveDiscovery.status,

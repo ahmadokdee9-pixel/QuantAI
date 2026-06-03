@@ -40,6 +40,10 @@ export type DecisionBriefDTO = {
   competitiveAdvantages?: string[];
   tradeoffs?: string[];
   whyPrimaryWins?: string;
+  /** Phase 10.5 — unified institutional confidence assessment */
+  confidenceSummary?: string;
+  confidenceTier?: string;
+  confidenceDrivers?: string[];
 };
 
 export function buildDecisionBrief(args: {
