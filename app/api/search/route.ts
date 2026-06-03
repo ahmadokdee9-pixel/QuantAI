@@ -44,6 +44,7 @@ import { buildIntentConfidence } from "@/lib/intelligence/intentConfidenceEngine
 import { buildMemoryPreparation } from "@/lib/intelligence/memoryPreparationEngine";
 import { buildUniversalBuyerModel } from "@/lib/intelligence/universalBuyerModelEngine";
 import { buildBuyerIntentVector } from "@/lib/intelligence/buyerIntentVectorEngine";
+import { buildShopperPsychology } from "@/lib/intelligence/shopperPsychologyEngine";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import {
   applyBetaDiscoveryDefaults,
@@ -651,6 +652,17 @@ async function handleSearch(
       intentConfidence,
       memoryPreparation,
       buyerModel,
+    });
+    const shopperPsychology = buildShopperPsychology({
+      shoppingBrain,
+      multiCategory,
+      tasteIntelligence,
+      lifestyleIntelligence,
+      contextIntelligence,
+      intentConfidence,
+      memoryPreparation,
+      buyerModel,
+      buyerIntentVector,
     });
     const requestCanonicalQuery = queryIntelligenceBundle.canonicalQuery;
     const pipelineKey = normalizeSearchCacheKey(requestCanonicalQuery.normalizedQuery || query);
@@ -1925,6 +1937,7 @@ async function handleSearch(
         memoryPreparation,
         buyerModel,
         buyerIntentVector,
+        shopperPsychology,
         decisionBrief: commerceFusion.decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,
