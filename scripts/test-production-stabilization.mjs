@@ -85,6 +85,8 @@ assert.ok(route.includes("buildRankingPreparation"), "phase 12.20 ranking prepar
 assert.ok(route.includes("rankingPreparation"), "phase 12.20 rankingPreparation meta exposed");
 assert.ok(route.includes("aggregateRankingSignals"), "phase 13.0 ranking signals aggregator wired");
 assert.ok(route.includes("rankingSignals"), "phase 13.0 rankingSignals meta exposed");
+assert.ok(route.includes("buildDeterministicRanking"), "phase 13.1 deterministic ranking wired");
+assert.ok(route.includes("rankingEngine"), "phase 13.1 rankingEngine meta exposed");
 assert.ok(route.includes("applyPhase95CommerceMemory"), "phase 9.5 commerce memory wired");
 assert.ok(route.includes("applyVerdictIntelligence"), "phase 10.0 verdict intelligence wired");
 assert.ok(route.includes("applyExplainabilityIntelligence"), "phase 10.1 explainability wired");

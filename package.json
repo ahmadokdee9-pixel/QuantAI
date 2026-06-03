@@ -54,6 +54,7 @@
     "test:phase1219-value-intelligence": "npx --yes tsx scripts/test-phase1219-value-intelligence.mjs",
     "test:phase1220-ranking-preparation": "npx --yes tsx scripts/test-phase1220-ranking-preparation.mjs",
     "test:phase130-ranking-signals": "npx --yes tsx scripts/test-phase130-ranking-signals.mjs",
+    "test:phase131-deterministic-ranking": "npx --yes tsx scripts/test-phase131-deterministic-ranking.mjs",
     "test:search-intelligence-upgrade": "npx --yes tsx scripts/test-search-intelligence-upgrade.mjs",
     "test:phase6-intelligence-hardening": "npx --yes tsx scripts/phase6-intelligence-hardening-validation.mjs",
     "test:phase8-ranking-validation": "npx --yes tsx scripts/phase8-ranking-validation-suite.mjs",

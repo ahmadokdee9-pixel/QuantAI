@@ -60,6 +60,7 @@ import { buildRealDiscount } from "@/lib/intelligence/realDiscountEngine";
 import { buildValueIntelligence } from "@/lib/intelligence/valueIntelligenceEngine";
 import { buildRankingPreparation } from "@/lib/intelligence/rankingPreparationEngine";
 import { aggregateRankingSignals } from "@/lib/ranking/rankingSignalsAggregator";
+import { buildDeterministicRanking } from "@/lib/ranking/deterministicRankingEngine";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import {
   applyBetaDiscoveryDefaults,
@@ -817,6 +818,7 @@ async function handleSearch(
       realDiscount,
       valueIntelligence,
     });
+    const rankingEngine = buildDeterministicRanking(rankingSignals);
     const requestCanonicalQuery = queryIntelligenceBundle.canonicalQuery;
     const pipelineKey = normalizeSearchCacheKey(requestCanonicalQuery.normalizedQuery || query);
 
@@ -2108,6 +2110,7 @@ async function handleSearch(
         valueIntelligence,
         rankingPreparation,
         rankingSignals,
+        rankingEngine,
         decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,
