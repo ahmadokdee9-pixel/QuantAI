@@ -61,6 +61,7 @@ import { buildValueIntelligence } from "@/lib/intelligence/valueIntelligenceEngi
 import { buildRankingPreparation } from "@/lib/intelligence/rankingPreparationEngine";
 import { aggregateRankingSignals } from "@/lib/ranking/rankingSignalsAggregator";
 import { buildDeterministicRanking } from "@/lib/ranking/deterministicRankingEngine";
+import { applyProductRanking } from "@/lib/ranking/productRankingApplication";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import {
   applyBetaDiscoveryDefaults,
@@ -2049,6 +2050,15 @@ async function handleSearch(
       decisionReadiness
     );
 
+    const productRanking = applyProductRanking({
+      rankingEngine,
+      products: products.map((product) => ({
+        id: product.id,
+        link: product.link,
+        qiRank: product.qiRank,
+      })),
+    });
+
     const marketAwareness = computeMarketAwarenessForTray(query, products);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
     const trayMetaCoherence = verifyTrayMetaCoherence(products, dealClusters);
@@ -2111,6 +2121,7 @@ async function handleSearch(
         rankingPreparation,
         rankingSignals,
         rankingEngine,
+        productRanking,
         decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,
