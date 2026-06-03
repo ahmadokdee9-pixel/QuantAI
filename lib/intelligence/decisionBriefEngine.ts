@@ -31,6 +31,8 @@ export type DecisionBriefDTO = {
   explanationSummary?: string;
   /** Phase 10.1 — top user-facing reasons for the verdict */
   keyReasons?: string[];
+  /** Phase 10.2 — institutional summary of tray alternatives */
+  alternativesSummary?: string;
 };
 
 export function buildDecisionBrief(args: {

@@ -59,6 +59,7 @@ import { applyPhase93TrustDiscountHardening } from "@/lib/intelligence/phase93Tr
 import { applyPhase95CommerceMemory } from "@/lib/intelligence/phase95CommerceMemory";
 import { applyVerdictIntelligence } from "@/lib/intelligence/verdictEngine";
 import { applyExplainabilityIntelligence } from "@/lib/intelligence/explainabilityEngine";
+import { applyAlternativeIntelligence } from "@/lib/intelligence/alternativeIntelligenceEngine";
 import {
   circuitSnapshot,
   getGuestStaleTray,
@@ -1665,6 +1666,18 @@ async function handleSearch(
     });
     traceStage("phase101_explainability", products.length, products.length);
 
+    const alternativeIntelligence = applyAlternativeIntelligence({
+      products,
+      decisionBrief: explainability.decisionBrief,
+      phase93: phase93TrustDiscount.meta,
+      comparison: intelligenceUpgrade.meta.comparisonIntelligence,
+      queryIntelligence: phase94QueryIntelligence.meta,
+      commerceMemory: phase95CommerceMemory.meta,
+      verdictIntelligence: explainability.verdictIntelligence,
+      explainability: explainability.meta,
+    });
+    traceStage("phase102_alternative_intelligence", products.length, products.length);
+
     const marketAwareness = computeMarketAwarenessForTray(query, products);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
     const trayMetaCoherence = verifyTrayMetaCoherence(products, dealClusters);
@@ -1704,7 +1717,7 @@ async function handleSearch(
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),
         canonicalQuery: canonicalQueryForDebug(canonicalQuery),
         queryIntelligence: phase94QueryIntelligence.meta,
-        decisionBrief: explainability.decisionBrief,
+        decisionBrief: alternativeIntelligence.decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,
         trustRanking: intelligenceUpgrade.meta.trustRanking,
@@ -1720,6 +1733,7 @@ async function handleSearch(
         commerceMemory: phase95CommerceMemory.meta,
         verdictIntelligence: explainability.verdictIntelligence,
         explainability: explainability.meta,
+        alternativeIntelligence: alternativeIntelligence.meta,
         identityDebug: debugMeta.identityDebug,
         liveDiscovery,
         liveDiscoveryStatus: liveDiscovery.status,
