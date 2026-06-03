@@ -34,7 +34,8 @@ import { entitlementsForTier } from "@/lib/subscription/entitlements";
 import { planDefinition } from "@/lib/subscription/plans";
 import { resolveServerSubscriptionTier } from "@/lib/subscription/resolveTier";
 import { buildUniversalCommerceContext, tasteTagListForApi } from "@/lib/commerce-os";
-import { buildCanonicalQuery, canonicalQueryForDebug, type CanonicalQueryContract } from "@/lib/search/canonicalQuery";
+import { canonicalQueryForDebug, type CanonicalQueryContract } from "@/lib/search/canonicalQuery";
+import { buildPhase94QueryIntelligence } from "@/lib/search/phase94QueryIntelligence";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import {
   applyBetaDiscoveryDefaults,
@@ -266,7 +267,7 @@ async function runSearchPipeline(query: string): Promise<{
   canonicalQuery: CanonicalQueryContract;
 }> {
   applyBetaDiscoveryDefaults();
-  const canonicalQuery = buildCanonicalQuery(query);
+  const canonicalQuery = buildPhase94QueryIntelligence(query).canonicalQuery;
   const result = await fetchShoppingProductsWithFallback(query, canonicalQuery);
   if (!result.ok) {
     const status =
@@ -564,7 +565,8 @@ async function handleSearch(
       );
     }
 
-    const requestCanonicalQuery = buildCanonicalQuery(query);
+    const phase94QueryIntelligence = buildPhase94QueryIntelligence(query);
+    const requestCanonicalQuery = phase94QueryIntelligence.canonicalQuery;
     const pipelineKey = normalizeSearchCacheKey(requestCanonicalQuery.normalizedQuery || query);
 
     const { userId, user } = await optionalClerkSearchUser();
@@ -1662,6 +1664,7 @@ async function handleSearch(
         commerceAiEngine: resolveCommerceAiEngine(),
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),
         canonicalQuery: canonicalQueryForDebug(canonicalQuery),
+        queryIntelligence: phase94QueryIntelligence.meta,
         decisionBrief: phase93TrustDiscount.decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,

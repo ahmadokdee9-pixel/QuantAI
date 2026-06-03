@@ -39,6 +39,8 @@ assert.ok(route.includes("withTimeout"), "request timeout guard wired");
 assert.ok(route.includes("isCircuitOpen"), "circuit-breaker guard wired");
 assert.ok(route.includes("applyPhase92TrayIntegrity"), "phase 9.2 tray integrity wired");
 assert.ok(route.includes("applyPhase93TrustDiscountHardening"), "phase 9.3 trust/discount wired");
+assert.ok(route.includes("buildPhase94QueryIntelligence"), "phase 9.4 query intelligence wired");
+assert.ok(route.includes("queryIntelligence: phase94QueryIntelligence.meta"), "phase 9.4 meta exposed");
 
 const env = { NODE_ENV: "production" };
 applyBetaDiscoveryDefaults(env);
