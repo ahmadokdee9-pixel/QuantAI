@@ -59,6 +59,7 @@ import { buildReviewCredibility } from "@/lib/intelligence/reviewCredibilityEngi
 import { buildRealDiscount } from "@/lib/intelligence/realDiscountEngine";
 import { buildValueIntelligence } from "@/lib/intelligence/valueIntelligenceEngine";
 import { buildRankingPreparation } from "@/lib/intelligence/rankingPreparationEngine";
+import { aggregateRankingSignals } from "@/lib/ranking/rankingSignalsAggregator";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import {
   applyBetaDiscoveryDefaults,
@@ -805,6 +806,15 @@ async function handleSearch(
       productAttributeAffinity,
       retailerTrust,
       reviewCredibility,
+      valueIntelligence,
+    });
+    const rankingSignals = aggregateRankingSignals({
+      rankingPreparation,
+      brandAffinity,
+      productAttributeAffinity,
+      reviewCredibility,
+      retailerTrust,
+      realDiscount,
       valueIntelligence,
     });
     const requestCanonicalQuery = queryIntelligenceBundle.canonicalQuery;
@@ -2097,6 +2107,7 @@ async function handleSearch(
         realDiscount,
         valueIntelligence,
         rankingPreparation,
+        rankingSignals,
         decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,
