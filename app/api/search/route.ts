@@ -54,6 +54,7 @@ import { rebuildSearchTrayArtifacts, verifyTrayMetaCoherence } from "@/lib/searc
 import { composeProductionMeta } from "@/lib/search/productionMetaComposer";
 import { applySearchIntelligenceUpgrade } from "@/lib/search/searchIntelligenceUpgrade";
 import { applyPhase92TrayIntegrity } from "@/lib/search/phase92TrayIntegrity";
+import { applyPhase93TrustDiscountHardening } from "@/lib/intelligence/phase93TrustDiscountHardening";
 import {
   circuitSnapshot,
   getGuestStaleTray,
@@ -1616,6 +1617,13 @@ async function handleSearch(
     products = phase92Integrity.products;
     traceStage("phase92_tray_integrity", stageBefore, products.length);
 
+    const phase93TrustDiscount = applyPhase93TrustDiscountHardening(products, query, {
+      decisionBrief: intelligenceUpgrade.meta.decisionBrief,
+      baseDiscount: intelligenceUpgrade.meta.discountIntelligence,
+    });
+    products = phase93TrustDiscount.products;
+    traceStage("phase93_trust_discount", products.length, products.length);
+
     const marketAwareness = computeMarketAwarenessForTray(query, products);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
     const trayMetaCoherence = verifyTrayMetaCoherence(products, dealClusters);
@@ -1654,18 +1662,19 @@ async function handleSearch(
         commerceAiEngine: resolveCommerceAiEngine(),
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),
         canonicalQuery: canonicalQueryForDebug(canonicalQuery),
-        decisionBrief: intelligenceUpgrade.meta.decisionBrief,
+        decisionBrief: phase93TrustDiscount.decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,
         trustRanking: intelligenceUpgrade.meta.trustRanking,
         comparisonIntelligence: intelligenceUpgrade.meta.comparisonIntelligence,
-        discountIntelligence: intelligenceUpgrade.meta.discountIntelligence,
+        discountIntelligence: phase93TrustDiscount.meta.discountIntelligence,
         sparseResult: intelligenceUpgrade.meta.sparseResult,
         searchIntelligenceUpgrade: {
           version: intelligenceUpgrade.meta.version,
           rankingAdjustmentsApplied: intelligenceUpgrade.meta.rankingAdjustmentsApplied,
         },
         phase92TrayIntegrity: phase92Integrity.meta,
+        phase93TrustDiscount: phase93TrustDiscount.meta,
         identityDebug: debugMeta.identityDebug,
         liveDiscovery,
         liveDiscoveryStatus: liveDiscovery.status,

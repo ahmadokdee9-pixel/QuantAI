@@ -60,6 +60,11 @@ export function detectFakeDiscountSignals(p: QuantProduct, list: QuantProduct[])
     /\b(sale|clearance|\d{1,2}%\s*off|mega deal|doorbuster)\b/i.test(blob) && disc != null && disc >= 28 ? 0.38 : 0.12;
   if (recycledDiscountPressure01(p, list) > 0.55) permanent += 0.18;
 
+  if (/\b(fruugo|ubuy|wish|temu|aliexpress|dhgate|banggood)\b/i.test(`${p.store} ${p.title}`) && disc != null && disc >= 30) {
+    manip += disc >= 40 ? 0.24 : 0.16;
+    if (trust < 66) manip += 0.1;
+  }
+
   return {
     fakeDiscountProbability: clamp01(fakeP),
     discountManipulationRisk: clamp01(manip),

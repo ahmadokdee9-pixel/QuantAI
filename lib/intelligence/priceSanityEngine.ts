@@ -86,6 +86,17 @@ export function assessPriceSanity(
     penalty += 12;
   }
 
+  if (
+    /\b(fruugo|ubuy|wish|temu|aliexpress)\b/i.test(`${product.store} ${product.title}`) &&
+    med > 0 &&
+    price > 0 &&
+    price < med * 0.35
+  ) {
+    flags.push("aggregator_price_outlier");
+    penalty += 14;
+    pricingModel = pricingModel === "unknown" ? "suspicious" : pricingModel;
+  }
+
   const score = Math.max(0, Math.min(1, 1 - penalty / 50));
   const sane = penalty < 22 && pricingModel !== "rental" && pricingModel !== "subscription";
 
