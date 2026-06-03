@@ -56,6 +56,7 @@ import { composeProductionMeta } from "@/lib/search/productionMetaComposer";
 import { applySearchIntelligenceUpgrade } from "@/lib/search/searchIntelligenceUpgrade";
 import { applyPhase92TrayIntegrity } from "@/lib/search/phase92TrayIntegrity";
 import { applyPhase93TrustDiscountHardening } from "@/lib/intelligence/phase93TrustDiscountHardening";
+import { applyPhase95CommerceMemory } from "@/lib/intelligence/phase95CommerceMemory";
 import {
   circuitSnapshot,
   getGuestStaleTray,
@@ -1626,6 +1627,16 @@ async function handleSearch(
     products = phase93TrustDiscount.products;
     traceStage("phase93_trust_discount", products.length, products.length);
 
+    const phase95CommerceMemory = applyPhase95CommerceMemory(products, query, {
+      canonicalQuery,
+      sessionMemory: commerceSessionMemory,
+      queryIntelligence: phase94QueryIntelligence.meta,
+      intent: intelligenceUpgrade.meta.extractedIntent,
+      decisionBrief: phase93TrustDiscount.decisionBrief,
+    });
+    products = phase95CommerceMemory.products;
+    traceStage("phase95_commerce_memory", products.length, products.length);
+
     const marketAwareness = computeMarketAwarenessForTray(query, products);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
     const trayMetaCoherence = verifyTrayMetaCoherence(products, dealClusters);
@@ -1665,7 +1676,7 @@ async function handleSearch(
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),
         canonicalQuery: canonicalQueryForDebug(canonicalQuery),
         queryIntelligence: phase94QueryIntelligence.meta,
-        decisionBrief: phase93TrustDiscount.decisionBrief,
+        decisionBrief: phase95CommerceMemory.decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,
         trustRanking: intelligenceUpgrade.meta.trustRanking,
@@ -1678,6 +1689,7 @@ async function handleSearch(
         },
         phase92TrayIntegrity: phase92Integrity.meta,
         phase93TrustDiscount: phase93TrustDiscount.meta,
+        commerceMemory: phase95CommerceMemory.meta,
         identityDebug: debugMeta.identityDebug,
         liveDiscovery,
         liveDiscoveryStatus: liveDiscovery.status,
@@ -1844,6 +1856,7 @@ async function handleSearch(
       meta: data.meta,
       controlledStackFastPath: controlledRegistry.fastPathEligible,
     });
+    data.meta.commerceMemory = phase95CommerceMemory.meta;
 
     logSearchEvent(products.length > 0 ? "success" : "empty", {
       queryLength: query.length,
