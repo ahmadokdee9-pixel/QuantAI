@@ -50,6 +50,8 @@ export type DecisionBriefDTO = {
   personalizationSummary?: string;
   /** Phase 10.8 — retailer trust and checkout quality summary */
   retailerSummary?: string;
+  /** Phase 10.9 — deal quality vs tray market value */
+  dealSummary?: string;
 };
 
 export function buildDecisionBrief(args: {

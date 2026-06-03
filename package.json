@@ -30,6 +30,7 @@
     "test:phase106-intent-alignment": "npx --yes tsx scripts/test-phase106-intent-alignment.mjs",
     "test:phase107-personalization": "npx --yes tsx scripts/test-phase107-personalization.mjs",
     "test:phase108-retailer-intelligence": "npx --yes tsx scripts/test-phase108-retailer-intelligence.mjs",
+    "test:phase109-deal-intelligence": "npx --yes tsx scripts/test-phase109-deal-intelligence.mjs",
     "test:search-intelligence-upgrade": "npx --yes tsx scripts/test-search-intelligence-upgrade.mjs",
     "test:phase6-intelligence-hardening": "npx --yes tsx scripts/phase6-intelligence-hardening-validation.mjs",
     "test:phase8-ranking-validation": "npx --yes tsx scripts/phase8-ranking-validation-suite.mjs",

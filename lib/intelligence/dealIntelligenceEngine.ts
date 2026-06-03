@@ -1279,3 +1279,12 @@ export function buildClusterDealLanes(clusterListings: QuantProduct[]): ClusterD
 }
 
 export type { LiveCommerceSignals } from "@/lib/intelligence/liveCommerceSignals";
+
+/** Phase 10.9 — read-only search meta deal intelligence (tray-level institutional assessment). */
+export {
+  applyDealIntelligence,
+  buildDealIntelligenceMeta,
+  type DealIntelligenceMeta,
+  type DealIntelligenceInput,
+  type DealTier,
+} from "@/lib/intelligence/phase109DealIntelligenceEngine";
