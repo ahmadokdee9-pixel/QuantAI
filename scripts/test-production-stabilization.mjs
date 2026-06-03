@@ -60,6 +60,8 @@ assert.ok(route.includes("applyRetailerIntelligence"), "phase 10.8 retailer inte
 assert.ok(route.includes("retailerIntelligence: retailerIntelligence.meta"), "phase 10.8 meta exposed");
 assert.ok(route.includes("applyDealIntelligence"), "phase 10.9 deal intelligence wired");
 assert.ok(route.includes("dealIntelligence: dealIntelligence.meta"), "phase 10.9 meta exposed");
+assert.ok(route.includes("applyCommerceFusion"), "phase 11.0 commerce fusion wired");
+assert.ok(route.includes("commerceFusion: commerceFusion.meta"), "phase 11.0 meta exposed");
 assert.ok(route.includes("explainability: explainability.meta"), "phase 10.1 meta exposed");
 assert.ok(route.includes("verdictIntelligence: verdictIntelligence.meta"), "phase 10.0 meta exposed");
 assert.ok(route.includes("phase95CommerceMemory.meta"), "phase 9.5 meta exposed");

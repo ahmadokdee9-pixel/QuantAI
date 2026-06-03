@@ -52,6 +52,8 @@ export type DecisionBriefDTO = {
   retailerSummary?: string;
   /** Phase 10.9 — deal quality vs tray market value */
   dealSummary?: string;
+  /** Phase 11.0 — unified institutional commerce fusion summary */
+  fusionSummary?: string;
 };
 
 export function buildDecisionBrief(args: {

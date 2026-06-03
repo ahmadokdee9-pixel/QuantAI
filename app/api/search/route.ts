@@ -67,6 +67,7 @@ import { applyIntentAlignmentIntelligence } from "@/lib/intelligence/intentAlign
 import { applyPersonalizationIntelligence } from "@/lib/intelligence/personalizationEngine";
 import { applyRetailerIntelligence } from "@/lib/intelligence/retailerIntelligenceEngine";
 import { applyDealIntelligence } from "@/lib/intelligence/phase109DealIntelligenceEngine";
+import { applyCommerceFusion } from "@/lib/intelligence/commerceFusionEngine";
 import {
   circuitSnapshot,
   getGuestStaleTray,
@@ -1786,6 +1787,22 @@ async function handleSearch(
     });
     traceStage("phase109_deal_intelligence", products.length, products.length);
 
+    const commerceFusion = applyCommerceFusion({
+      products,
+      decisionBrief: dealIntelligence.decisionBrief,
+      verdictIntelligence: explainability.verdictIntelligence,
+      explainability: explainability.meta,
+      alternativeIntelligence: alternativeIntelligence.meta,
+      marketContext: marketContextIntelligence.meta,
+      competitiveIntelligence: competitiveIntelligence.meta,
+      confidenceIntelligence: confidenceIntelligence.meta,
+      intentAlignment: intentAlignmentIntelligence.meta,
+      personalization: personalizationIntelligence.meta,
+      retailerIntelligence: retailerIntelligence.meta,
+      dealIntelligence: dealIntelligence.meta,
+    });
+    traceStage("phase110_commerce_fusion", products.length, products.length);
+
     const marketAwareness = computeMarketAwarenessForTray(query, products);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
     const trayMetaCoherence = verifyTrayMetaCoherence(products, dealClusters);
@@ -1825,7 +1842,7 @@ async function handleSearch(
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),
         canonicalQuery: canonicalQueryForDebug(canonicalQuery),
         queryIntelligence: phase94QueryIntelligence.meta,
-        decisionBrief: dealIntelligence.decisionBrief,
+        decisionBrief: commerceFusion.decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,
         trustRanking: intelligenceUpgrade.meta.trustRanking,
@@ -1849,6 +1866,7 @@ async function handleSearch(
         personalization: personalizationIntelligence.meta,
         retailerIntelligence: retailerIntelligence.meta,
         dealIntelligence: dealIntelligence.meta,
+        commerceFusion: commerceFusion.meta,
         identityDebug: debugMeta.identityDebug,
         liveDiscovery,
         liveDiscoveryStatus: liveDiscovery.status,
