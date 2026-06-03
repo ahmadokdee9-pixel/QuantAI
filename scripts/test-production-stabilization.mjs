@@ -73,6 +73,8 @@ assert.ok(route.includes("buildBrandAffinity"), "phase 12.14 brand affinity wire
 assert.ok(route.includes("brandAffinity"), "phase 12.14 brandAffinity meta exposed");
 assert.ok(route.includes("buildProductAttributeAffinity"), "phase 12.15 product attribute affinity wired");
 assert.ok(route.includes("productAttributeAffinity"), "phase 12.15 productAttributeAffinity meta exposed");
+assert.ok(route.includes("buildRetailerTrust"), "phase 12.16 retailer trust wired");
+assert.ok(route.includes("retailerTrust"), "phase 12.16 retailerTrust meta exposed");
 assert.ok(route.includes("applyPhase95CommerceMemory"), "phase 9.5 commerce memory wired");
 assert.ok(route.includes("applyVerdictIntelligence"), "phase 10.0 verdict intelligence wired");
 assert.ok(route.includes("applyExplainabilityIntelligence"), "phase 10.1 explainability wired");
