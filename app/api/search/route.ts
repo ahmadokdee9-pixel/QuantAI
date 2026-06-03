@@ -53,6 +53,7 @@ import { buildPurchaseFriction } from "@/lib/intelligence/purchaseFrictionEngine
 import { buildConversionProbability } from "@/lib/intelligence/conversionProbabilityEngine";
 import { buildDealSensitivity } from "@/lib/intelligence/dealSensitivityEngine";
 import { buildBrandAffinity } from "@/lib/intelligence/brandAffinityEngine";
+import { buildProductAttributeAffinity } from "@/lib/intelligence/productAttributeAffinityEngine";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import {
   applyBetaDiscoveryDefaults,
@@ -738,6 +739,17 @@ async function handleSearch(
       dealSensitivity,
       tasteIntelligence,
       lifestyleIntelligence,
+    });
+    const productAttributeAffinity = buildProductAttributeAffinity({
+      query,
+      shoppingBrain,
+      buyerModel,
+      buyerIntentVector,
+      shopperPsychology,
+      contextIntelligence,
+      tasteIntelligence,
+      lifestyleIntelligence,
+      brandAffinity,
     });
     const requestCanonicalQuery = queryIntelligenceBundle.canonicalQuery;
     const pipelineKey = normalizeSearchCacheKey(requestCanonicalQuery.normalizedQuery || query);
@@ -2023,6 +2035,7 @@ async function handleSearch(
         conversionProbability,
         dealSensitivity,
         brandAffinity,
+        productAttributeAffinity,
         decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,
