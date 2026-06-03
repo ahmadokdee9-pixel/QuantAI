@@ -35,7 +35,7 @@ import { planDefinition } from "@/lib/subscription/plans";
 import { resolveServerSubscriptionTier } from "@/lib/subscription/resolveTier";
 import { buildUniversalCommerceContext, tasteTagListForApi } from "@/lib/commerce-os";
 import { canonicalQueryForDebug, type CanonicalQueryContract } from "@/lib/search/canonicalQuery";
-import { buildPhase94QueryIntelligence } from "@/lib/search/phase94QueryIntelligence";
+import { buildQueryIntelligence } from "@/lib/intelligence/queryIntelligence";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import {
   applyBetaDiscoveryDefaults,
@@ -279,7 +279,7 @@ async function runSearchPipeline(query: string): Promise<{
   canonicalQuery: CanonicalQueryContract;
 }> {
   applyBetaDiscoveryDefaults();
-  const canonicalQuery = buildPhase94QueryIntelligence(query).canonicalQuery;
+  const canonicalQuery = buildQueryIntelligence(query).canonicalQuery;
   const result = await fetchShoppingProductsWithFallback(query, canonicalQuery);
   if (!result.ok) {
     const status =
@@ -577,8 +577,13 @@ async function handleSearch(
       );
     }
 
-    const phase94QueryIntelligence = buildPhase94QueryIntelligence(query);
-    const requestCanonicalQuery = phase94QueryIntelligence.canonicalQuery;
+    const queryIntelligenceBundle = buildQueryIntelligence(query);
+    const phase94QueryIntelligence = {
+      meta: queryIntelligenceBundle.meta,
+      canonicalQuery: queryIntelligenceBundle.canonicalQuery,
+    };
+    const shoppingBrain = queryIntelligenceBundle.shoppingBrain;
+    const requestCanonicalQuery = queryIntelligenceBundle.canonicalQuery;
     const pipelineKey = normalizeSearchCacheKey(requestCanonicalQuery.normalizedQuery || query);
 
     const { userId, user } = await optionalClerkSearchUser();
@@ -1842,6 +1847,7 @@ async function handleSearch(
         universalCommerce: buildUniversalCommerceContext(query, intentMatchEnvelope(query)),
         canonicalQuery: canonicalQueryForDebug(canonicalQuery),
         queryIntelligence: phase94QueryIntelligence.meta,
+        shoppingBrain,
         decisionBrief: commerceFusion.decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,
