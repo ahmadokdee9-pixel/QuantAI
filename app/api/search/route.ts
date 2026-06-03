@@ -37,6 +37,7 @@ import { buildUniversalCommerceContext, tasteTagListForApi } from "@/lib/commerc
 import { canonicalQueryForDebug, type CanonicalQueryContract } from "@/lib/search/canonicalQuery";
 import { buildQueryIntelligence } from "@/lib/intelligence/queryIntelligence";
 import { buildMultiCategoryIntelligence } from "@/lib/intelligence/multiCategoryIntelligence";
+import { buildTasteIntelligence } from "@/lib/intelligence/tasteIntelligenceEngine";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import {
   applyBetaDiscoveryDefaults,
@@ -588,6 +589,12 @@ async function handleSearch(
       query,
       shoppingBrain,
       queryIntelligence: queryIntelligenceBundle.meta,
+    });
+    const tasteIntelligence = buildTasteIntelligence({
+      query,
+      shoppingBrain,
+      queryIntelligence: queryIntelligenceBundle.meta,
+      multiCategory,
     });
     const requestCanonicalQuery = queryIntelligenceBundle.canonicalQuery;
     const pipelineKey = normalizeSearchCacheKey(requestCanonicalQuery.normalizedQuery || query);
@@ -1855,6 +1862,7 @@ async function handleSearch(
         queryIntelligence: phase94QueryIntelligence.meta,
         shoppingBrain,
         multiCategory,
+        tasteIntelligence,
         decisionBrief: commerceFusion.decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,
