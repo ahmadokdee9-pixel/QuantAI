@@ -54,6 +54,8 @@ export type DecisionBriefDTO = {
   dealSummary?: string;
   /** Phase 11.0 — unified institutional commerce fusion summary */
   fusionSummary?: string;
+  /** Phase 12.10 — pre-search decision readiness summary */
+  decisionReadinessSummary?: string;
 };
 
 export function buildDecisionBrief(args: {

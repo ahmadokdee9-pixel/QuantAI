@@ -45,6 +45,10 @@ import { buildMemoryPreparation } from "@/lib/intelligence/memoryPreparationEngi
 import { buildUniversalBuyerModel } from "@/lib/intelligence/universalBuyerModelEngine";
 import { buildBuyerIntentVector } from "@/lib/intelligence/buyerIntentVectorEngine";
 import { buildShopperPsychology } from "@/lib/intelligence/shopperPsychologyEngine";
+import {
+  applyDecisionReadinessToBrief,
+  buildDecisionReadiness,
+} from "@/lib/intelligence/decisionReadinessEngine";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import {
   applyBetaDiscoveryDefaults,
@@ -663,6 +667,18 @@ async function handleSearch(
       memoryPreparation,
       buyerModel,
       buyerIntentVector,
+    });
+    const decisionReadiness = buildDecisionReadiness({
+      shoppingBrain,
+      multiCategory,
+      tasteIntelligence,
+      lifestyleIntelligence,
+      contextIntelligence,
+      intentConfidence,
+      memoryPreparation,
+      buyerModel,
+      buyerIntentVector,
+      shopperPsychology,
     });
     const requestCanonicalQuery = queryIntelligenceBundle.canonicalQuery;
     const pipelineKey = normalizeSearchCacheKey(requestCanonicalQuery.normalizedQuery || query);
@@ -1889,6 +1905,11 @@ async function handleSearch(
     });
     traceStage("phase110_commerce_fusion", products.length, products.length);
 
+    const decisionBrief = applyDecisionReadinessToBrief(
+      commerceFusion.decisionBrief,
+      decisionReadiness
+    );
+
     const marketAwareness = computeMarketAwarenessForTray(query, products);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
     const trayMetaCoherence = verifyTrayMetaCoherence(products, dealClusters);
@@ -1938,7 +1959,8 @@ async function handleSearch(
         buyerModel,
         buyerIntentVector,
         shopperPsychology,
-        decisionBrief: commerceFusion.decisionBrief,
+        decisionReadiness,
+        decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,
         trustRanking: intelligenceUpgrade.meta.trustRanking,
