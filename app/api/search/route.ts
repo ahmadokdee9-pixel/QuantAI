@@ -63,6 +63,7 @@ import { aggregateRankingSignals } from "@/lib/ranking/rankingSignalsAggregator"
 import { buildDeterministicRanking } from "@/lib/ranking/deterministicRankingEngine";
 import { applyProductRanking } from "@/lib/ranking/productRankingApplication";
 import { prepareRankingExecution } from "@/lib/ranking/rankingExecutionPreparation";
+import { executeControlledRanking } from "@/lib/ranking/controlledRankingExecution";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import {
   applyBetaDiscoveryDefaults,
@@ -2060,6 +2061,12 @@ async function handleSearch(
       })),
     });
     const rankingExecution = prepareRankingExecution(productRanking);
+    const controlledRanking = executeControlledRanking({
+      rankingExecution,
+      products,
+    });
+    products = controlledRanking.products;
+    const executedRanking = controlledRanking.executedRanking;
 
     const marketAwareness = computeMarketAwarenessForTray(query, products);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
@@ -2125,6 +2132,7 @@ async function handleSearch(
         rankingEngine,
         productRanking,
         rankingExecution,
+        executedRanking,
         decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,

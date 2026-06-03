@@ -57,6 +57,7 @@
     "test:phase131-deterministic-ranking": "npx --yes tsx scripts/test-phase131-deterministic-ranking.mjs",
     "test:phase132-product-ranking": "npx --yes tsx scripts/test-phase132-product-ranking.mjs",
     "test:phase133-ranking-execution": "npx --yes tsx scripts/test-phase133-ranking-execution.mjs",
+    "test:phase134-controlled-ranking-execution": "npx --yes tsx scripts/test-phase134-controlled-ranking-execution.mjs",
     "test:search-intelligence-upgrade": "npx --yes tsx scripts/test-search-intelligence-upgrade.mjs",
     "test:phase6-intelligence-hardening": "npx --yes tsx scripts/phase6-intelligence-hardening-validation.mjs",
     "test:phase8-ranking-validation": "npx --yes tsx scripts/phase8-ranking-validation-suite.mjs",

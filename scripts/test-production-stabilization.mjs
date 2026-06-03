@@ -91,6 +91,8 @@ assert.ok(route.includes("applyProductRanking"), "phase 13.2 product ranking app
 assert.ok(route.includes("productRanking"), "phase 13.2 productRanking meta exposed");
 assert.ok(route.includes("prepareRankingExecution"), "phase 13.3 ranking execution preparation wired");
 assert.ok(route.includes("rankingExecution"), "phase 13.3 rankingExecution meta exposed");
+assert.ok(route.includes("executeControlledRanking"), "phase 13.4 controlled ranking execution wired");
+assert.ok(route.includes("executedRanking"), "phase 13.4 executedRanking meta exposed");
 assert.ok(route.includes("applyPhase95CommerceMemory"), "phase 9.5 commerce memory wired");
 assert.ok(route.includes("applyVerdictIntelligence"), "phase 10.0 verdict intelligence wired");
 assert.ok(route.includes("applyExplainabilityIntelligence"), "phase 10.1 explainability wired");
