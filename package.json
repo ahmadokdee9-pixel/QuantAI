@@ -33,6 +33,7 @@
     "test:phase109-deal-intelligence": "npx --yes tsx scripts/test-phase109-deal-intelligence.mjs",
     "test:phase110-commerce-fusion": "npx --yes tsx scripts/test-phase110-commerce-fusion.mjs",
     "test:phase120-universal-shopping-brain": "npx --yes tsx scripts/test-phase120-universal-shopping-brain.mjs",
+    "test:phase121-multicategory": "npx --yes tsx scripts/test-phase121-multicategory.mjs",
     "test:search-intelligence-upgrade": "npx --yes tsx scripts/test-search-intelligence-upgrade.mjs",
     "test:phase6-intelligence-hardening": "npx --yes tsx scripts/phase6-intelligence-hardening-validation.mjs",
     "test:phase8-ranking-validation": "npx --yes tsx scripts/phase8-ranking-validation-suite.mjs",

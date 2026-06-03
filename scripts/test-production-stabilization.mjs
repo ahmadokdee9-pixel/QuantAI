@@ -42,6 +42,8 @@ assert.ok(route.includes("applyPhase93TrustDiscountHardening"), "phase 9.3 trust
 assert.ok(route.includes("buildQueryIntelligence"), "phase 12.0 query intelligence bundle wired");
 assert.ok(route.includes("queryIntelligence: phase94QueryIntelligence.meta"), "phase 9.4 meta exposed");
 assert.ok(route.includes("shoppingBrain"), "phase 12.0 shopping brain meta exposed");
+assert.ok(route.includes("buildMultiCategoryIntelligence"), "phase 12.1 multi-category intelligence wired");
+assert.ok(route.includes("multiCategory"), "phase 12.1 multiCategory meta exposed");
 assert.ok(route.includes("applyPhase95CommerceMemory"), "phase 9.5 commerce memory wired");
 assert.ok(route.includes("applyVerdictIntelligence"), "phase 10.0 verdict intelligence wired");
 assert.ok(route.includes("applyExplainabilityIntelligence"), "phase 10.1 explainability wired");
