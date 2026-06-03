@@ -49,6 +49,7 @@ import {
   applyDecisionReadinessToBrief,
   buildDecisionReadiness,
 } from "@/lib/intelligence/decisionReadinessEngine";
+import { buildPurchaseFriction } from "@/lib/intelligence/purchaseFrictionEngine";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import {
   applyBetaDiscoveryDefaults,
@@ -679,6 +680,19 @@ async function handleSearch(
       buyerModel,
       buyerIntentVector,
       shopperPsychology,
+    });
+    const purchaseFriction = buildPurchaseFriction({
+      shoppingBrain,
+      multiCategory,
+      tasteIntelligence,
+      lifestyleIntelligence,
+      contextIntelligence,
+      intentConfidence,
+      memoryPreparation,
+      buyerModel,
+      buyerIntentVector,
+      shopperPsychology,
+      decisionReadiness,
     });
     const requestCanonicalQuery = queryIntelligenceBundle.canonicalQuery;
     const pipelineKey = normalizeSearchCacheKey(requestCanonicalQuery.normalizedQuery || query);
@@ -1960,6 +1974,7 @@ async function handleSearch(
         buyerIntentVector,
         shopperPsychology,
         decisionReadiness,
+        purchaseFriction,
         decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,
