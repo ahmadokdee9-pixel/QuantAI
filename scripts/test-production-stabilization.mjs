@@ -69,6 +69,8 @@ assert.ok(route.includes("buildConversionProbability"), "phase 12.12 conversion 
 assert.ok(route.includes("conversionProbability"), "phase 12.12 conversionProbability meta exposed");
 assert.ok(route.includes("buildDealSensitivity"), "phase 12.13 deal sensitivity wired");
 assert.ok(route.includes("dealSensitivity"), "phase 12.13 dealSensitivity meta exposed");
+assert.ok(route.includes("buildBrandAffinity"), "phase 12.14 brand affinity wired");
+assert.ok(route.includes("brandAffinity"), "phase 12.14 brandAffinity meta exposed");
 assert.ok(route.includes("applyPhase95CommerceMemory"), "phase 9.5 commerce memory wired");
 assert.ok(route.includes("applyVerdictIntelligence"), "phase 10.0 verdict intelligence wired");
 assert.ok(route.includes("applyExplainabilityIntelligence"), "phase 10.1 explainability wired");
