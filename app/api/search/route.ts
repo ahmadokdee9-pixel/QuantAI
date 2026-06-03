@@ -40,6 +40,7 @@ import { buildMultiCategoryIntelligence } from "@/lib/intelligence/multiCategory
 import { buildTasteIntelligence } from "@/lib/intelligence/tasteIntelligenceEngine";
 import { buildLifestyleIntelligence } from "@/lib/intelligence/lifestyleIntelligenceEngine";
 import { buildContextIntelligence } from "@/lib/intelligence/contextIntelligenceEngine";
+import { buildIntentConfidence } from "@/lib/intelligence/intentConfidenceEngine";
 import { normalizeSearchCacheKey } from "@/lib/search/searchCacheKey";
 import {
   applyBetaDiscoveryDefaults,
@@ -612,6 +613,14 @@ async function handleSearch(
       multiCategory,
       tasteIntelligence,
       lifestyleIntelligence,
+    });
+    const intentConfidence = buildIntentConfidence({
+      query,
+      shoppingBrain,
+      multiCategory,
+      tasteIntelligence,
+      lifestyleIntelligence,
+      contextIntelligence,
     });
     const requestCanonicalQuery = queryIntelligenceBundle.canonicalQuery;
     const pipelineKey = normalizeSearchCacheKey(requestCanonicalQuery.normalizedQuery || query);
@@ -1882,6 +1891,7 @@ async function handleSearch(
         tasteIntelligence,
         lifestyleIntelligence,
         contextIntelligence,
+        intentConfidence,
         decisionBrief: commerceFusion.decisionBrief,
         extractedIntent: intelligenceUpgrade.meta.extractedIntent,
         constraints: intelligenceUpgrade.meta.constraints,
