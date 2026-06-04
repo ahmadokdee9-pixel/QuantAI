@@ -55,6 +55,7 @@ import { buildCardIntelligenceLayer } from "@/lib/ui/cardIntelligenceLayer";
 import { deriveCardDecision } from "@/lib/ui/decisionLanguage";
 import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
 import type { VerdictSurfaceContext } from "@/lib/ui/verdictSurfaceOptimization";
+import type { MarketContextInput } from "@/lib/ui/marketContextActivation";
 import { classifyListingOutlier } from "@/lib/ui/listingOutlierFilter";
 import IntelligenceCardBody from "./IntelligenceCardBody";
 import { recordViewedProductLink } from "@/lib/personalization/localSignals";
@@ -215,6 +216,7 @@ type Props = {
   onTrayFocus?: (link: string | null) => void;
   decisionBrief?: DecisionBriefDTO | null;
   verdictSurface?: VerdictSurfaceContext | null;
+  marketContext?: MarketContextInput | null;
 };
 
 function ProductResultCard({
@@ -240,6 +242,7 @@ function ProductResultCard({
   onTrayFocus,
   decisionBrief = null,
   verdictSurface = null,
+  marketContext = null,
 }: Props) {
   const isTrayFocused = trayFocusLink === p.link;
   const isTrayDimmed = Boolean(trayFocusLink && trayFocusLink !== p.link);
@@ -488,6 +491,7 @@ function ProductResultCard({
             onSave={() => saveProduct(p)}
             decisionBrief={decisionBrief}
             verdictSurface={verdictSurface}
+            marketContext={marketContext}
           />
         </div>
       </motion.article>

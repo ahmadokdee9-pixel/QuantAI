@@ -33,6 +33,7 @@ import { computeMarketAwarenessForTray } from "@/lib/intelligence/marketAwarenes
 import type { QuantProduct } from "@/lib/shoppingScore";
 import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
 import type { VerdictSurfaceContext } from "@/lib/ui/verdictSurfaceOptimization";
+import type { MarketContextInput } from "@/lib/ui/marketContextActivation";
 import CompareIntelligencePanel from "./CompareIntelligencePanel";
 import IntelligenceCommandCenter from "./IntelligenceCommandCenter";
 import LiveIntelligenceRail from "./LiveIntelligenceRail";
@@ -221,6 +222,22 @@ export default function ProductResultsSurface({
         (searchMeta?.valueIntelligence as VerdictSurfaceContext["valueIntelligence"]) ?? null,
     };
   }, [searchMeta]);
+  const marketContext = useMemo((): MarketContextInput => {
+    return {
+      decisionBrief,
+      valueIntelligence:
+        (searchMeta?.valueIntelligence as MarketContextInput["valueIntelligence"]) ?? null,
+      realDiscount: (searchMeta?.realDiscount as MarketContextInput["realDiscount"]) ?? null,
+      retailerTrust: (searchMeta?.retailerTrust as MarketContextInput["retailerTrust"]) ?? null,
+      reviewCredibility:
+        (searchMeta?.reviewCredibility as MarketContextInput["reviewCredibility"]) ?? null,
+      decisionReadiness:
+        (searchMeta?.decisionReadiness as MarketContextInput["decisionReadiness"]) ?? null,
+      rankingEngine: (searchMeta?.rankingEngine as MarketContextInput["rankingEngine"]) ?? null,
+      verdictIntelligence:
+        (searchMeta?.verdictIntelligence as MarketContextInput["verdictIntelligence"]) ?? null,
+    };
+  }, [searchMeta, decisionBrief]);
   const unifiedMarketByLink = useMemo(
     () => buildUnifiedMarketGroup(sortedProducts, searchQuery.trim()).byLink,
     [sortedProducts, searchQuery]
@@ -598,6 +615,7 @@ export default function ProductResultsSurface({
         onSave={saveProduct}
         saved={detailProduct != null && savedLinks.has(detailProduct.link)}
         decisionBrief={decisionBrief}
+        marketContext={marketContext}
       />
 
       {mobilePerf ? (
@@ -633,6 +651,7 @@ export default function ProductResultsSurface({
                   searchQuery={searchQuery}
                   decisionBrief={decisionBrief}
                   verdictSurface={verdictSurface}
+                  marketContext={marketContext}
                 />
               </div>
             );
@@ -677,6 +696,7 @@ export default function ProductResultsSurface({
                     searchQuery={searchQuery}
                     decisionBrief={decisionBrief}
                     verdictSurface={verdictSurface}
+                    marketContext={marketContext}
                   />
                 </div>
               );

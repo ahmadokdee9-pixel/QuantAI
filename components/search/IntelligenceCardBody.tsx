@@ -11,6 +11,12 @@ import {
   optimizeVerdictSurface,
   type VerdictSurfaceContext,
 } from "@/lib/ui/verdictSurfaceOptimization";
+import {
+  activateMarketContext,
+  mergeMarketContextExpandedLines,
+  mergeMarketContextSummary,
+  type MarketContextInput,
+} from "@/lib/ui/marketContextActivation";
 import { formatListingPrice } from "@/lib/commerce/cues";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import {
@@ -44,6 +50,7 @@ type Props = {
   onSave: () => void;
   decisionBrief?: DecisionBriefDTO | null;
   verdictSurface?: VerdictSurfaceContext | null;
+  marketContext?: MarketContextInput | null;
 };
 
 const SUMMARY_SLOTS = 2;
@@ -77,6 +84,7 @@ export default function IntelligenceCardBody({
   onSave,
   decisionBrief = null,
   verdictSurface = null,
+  marketContext = null,
 }: Props) {
   const [imageErr, setImageErr] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -119,6 +127,10 @@ export default function IntelligenceCardBody({
     [verdictLabel, reasonLine, decisionBrief, verdictSurface]
   );
   const displayReasonLine = optimizedSurface.verdictReason || reasonLine;
+  const activatedMarket = useMemo(
+    () => activateMarketContext({ decisionBrief, ...marketContext }),
+    [decisionBrief, marketContext]
+  );
   const whyChose = buildWhyQuantAIChoseThis(intelArgs);
   const intelChips = useMemo(() => buildIntelligenceChips(intelArgs), [intelArgs]);
   const expandedSignals = useMemo(() => {
@@ -129,24 +141,29 @@ export default function IntelligenceCardBody({
   }, [activatedBrief, intelArgs]);
   const smartDecisions = useMemo(() => {
     const base = buildSmartDecisionLines(intelArgs);
-    if (!activatedBrief) return base;
+    if (!activatedBrief) {
+      return mergeMarketContextExpandedLines(base, activatedMarket);
+    }
     const activated = [activatedBrief.reasoning, activatedBrief.marketStatus, activatedBrief.confidenceExplanation]
       .filter(Boolean)
       .concat(base);
     const seen = new Set<string>();
-    return activated.filter((line) => {
+    const merged = activated.filter((line) => {
       if (seen.has(line)) return false;
       seen.add(line);
       return true;
-    }).slice(0, 3);
-  }, [activatedBrief, intelArgs]);
+    });
+    return mergeMarketContextExpandedLines(merged, activatedMarket);
+  }, [activatedBrief, activatedMarket, intelArgs]);
   const quantVerdict = useMemo(() => buildQuantAIVerdictNarrative(intelArgs), [intelArgs]);
 
   const summaryReasons = useMemo(() => {
-    const rows = optimizedSurface.summaryLines.slice(0, SUMMARY_SLOTS);
-    while (rows.length < SUMMARY_SLOTS) rows.push("");
-    return rows;
-  }, [optimizedSurface.summaryLines]);
+    return mergeMarketContextSummary(
+      optimizedSurface.summaryLines.slice(0, SUMMARY_SLOTS),
+      activatedMarket,
+      SUMMARY_SLOTS
+    );
+  }, [optimizedSurface.summaryLines, activatedMarket]);
 
   const hasExpandedIntel =
     expandedSignals.length > 0 || smartDecisions.length > 0 || quantVerdict.length > 0;

@@ -16,6 +16,7 @@ import {
 } from "@/lib/intelligence/drawerInsights";
 import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
 import { resolveActivatedBriefPresentation } from "@/lib/ui/activatedDecisionBriefPresentation";
+import { activateMarketContext, type MarketContextInput } from "@/lib/ui/marketContextActivation";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import { resolveOfferClickUrl } from "@/lib/commerce/offerClick";
 import {
@@ -35,6 +36,7 @@ type Props = {
   onSave?: (p: QuantProduct) => void;
   saved?: boolean;
   decisionBrief?: DecisionBriefDTO | null;
+  marketContext?: MarketContextInput | null;
 };
 
 function SignalBar({ value }: { value: number }) {
@@ -93,6 +95,7 @@ export default function ProductIntelligenceDrawer({
   onSave,
   saved = false,
   decisionBrief = null,
+  marketContext = null,
 }: Props) {
   const reduceMotion = useReducedMotion();
   const titleId = useId();
@@ -216,7 +219,7 @@ export default function ProductIntelligenceDrawer({
             </header>
 
             <div className="qa-ui-drawer-body qa-cine-drawer-body relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-4 sm:px-5 sm:py-5">
-              <DrawerBody p={p} list={list} decisionBrief={decisionBrief} />
+              <DrawerBody p={p} list={list} decisionBrief={decisionBrief} marketContext={marketContext} />
             </div>
 
             <footer className="qa-ui-drawer-footer relative shrink-0 border-t px-4 py-3 sm:px-5">
@@ -261,13 +264,16 @@ function DrawerBody({
   p,
   list,
   decisionBrief = null,
+  marketContext = null,
 }: {
   p: QuantProduct;
   list: QuantProduct[];
   decisionBrief?: DecisionBriefDTO | null;
+  marketContext?: MarketContextInput | null;
 }) {
   const band = decisionBand(p, list);
   const activatedBrief = resolveActivatedBriefPresentation(decisionBrief, verdictFromBand(band));
+  const activatedMarket = activateMarketContext({ decisionBrief, ...marketContext });
   const comp = getFinalComposite(p, list);
   const { pros, cons } = getProsAndCons(p, list);
   const why = getWhyQuantAIRecommends(p, list, comp);
@@ -308,6 +314,7 @@ function DrawerBody({
       .replace(/\s+/g, " ")
       .trim();
   const listingReadSummary =
+    activatedMarket?.drawerListingRead ||
     activatedBrief?.marketStatus ||
     [valueAnalysisParagraph(p, list), trustAnalysisParagraph(p, list), priceTrendInsightParagraph(p)]
       .filter(Boolean)
@@ -383,7 +390,11 @@ function DrawerBody({
         <div className="qa-ui-drawer-split">
           <div>
             <p className="qa-ui-drawer-split-label">Decision lane</p>
-            <p className="qa-ui-drawer-copy line-clamp-3">{bandLabel}</p>
+            <p className="qa-ui-drawer-copy line-clamp-3">
+              {activatedMarket?.timingFavorable ||
+                activatedMarket?.waitRecommended ||
+                bandLabel}
+            </p>
           </div>
           <div>
             <p className="qa-ui-drawer-split-label">Confidence context</p>
