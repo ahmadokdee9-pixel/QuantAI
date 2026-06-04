@@ -67,6 +67,7 @@
     "test:phase141-ranking-rationale": "npx --yes tsx scripts/test-phase141-ranking-rationale-activation.mjs",
     "test:phase150-commerce-coverage": "npx --yes tsx scripts/test-phase150-commerce-coverage.mjs",
     "test:phase160-discount-truth": "npx --yes tsx scripts/test-phase160-discount-truth.mjs",
+    "test:phase170-buy-wait": "npx --yes tsx scripts/test-phase170-buy-wait.mjs",
     "test:search-intelligence-upgrade": "npx --yes tsx scripts/test-search-intelligence-upgrade.mjs",
     "test:phase6-intelligence-hardening": "npx --yes tsx scripts/phase6-intelligence-hardening-validation.mjs",
     "test:phase8-ranking-validation": "npx --yes tsx scripts/phase8-ranking-validation-suite.mjs",

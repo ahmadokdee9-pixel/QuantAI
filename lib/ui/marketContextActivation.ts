@@ -14,6 +14,7 @@ import type { VerdictIntelligenceMeta } from "@/lib/intelligence/verdictEngine";
 import type { RankingEngineMeta } from "@/lib/ranking/deterministicRankingEngine";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import type { ActivatedDiscountTruth } from "@/lib/ui/discountTruthActivation";
+import type { ActivatedBuyWait } from "@/lib/ui/buyWaitActivation";
 
 export type MarketContextInput = {
   decisionBrief?: DecisionBriefDTO | null;
@@ -29,6 +30,8 @@ export type MarketContextInput = {
   institutionalVerdict?: PrimaryVerdict | null;
   /** Phase 16.0 — listing discount truth; Phase 93 may override on conflict. */
   discountTruth?: ActivatedDiscountTruth | null;
+  /** Phase 17.0 — buy-now vs wait timing; Phase 93 may tighten wait posture. */
+  buyWait?: ActivatedBuyWait | null;
 };
 
 export type ActivatedMarketContext = {
@@ -179,6 +182,7 @@ function hasMarketSources(input: MarketContextInput): boolean {
       input.verdictIntelligence ||
       input.phase93Assessment ||
       input.discountTruth ||
+      input.buyWait ||
       input.decisionBrief?.marketStatus
   );
 }
@@ -244,6 +248,32 @@ function applyDiscountTruthGrounding(
   };
 }
 
+function applyBuyWaitGrounding(
+  ctx: Omit<ActivatedMarketContext, "cardLines" | "drawerListingRead" | "expandedLines">,
+  buyWait: ActivatedBuyWait | null | undefined
+): Omit<ActivatedMarketContext, "cardLines" | "drawerListingRead" | "expandedLines"> {
+  if (!buyWait) return ctx;
+  if (buyWait.verdict === "BUY NOW") {
+    return {
+      ...ctx,
+      timingFavorable: buyWait.explanation,
+      waitRecommended: ctx.waitRecommended,
+    };
+  }
+  if (buyWait.verdict === "WAIT") {
+    return {
+      ...ctx,
+      timingFavorable: ctx.timingFavorable,
+      waitRecommended: buyWait.explanation,
+    };
+  }
+  return {
+    ...ctx,
+    timingFavorable: buyWait.explanation || ctx.timingFavorable,
+    waitRecommended: ctx.waitRecommended,
+  };
+}
+
 /** Activate existing market context into buyer-facing copy for current UI slots. */
 export function activateMarketContext(input: MarketContextInput): ActivatedMarketContext | null {
   if (!hasMarketSources(input)) return null;
@@ -268,7 +298,10 @@ export function activateMarketContext(input: MarketContextInput): ActivatedMarke
   };
 
   const grounded = applyPhase93Grounding(
-    applyDiscountTruthGrounding(baseLines, input.discountTruth),
+    applyBuyWaitGrounding(
+      applyDiscountTruthGrounding(baseLines, input.discountTruth),
+      input.buyWait
+    ),
     input.phase93Assessment,
     input.institutionalVerdict
   );

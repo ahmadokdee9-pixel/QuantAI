@@ -249,6 +249,16 @@ export default function ProductResultsSurface({
     () => buildTrayCoherenceContext({ searchMeta, decisionBrief }),
     [searchMeta, decisionBrief]
   );
+  const commerceCoverageByLink = useMemo(
+    () =>
+      buildCommerceCoverageTray(
+        sortedProducts,
+        searchQuery.trim(),
+        "€",
+        (searchMeta?.phase93TrustDiscount as Phase93TrustDiscountMeta | null) ?? null
+      ),
+    [sortedProducts, searchQuery, searchMeta?.phase93TrustDiscount]
+  );
   const coherenceByLink = useMemo((): Map<string, CoherentProductDecision> => {
     const map = new Map<string, CoherentProductDecision>();
     for (let index = 0; index < sortedProducts.length; index++) {
@@ -261,25 +271,16 @@ export default function ProductResultsSurface({
           list: sortedProducts,
           rank,
           tray: trayCoherence,
+          commerceCoverage: commerceCoverageByLink.get(product.link) ?? null,
         })
       );
     }
     return map;
-  }, [sortedProducts, rankByLink, trayCoherence]);
+  }, [sortedProducts, rankByLink, trayCoherence, commerceCoverageByLink]);
   const detailCoherence = detailProduct ? coherenceByLink.get(detailProduct.link) ?? null : null;
   const unifiedMarketByLink = useMemo(
     () => buildUnifiedMarketGroup(sortedProducts, searchQuery.trim()).byLink,
     [sortedProducts, searchQuery]
-  );
-  const commerceCoverageByLink = useMemo(
-    () =>
-      buildCommerceCoverageTray(
-        sortedProducts,
-        searchQuery.trim(),
-        "€",
-        (searchMeta?.phase93TrustDiscount as Phase93TrustDiscountMeta | null) ?? null
-      ),
-    [sortedProducts, searchQuery, searchMeta?.phase93TrustDiscount]
   );
   const detailCommerceCoverage = detailProduct
     ? commerceCoverageByLink.get(detailProduct.link) ?? null

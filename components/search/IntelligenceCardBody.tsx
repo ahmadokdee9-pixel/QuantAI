@@ -35,6 +35,7 @@ import {
   type ActivatedCommerceCoverage,
 } from "@/lib/ui/commerceCoverageActivation";
 import { mergeDiscountTruthChip } from "@/lib/ui/discountTruthActivation";
+import { mergeBuyWaitChip } from "@/lib/ui/buyWaitActivation";
 
 type Props = {
   product: QuantProduct;
@@ -149,10 +150,11 @@ export default function IntelligenceCardBody({
   const whyChose = buildWhyQuantAIChoseThis(intelArgs);
   const intelChips = useMemo(() => {
     let chips = buildIntelligenceChips(intelArgs);
+    chips = mergeBuyWaitChip(chips, coherentDecision?.buyWait ?? null, 2);
     chips = mergeDiscountTruthChip(chips, coherentDecision?.discountTruth ?? null, 2);
     chips = mergeCommerceCoverageChip(chips, commerceCoverage, 2);
     return chips;
-  }, [intelArgs, coherentDecision?.discountTruth, commerceCoverage]);
+  }, [intelArgs, coherentDecision?.buyWait, coherentDecision?.discountTruth, commerceCoverage]);
   const expandedSignals = useMemo(() => {
     if (coherentDecision) return coherentDecision.expandedSignals;
     if (activatedBrief?.topSignals.length || activatedBrief?.riskSignals.length) {
