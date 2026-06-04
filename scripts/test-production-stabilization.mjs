@@ -179,6 +179,18 @@ assert.ok(
   ),
   "phase 23.0 unified decision wired in coherence"
 );
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/intelligenceExposureActivation.ts"), "utf8").includes(
+    "activateIntelligenceExposure"
+  ),
+  "phase 25.0 intelligence exposure activation present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/decisionCoherenceActivation.ts"), "utf8").includes(
+    "intelligenceExposure"
+  ),
+  "phase 25.0 exposure wired in coherence"
+);
 
 assert.ok(route.includes("applyPhase95CommerceMemory"), "phase 9.5 commerce memory wired");
 assert.ok(route.includes("applyVerdictIntelligence"), "phase 10.0 verdict intelligence wired");

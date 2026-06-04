@@ -30,12 +30,7 @@ import {
 } from "@/lib/ui/intelligenceCardSignals";
 import { INTEL_TERMS, merchantActionLabel } from "@/lib/ui/intelligenceTerminology";
 import { resolveProductImageDisplay } from "@/lib/ui/productImageQuality";
-import {
-  mergeCommerceCoverageChip,
-  type ActivatedCommerceCoverage,
-} from "@/lib/ui/commerceCoverageActivation";
-import { mergeDiscountTruthChip } from "@/lib/ui/discountTruthActivation";
-import { mergeBuyWaitChip } from "@/lib/ui/buyWaitActivation";
+import type { ActivatedCommerceCoverage } from "@/lib/ui/commerceCoverageActivation";
 
 type Props = {
   product: QuantProduct;
@@ -149,12 +144,11 @@ export default function IntelligenceCardBody({
   }, [coherentDecision, scopedBrief, scopedMarketContext]);
   const whyChose = buildWhyQuantAIChoseThis(intelArgs);
   const intelChips = useMemo(() => {
-    let chips = buildIntelligenceChips(intelArgs);
-    chips = mergeBuyWaitChip(chips, coherentDecision?.buyWait ?? null, 2);
-    chips = mergeDiscountTruthChip(chips, coherentDecision?.discountTruth ?? null, 2);
-    chips = mergeCommerceCoverageChip(chips, commerceCoverage, 2);
-    return chips;
-  }, [intelArgs, coherentDecision?.buyWait, coherentDecision?.discountTruth, commerceCoverage]);
+    if (coherentDecision?.intelligenceExposure?.chips.length) {
+      return coherentDecision.intelligenceExposure.chips;
+    }
+    return buildIntelligenceChips(intelArgs).slice(0, 2);
+  }, [coherentDecision?.intelligenceExposure, intelArgs]);
   const expandedSignals = useMemo(() => {
     if (coherentDecision) return coherentDecision.expandedSignals;
     if (activatedBrief?.topSignals.length || activatedBrief?.riskSignals.length) {

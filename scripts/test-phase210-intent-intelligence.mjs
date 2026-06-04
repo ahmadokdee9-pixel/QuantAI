@@ -227,7 +227,11 @@ const coherence = activateProductDecisionCoherence({
   searchQuery: cameraQuery,
 });
 assert.equal(coherence.verdict, "BUY READY", "phase 14.0 verdict authority preserved");
-assert.ok(coherence.summaryLines[0]?.includes("Ranked first"), "phase 14.1 ranking rationale preserved");
+assert.ok(
+  coherence.summaryLines.some((line) => line.includes("Ranked first")) ||
+    coherence.rankingRationaleLine.includes("Ranked first"),
+  "phase 14.1 ranking rationale preserved"
+);
 assert.ok(coherence.categoryIntelligence.segment === "phones", "phase 20 category intelligence preserved");
 assert.ok(coherence.intentIntelligence.intentMatchScore > 0, "intent intelligence bound on coherent decision");
 assert.ok(
@@ -235,8 +239,9 @@ assert.ok(
   "intent exposed in expanded signals"
 );
 assert.ok(
-  coherence.smartDecisionLines.some((line) => line.includes("camera") || line.includes("alternatives")),
-  "intent exposed in drawer/smart lines"
+  coherence.intelligenceExposure.expandSlots[0]?.includes("camera") ||
+    coherence.intelligenceExposure.drawerModules.some((m) => m.id === "intent"),
+  "intent exposed in structured expand slot or drawer module"
 );
 
 console.log("phase210-intent-intelligence-activation: ok");

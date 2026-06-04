@@ -299,7 +299,15 @@ const coherence = activateProductDecisionCoherence({
   searchQuery: "samsung galaxy s24 ultra best camera phone",
 });
 assert.equal(coherence.verdict, "BUY READY", "phase 14.0 verdict authority preserved");
-assert.ok(coherence.summaryLines[0]?.includes("Ranked first"), "phase 14.1 ranking rationale preserved");
+assert.ok(
+  coherence.summaryLines[0]?.includes("Buy now") || coherence.summaryLines[0]?.includes("Wait"),
+  "phase 25 unified summary dominates card summary"
+);
+assert.ok(
+  coherence.summaryLines.some((line) => line.includes("Ranked first")) ||
+    coherence.rankingRationaleLine.includes("Ranked first"),
+  "phase 14.1 ranking rationale preserved"
+);
 assert.ok(coherence.trustRisk.trustScore > 0, "phase 22 trust/risk preserved");
 assert.ok(coherence.unifiedDecision.finalDecision === "BUY_NOW", "unified decision bound on coherent decision");
 assert.ok(

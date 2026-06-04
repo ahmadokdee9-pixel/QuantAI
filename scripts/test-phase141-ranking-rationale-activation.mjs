@@ -199,8 +199,9 @@ const leadCoherence = activateProductDecisionCoherence({
   tray,
 });
 assert.ok(
-  leadCoherence.summaryLines[0].includes("Ranked first"),
-  "lead summary slot exposes ranking rationale"
+  leadCoherence.summaryLines.some((line) => line.includes("Ranked first")) ||
+    leadCoherence.rankingRationaleLine.includes("Ranked first"),
+  "lead summary exposes ranking rationale"
 );
 
 // ── Secondary rationale isolation ──────────────────────────────────────────────
@@ -224,9 +225,12 @@ const altCoherence = activateProductDecisionCoherence({
 });
 assert.ok(!altCoherence.summaryLines[0]?.includes("Ranked first after controlled execution"), "secondary summary avoids lead tray rationale");
 assert.ok(
-  altCoherence.summaryLines[0]?.includes("Ranked here") ||
-    altCoherence.summaryLines[0]?.includes("below the lead") ||
-    altCoherence.summaryLines[0]?.includes("Alternative slot"),
+  altCoherence.summaryLines.some(
+    (line) =>
+      line.includes("Ranked here") ||
+      line.includes("below the lead") ||
+      line.includes("Alternative slot")
+  ) || altCoherence.rankingRationaleLine.includes("Ranked here"),
   "secondary summary uses scoped rationale"
 );
 

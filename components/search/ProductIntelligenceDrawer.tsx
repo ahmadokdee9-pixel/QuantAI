@@ -336,6 +336,7 @@ function DrawerBody({
     : [];
 
   const topSignals = signalRows.slice(0, 4);
+  const exposure = coherentDecision?.intelligenceExposure ?? null;
   const bandLabel = coherentDecision?.drawerStanceLabel ?? stanceLabelFromVerdict(coherentVerdict);
   const compactSynthesis =
     coherentDecision?.drawerSynthesis ||
@@ -385,14 +386,28 @@ function DrawerBody({
         : pros
   ).slice(0, 4);
 
+  const trustRisk = coherentDecision?.trustRisk;
+  const priceTarget = coherentDecision?.priceTarget;
+
   return (
     <div className="qa-ui-drawer-stack qa-cine-drawer-stack">
       <div className="qa-ui-drawer-hero qa-cine-drawer-hero">
         <div className="qa-ui-drawer-hero-top">
-          <p className="qa-ui-type-label">Intelligence synthesis</p>
+          <p className="qa-ui-type-label">
+            {exposure ? "Unified decision" : "Intelligence synthesis"}
+          </p>
           <span className="qa-ui-drawer-chip">QI {comp}</span>
         </div>
-        <p className="qa-ui-drawer-hero-lead line-clamp-6">{compactSynthesis}</p>
+        {exposure ? (
+          <>
+            <p className="qa-ui-drawer-hero-sub">
+              {exposure.drawerHero.decisionLabel} · {exposure.drawerHero.finalConfidence}% confidence
+            </p>
+            <p className="qa-ui-drawer-hero-lead line-clamp-6">{exposure.drawerHero.finalReasoning}</p>
+          </>
+        ) : (
+          <p className="qa-ui-drawer-hero-lead line-clamp-6">{compactSynthesis}</p>
+        )}
       </div>
 
       <div className="qa-ui-drawer-metrics-row">
@@ -402,13 +417,69 @@ function DrawerBody({
         </div>
         <div className="qa-ui-drawer-metric">
           <p className="qa-ui-drawer-metric-label">Trust</p>
-          <p className="qa-ui-drawer-metric-value tabular-nums">{trust}</p>
+          <p className="qa-ui-drawer-metric-value tabular-nums">
+            {trustRisk ? `${trustRisk.trustScore}` : trust}
+          </p>
         </div>
         <div className="qa-ui-drawer-metric">
           <p className="qa-ui-drawer-metric-label">Price</p>
-          <p className="qa-ui-drawer-metric-value">{matrixPrice}</p>
+          <p className="qa-ui-drawer-metric-value">
+            {priceTarget?.targetBuyPriceLabel ? `Target ${priceTarget.targetBuyPriceLabel}` : matrixPrice}
+          </p>
         </div>
       </div>
+
+      {exposure
+        ? exposure.drawerModules.map((module) => (
+            <DrawerModule
+              key={module.id}
+              title={module.title}
+              act={module.id === "factors" || module.id === "commerce" ? "fold" : undefined}
+              defaultOpen={module.id === "unified"}
+            >
+              {module.lead ? <p className="qa-ui-drawer-lead">{module.lead}</p> : null}
+              {module.lines.map((line) => (
+                <p key={line} className="qa-ui-drawer-copy line-clamp-4">
+                  {line}
+                </p>
+              ))}
+              {module.bullets.length > 0 ? (
+                <ul className="qa-ui-drawer-bullets">
+                  {module.bullets.map((bullet) => (
+                    <li key={bullet}>{bullet}</li>
+                  ))}
+                </ul>
+              ) : null}
+              {module.id === "commerce" && showMatchedOffers ? (
+                <ul className="qa-ui-drawer-alt-list">
+                  {matchedOffers.map((offer) => (
+                    <li key={offer.link} className="qa-ui-drawer-alt-item">
+                      <div className="min-w-0 flex-1">
+                        <p className="qa-ui-drawer-alt-title line-clamp-2">{offer.normalizedTitle}</p>
+                        <p className="qa-ui-drawer-alt-meta">
+                          {offer.store} · {offer.discountLabel} · {offer.availabilityStatus}
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="qa-ui-drawer-alt-price tabular-nums">{offer.displayPrice}</p>
+                        <p className="qa-ui-drawer-alt-qi">Trust {Math.round(offer.trustScore)}</p>
+                      </div>
+                      <a
+                        href={offer.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="qa-ui-compare-icon-btn shrink-0"
+                        aria-label={`Open offer at ${offer.store}`}
+                      >
+                        <ExternalLink className="size-3.5" strokeWidth={1.5} />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </DrawerModule>
+          ))
+        : null}
 
       {coherentDecision?.executionPosture || p.qiBuyingDecision ? (
         <DrawerModule title="Execution posture">
@@ -422,47 +493,51 @@ function DrawerBody({
         </DrawerModule>
       ) : null}
 
-      <DrawerModule title="Signal advantages">
-        {signalAdvantages.length > 0 ? (
-          <ul className="qa-ui-drawer-bullets">
-            {signalAdvantages.map((x) => (
-              <li key={x}>{x}</li>
-            ))}
-          </ul>
-        ) : (
-          <p className="qa-ui-drawer-copy line-clamp-3">
-            Core signals remain within expected variance for this tray.
-          </p>
-        )}
-      </DrawerModule>
+      {!exposure ? (
+        <>
+          <DrawerModule title="Signal advantages">
+            {signalAdvantages.length > 0 ? (
+              <ul className="qa-ui-drawer-bullets">
+                {signalAdvantages.map((x) => (
+                  <li key={x}>{x}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="qa-ui-drawer-copy line-clamp-3">
+                Core signals remain within expected variance for this tray.
+              </p>
+            )}
+          </DrawerModule>
 
-      <DrawerModule title="Validation layer">
-        <ul className="qa-ui-drawer-bullets">
-          {validationChecks.map((x) => (
-            <li key={x}>{x}</li>
-          ))}
-        </ul>
-      </DrawerModule>
+          <DrawerModule title="Validation layer">
+            <ul className="qa-ui-drawer-bullets">
+              {validationChecks.map((x) => (
+                <li key={x}>{x}</li>
+              ))}
+            </ul>
+          </DrawerModule>
 
-      <DrawerModule title="Supporting intelligence">
-        <div className="qa-ui-drawer-split">
-          <div>
-            <p className="qa-ui-drawer-split-label">Decision lane</p>
-            <p className="qa-ui-drawer-copy line-clamp-3">
-              {coherentDecision?.drawerDecisionLane ||
-                activatedMarket?.timingFavorable ||
-                activatedMarket?.waitRecommended ||
-                bandLabel}
-            </p>
-          </div>
-          <div>
-            <p className="qa-ui-drawer-split-label">Confidence context</p>
-            <p className="qa-ui-drawer-copy line-clamp-3">
-              {activatedBrief?.confidenceExplanation || `Trust ${trust} · QI ${comp} · ${matrixPrice}`}
-            </p>
-          </div>
-        </div>
-      </DrawerModule>
+          <DrawerModule title="Supporting intelligence">
+            <div className="qa-ui-drawer-split">
+              <div>
+                <p className="qa-ui-drawer-split-label">Decision lane</p>
+                <p className="qa-ui-drawer-copy line-clamp-3">
+                  {coherentDecision?.drawerDecisionLane ||
+                    activatedMarket?.timingFavorable ||
+                    activatedMarket?.waitRecommended ||
+                    bandLabel}
+                </p>
+              </div>
+              <div>
+                <p className="qa-ui-drawer-split-label">Confidence context</p>
+                <p className="qa-ui-drawer-copy line-clamp-3">
+                  {activatedBrief?.confidenceExplanation || `Trust ${trust} · QI ${comp} · ${matrixPrice}`}
+                </p>
+              </div>
+            </div>
+          </DrawerModule>
+        </>
+      ) : null}
 
       {topSignals.length > 0 ? (
         <DrawerModule title="Signal profile" act="fold" defaultOpen={false}>
@@ -484,7 +559,7 @@ function DrawerBody({
         <p className="qa-ui-drawer-copy line-clamp-6">{listingReadSummary}</p>
       </DrawerModule>
 
-      {showMatchedOffers ? (
+      {showMatchedOffers && !exposure ? (
         <DrawerModule title="View all offers" act="fold" defaultOpen={false}>
           <p className="qa-ui-drawer-copy line-clamp-3">{commerceCoverage?.drawerOffersSummary}</p>
           <ul className="qa-ui-drawer-alt-list">

@@ -170,7 +170,11 @@ const coherence = activateProductDecisionCoherence({
   searchQuery: "samsung galaxy s24",
 });
 assert.equal(coherence.verdict, "BUY READY", "phase 14.0 verdict authority preserved");
-assert.ok(coherence.summaryLines[0]?.includes("Ranked first"), "phase 14.1 ranking rationale preserved");
+assert.ok(
+  coherence.summaryLines.some((line) => line.includes("Ranked first")) ||
+    coherence.rankingRationaleLine.includes("Ranked first"),
+  "phase 14.1 ranking rationale preserved"
+);
 assert.ok(coherence.categoryIntelligence.segment === "phones", "category intelligence bound on coherent decision");
 assert.ok(
   coherence.expandedSignals.some((line) => line.includes("Camera") || line.includes("category")),

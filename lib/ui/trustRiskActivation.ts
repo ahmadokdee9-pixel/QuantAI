@@ -343,3 +343,28 @@ export function mergeTrustRiskBriefSignals(
 ): string[] {
   return mergeTrustRiskExpandedSignals(existingLines, trustRisk, max);
 }
+
+export function mergeTrustRiskChip(
+  chips: Array<{ label: string; tone: "emerald" | "blue" | "violet" | "amber" | "slate" }>,
+  trustRisk: ActivatedTrustRisk | null,
+  max = 3
+): Array<{ label: string; tone: "emerald" | "blue" | "violet" | "amber" | "slate" }> {
+  if (!trustRisk) return chips.slice(0, max);
+  const tone: "emerald" | "blue" | "violet" | "amber" | "slate" =
+    trustRisk.riskScore >= 62
+      ? "amber"
+      : trustRisk.trustScore >= 68
+        ? "emerald"
+        : "slate";
+  const chip = {
+    label: clipLine(
+      trustRisk.riskScore >= 55
+        ? `Risk ${trustRisk.riskScore}%`
+        : `Trust ${trustRisk.trustScore}%`,
+      42
+    ),
+    tone,
+  };
+  const merged = [chip, ...chips.filter((item) => item.label !== chip.label)];
+  return merged.slice(0, max);
+}
