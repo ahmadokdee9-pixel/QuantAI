@@ -272,11 +272,12 @@ export default function ProductResultsSurface({
           rank,
           tray: trayCoherence,
           commerceCoverage: commerceCoverageByLink.get(product.link) ?? null,
+          searchQuery: searchQuery.trim(),
         })
       );
     }
     return map;
-  }, [sortedProducts, rankByLink, trayCoherence, commerceCoverageByLink]);
+  }, [sortedProducts, rankByLink, trayCoherence, commerceCoverageByLink, searchQuery]);
   const detailCoherence = detailProduct ? coherenceByLink.get(detailProduct.link) ?? null : null;
   const unifiedMarketByLink = useMemo(
     () => buildUnifiedMarketGroup(sortedProducts, searchQuery.trim()).byLink,
