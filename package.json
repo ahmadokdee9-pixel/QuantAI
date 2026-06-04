@@ -69,6 +69,7 @@
     "test:phase160-discount-truth": "npx --yes tsx scripts/test-phase160-discount-truth.mjs",
     "test:phase170-buy-wait": "npx --yes tsx scripts/test-phase170-buy-wait.mjs",
     "test:phase180-price-target": "npx --yes tsx scripts/test-phase180-price-target.mjs",
+    "test:phase190-alternative-advantage": "npx --yes tsx scripts/test-phase190-alternative-advantage.mjs",
     "test:search-intelligence-upgrade": "npx --yes tsx scripts/test-search-intelligence-upgrade.mjs",
     "test:phase6-intelligence-hardening": "npx --yes tsx scripts/phase6-intelligence-hardening-validation.mjs",
     "test:phase8-ranking-validation": "npx --yes tsx scripts/phase8-ranking-validation-suite.mjs",
