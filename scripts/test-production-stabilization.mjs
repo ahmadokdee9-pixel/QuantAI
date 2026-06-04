@@ -113,6 +113,12 @@ assert.ok(
   ),
   "phase 14.0 institutional verdict authority present"
 );
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/rankingRationaleActivation.ts"), "utf8").includes(
+    "activateRankingRationale"
+  ),
+  "phase 14.1 ranking rationale activation present"
+);
 
 assert.ok(route.includes("applyPhase95CommerceMemory"), "phase 9.5 commerce memory wired");
 assert.ok(route.includes("applyVerdictIntelligence"), "phase 10.0 verdict intelligence wired");

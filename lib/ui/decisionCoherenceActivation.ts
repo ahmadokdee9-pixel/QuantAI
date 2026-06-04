@@ -32,12 +32,21 @@ import {
   type OptimizedVerdictSurface,
   type VerdictSurfaceContext,
 } from "@/lib/ui/verdictSurfaceOptimization";
+import {
+  activateRankingRationale,
+  mergeRankingRationaleExpandedLines,
+  mergeRankingRationaleSummary,
+} from "@/lib/ui/rankingRationaleActivation";
+import type { ProductRankingMeta } from "@/lib/ranking/productRankingApplication";
+import type { RankingSignalsMeta } from "@/lib/ranking/rankingSignalsAggregator";
 
 export type DecisionCoherenceTrayContext = {
   verdictIntelligence: VerdictIntelligenceMeta | null;
   decisionBrief: DecisionBriefDTO | null;
   rankingEngine: RankingEngineMeta | null;
   executedRanking: ExecutedRankingMeta | null;
+  rankingSignals: RankingSignalsMeta | null;
+  productRanking: ProductRankingMeta | null;
   verdictSurface: VerdictSurfaceContext;
   marketContext: MarketContextInput;
   phase93: Phase93TrustDiscountMeta | null;
@@ -61,6 +70,7 @@ export type CoherentProductDecision = {
   expandedSignals: string[];
   smartDecisionLines: string[];
   rankingRationaleLine: string;
+  drawerRankingLine: string;
   drawerDecisionLane: string;
   drawerStanceLabel: string;
   drawerSynthesis: string;
@@ -165,38 +175,6 @@ export function groundMarketContextInput(
     phase93Assessment,
     institutionalVerdict,
   };
-}
-
-export function buildRankingRationaleLine(args: {
-  isLeadProduct: boolean;
-  rank: number;
-  rankingEngine: RankingEngineMeta | null;
-  executedRanking: ExecutedRankingMeta | null;
-}): string {
-  if (!args.isLeadProduct || args.rank !== 0) return "";
-  if (args.executedRanking?.executed && args.executedRanking.rankingSummary) {
-    return clipLine(args.executedRanking.rankingSummary);
-  }
-  const reason = args.rankingEngine?.rankingReasons?.[0];
-  if (!reason) return "";
-  if (reason.toLowerCase().includes("trust signals are strong")) {
-    return "Ranked first — trust and seller signals lead this tray.";
-  }
-  if (reason.toLowerCase().includes("trust signals are mixed")) {
-    return "Ranked first — compare trust carefully across sellers.";
-  }
-  return clipLine(reason.replace(/\bintelligence\b/gi, "signal"));
-}
-
-export function mergeRankingRationaleSummary(
-  summaryLines: string[],
-  rankingRationale: string,
-  slotCount = 2
-): string[] {
-  const rows = summaryLines.slice(0, slotCount);
-  while (rows.length < slotCount) rows.push("");
-  if (rankingRationale) rows[0] = rankingRationale;
-  return rows.slice(0, slotCount);
 }
 
 function stanceLabel(verdict: PrimaryVerdict): string {
@@ -362,6 +340,8 @@ export function buildTrayCoherenceContext(args: {
     decisionBrief: args.decisionBrief,
     rankingEngine: (meta.rankingEngine as RankingEngineMeta | null) ?? null,
     executedRanking: (meta.executedRanking as ExecutedRankingMeta | null) ?? null,
+    rankingSignals: (meta.rankingSignals as RankingSignalsMeta | null) ?? null,
+    productRanking: (meta.productRanking as ProductRankingMeta | null) ?? null,
     verdictSurface: {
       verdictIntelligence: (meta.verdictIntelligence as VerdictSurfaceContext["verdictIntelligence"]) ?? null,
       rankingEngine: (meta.rankingEngine as VerdictSurfaceContext["rankingEngine"]) ?? null,
@@ -420,19 +400,24 @@ export function activateProductDecisionCoherence(args: {
   });
 
   const activatedMarket = activateMarketContext(groundedMarket);
-  const rankingRationaleLine = buildRankingRationaleLine({
-    isLeadProduct: lead,
+  const activatedRanking = activateRankingRationale({
+    product,
     rank,
+    isLeadProduct: lead,
     rankingEngine: tray.rankingEngine,
     executedRanking: tray.executedRanking,
+    rankingSignals: tray.rankingSignals,
+    productRanking: tray.productRanking,
   });
 
   let summaryLines = mergeRankingRationaleSummary(
     optimizedSurface.summaryLines,
-    rankingRationaleLine,
+    activatedRanking,
     2
   );
   summaryLines = mergeMarketContextSummary(summaryLines, activatedMarket, 2);
+  const rankingRationaleLine = activatedRanking?.cardLine ?? "";
+  const drawerRankingLine = activatedRanking?.drawerLine ?? "";
 
   const activatedBrief = scopedBrief
     ? resolveActivatedBriefPresentation(scopedBrief, verdict)
@@ -444,18 +429,26 @@ export function activateProductDecisionCoherence(args: {
       : buildProductScopedSignals(product, list, phase93Assessment);
 
   const smartDecisionLines = activatedBrief
-    ? mergeMarketContextExpandedLines(
-        uniqueLines([
-          activatedBrief.reasoning,
-          activatedBrief.marketStatus,
-          activatedBrief.confidenceExplanation,
-        ]).slice(0, 3),
-        activatedMarket,
+    ? mergeRankingRationaleExpandedLines(
+        mergeMarketContextExpandedLines(
+          uniqueLines([
+            activatedBrief.reasoning,
+            activatedBrief.marketStatus,
+            activatedBrief.confidenceExplanation,
+          ]).slice(0, 3),
+          activatedMarket,
+          3
+        ),
+        activatedRanking,
         3
       )
-    : mergeMarketContextExpandedLines(
-        buildProductScopedSmartLines(product, list, verdict, phase93Assessment),
-        activatedMarket,
+    : mergeRankingRationaleExpandedLines(
+        mergeMarketContextExpandedLines(
+          buildProductScopedSmartLines(product, list, verdict, phase93Assessment),
+          activatedMarket,
+          3
+        ),
+        activatedRanking,
         3
       );
 
@@ -482,6 +475,7 @@ export function activateProductDecisionCoherence(args: {
     expandedSignals,
     smartDecisionLines,
     rankingRationaleLine,
+    drawerRankingLine,
     drawerDecisionLane,
     drawerStanceLabel: stanceLabel(verdict),
     drawerSynthesis: buildDrawerSynthesis(verdict, optimizedSurface.verdictReason, scopedBrief, product),

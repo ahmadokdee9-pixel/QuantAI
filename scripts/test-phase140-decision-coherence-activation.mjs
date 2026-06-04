@@ -8,12 +8,14 @@ import { join } from "node:path";
 import {
   activateProductDecisionCoherence,
   bindProductDecisionBrief,
-  buildRankingRationaleLine,
   buildTrayCoherenceContext,
-  mergeRankingRationaleSummary,
   resolveCoherentProductVerdict,
   resolveInstitutionalVerdict,
 } from "../lib/ui/decisionCoherenceActivation.ts";
+import {
+  activateRankingRationale,
+  mergeRankingRationaleSummary,
+} from "../lib/ui/rankingRationaleActivation.ts";
 import { activateMarketContext } from "../lib/ui/marketContextActivation.ts";
 
 const verdictIntelligence = {
@@ -253,13 +255,68 @@ assert.ok(
 );
 
 // ── Ranking rationale activation ───────────────────────────────────────────────
-const rankingLine = buildRankingRationaleLine({
-  isLeadProduct: true,
+const rankingLine = activateRankingRationale({
+  product: leadProduct,
   rank: 0,
+  isLeadProduct: true,
   rankingEngine,
   executedRanking,
-});
-assert.ok(rankingLine.includes("Ranked first"), "ranking rationale uses executed ranking");
+  rankingSignals: {
+    version: "phase13.0-v1",
+    rankingSignalScore: 0.72,
+    signalWeights: {
+      buyerFit: 0.2,
+      trust: 0.28,
+      value: 0.24,
+      quality: 0.1,
+      confidence: 0.18,
+      brandAffinity: 0.1,
+      productAttributeAffinity: 0.1,
+      reviewCredibility: 0.12,
+      retailerTrust: 0.12,
+      realDiscount: 0.08,
+      valueIntelligence: 0.1,
+    },
+    signalConflicts: [],
+    signalStrengths: ["strong_trust_signal"],
+    signalWeaknesses: [],
+  },
+  productRanking: {
+    version: "phase13.2-v1",
+    rankingScore: 0.82,
+    rankingTier: "HIGH",
+    rankingReasons: rankingEngine.rankingReasons,
+    rankingWarnings: [],
+    rankingConfidence: 0.72,
+    rankingProfile: [
+      {
+        productId: 1,
+        link: leadProduct.link,
+        currentRank: 0,
+        preparedRankingScore: 0.82,
+        preparedRankingTier: "HIGH",
+        trustAdjustment: 0.12,
+        valueAdjustment: 0.08,
+        buyerFitAdjustment: 0.07,
+        confidenceAdjustment: 0.05,
+        rankingReady: true,
+      },
+      {
+        productId: 2,
+        link: altProduct.link,
+        currentRank: 1,
+        preparedRankingScore: 0.58,
+        preparedRankingTier: "MEDIUM",
+        trustAdjustment: 0.05,
+        valueAdjustment: 0.09,
+        buyerFitAdjustment: 0.04,
+        confidenceAdjustment: 0.03,
+        rankingReady: true,
+      },
+    ],
+  },
+})?.cardLine;
+assert.ok(rankingLine?.includes("Ranked first"), "ranking rationale uses executed ranking");
 const mergedSummary = mergeRankingRationaleSummary(["Existing line", ""], rankingLine, 2);
 assert.equal(mergedSummary[0], rankingLine, "ranking rationale occupies first summary slot");
 

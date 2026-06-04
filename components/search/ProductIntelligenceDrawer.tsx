@@ -337,14 +337,20 @@ function DrawerBody({
       .join(" ")
       .replace(/\s+/g, " ")
       .trim();
-  const listingReadSummary =
+  const listingReadSummary = [
+    coherentDecision?.drawerRankingLine,
     activatedMarket?.drawerListingRead ||
-    activatedBrief?.marketStatus ||
-    [valueAnalysisParagraph(p, list), trustAnalysisParagraph(p, list), priceTrendInsightParagraph(p)]
-      .filter(Boolean)
-      .join(" ")
-      .replace(/\s+/g, " ")
-      .trim();
+      activatedBrief?.marketStatus ||
+      [valueAnalysisParagraph(p, list), trustAnalysisParagraph(p, list), priceTrendInsightParagraph(p)]
+        .filter(Boolean)
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim(),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
   const scopedRiskSignals =
     coherentDecision?.expandedSignals.filter((line) =>
       /verify|risk|wait|avoid|caution|seller|discount/i.test(line)

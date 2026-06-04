@@ -555,7 +555,7 @@ function marketTrayEqual(a: Props["marketTray"], b: Props["marketTray"]): boolea
 
 function coherentDecisionFingerprint(d: CoherentProductDecision | null | undefined): string {
   if (!d) return "";
-  return `${d.verdict}|${d.reasonLine}|${d.alignmentScore}|${d.isLeadProduct}|${d.rankingRationaleLine}|${d.summaryLines.join(";;")}|${d.decisionBrief?.explanation ?? ""}`;
+  return `${d.verdict}|${d.reasonLine}|${d.alignmentScore}|${d.isLeadProduct}|${d.rankingRationaleLine}|${d.drawerRankingLine}|${d.summaryLines.join(";;")}|${d.decisionBrief?.explanation ?? ""}`;
 }
 
 function productResultCardPropsEqual(a: Props, b: Props): boolean {
