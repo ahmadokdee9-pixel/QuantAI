@@ -137,6 +137,12 @@ assert.ok(
   ),
   "phase 17.0 buy/wait activation present"
 );
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/priceTargetActivation.ts"), "utf8").includes(
+    "activatePriceTarget"
+  ),
+  "phase 18.0 price target activation present"
+);
 
 assert.ok(route.includes("applyPhase95CommerceMemory"), "phase 9.5 commerce memory wired");
 assert.ok(route.includes("applyVerdictIntelligence"), "phase 10.0 verdict intelligence wired");

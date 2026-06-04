@@ -15,6 +15,7 @@ import type { RankingEngineMeta } from "@/lib/ranking/deterministicRankingEngine
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import type { ActivatedDiscountTruth } from "@/lib/ui/discountTruthActivation";
 import type { ActivatedBuyWait } from "@/lib/ui/buyWaitActivation";
+import type { ActivatedPriceTarget } from "@/lib/ui/priceTargetActivation";
 
 export type MarketContextInput = {
   decisionBrief?: DecisionBriefDTO | null;
@@ -32,6 +33,8 @@ export type MarketContextInput = {
   discountTruth?: ActivatedDiscountTruth | null;
   /** Phase 17.0 — buy-now vs wait timing; Phase 93 may tighten wait posture. */
   buyWait?: ActivatedBuyWait | null;
+  /** Phase 18.0 — target buy price and savings estimate. */
+  priceTarget?: ActivatedPriceTarget | null;
 };
 
 export type ActivatedMarketContext = {
@@ -183,6 +186,7 @@ function hasMarketSources(input: MarketContextInput): boolean {
       input.phase93Assessment ||
       input.discountTruth ||
       input.buyWait ||
+      input.priceTarget ||
       input.decisionBrief?.marketStatus
   );
 }
@@ -274,6 +278,17 @@ function applyBuyWaitGrounding(
   };
 }
 
+function applyPriceTargetGrounding(
+  ctx: Omit<ActivatedMarketContext, "cardLines" | "drawerListingRead" | "expandedLines">,
+  priceTarget: ActivatedPriceTarget | null | undefined
+): Omit<ActivatedMarketContext, "cardLines" | "drawerListingRead" | "expandedLines"> {
+  if (!priceTarget?.explanation) return ctx;
+  return {
+    ...ctx,
+    priceAttractive: priceTarget.explanation,
+  };
+}
+
 /** Activate existing market context into buyer-facing copy for current UI slots. */
 export function activateMarketContext(input: MarketContextInput): ActivatedMarketContext | null {
   if (!hasMarketSources(input)) return null;
@@ -299,7 +314,10 @@ export function activateMarketContext(input: MarketContextInput): ActivatedMarke
 
   const grounded = applyPhase93Grounding(
     applyBuyWaitGrounding(
-      applyDiscountTruthGrounding(baseLines, input.discountTruth),
+      applyPriceTargetGrounding(
+        applyDiscountTruthGrounding(baseLines, input.discountTruth),
+        input.priceTarget
+      ),
       input.buyWait
     ),
     input.phase93Assessment,

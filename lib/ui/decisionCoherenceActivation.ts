@@ -34,6 +34,12 @@ import {
 } from "@/lib/ui/verdictSurfaceOptimization";
 import type { ActivatedCommerceCoverage } from "@/lib/ui/commerceCoverageActivation";
 import {
+  activatePriceTarget,
+  mergePriceTargetExpandedLines,
+  mergePriceTargetSummary,
+  type ActivatedPriceTarget,
+} from "@/lib/ui/priceTargetActivation";
+import {
   activateBuyWait,
   mergeBuyWaitExpandedLines,
   type ActivatedBuyWait,
@@ -89,6 +95,7 @@ export type CoherentProductDecision = {
   isLeadProduct: boolean;
   discountTruth: ActivatedDiscountTruth;
   buyWait: ActivatedBuyWait;
+  priceTarget: ActivatedPriceTarget;
 };
 
 function clipLine(text: string | undefined | null, max = 112): string {
@@ -402,8 +409,15 @@ export function activateProductDecisionCoherence(args: {
     commerceCoverage,
     institutionalVerdict: verdict,
   });
+  const priceTarget = activatePriceTarget({
+    product,
+    list,
+    discountTruth,
+    buyWait,
+    commerceCoverage,
+  });
   const groundedMarket = groundMarketContextInput(
-    { ...tray.marketContext, decisionBrief: scopedBrief, discountTruth, buyWait },
+    { ...tray.marketContext, decisionBrief: scopedBrief, discountTruth, buyWait, priceTarget },
     phase93Assessment,
     institutionalVerdict
   );
@@ -438,6 +452,7 @@ export function activateProductDecisionCoherence(args: {
     2
   );
   summaryLines = mergeMarketContextSummary(summaryLines, activatedMarket, 2);
+  summaryLines = mergePriceTargetSummary(summaryLines, priceTarget, 2);
   const rankingRationaleLine = activatedRanking?.cardLine ?? "";
   const drawerRankingLine = activatedRanking?.drawerLine ?? "";
 
@@ -447,38 +462,48 @@ export function activateProductDecisionCoherence(args: {
 
   const expandedSignals =
     activatedBrief?.topSignals.length || activatedBrief?.riskSignals.length
-      ? uniqueLines([...activatedBrief.topSignals, ...activatedBrief.riskSignals]).slice(0, 3)
-      : buildProductScopedSignals(product, list, phase93Assessment);
+      ? uniqueLines([priceTarget.cardLine, ...activatedBrief.topSignals, ...activatedBrief.riskSignals]).slice(
+          0,
+          3
+        )
+      : uniqueLines([priceTarget.cardLine, ...buildProductScopedSignals(product, list, phase93Assessment)]).slice(
+          0,
+          3
+        );
 
-  const smartDecisionLines = mergeBuyWaitExpandedLines(
-    mergeDiscountTruthExpandedLines(
-      activatedBrief
-        ? mergeRankingRationaleExpandedLines(
-            mergeMarketContextExpandedLines(
-              uniqueLines([
-                activatedBrief.reasoning,
-                activatedBrief.marketStatus,
-                activatedBrief.confidenceExplanation,
-              ]).slice(0, 3),
-              activatedMarket,
+  const smartDecisionLines = mergePriceTargetExpandedLines(
+    mergeBuyWaitExpandedLines(
+      mergeDiscountTruthExpandedLines(
+        activatedBrief
+          ? mergeRankingRationaleExpandedLines(
+              mergeMarketContextExpandedLines(
+                uniqueLines([
+                  activatedBrief.reasoning,
+                  activatedBrief.marketStatus,
+                  activatedBrief.confidenceExplanation,
+                ]).slice(0, 3),
+                activatedMarket,
+                3
+              ),
+              activatedRanking,
+              3
+            )
+          : mergeRankingRationaleExpandedLines(
+              mergeMarketContextExpandedLines(
+                buildProductScopedSmartLines(product, list, verdict, phase93Assessment),
+                activatedMarket,
+                3
+              ),
+              activatedRanking,
               3
             ),
-            activatedRanking,
-            3
-          )
-        : mergeRankingRationaleExpandedLines(
-            mergeMarketContextExpandedLines(
-              buildProductScopedSmartLines(product, list, verdict, phase93Assessment),
-              activatedMarket,
-              3
-            ),
-            activatedRanking,
-            3
-          ),
-      discountTruth,
+        discountTruth,
+        3
+      ),
+      buyWait,
       3
     ),
-    buyWait,
+    priceTarget,
     3
   );
 
@@ -514,5 +539,6 @@ export function activateProductDecisionCoherence(args: {
     isLeadProduct: lead,
     discountTruth,
     buyWait,
+    priceTarget,
   };
 }
