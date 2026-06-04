@@ -564,7 +564,7 @@ function commerceCoverageFingerprint(c: ActivatedCommerceCoverage | null | undef
 
 function coherentDecisionFingerprint(d: CoherentProductDecision | null | undefined): string {
   if (!d) return "";
-  return `${d.verdict}|${d.reasonLine}|${d.alignmentScore}|${d.isLeadProduct}|${d.rankingRationaleLine}|${d.drawerRankingLine}|${d.summaryLines.join(";;")}|${d.decisionBrief?.explanation ?? ""}|${d.discountTruth?.verdict ?? ""}|${d.discountTruth?.confidence ?? ""}|${d.buyWait?.verdict ?? ""}|${d.buyWait?.confidence ?? ""}|${d.priceTarget?.targetBuyPrice ?? ""}|${d.priceTarget?.opportunityScore ?? ""}|${d.alternativeAdvantage?.leadAdvantageScore ?? ""}|${d.categoryIntelligence?.categoryScore ?? ""}|${d.categoryIntelligence?.segment ?? ""}|${d.intentIntelligence?.intentMatchScore ?? ""}|${d.intentIntelligence?.intentLabel ?? ""}`;
+  return `${d.verdict}|${d.reasonLine}|${d.alignmentScore}|${d.isLeadProduct}|${d.rankingRationaleLine}|${d.drawerRankingLine}|${d.summaryLines.join(";;")}|${d.decisionBrief?.explanation ?? ""}|${d.discountTruth?.verdict ?? ""}|${d.discountTruth?.confidence ?? ""}|${d.buyWait?.verdict ?? ""}|${d.buyWait?.confidence ?? ""}|${d.priceTarget?.targetBuyPrice ?? ""}|${d.priceTarget?.opportunityScore ?? ""}|${d.alternativeAdvantage?.leadAdvantageScore ?? ""}|${d.categoryIntelligence?.categoryScore ?? ""}|${d.categoryIntelligence?.segment ?? ""}|${d.intentIntelligence?.intentMatchScore ?? ""}|${d.intentIntelligence?.intentLabel ?? ""}|${d.trustRisk?.trustScore ?? ""}|${d.trustRisk?.riskScore ?? ""}`;
 }
 
 function productResultCardPropsEqual(a: Props, b: Props): boolean {

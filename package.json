@@ -72,6 +72,7 @@
     "test:phase190-alternative-advantage": "npx --yes tsx scripts/test-phase190-alternative-advantage.mjs",
     "test:phase200-category-intelligence": "npx --yes tsx scripts/test-phase200-category-intelligence.mjs",
     "test:phase210-intent-intelligence": "npx --yes tsx scripts/test-phase210-intent-intelligence.mjs",
+    "test:phase220-trust-risk": "npx --yes tsx scripts/test-phase220-trust-risk.mjs",
     "test:search-intelligence-upgrade": "npx --yes tsx scripts/test-search-intelligence-upgrade.mjs",
     "test:phase6-intelligence-hardening": "npx --yes tsx scripts/phase6-intelligence-hardening-validation.mjs",
     "test:phase8-ranking-validation": "npx --yes tsx scripts/phase8-ranking-validation-suite.mjs",

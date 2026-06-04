@@ -161,6 +161,12 @@ assert.ok(
   ),
   "phase 21.0 intent intelligence activation present"
 );
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/trustRiskActivation.ts"), "utf8").includes(
+    "activateTrustRisk"
+  ),
+  "phase 22.0 trust/risk activation present"
+);
 
 assert.ok(route.includes("applyPhase95CommerceMemory"), "phase 9.5 commerce memory wired");
 assert.ok(route.includes("applyVerdictIntelligence"), "phase 10.0 verdict intelligence wired");

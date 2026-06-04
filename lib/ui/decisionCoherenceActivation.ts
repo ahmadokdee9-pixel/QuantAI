@@ -34,6 +34,12 @@ import {
 } from "@/lib/ui/verdictSurfaceOptimization";
 import type { ActivatedCommerceCoverage } from "@/lib/ui/commerceCoverageActivation";
 import {
+  activateTrustRisk,
+  mergeTrustRiskExpandedLines,
+  mergeTrustRiskExpandedSignals,
+  type ActivatedTrustRisk,
+} from "@/lib/ui/trustRiskActivation";
+import {
   activateIntentIntelligence,
   mergeIntentIntelligenceExpandedLines,
   mergeIntentIntelligenceExpandedSignals,
@@ -117,6 +123,7 @@ export type CoherentProductDecision = {
   alternativeAdvantage: ActivatedAlternativeAdvantage;
   categoryIntelligence: ActivatedCategoryIntelligence;
   intentIntelligence: ActivatedIntentIntelligence;
+  trustRisk: ActivatedTrustRisk;
 };
 
 function clipLine(text: string | undefined | null, max = 112): string {
@@ -469,6 +476,18 @@ export function activateProductDecisionCoherence(args: {
     alternativeAdvantage,
     rankingRationaleLine: activatedRankingPreview?.cardLine ?? "",
   });
+  const trustRisk = activateTrustRisk({
+    product,
+    list,
+    phase93Assessment,
+    commerceCoverage,
+    discountTruth,
+    categoryIntelligence,
+    buyWait,
+    priceTarget,
+    alternativeAdvantage,
+    rankingRationaleLine: activatedRankingPreview?.cardLine ?? "",
+  });
   const groundedMarket = groundMarketContextInput(
     { ...tray.marketContext, decisionBrief: scopedBrief, discountTruth, buyWait, priceTarget },
     phase93Assessment,
@@ -508,21 +527,26 @@ export function activateProductDecisionCoherence(args: {
     : null;
 
   const expandedSignals = mergeIntentIntelligenceExpandedSignals(
-    mergeCategoryIntelligenceExpandedSignals(
-      mergeAlternativeAdvantageExpandedSignals(
-        activatedBrief?.topSignals.length || activatedBrief?.riskSignals.length
-          ? uniqueLines([priceTarget.cardLine, ...activatedBrief.topSignals, ...activatedBrief.riskSignals]).slice(
-              0,
-              3
-            )
-          : uniqueLines([priceTarget.cardLine, ...buildProductScopedSignals(product, list, phase93Assessment)]).slice(
-              0,
-              3
-            ),
-        alternativeAdvantage,
+    mergeTrustRiskExpandedSignals(
+      mergeCategoryIntelligenceExpandedSignals(
+        mergeAlternativeAdvantageExpandedSignals(
+          activatedBrief?.topSignals.length || activatedBrief?.riskSignals.length
+            ? uniqueLines([
+                ...activatedBrief.topSignals,
+                ...activatedBrief.riskSignals,
+                priceTarget.cardLine,
+              ]).slice(0, 3)
+            : uniqueLines([priceTarget.cardLine, ...buildProductScopedSignals(product, list, phase93Assessment)]).slice(
+                0,
+                3
+              ),
+          alternativeAdvantage,
+          3
+        ),
+        categoryIntelligence,
         3
       ),
-      categoryIntelligence,
+      trustRisk,
       3
     ),
     intentIntelligence,
@@ -530,47 +554,51 @@ export function activateProductDecisionCoherence(args: {
   );
 
   const smartDecisionLines = mergeIntentIntelligenceExpandedLines(
-    mergeCategoryIntelligenceExpandedLines(
-      mergeAlternativeAdvantageExpandedLines(
-        mergePriceTargetExpandedLines(
-          mergeBuyWaitExpandedLines(
-            mergeDiscountTruthExpandedLines(
-              activatedBrief
-                ? mergeRankingRationaleExpandedLines(
-                    mergeMarketContextExpandedLines(
-                      uniqueLines([
-                        activatedBrief.reasoning,
-                        activatedBrief.marketStatus,
-                        activatedBrief.confidenceExplanation,
-                      ]).slice(0, 3),
-                      activatedMarket,
+    mergeTrustRiskExpandedLines(
+      mergeCategoryIntelligenceExpandedLines(
+        mergeAlternativeAdvantageExpandedLines(
+          mergePriceTargetExpandedLines(
+            mergeBuyWaitExpandedLines(
+              mergeDiscountTruthExpandedLines(
+                activatedBrief
+                  ? mergeRankingRationaleExpandedLines(
+                      mergeMarketContextExpandedLines(
+                        uniqueLines([
+                          activatedBrief.reasoning,
+                          activatedBrief.marketStatus,
+                          activatedBrief.confidenceExplanation,
+                        ]).slice(0, 3),
+                        activatedMarket,
+                        3
+                      ),
+                      activatedRanking,
+                      3
+                    )
+                  : mergeRankingRationaleExpandedLines(
+                      mergeMarketContextExpandedLines(
+                        buildProductScopedSmartLines(product, list, verdict, phase93Assessment),
+                        activatedMarket,
+                        3
+                      ),
+                      activatedRanking,
                       3
                     ),
-                    activatedRanking,
-                    3
-                  )
-                : mergeRankingRationaleExpandedLines(
-                    mergeMarketContextExpandedLines(
-                      buildProductScopedSmartLines(product, list, verdict, phase93Assessment),
-                      activatedMarket,
-                      3
-                    ),
-                    activatedRanking,
-                    3
-                  ),
-              discountTruth,
+                discountTruth,
+                3
+              ),
+              buyWait,
               3
             ),
-            buyWait,
+            priceTarget,
             3
           ),
-          priceTarget,
+          alternativeAdvantage,
           3
         ),
-        alternativeAdvantage,
+        categoryIntelligence,
         3
       ),
-      categoryIntelligence,
+      trustRisk,
       3
     ),
     intentIntelligence,
@@ -613,5 +641,6 @@ export function activateProductDecisionCoherence(args: {
     alternativeAdvantage,
     categoryIntelligence,
     intentIntelligence,
+    trustRisk,
   };
 }
