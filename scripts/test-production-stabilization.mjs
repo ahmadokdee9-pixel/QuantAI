@@ -106,6 +106,13 @@ const cardBody = readFileSync(join(process.cwd(), "components", "search", "Intel
 assert.ok(cardBody.includes("optimizeVerdictSurface"), "phase 13.8 verdict surface optimization wired");
 
 assert.ok(cardBody.includes("activateMarketContext"), "phase 13.9 market context activation wired");
+assert.ok(cardBody.includes("coherentDecision"), "phase 14.0 decision coherence wired");
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/decisionCoherenceActivation.ts"), "utf8").includes(
+    "resolveInstitutionalVerdict"
+  ),
+  "phase 14.0 institutional verdict authority present"
+);
 
 assert.ok(route.includes("applyPhase95CommerceMemory"), "phase 9.5 commerce memory wired");
 assert.ok(route.includes("applyVerdictIntelligence"), "phase 10.0 verdict intelligence wired");

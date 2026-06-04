@@ -17,6 +17,7 @@ import {
 import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
 import { resolveActivatedBriefPresentation } from "@/lib/ui/activatedDecisionBriefPresentation";
 import { activateMarketContext, type MarketContextInput } from "@/lib/ui/marketContextActivation";
+import type { CoherentProductDecision } from "@/lib/ui/decisionCoherenceActivation";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import { resolveOfferClickUrl } from "@/lib/commerce/offerClick";
 import {
@@ -37,6 +38,7 @@ type Props = {
   saved?: boolean;
   decisionBrief?: DecisionBriefDTO | null;
   marketContext?: MarketContextInput | null;
+  coherentDecision?: CoherentProductDecision | null;
 };
 
 function SignalBar({ value }: { value: number }) {
@@ -96,6 +98,7 @@ export default function ProductIntelligenceDrawer({
   saved = false,
   decisionBrief = null,
   marketContext = null,
+  coherentDecision = null,
 }: Props) {
   const reduceMotion = useReducedMotion();
   const titleId = useId();
@@ -219,7 +222,13 @@ export default function ProductIntelligenceDrawer({
             </header>
 
             <div className="qa-ui-drawer-body qa-cine-drawer-body relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-4 sm:px-5 sm:py-5">
-              <DrawerBody p={p} list={list} decisionBrief={decisionBrief} marketContext={marketContext} />
+              <DrawerBody
+                p={p}
+                list={list}
+                decisionBrief={decisionBrief}
+                marketContext={marketContext}
+                coherentDecision={coherentDecision}
+              />
             </div>
 
             <footer className="qa-ui-drawer-footer relative shrink-0 border-t px-4 py-3 sm:px-5">
@@ -260,20 +269,34 @@ function verdictFromBand(band: ReturnType<typeof decisionBand>): PrimaryVerdict 
   return "COMPARE";
 }
 
+function stanceLabelFromVerdict(verdict: PrimaryVerdict): string {
+  if (verdict === "BUY READY") return "Buy lane";
+  if (verdict === "WAIT" || verdict === "AVOID") return "Wait lane";
+  return "Compare lane";
+}
+
 function DrawerBody({
   p,
   list,
   decisionBrief = null,
   marketContext = null,
+  coherentDecision = null,
 }: {
   p: QuantProduct;
   list: QuantProduct[];
   decisionBrief?: DecisionBriefDTO | null;
   marketContext?: MarketContextInput | null;
+  coherentDecision?: CoherentProductDecision | null;
 }) {
-  const band = decisionBand(p, list);
-  const activatedBrief = resolveActivatedBriefPresentation(decisionBrief, verdictFromBand(band));
-  const activatedMarket = activateMarketContext({ decisionBrief, ...marketContext });
+  const scopedBrief = coherentDecision?.decisionBrief ?? decisionBrief;
+  const coherentVerdict: PrimaryVerdict =
+    coherentDecision?.verdict ??
+    verdictFromBand(decisionBand(p, list));
+  const activatedBrief = resolveActivatedBriefPresentation(scopedBrief, coherentVerdict);
+  const scopedMarket = coherentDecision?.marketContext ?? marketContext;
+  const activatedMarket =
+    coherentDecision?.activatedMarket ??
+    activateMarketContext({ decisionBrief: scopedBrief, ...scopedMarket });
   const comp = getFinalComposite(p, list);
   const { pros, cons } = getProsAndCons(p, list);
   const why = getWhyQuantAIRecommends(p, list, comp);
@@ -305,8 +328,9 @@ function DrawerBody({
     : [];
 
   const topSignals = signalRows.slice(0, 4);
-  const bandLabel = band === "buy" ? "Buy lane" : band === "wait" ? "Wait lane" : "Compare lane";
+  const bandLabel = coherentDecision?.drawerStanceLabel ?? stanceLabelFromVerdict(coherentVerdict);
   const compactSynthesis =
+    coherentDecision?.drawerSynthesis ||
     activatedBrief?.reasoning ||
     [quantVerdictLead(p, list), p.qiPsychology?.trim(), why]
       .filter(Boolean)
@@ -321,15 +345,29 @@ function DrawerBody({
       .join(" ")
       .replace(/\s+/g, " ")
       .trim();
+  const scopedRiskSignals =
+    coherentDecision?.expandedSignals.filter((line) =>
+      /verify|risk|wait|avoid|caution|seller|discount/i.test(line)
+    ) ?? [];
+  const scopedAdvantageSignals =
+    coherentDecision?.expandedSignals.filter(
+      (line) => !/verify|risk|wait|avoid|caution|discount/i.test(line)
+    ) ?? [];
   const validationChecks = (
     activatedBrief?.riskSignals.length
       ? activatedBrief.riskSignals
-      : cons.length
-        ? cons
-        : ["Confirm seller, warranty, and final checkout terms before execution."]
+      : scopedRiskSignals.length
+        ? scopedRiskSignals
+        : cons.length
+          ? cons
+          : ["Confirm seller, warranty, and final checkout terms before execution."]
   ).slice(0, 3);
   const signalAdvantages = (
-    activatedBrief?.topSignals.length ? activatedBrief.topSignals : pros
+    activatedBrief?.topSignals.length
+      ? activatedBrief.topSignals
+      : scopedAdvantageSignals.length
+        ? scopedAdvantageSignals
+        : pros
   ).slice(0, 4);
 
   return (
@@ -357,10 +395,15 @@ function DrawerBody({
         </div>
       </div>
 
-      {p.qiBuyingDecision ? (
+      {coherentDecision?.executionPosture || p.qiBuyingDecision ? (
         <DrawerModule title="Execution posture">
-          <p className="qa-ui-drawer-lead">{intelligenceDecisionLabel(p.qiBuyingDecision.action)}</p>
-          <p className="qa-ui-drawer-copy line-clamp-3">{p.qiBuyingDecision.analystLine}</p>
+          <p className="qa-ui-drawer-lead">
+            {coherentDecision?.executionPosture?.label ??
+              intelligenceDecisionLabel(p.qiBuyingDecision?.action)}
+          </p>
+          <p className="qa-ui-drawer-copy line-clamp-3">
+            {coherentDecision?.executionPosture?.line ?? p.qiBuyingDecision?.analystLine}
+          </p>
         </DrawerModule>
       ) : null}
 
@@ -391,7 +434,8 @@ function DrawerBody({
           <div>
             <p className="qa-ui-drawer-split-label">Decision lane</p>
             <p className="qa-ui-drawer-copy line-clamp-3">
-              {activatedMarket?.timingFavorable ||
+              {coherentDecision?.drawerDecisionLane ||
+                activatedMarket?.timingFavorable ||
                 activatedMarket?.waitRecommended ||
                 bandLabel}
             </p>

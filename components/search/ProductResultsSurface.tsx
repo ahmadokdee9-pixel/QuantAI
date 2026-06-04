@@ -34,6 +34,11 @@ import type { QuantProduct } from "@/lib/shoppingScore";
 import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
 import type { VerdictSurfaceContext } from "@/lib/ui/verdictSurfaceOptimization";
 import type { MarketContextInput } from "@/lib/ui/marketContextActivation";
+import {
+  activateProductDecisionCoherence,
+  buildTrayCoherenceContext,
+  type CoherentProductDecision,
+} from "@/lib/ui/decisionCoherenceActivation";
 import CompareIntelligencePanel from "./CompareIntelligencePanel";
 import IntelligenceCommandCenter from "./IntelligenceCommandCenter";
 import LiveIntelligenceRail from "./LiveIntelligenceRail";
@@ -238,6 +243,28 @@ export default function ProductResultsSurface({
         (searchMeta?.verdictIntelligence as MarketContextInput["verdictIntelligence"]) ?? null,
     };
   }, [searchMeta, decisionBrief]);
+  const trayCoherence = useMemo(
+    () => buildTrayCoherenceContext({ searchMeta, decisionBrief }),
+    [searchMeta, decisionBrief]
+  );
+  const coherenceByLink = useMemo((): Map<string, CoherentProductDecision> => {
+    const map = new Map<string, CoherentProductDecision>();
+    for (let index = 0; index < sortedProducts.length; index++) {
+      const product = sortedProducts[index]!;
+      const rank = rankByLink.get(product.link) ?? index;
+      map.set(
+        product.link,
+        activateProductDecisionCoherence({
+          product,
+          list: sortedProducts,
+          rank,
+          tray: trayCoherence,
+        })
+      );
+    }
+    return map;
+  }, [sortedProducts, rankByLink, trayCoherence]);
+  const detailCoherence = detailProduct ? coherenceByLink.get(detailProduct.link) ?? null : null;
   const unifiedMarketByLink = useMemo(
     () => buildUnifiedMarketGroup(sortedProducts, searchQuery.trim()).byLink,
     [sortedProducts, searchQuery]
@@ -614,8 +641,9 @@ export default function ProductResultsSurface({
         onClose={() => setDetailProduct(null)}
         onSave={saveProduct}
         saved={detailProduct != null && savedLinks.has(detailProduct.link)}
-        decisionBrief={decisionBrief}
-        marketContext={marketContext}
+        decisionBrief={detailCoherence?.decisionBrief ?? decisionBrief}
+        marketContext={detailCoherence?.marketContext ?? marketContext}
+        coherentDecision={detailCoherence}
       />
 
       {mobilePerf ? (
@@ -652,6 +680,7 @@ export default function ProductResultsSurface({
                   decisionBrief={decisionBrief}
                   verdictSurface={verdictSurface}
                   marketContext={marketContext}
+                  coherentDecision={coherenceByLink.get(p.link) ?? null}
                 />
               </div>
             );

@@ -9,8 +9,10 @@ import type { RealDiscountMeta } from "@/lib/intelligence/realDiscountEngine";
 import type { RetailerTrustMeta } from "@/lib/intelligence/retailerTrustEngine";
 import type { ReviewCredibilityMeta } from "@/lib/intelligence/reviewCredibilityEngine";
 import type { ValueIntelligenceMeta } from "@/lib/intelligence/valueIntelligenceEngine";
+import type { ProductTrustDiscountAssessment } from "@/lib/intelligence/phase93TrustDiscountHardening";
 import type { VerdictIntelligenceMeta } from "@/lib/intelligence/verdictEngine";
 import type { RankingEngineMeta } from "@/lib/ranking/deterministicRankingEngine";
+import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 
 export type MarketContextInput = {
   decisionBrief?: DecisionBriefDTO | null;
@@ -21,6 +23,9 @@ export type MarketContextInput = {
   decisionReadiness?: DecisionReadinessMeta | null;
   rankingEngine?: RankingEngineMeta | null;
   verdictIntelligence?: VerdictIntelligenceMeta | null;
+  /** Phase 14.0 — tray-local listing truth; presentation may filter, not invent. */
+  phase93Assessment?: ProductTrustDiscountAssessment | null;
+  institutionalVerdict?: PrimaryVerdict | null;
 };
 
 export type ActivatedMarketContext = {
@@ -169,30 +174,91 @@ function hasMarketSources(input: MarketContextInput): boolean {
       input.decisionReadiness ||
       input.rankingEngine ||
       input.verdictIntelligence ||
+      input.phase93Assessment ||
       input.decisionBrief?.marketStatus
   );
+}
+
+function applyPhase93Grounding(
+  ctx: Omit<ActivatedMarketContext, "cardLines" | "drawerListingRead" | "expandedLines">,
+  assessment: ProductTrustDiscountAssessment | null | undefined,
+  institutionalVerdict: PrimaryVerdict | null | undefined
+): Omit<ActivatedMarketContext, "cardLines" | "drawerListingRead" | "expandedLines"> {
+  if (!assessment && !institutionalVerdict) return ctx;
+
+  let priceAttractive = ctx.priceAttractive;
+  let discountReal = ctx.discountReal;
+  let sellerTrustworthy = ctx.sellerTrustworthy;
+  let timingFavorable = ctx.timingFavorable;
+  let waitRecommended = ctx.waitRecommended;
+
+  if (assessment) {
+    if (assessment.fakeDiscountRisk === "high") {
+      discountReal = "Discount may be inflated — check the original price.";
+      waitRecommended = waitRecommended || "Waiting may avoid a misleading discount.";
+      timingFavorable = "Market timing favors verification before buying.";
+    } else if (assessment.fakeDiscountRisk === "medium") {
+      discountReal = "Savings look modest or need verification.";
+    }
+
+    if (assessment.suspiciousSeller || assessment.trustScore < 52) {
+      sellerTrustworthy = "Seller reputation needs extra verification.";
+      waitRecommended = waitRecommended || "Waiting may reduce checkout risk.";
+      timingFavorable = "Market timing favors patience until seller checks out.";
+    }
+
+    if (assessment.priceAnomaly === "suspicious_low" || assessment.priceAnomaly === "premium_outlier") {
+      priceAttractive = "Current price may not reflect a fair market level.";
+    }
+  }
+
+  if (institutionalVerdict === "WAIT" || institutionalVerdict === "AVOID") {
+    timingFavorable =
+      institutionalVerdict === "AVOID"
+        ? "Market timing does not favor buying right now."
+        : "Market timing favors waiting for a better deal.";
+    waitRecommended = waitRecommended || "Waiting is recommended until market conditions improve.";
+  }
+
+  return {
+    priceAttractive,
+    discountReal,
+    sellerTrustworthy,
+    timingFavorable,
+    waitRecommended,
+  };
 }
 
 /** Activate existing market context into buyer-facing copy for current UI slots. */
 export function activateMarketContext(input: MarketContextInput): ActivatedMarketContext | null {
   if (!hasMarketSources(input)) return null;
 
-  const priceAttractive = priceAttractiveLine(input.valueIntelligence);
-  const discountReal = discountRealLine(input.realDiscount);
-  const sellerTrustworthy = sellerTrustworthyLine(input.retailerTrust, input.reviewCredibility);
-  const timingFavorable = timingFavorableLine(
-    input.valueIntelligence,
-    input.realDiscount,
-    input.decisionReadiness,
-    input.verdictIntelligence
+  const baseLines = {
+    priceAttractive: priceAttractiveLine(input.valueIntelligence),
+    discountReal: discountRealLine(input.realDiscount),
+    sellerTrustworthy: sellerTrustworthyLine(input.retailerTrust, input.reviewCredibility),
+    timingFavorable: timingFavorableLine(
+      input.valueIntelligence,
+      input.realDiscount,
+      input.decisionReadiness,
+      input.verdictIntelligence
+    ),
+    waitRecommended: waitRecommendedLine(
+      input.decisionReadiness,
+      input.valueIntelligence,
+      input.realDiscount,
+      input.verdictIntelligence,
+      input.decisionBrief
+    ),
+  };
+
+  const grounded = applyPhase93Grounding(
+    baseLines,
+    input.phase93Assessment,
+    input.institutionalVerdict
   );
-  const waitRecommended = waitRecommendedLine(
-    input.decisionReadiness,
-    input.valueIntelligence,
-    input.realDiscount,
-    input.verdictIntelligence,
-    input.decisionBrief
-  );
+  const { priceAttractive, discountReal, sellerTrustworthy, timingFavorable, waitRecommended } =
+    grounded;
 
   const expandedLines = uniqueLines([
     priceAttractive,

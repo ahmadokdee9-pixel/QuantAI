@@ -17,6 +17,7 @@ import {
   mergeMarketContextSummary,
   type MarketContextInput,
 } from "@/lib/ui/marketContextActivation";
+import type { CoherentProductDecision } from "@/lib/ui/decisionCoherenceActivation";
 import { formatListingPrice } from "@/lib/commerce/cues";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import {
@@ -51,6 +52,7 @@ type Props = {
   decisionBrief?: DecisionBriefDTO | null;
   verdictSurface?: VerdictSurfaceContext | null;
   marketContext?: MarketContextInput | null;
+  coherentDecision?: CoherentProductDecision | null;
 };
 
 const SUMMARY_SLOTS = 2;
@@ -85,18 +87,25 @@ export default function IntelligenceCardBody({
   decisionBrief = null,
   verdictSurface = null,
   marketContext = null,
+  coherentDecision = null,
 }: Props) {
   const [imageErr, setImageErr] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
-  const verdictClass = verdictLabel.replace(/\s+/g, "-").toLowerCase();
+  const resolvedVerdict = coherentDecision?.verdict ?? verdictLabel;
+  const resolvedReason = coherentDecision?.reasonLine ?? reasonLine;
+  const resolvedAlignment = coherentDecision?.alignmentScore ?? alignmentScore;
+  const scopedBrief = coherentDecision?.decisionBrief ?? decisionBrief;
+  const scopedMarketContext = coherentDecision?.marketContext ?? marketContext;
+
+  const verdictClass = resolvedVerdict.replace(/\s+/g, "-").toLowerCase();
   const image = resolveProductImageDisplay(p);
   const showAssetImage = image.showImage && image.src && !imageErr;
 
   const intelArgs = useMemo(
-    () => cardIntelArgs(p, list, trust, deal, verdictLabel, alignmentScore),
-    [p, list, trust, deal, verdictLabel, alignmentScore],
+    () => cardIntelArgs(p, list, trust, deal, resolvedVerdict, resolvedAlignment),
+    [p, list, trust, deal, resolvedVerdict, resolvedAlignment],
   );
 
   const briefTags = buildBriefPreviewTags({
@@ -104,42 +113,43 @@ export default function IntelligenceCardBody({
     list,
     trustScore: trust,
     deal,
-    reason: reasonLine,
-    alignmentScore,
+    reason: resolvedReason,
+    alignmentScore: resolvedAlignment,
     rank,
   }).filter((t) => t.active);
   const activatedBrief = useMemo(
-    () => resolveActivatedBriefPresentation(decisionBrief, verdictLabel),
-    [decisionBrief, verdictLabel]
+    () => resolveActivatedBriefPresentation(scopedBrief, resolvedVerdict),
+    [scopedBrief, resolvedVerdict]
   );
-  const optimizedSurface = useMemo(
-    () =>
-      optimizeVerdictSurface({
-        verdict: verdictLabel,
-        fallbackReason: reasonLine,
-        decisionBrief,
-        verdictIntelligence: verdictSurface?.verdictIntelligence ?? null,
-        rankingEngine: verdictSurface?.rankingEngine ?? null,
-        decisionReadiness: verdictSurface?.decisionReadiness ?? null,
-        intentConfidence: verdictSurface?.intentConfidence ?? null,
-        valueIntelligence: verdictSurface?.valueIntelligence ?? null,
-      }),
-    [verdictLabel, reasonLine, decisionBrief, verdictSurface]
-  );
-  const displayReasonLine = optimizedSurface.verdictReason || reasonLine;
-  const activatedMarket = useMemo(
-    () => activateMarketContext({ decisionBrief, ...marketContext }),
-    [decisionBrief, marketContext]
-  );
+  const optimizedSurface = useMemo(() => {
+    if (coherentDecision) return coherentDecision.optimizedSurface;
+    return optimizeVerdictSurface({
+      verdict: resolvedVerdict,
+      fallbackReason: resolvedReason,
+      decisionBrief: scopedBrief,
+      verdictIntelligence: verdictSurface?.verdictIntelligence ?? null,
+      rankingEngine: verdictSurface?.rankingEngine ?? null,
+      decisionReadiness: verdictSurface?.decisionReadiness ?? null,
+      intentConfidence: verdictSurface?.intentConfidence ?? null,
+      valueIntelligence: verdictSurface?.valueIntelligence ?? null,
+    });
+  }, [coherentDecision, resolvedVerdict, resolvedReason, scopedBrief, verdictSurface]);
+  const displayReasonLine = optimizedSurface.verdictReason || resolvedReason;
+  const activatedMarket = useMemo(() => {
+    if (coherentDecision) return coherentDecision.activatedMarket;
+    return activateMarketContext({ decisionBrief: scopedBrief, ...scopedMarketContext });
+  }, [coherentDecision, scopedBrief, scopedMarketContext]);
   const whyChose = buildWhyQuantAIChoseThis(intelArgs);
   const intelChips = useMemo(() => buildIntelligenceChips(intelArgs), [intelArgs]);
   const expandedSignals = useMemo(() => {
+    if (coherentDecision) return coherentDecision.expandedSignals;
     if (activatedBrief?.topSignals.length || activatedBrief?.riskSignals.length) {
       return [...activatedBrief.topSignals, ...activatedBrief.riskSignals].slice(0, 3);
     }
     return buildExpandedSignalLines(intelArgs);
-  }, [activatedBrief, intelArgs]);
+  }, [coherentDecision, activatedBrief, intelArgs]);
   const smartDecisions = useMemo(() => {
+    if (coherentDecision) return coherentDecision.smartDecisionLines;
     const base = buildSmartDecisionLines(intelArgs);
     if (!activatedBrief) {
       return mergeMarketContextExpandedLines(base, activatedMarket);
@@ -154,16 +164,17 @@ export default function IntelligenceCardBody({
       return true;
     });
     return mergeMarketContextExpandedLines(merged, activatedMarket);
-  }, [activatedBrief, activatedMarket, intelArgs]);
+  }, [coherentDecision, activatedBrief, activatedMarket, intelArgs]);
   const quantVerdict = useMemo(() => buildQuantAIVerdictNarrative(intelArgs), [intelArgs]);
 
   const summaryReasons = useMemo(() => {
+    if (coherentDecision) return coherentDecision.summaryLines;
     return mergeMarketContextSummary(
       optimizedSurface.summaryLines.slice(0, SUMMARY_SLOTS),
       activatedMarket,
       SUMMARY_SLOTS
     );
-  }, [optimizedSurface.summaryLines, activatedMarket]);
+  }, [coherentDecision, optimizedSurface.summaryLines, activatedMarket]);
 
   const hasExpandedIntel =
     expandedSignals.length > 0 || smartDecisions.length > 0 || quantVerdict.length > 0;
@@ -199,10 +210,10 @@ export default function IntelligenceCardBody({
 
       <div
         className={`qa-ref-intel-card__verdict-band qa-ref-intel-card__verdict-band--${verdictClass}`}
-        data-verdict={verdictLabel}
+        data-verdict={resolvedVerdict}
       >
         <span className="qa-ref-intel-card__verdict-kicker">Recommendation</span>
-        <span className="qa-ref-intel-card__verdict-value">{verdictLabel}</span>
+        <span className="qa-ref-intel-card__verdict-value">{resolvedVerdict}</span>
         <p className="qa-ref-intel-card__verdict-reason line-clamp-1">{displayReasonLine}</p>
       </div>
 
@@ -213,11 +224,11 @@ export default function IntelligenceCardBody({
 
       <div className="qa-ref-intel-card__field qa-ref-intel-card__confidence-block">
         <span className="qa-ref-intel-card__field-label">{INTEL_TERMS.decisionConfidence}</span>
-        <span className="qa-ref-intel-card__field-value">{Math.round(alignmentScore)}%</span>
+        <span className="qa-ref-intel-card__field-value">{Math.round(resolvedAlignment)}%</span>
         <div className="qa-ref-intel-card__confidence-bar" aria-hidden>
           <motion.span
             initial={{ width: 0 }}
-            animate={{ width: `${Math.min(100, Math.max(8, alignmentScore))}%` }}
+            animate={{ width: `${Math.min(100, Math.max(8, resolvedAlignment))}%` }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
           />
         </div>

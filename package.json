@@ -63,6 +63,7 @@
     "test:phase137-intelligence-translation": "npx --yes tsx scripts/test-phase137-intelligence-translation.mjs",
     "test:phase138-verdict-surface-optimization": "npx --yes tsx scripts/test-phase138-verdict-surface-optimization.mjs",
     "test:phase139-market-context-activation": "npx --yes tsx scripts/test-phase139-market-context-activation.mjs",
+    "test:phase140-decision-coherence-activation": "npx --yes tsx scripts/test-phase140-decision-coherence-activation.mjs",
     "test:search-intelligence-upgrade": "npx --yes tsx scripts/test-search-intelligence-upgrade.mjs",
     "test:phase6-intelligence-hardening": "npx --yes tsx scripts/phase6-intelligence-hardening-validation.mjs",
     "test:phase8-ranking-validation": "npx --yes tsx scripts/phase8-ranking-validation-suite.mjs",

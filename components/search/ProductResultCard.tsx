@@ -56,6 +56,7 @@ import { deriveCardDecision } from "@/lib/ui/decisionLanguage";
 import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
 import type { VerdictSurfaceContext } from "@/lib/ui/verdictSurfaceOptimization";
 import type { MarketContextInput } from "@/lib/ui/marketContextActivation";
+import type { CoherentProductDecision } from "@/lib/ui/decisionCoherenceActivation";
 import { classifyListingOutlier } from "@/lib/ui/listingOutlierFilter";
 import IntelligenceCardBody from "./IntelligenceCardBody";
 import { recordViewedProductLink } from "@/lib/personalization/localSignals";
@@ -217,6 +218,7 @@ type Props = {
   decisionBrief?: DecisionBriefDTO | null;
   verdictSurface?: VerdictSurfaceContext | null;
   marketContext?: MarketContextInput | null;
+  coherentDecision?: CoherentProductDecision | null;
 };
 
 function ProductResultCard({
@@ -243,6 +245,7 @@ function ProductResultCard({
   decisionBrief = null,
   verdictSurface = null,
   marketContext = null,
+  coherentDecision = null,
 }: Props) {
   const isTrayFocused = trayFocusLink === p.link;
   const isTrayDimmed = Boolean(trayFocusLink && trayFocusLink !== p.link);
@@ -423,10 +426,10 @@ function ProductResultCard({
     [trust, weakRetailer, cardIntel.posture.price, cardIntel.buyingThesis, p, list]
   );
 
-  const verdictLabel = derived.verdict;
-  const reasonLine = derived.reason;
-  const alignmentScore = derived.alignmentScore;
-  const trustMicro = derived.trustMicro;
+  const verdictLabel = coherentDecision?.verdict ?? derived.verdict;
+  const reasonLine = coherentDecision?.reasonLine ?? derived.reason;
+  const alignmentScore = coherentDecision?.alignmentScore ?? derived.alignmentScore;
+  const trustMicro = coherentDecision?.trustMicro ?? derived.trustMicro;
 
   const signalsTerminalRisk = useMemo(() => {
     if (resolved.riskReason) return clip(resolved.riskReason, 112);
@@ -489,9 +492,10 @@ function ProductResultCard({
             }}
             onToggleCompare={() => toggleCompare(p.link)}
             onSave={() => saveProduct(p)}
-            decisionBrief={decisionBrief}
+            decisionBrief={coherentDecision?.decisionBrief ?? decisionBrief}
             verdictSurface={verdictSurface}
-            marketContext={marketContext}
+            marketContext={coherentDecision?.marketContext ?? marketContext}
+            coherentDecision={coherentDecision}
           />
         </div>
       </motion.article>
@@ -549,10 +553,18 @@ function marketTrayEqual(a: Props["marketTray"], b: Props["marketTray"]): boolea
   );
 }
 
+function coherentDecisionFingerprint(d: CoherentProductDecision | null | undefined): string {
+  if (!d) return "";
+  return `${d.verdict}|${d.reasonLine}|${d.alignmentScore}|${d.isLeadProduct}|${d.rankingRationaleLine}|${d.summaryLines.join(";;")}|${d.decisionBrief?.explanation ?? ""}`;
+}
+
 function productResultCardPropsEqual(a: Props, b: Props): boolean {
   if (a.product.link !== b.product.link) return false;
   if (a.rank !== b.rank || a.index !== b.index) return false;
   if (a.lowPower !== b.lowPower || a.imagePriority !== b.imagePriority) return false;
+  if (coherentDecisionFingerprint(a.coherentDecision) !== coherentDecisionFingerprint(b.coherentDecision))
+    return false;
+  if ((a.decisionBrief?.explanation ?? "") !== (b.decisionBrief?.explanation ?? "")) return false;
   if (!unifiedMarketEqual(a.unifiedMarket, b.unifiedMarket)) return false;
   if (humanSearchIntentFingerprint(a.humanSearchIntent) !== humanSearchIntentFingerprint(b.humanSearchIntent))
     return false;
