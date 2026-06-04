@@ -32,6 +32,7 @@ import { extractHumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
 import { computeMarketAwarenessForTray } from "@/lib/intelligence/marketAwareness";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
+import type { VerdictSurfaceContext } from "@/lib/ui/verdictSurfaceOptimization";
 import CompareIntelligencePanel from "./CompareIntelligencePanel";
 import IntelligenceCommandCenter from "./IntelligenceCommandCenter";
 import LiveIntelligenceRail from "./LiveIntelligenceRail";
@@ -207,6 +208,19 @@ export default function ProductResultsSurface({
       }
     | undefined;
   const decisionBrief = (searchMeta?.decisionBrief ?? null) as DecisionBriefDTO | null;
+  const verdictSurface = useMemo((): VerdictSurfaceContext => {
+    return {
+      verdictIntelligence:
+        (searchMeta?.verdictIntelligence as VerdictSurfaceContext["verdictIntelligence"]) ?? null,
+      rankingEngine: (searchMeta?.rankingEngine as VerdictSurfaceContext["rankingEngine"]) ?? null,
+      decisionReadiness:
+        (searchMeta?.decisionReadiness as VerdictSurfaceContext["decisionReadiness"]) ?? null,
+      intentConfidence:
+        (searchMeta?.intentConfidence as VerdictSurfaceContext["intentConfidence"]) ?? null,
+      valueIntelligence:
+        (searchMeta?.valueIntelligence as VerdictSurfaceContext["valueIntelligence"]) ?? null,
+    };
+  }, [searchMeta]);
   const unifiedMarketByLink = useMemo(
     () => buildUnifiedMarketGroup(sortedProducts, searchQuery.trim()).byLink,
     [sortedProducts, searchQuery]
@@ -618,6 +632,7 @@ export default function ProductResultsSurface({
                   marketMemoryState={marketMemoryState}
                   searchQuery={searchQuery}
                   decisionBrief={decisionBrief}
+                  verdictSurface={verdictSurface}
                 />
               </div>
             );
@@ -661,6 +676,7 @@ export default function ProductResultsSurface({
                     marketMemoryState={marketMemoryState}
                     searchQuery={searchQuery}
                     decisionBrief={decisionBrief}
+                    verdictSurface={verdictSurface}
                   />
                 </div>
               );

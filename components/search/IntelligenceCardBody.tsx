@@ -7,6 +7,10 @@ import type { ProductDealIntelligence } from "@/lib/intelligence/dealIntelligenc
 import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { resolveActivatedBriefPresentation } from "@/lib/ui/activatedDecisionBriefPresentation";
+import {
+  optimizeVerdictSurface,
+  type VerdictSurfaceContext,
+} from "@/lib/ui/verdictSurfaceOptimization";
 import { formatListingPrice } from "@/lib/commerce/cues";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import {
@@ -39,6 +43,7 @@ type Props = {
   onToggleCompare: () => void;
   onSave: () => void;
   decisionBrief?: DecisionBriefDTO | null;
+  verdictSurface?: VerdictSurfaceContext | null;
 };
 
 const SUMMARY_SLOTS = 2;
@@ -71,6 +76,7 @@ export default function IntelligenceCardBody({
   onToggleCompare,
   onSave,
   decisionBrief = null,
+  verdictSurface = null,
 }: Props) {
   const [imageErr, setImageErr] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -98,6 +104,21 @@ export default function IntelligenceCardBody({
     () => resolveActivatedBriefPresentation(decisionBrief, verdictLabel),
     [decisionBrief, verdictLabel]
   );
+  const optimizedSurface = useMemo(
+    () =>
+      optimizeVerdictSurface({
+        verdict: verdictLabel,
+        fallbackReason: reasonLine,
+        decisionBrief,
+        verdictIntelligence: verdictSurface?.verdictIntelligence ?? null,
+        rankingEngine: verdictSurface?.rankingEngine ?? null,
+        decisionReadiness: verdictSurface?.decisionReadiness ?? null,
+        intentConfidence: verdictSurface?.intentConfidence ?? null,
+        valueIntelligence: verdictSurface?.valueIntelligence ?? null,
+      }),
+    [verdictLabel, reasonLine, decisionBrief, verdictSurface]
+  );
+  const displayReasonLine = optimizedSurface.verdictReason || reasonLine;
   const whyChose = buildWhyQuantAIChoseThis(intelArgs);
   const intelChips = useMemo(() => buildIntelligenceChips(intelArgs), [intelArgs]);
   const expandedSignals = useMemo(() => {
@@ -122,15 +143,10 @@ export default function IntelligenceCardBody({
   const quantVerdict = useMemo(() => buildQuantAIVerdictNarrative(intelArgs), [intelArgs]);
 
   const summaryReasons = useMemo(() => {
-    if (activatedBrief?.summaryLines.length) {
-      const rows = activatedBrief.summaryLines.slice(0, SUMMARY_SLOTS);
-      while (rows.length < SUMMARY_SLOTS) rows.push("");
-      return rows;
-    }
-    const rows = whyChose.slice(0, SUMMARY_SLOTS);
+    const rows = optimizedSurface.summaryLines.slice(0, SUMMARY_SLOTS);
     while (rows.length < SUMMARY_SLOTS) rows.push("");
     return rows;
-  }, [activatedBrief, whyChose]);
+  }, [optimizedSurface.summaryLines]);
 
   const hasExpandedIntel =
     expandedSignals.length > 0 || smartDecisions.length > 0 || quantVerdict.length > 0;
@@ -170,7 +186,7 @@ export default function IntelligenceCardBody({
       >
         <span className="qa-ref-intel-card__verdict-kicker">Recommendation</span>
         <span className="qa-ref-intel-card__verdict-value">{verdictLabel}</span>
-        <p className="qa-ref-intel-card__verdict-reason line-clamp-1">{reasonLine}</p>
+        <p className="qa-ref-intel-card__verdict-reason line-clamp-1">{displayReasonLine}</p>
       </div>
 
       <div className="qa-ref-intel-card__field qa-ref-intel-card__price-block">
