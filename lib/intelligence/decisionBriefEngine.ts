@@ -56,6 +56,15 @@ export type DecisionBriefDTO = {
   fusionSummary?: string;
   /** Phase 12.10 — pre-search decision readiness summary */
   decisionReadinessSummary?: string;
+  /** Phase 13.6 — activated intelligence summary */
+  explanation?: string;
+  marketStatus?: string;
+  buyReasoning?: string;
+  waitReasoning?: string;
+  compareReasoning?: string;
+  topSignals?: string[];
+  riskSignals?: string[];
+  confidenceExplanation?: string;
 };
 
 export function buildDecisionBrief(args: {

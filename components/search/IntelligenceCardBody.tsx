@@ -4,7 +4,9 @@ import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Check, ChevronDown, ExternalLink, ImageIcon, PanelRight, Sparkles, X } from "lucide-react";
 import type { ProductDealIntelligence } from "@/lib/intelligence/dealIntelligenceEngine";
+import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
 import type { QuantProduct } from "@/lib/shoppingScore";
+import { resolveActivatedBriefPresentation } from "@/lib/ui/activatedDecisionBriefPresentation";
 import { formatListingPrice } from "@/lib/commerce/cues";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import {
@@ -36,6 +38,7 @@ type Props = {
   onOpenBrief: () => void;
   onToggleCompare: () => void;
   onSave: () => void;
+  decisionBrief?: DecisionBriefDTO | null;
 };
 
 const SUMMARY_SLOTS = 2;
@@ -67,6 +70,7 @@ export default function IntelligenceCardBody({
   onOpenBrief,
   onToggleCompare,
   onSave,
+  decisionBrief = null,
 }: Props) {
   const [imageErr, setImageErr] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -90,17 +94,43 @@ export default function IntelligenceCardBody({
     alignmentScore,
     rank,
   }).filter((t) => t.active);
+  const activatedBrief = useMemo(
+    () => resolveActivatedBriefPresentation(decisionBrief, verdictLabel),
+    [decisionBrief, verdictLabel]
+  );
   const whyChose = buildWhyQuantAIChoseThis(intelArgs);
   const intelChips = useMemo(() => buildIntelligenceChips(intelArgs), [intelArgs]);
-  const expandedSignals = useMemo(() => buildExpandedSignalLines(intelArgs), [intelArgs]);
-  const smartDecisions = useMemo(() => buildSmartDecisionLines(intelArgs), [intelArgs]);
+  const expandedSignals = useMemo(() => {
+    if (activatedBrief?.topSignals.length || activatedBrief?.riskSignals.length) {
+      return [...activatedBrief.topSignals, ...activatedBrief.riskSignals].slice(0, 3);
+    }
+    return buildExpandedSignalLines(intelArgs);
+  }, [activatedBrief, intelArgs]);
+  const smartDecisions = useMemo(() => {
+    const base = buildSmartDecisionLines(intelArgs);
+    if (!activatedBrief) return base;
+    const activated = [activatedBrief.reasoning, activatedBrief.marketStatus, activatedBrief.confidenceExplanation]
+      .filter(Boolean)
+      .concat(base);
+    const seen = new Set<string>();
+    return activated.filter((line) => {
+      if (seen.has(line)) return false;
+      seen.add(line);
+      return true;
+    }).slice(0, 3);
+  }, [activatedBrief, intelArgs]);
   const quantVerdict = useMemo(() => buildQuantAIVerdictNarrative(intelArgs), [intelArgs]);
 
   const summaryReasons = useMemo(() => {
+    if (activatedBrief?.summaryLines.length) {
+      const rows = activatedBrief.summaryLines.slice(0, SUMMARY_SLOTS);
+      while (rows.length < SUMMARY_SLOTS) rows.push("");
+      return rows;
+    }
     const rows = whyChose.slice(0, SUMMARY_SLOTS);
     while (rows.length < SUMMARY_SLOTS) rows.push("");
     return rows;
-  }, [whyChose]);
+  }, [activatedBrief, whyChose]);
 
   const hasExpandedIntel =
     expandedSignals.length > 0 || smartDecisions.length > 0 || quantVerdict.length > 0;

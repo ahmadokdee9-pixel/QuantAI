@@ -53,6 +53,7 @@ import { intelligenceMarketPulseLine } from "@/lib/ui/intelligencePresentation";
 import { buildCanonicalQuery } from "@/lib/search/canonicalQuery";
 import { buildCardIntelligenceLayer } from "@/lib/ui/cardIntelligenceLayer";
 import { deriveCardDecision } from "@/lib/ui/decisionLanguage";
+import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
 import { classifyListingOutlier } from "@/lib/ui/listingOutlierFilter";
 import IntelligenceCardBody from "./IntelligenceCardBody";
 import { recordViewedProductLink } from "@/lib/personalization/localSignals";
@@ -211,6 +212,7 @@ type Props = {
   /** Tray focus mode — dims peer cards when another row is hovered. */
   trayFocusLink?: string | null;
   onTrayFocus?: (link: string | null) => void;
+  decisionBrief?: DecisionBriefDTO | null;
 };
 
 function ProductResultCard({
@@ -234,6 +236,7 @@ function ProductResultCard({
   searchQuery = "",
   trayFocusLink = null,
   onTrayFocus,
+  decisionBrief = null,
 }: Props) {
   const isTrayFocused = trayFocusLink === p.link;
   const isTrayDimmed = Boolean(trayFocusLink && trayFocusLink !== p.link);
@@ -480,6 +483,7 @@ function ProductResultCard({
             }}
             onToggleCompare={() => toggleCompare(p.link)}
             onSave={() => saveProduct(p)}
+            decisionBrief={decisionBrief}
           />
         </div>
       </motion.article>

@@ -49,6 +49,7 @@ import {
   applyDecisionReadinessToBrief,
   buildDecisionReadiness,
 } from "@/lib/intelligence/decisionReadinessEngine";
+import { activateQuantAIIntelligence } from "@/lib/intelligence/intelligenceActivationEngine";
 import { buildPurchaseFriction } from "@/lib/intelligence/purchaseFrictionEngine";
 import { buildConversionProbability } from "@/lib/intelligence/conversionProbabilityEngine";
 import { buildDealSensitivity } from "@/lib/intelligence/dealSensitivityEngine";
@@ -2047,7 +2048,7 @@ async function handleSearch(
     });
     traceStage("phase110_commerce_fusion", products.length, products.length);
 
-    const decisionBrief = applyDecisionReadinessToBrief(
+    const decisionBriefBeforeActivation = applyDecisionReadinessToBrief(
       commerceFusion.decisionBrief,
       decisionReadiness
     );
@@ -2067,6 +2068,20 @@ async function handleSearch(
     });
     products = controlledRanking.products;
     const executedRanking = controlledRanking.executedRanking;
+
+    const decisionBrief = activateQuantAIIntelligence({
+      decisionBrief: decisionBriefBeforeActivation,
+      verdictIntelligence: explainability.verdictIntelligence,
+      rankingEngine,
+      executedRanking,
+      valueIntelligence,
+      retailerTrust,
+      reviewCredibility,
+      realDiscount,
+      rankingPreparation,
+      intentConfidence,
+      decisionReadiness,
+    });
 
     const marketAwareness = computeMarketAwarenessForTray(query, products);
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);

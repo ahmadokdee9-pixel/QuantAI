@@ -31,6 +31,7 @@ import { parseCommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
 import { extractHumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
 import { computeMarketAwarenessForTray } from "@/lib/intelligence/marketAwareness";
 import type { QuantProduct } from "@/lib/shoppingScore";
+import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
 import CompareIntelligencePanel from "./CompareIntelligencePanel";
 import IntelligenceCommandCenter from "./IntelligenceCommandCenter";
 import LiveIntelligenceRail from "./LiveIntelligenceRail";
@@ -205,6 +206,7 @@ export default function ProductResultsSurface({
         };
       }
     | undefined;
+  const decisionBrief = (searchMeta?.decisionBrief ?? null) as DecisionBriefDTO | null;
   const unifiedMarketByLink = useMemo(
     () => buildUnifiedMarketGroup(sortedProducts, searchQuery.trim()).byLink,
     [sortedProducts, searchQuery]
@@ -581,6 +583,7 @@ export default function ProductResultsSurface({
         onClose={() => setDetailProduct(null)}
         onSave={saveProduct}
         saved={detailProduct != null && savedLinks.has(detailProduct.link)}
+        decisionBrief={decisionBrief}
       />
 
       {mobilePerf ? (
@@ -614,6 +617,7 @@ export default function ProductResultsSurface({
                   humanSearchIntent={humanSearchIntent}
                   marketMemoryState={marketMemoryState}
                   searchQuery={searchQuery}
+                  decisionBrief={decisionBrief}
                 />
               </div>
             );
@@ -656,6 +660,7 @@ export default function ProductResultsSurface({
                     humanSearchIntent={humanSearchIntent}
                     marketMemoryState={marketMemoryState}
                     searchQuery={searchQuery}
+                    decisionBrief={decisionBrief}
                   />
                 </div>
               );

@@ -14,6 +14,9 @@ import {
   trustAnalysisParagraph,
   valueAnalysisParagraph,
 } from "@/lib/intelligence/drawerInsights";
+import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
+import { resolveActivatedBriefPresentation } from "@/lib/ui/activatedDecisionBriefPresentation";
+import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import { resolveOfferClickUrl } from "@/lib/commerce/offerClick";
 import {
   getFinalComposite,
@@ -31,6 +34,7 @@ type Props = {
   onClose: () => void;
   onSave?: (p: QuantProduct) => void;
   saved?: boolean;
+  decisionBrief?: DecisionBriefDTO | null;
 };
 
 function SignalBar({ value }: { value: number }) {
@@ -88,6 +92,7 @@ export default function ProductIntelligenceDrawer({
   onClose,
   onSave,
   saved = false,
+  decisionBrief = null,
 }: Props) {
   const reduceMotion = useReducedMotion();
   const titleId = useId();
@@ -211,7 +216,7 @@ export default function ProductIntelligenceDrawer({
             </header>
 
             <div className="qa-ui-drawer-body qa-cine-drawer-body relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-4 sm:px-5 sm:py-5">
-              <DrawerBody p={p} list={list} />
+              <DrawerBody p={p} list={list} decisionBrief={decisionBrief} />
             </div>
 
             <footer className="qa-ui-drawer-footer relative shrink-0 border-t px-4 py-3 sm:px-5">
@@ -246,9 +251,24 @@ export default function ProductIntelligenceDrawer({
   return createPortal(panel, document.body);
 }
 
-function DrawerBody({ p, list }: { p: QuantProduct; list: QuantProduct[] }) {
-  const comp = getFinalComposite(p, list);
+function verdictFromBand(band: ReturnType<typeof decisionBand>): PrimaryVerdict {
+  if (band === "buy") return "BUY READY";
+  if (band === "wait") return "WAIT";
+  return "COMPARE";
+}
+
+function DrawerBody({
+  p,
+  list,
+  decisionBrief = null,
+}: {
+  p: QuantProduct;
+  list: QuantProduct[];
+  decisionBrief?: DecisionBriefDTO | null;
+}) {
   const band = decisionBand(p, list);
+  const activatedBrief = resolveActivatedBriefPresentation(decisionBrief, verdictFromBand(band));
+  const comp = getFinalComposite(p, list);
   const { pros, cons } = getProsAndCons(p, list);
   const why = getWhyQuantAIRecommends(p, list, comp);
   const trust = getStoreTrustScore(p.store);
@@ -280,18 +300,30 @@ function DrawerBody({ p, list }: { p: QuantProduct; list: QuantProduct[] }) {
 
   const topSignals = signalRows.slice(0, 4);
   const bandLabel = band === "buy" ? "Buy lane" : band === "wait" ? "Wait lane" : "Compare lane";
-  const compactSynthesis = [quantVerdictLead(p, list), p.qiPsychology?.trim(), why]
-    .filter(Boolean)
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .trim();
-  const listingReadSummary = [valueAnalysisParagraph(p, list), trustAnalysisParagraph(p, list), priceTrendInsightParagraph(p)]
-    .filter(Boolean)
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .trim();
-  const validationChecks = (cons.length ? cons : ["Confirm seller, warranty, and final checkout terms before execution."]).slice(0, 3);
-  const signalAdvantages = pros.slice(0, 4);
+  const compactSynthesis =
+    activatedBrief?.reasoning ||
+    [quantVerdictLead(p, list), p.qiPsychology?.trim(), why]
+      .filter(Boolean)
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+  const listingReadSummary =
+    activatedBrief?.marketStatus ||
+    [valueAnalysisParagraph(p, list), trustAnalysisParagraph(p, list), priceTrendInsightParagraph(p)]
+      .filter(Boolean)
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+  const validationChecks = (
+    activatedBrief?.riskSignals.length
+      ? activatedBrief.riskSignals
+      : cons.length
+        ? cons
+        : ["Confirm seller, warranty, and final checkout terms before execution."]
+  ).slice(0, 3);
+  const signalAdvantages = (
+    activatedBrief?.topSignals.length ? activatedBrief.topSignals : pros
+  ).slice(0, 4);
 
   return (
     <div className="qa-ui-drawer-stack qa-cine-drawer-stack">
@@ -355,7 +387,9 @@ function DrawerBody({ p, list }: { p: QuantProduct; list: QuantProduct[] }) {
           </div>
           <div>
             <p className="qa-ui-drawer-split-label">Confidence context</p>
-            <p className="qa-ui-drawer-copy line-clamp-3">Trust {trust} · QI {comp} · {matrixPrice}</p>
+            <p className="qa-ui-drawer-copy line-clamp-3">
+              {activatedBrief?.confidenceExplanation || `Trust ${trust} · QI ${comp} · ${matrixPrice}`}
+            </p>
           </div>
         </div>
       </DrawerModule>

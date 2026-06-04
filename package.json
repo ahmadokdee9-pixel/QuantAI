@@ -59,6 +59,7 @@
     "test:phase133-ranking-execution": "npx --yes tsx scripts/test-phase133-ranking-execution.mjs",
     "test:phase134-controlled-ranking-execution": "npx --yes tsx scripts/test-phase134-controlled-ranking-execution.mjs",
     "test:phase135-ranked-results-display-bridge": "npx --yes tsx scripts/test-phase135-ranked-results-display-bridge.mjs",
+    "test:phase136-intelligence-activation": "npx --yes tsx scripts/test-phase136-intelligence-activation.mjs",
     "test:search-intelligence-upgrade": "npx --yes tsx scripts/test-search-intelligence-upgrade.mjs",
     "test:phase6-intelligence-hardening": "npx --yes tsx scripts/phase6-intelligence-hardening-validation.mjs",
     "test:phase8-ranking-validation": "npx --yes tsx scripts/phase8-ranking-validation-suite.mjs",

@@ -98,6 +98,8 @@ const homePage = readFileSync(join(process.cwd(), "app", "page.tsx"), "utf8");
 assert.ok(homePage.includes("applyRankedResultsDisplayBridge"), "phase 13.5 ranked results display bridge wired");
 assert.ok(homePage.includes("executedRanking"), "phase 13.5 consumes executedRanking meta");
 
+assert.ok(route.includes("activateQuantAIIntelligence"), "phase 13.6 intelligence activation wired");
+
 assert.ok(route.includes("applyPhase95CommerceMemory"), "phase 9.5 commerce memory wired");
 assert.ok(route.includes("applyVerdictIntelligence"), "phase 10.0 verdict intelligence wired");
 assert.ok(route.includes("applyExplainabilityIntelligence"), "phase 10.1 explainability wired");
