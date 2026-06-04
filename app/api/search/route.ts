@@ -50,6 +50,7 @@ import {
   buildDecisionReadiness,
 } from "@/lib/intelligence/decisionReadinessEngine";
 import { activateQuantAIIntelligence } from "@/lib/intelligence/intelligenceActivationEngine";
+import { translateQuantAIIntelligence } from "@/lib/intelligence/intelligenceTranslationLayer";
 import { buildPurchaseFriction } from "@/lib/intelligence/purchaseFrictionEngine";
 import { buildConversionProbability } from "@/lib/intelligence/conversionProbabilityEngine";
 import { buildDealSensitivity } from "@/lib/intelligence/dealSensitivityEngine";
@@ -2069,8 +2070,20 @@ async function handleSearch(
     products = controlledRanking.products;
     const executedRanking = controlledRanking.executedRanking;
 
-    const decisionBrief = activateQuantAIIntelligence({
-      decisionBrief: decisionBriefBeforeActivation,
+    const decisionBrief = translateQuantAIIntelligence({
+      decisionBrief: activateQuantAIIntelligence({
+        decisionBrief: decisionBriefBeforeActivation,
+        verdictIntelligence: explainability.verdictIntelligence,
+        rankingEngine,
+        executedRanking,
+        valueIntelligence,
+        retailerTrust,
+        reviewCredibility,
+        realDiscount,
+        rankingPreparation,
+        intentConfidence,
+        decisionReadiness,
+      }),
       verdictIntelligence: explainability.verdictIntelligence,
       rankingEngine,
       executedRanking,
