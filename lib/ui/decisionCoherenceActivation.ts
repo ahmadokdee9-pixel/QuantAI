@@ -78,6 +78,11 @@ import {
   mergeRankingRationaleExpandedLines,
   mergeRankingRationaleSummary,
 } from "@/lib/ui/rankingRationaleActivation";
+import {
+  activateUnifiedDecision,
+  mergeUnifiedDecisionSummary,
+  type ActivatedUnifiedDecision,
+} from "@/lib/ui/unifiedDecisionActivation";
 import type { ProductRankingMeta } from "@/lib/ranking/productRankingApplication";
 import type { RankingSignalsMeta } from "@/lib/ranking/rankingSignalsAggregator";
 
@@ -124,6 +129,7 @@ export type CoherentProductDecision = {
   categoryIntelligence: ActivatedCategoryIntelligence;
   intentIntelligence: ActivatedIntentIntelligence;
   trustRisk: ActivatedTrustRisk;
+  unifiedDecision: ActivatedUnifiedDecision;
 };
 
 function clipLine(text: string | undefined | null, max = 112): string {
@@ -488,6 +494,19 @@ export function activateProductDecisionCoherence(args: {
     alternativeAdvantage,
     rankingRationaleLine: activatedRankingPreview?.cardLine ?? "",
   });
+  const unifiedDecision = activateUnifiedDecision({
+    institutionalVerdict,
+    isLeadProduct: lead,
+    rankingRationaleLine: activatedRankingPreview?.cardLine ?? "",
+    commerceCoverage,
+    discountTruth,
+    buyWait,
+    priceTarget,
+    alternativeAdvantage,
+    categoryIntelligence,
+    intentIntelligence,
+    trustRisk,
+  });
   const groundedMarket = groundMarketContextInput(
     { ...tray.marketContext, decisionBrief: scopedBrief, discountTruth, buyWait, priceTarget },
     phase93Assessment,
@@ -517,6 +536,7 @@ export function activateProductDecisionCoherence(args: {
   );
   summaryLines = mergeMarketContextSummary(summaryLines, activatedMarket, 2);
   summaryLines = mergePriceTargetSummary(summaryLines, priceTarget, 2);
+  summaryLines = mergeUnifiedDecisionSummary(summaryLines, unifiedDecision, 2);
   const rankingRationaleLine = activatedRanking?.cardLine ?? "";
   const drawerRankingLine = clipLine(
     [alternativeAdvantage.comparisonSummary, activatedRanking?.drawerLine].filter(Boolean).join(" ")
@@ -535,22 +555,22 @@ export function activateProductDecisionCoherence(args: {
                 ...activatedBrief.topSignals,
                 ...activatedBrief.riskSignals,
                 priceTarget.cardLine,
-              ]).slice(0, 3)
+              ]).slice(0, 4)
             : uniqueLines([priceTarget.cardLine, ...buildProductScopedSignals(product, list, phase93Assessment)]).slice(
                 0,
-                3
+                4
               ),
           alternativeAdvantage,
-          3
+          4
         ),
         categoryIntelligence,
-        3
+        4
       ),
       trustRisk,
-      3
+      4
     ),
     intentIntelligence,
-    3
+    4
   );
 
   const smartDecisionLines = mergeIntentIntelligenceExpandedLines(
@@ -632,7 +652,11 @@ export function activateProductDecisionCoherence(args: {
     drawerRankingLine,
     drawerDecisionLane,
     drawerStanceLabel: stanceLabel(verdict),
-    drawerSynthesis: buildDrawerSynthesis(verdict, optimizedSurface.verdictReason, scopedBrief, product),
+    drawerSynthesis: clipLine(
+      unifiedDecision.finalReasoning ||
+        buildDrawerSynthesis(verdict, optimizedSurface.verdictReason, scopedBrief, product),
+      280
+    ),
     executionPosture: resolveExecutionPosture(product, verdict, scopedBrief),
     isLeadProduct: lead,
     discountTruth,
@@ -642,5 +666,6 @@ export function activateProductDecisionCoherence(args: {
     categoryIntelligence,
     intentIntelligence,
     trustRisk,
+    unifiedDecision,
   };
 }
