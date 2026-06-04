@@ -32,6 +32,7 @@ import { extractHumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
 import { computeMarketAwarenessForTray } from "@/lib/intelligence/marketAwareness";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
+import type { Phase93TrustDiscountMeta } from "@/lib/intelligence/phase93TrustDiscountHardening";
 import type { VerdictSurfaceContext } from "@/lib/ui/verdictSurfaceOptimization";
 import type { MarketContextInput } from "@/lib/ui/marketContextActivation";
 import {
@@ -271,8 +272,14 @@ export default function ProductResultsSurface({
     [sortedProducts, searchQuery]
   );
   const commerceCoverageByLink = useMemo(
-    () => buildCommerceCoverageTray(sortedProducts, searchQuery.trim()),
-    [sortedProducts, searchQuery]
+    () =>
+      buildCommerceCoverageTray(
+        sortedProducts,
+        searchQuery.trim(),
+        "€",
+        (searchMeta?.phase93TrustDiscount as Phase93TrustDiscountMeta | null) ?? null
+      ),
+    [sortedProducts, searchQuery, searchMeta?.phase93TrustDiscount]
   );
   const detailCommerceCoverage = detailProduct
     ? commerceCoverageByLink.get(detailProduct.link) ?? null

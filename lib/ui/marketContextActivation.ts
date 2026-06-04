@@ -13,6 +13,7 @@ import type { ProductTrustDiscountAssessment } from "@/lib/intelligence/phase93T
 import type { VerdictIntelligenceMeta } from "@/lib/intelligence/verdictEngine";
 import type { RankingEngineMeta } from "@/lib/ranking/deterministicRankingEngine";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
+import type { ActivatedDiscountTruth } from "@/lib/ui/discountTruthActivation";
 
 export type MarketContextInput = {
   decisionBrief?: DecisionBriefDTO | null;
@@ -26,6 +27,8 @@ export type MarketContextInput = {
   /** Phase 14.0 — tray-local listing truth; presentation may filter, not invent. */
   phase93Assessment?: ProductTrustDiscountAssessment | null;
   institutionalVerdict?: PrimaryVerdict | null;
+  /** Phase 16.0 — listing discount truth; Phase 93 may override on conflict. */
+  discountTruth?: ActivatedDiscountTruth | null;
 };
 
 export type ActivatedMarketContext = {
@@ -175,6 +178,7 @@ function hasMarketSources(input: MarketContextInput): boolean {
       input.rankingEngine ||
       input.verdictIntelligence ||
       input.phase93Assessment ||
+      input.discountTruth ||
       input.decisionBrief?.marketStatus
   );
 }
@@ -229,6 +233,17 @@ function applyPhase93Grounding(
   };
 }
 
+function applyDiscountTruthGrounding(
+  ctx: Omit<ActivatedMarketContext, "cardLines" | "drawerListingRead" | "expandedLines">,
+  discountTruth: ActivatedDiscountTruth | null | undefined
+): Omit<ActivatedMarketContext, "cardLines" | "drawerListingRead" | "expandedLines"> {
+  if (!discountTruth) return ctx;
+  return {
+    ...ctx,
+    discountReal: discountTruth.explanation,
+  };
+}
+
 /** Activate existing market context into buyer-facing copy for current UI slots. */
 export function activateMarketContext(input: MarketContextInput): ActivatedMarketContext | null {
   if (!hasMarketSources(input)) return null;
@@ -253,7 +268,7 @@ export function activateMarketContext(input: MarketContextInput): ActivatedMarke
   };
 
   const grounded = applyPhase93Grounding(
-    baseLines,
+    applyDiscountTruthGrounding(baseLines, input.discountTruth),
     input.phase93Assessment,
     input.institutionalVerdict
   );

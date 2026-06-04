@@ -33,6 +33,11 @@ import {
   type VerdictSurfaceContext,
 } from "@/lib/ui/verdictSurfaceOptimization";
 import {
+  activateDiscountTruth,
+  mergeDiscountTruthExpandedLines,
+  type ActivatedDiscountTruth,
+} from "@/lib/ui/discountTruthActivation";
+import {
   activateRankingRationale,
   mergeRankingRationaleExpandedLines,
   mergeRankingRationaleSummary,
@@ -76,6 +81,7 @@ export type CoherentProductDecision = {
   drawerSynthesis: string;
   executionPosture: CoherentExecutionPosture | null;
   isLeadProduct: boolean;
+  discountTruth: ActivatedDiscountTruth;
 };
 
 function clipLine(text: string | undefined | null, max = 112): string {
@@ -380,8 +386,9 @@ export function activateProductDecisionCoherence(args: {
     phase93Assessment,
   });
   const scopedBrief = bindProductDecisionBrief(tray.decisionBrief, product, lead);
+  const discountTruth = activateDiscountTruth({ product, list, phase93Assessment });
   const groundedMarket = groundMarketContextInput(
-    { ...tray.marketContext, decisionBrief: scopedBrief },
+    { ...tray.marketContext, decisionBrief: scopedBrief, discountTruth },
     phase93Assessment,
     institutionalVerdict
   );
@@ -481,5 +488,6 @@ export function activateProductDecisionCoherence(args: {
     drawerSynthesis: buildDrawerSynthesis(verdict, optimizedSurface.verdictReason, scopedBrief, product),
     executionPosture: resolveExecutionPosture(product, verdict, scopedBrief),
     isLeadProduct: lead,
+    discountTruth,
   };
 }

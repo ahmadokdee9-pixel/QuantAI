@@ -9,7 +9,13 @@ import {
   type UnifiedCardInsight,
   type UnifiedMarketGroup,
 } from "@/lib/intelligence/unifiedMarketMatching";
+import type { Phase93TrustDiscountMeta } from "@/lib/intelligence/phase93TrustDiscountHardening";
 import { getStoreTrustScore, type QuantProduct } from "@/lib/shoppingScore";
+import {
+  activateDiscountTruth,
+  findPhase93AssessmentForProduct,
+  type ActivatedDiscountTruth,
+} from "@/lib/ui/discountTruthActivation";
 
 export type NormalizedMerchantOffer = {
   link: string;
@@ -92,9 +98,15 @@ function normalizeDiscount(product: QuantProduct): { pct: number | null; label: 
 export function normalizeMerchantOffer(
   product: QuantProduct,
   currentLink: string,
-  currencySym = "€"
+  currencySym = "€",
+  discountTruth: ActivatedDiscountTruth | null = null
 ): NormalizedMerchantOffer {
   const discount = normalizeDiscount(product);
+  const discountLabel = discountTruth
+    ? clipLine(`${discountTruth.label} · ${discountTruth.confidence}%`, 48)
+    : discount.pct != null
+      ? discount.label
+      : "No listed discount";
   return {
     link: product.link,
     store: normalizeStore(product.store),
@@ -104,7 +116,7 @@ export function normalizeMerchantOffer(
     shippingLabel: normalizeShipping(product),
     availabilityStatus: normalizeAvailability(product),
     discountPct: discount.pct,
-    discountLabel: discount.label,
+    discountLabel,
     trustScore: getStoreTrustScore(product.store),
     isCurrentListing: product.link === currentLink,
   };
@@ -167,10 +179,19 @@ export function activateCommerceCoverage(args: {
   familyMembers: QuantProduct[];
   insight: UnifiedCardInsight | null;
   currencySym?: string;
+  phase93?: Phase93TrustDiscountMeta | null;
+  list?: QuantProduct[];
 }): ActivatedCommerceCoverage {
-  const { product, familyMembers, insight, currencySym = "€" } = args;
+  const { product, familyMembers, insight, currencySym = "€", phase93 = null, list = familyMembers } = args;
   const offers = sortOffers(
-    familyMembers.map((member) => normalizeMerchantOffer(member, product.link, currencySym))
+    familyMembers.map((member) => {
+      const truth = activateDiscountTruth({
+        product: member,
+        list,
+        phase93Assessment: findPhase93AssessmentForProduct(phase93, member),
+      });
+      return normalizeMerchantOffer(member, product.link, currencySym, truth);
+    })
   );
   const merchantCount = new Set(offers.map((offer) => offer.store.toLowerCase())).size;
   const listingCount = offers.length;
@@ -237,7 +258,8 @@ export function activateCommerceCoverage(args: {
 export function buildCommerceCoverageTray(
   products: QuantProduct[],
   searchQuery = "",
-  currencySym = "€"
+  currencySym = "€",
+  phase93: Phase93TrustDiscountMeta | null = null
 ): Map<string, ActivatedCommerceCoverage> {
   const map = new Map<string, ActivatedCommerceCoverage>();
   if (!products.length) return map;
@@ -253,6 +275,8 @@ export function buildCommerceCoverageTray(
         familyMembers,
         insight,
         currencySym,
+        phase93,
+        list: products,
       })
     );
   }

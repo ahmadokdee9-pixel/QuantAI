@@ -125,6 +125,12 @@ assert.ok(
   ),
   "phase 15.0 commerce coverage activation present"
 );
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/discountTruthActivation.ts"), "utf8").includes(
+    "activateDiscountTruth"
+  ),
+  "phase 16.0 discount truth activation present"
+);
 
 assert.ok(route.includes("applyPhase95CommerceMemory"), "phase 9.5 commerce memory wired");
 assert.ok(route.includes("applyVerdictIntelligence"), "phase 10.0 verdict intelligence wired");
