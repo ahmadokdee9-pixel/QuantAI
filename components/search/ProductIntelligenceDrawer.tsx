@@ -18,6 +18,7 @@ import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
 import { resolveActivatedBriefPresentation } from "@/lib/ui/activatedDecisionBriefPresentation";
 import { activateMarketContext, type MarketContextInput } from "@/lib/ui/marketContextActivation";
 import type { CoherentProductDecision } from "@/lib/ui/decisionCoherenceActivation";
+import type { ActivatedCommerceCoverage } from "@/lib/ui/commerceCoverageActivation";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import { resolveOfferClickUrl } from "@/lib/commerce/offerClick";
 import {
@@ -39,6 +40,7 @@ type Props = {
   decisionBrief?: DecisionBriefDTO | null;
   marketContext?: MarketContextInput | null;
   coherentDecision?: CoherentProductDecision | null;
+  commerceCoverage?: ActivatedCommerceCoverage | null;
 };
 
 function SignalBar({ value }: { value: number }) {
@@ -99,6 +101,7 @@ export default function ProductIntelligenceDrawer({
   decisionBrief = null,
   marketContext = null,
   coherentDecision = null,
+  commerceCoverage = null,
 }: Props) {
   const reduceMotion = useReducedMotion();
   const titleId = useId();
@@ -228,6 +231,7 @@ export default function ProductIntelligenceDrawer({
                 decisionBrief={decisionBrief}
                 marketContext={marketContext}
                 coherentDecision={coherentDecision}
+                commerceCoverage={commerceCoverage}
               />
             </div>
 
@@ -281,12 +285,14 @@ function DrawerBody({
   decisionBrief = null,
   marketContext = null,
   coherentDecision = null,
+  commerceCoverage = null,
 }: {
   p: QuantProduct;
   list: QuantProduct[];
   decisionBrief?: DecisionBriefDTO | null;
   marketContext?: MarketContextInput | null;
   coherentDecision?: CoherentProductDecision | null;
+  commerceCoverage?: ActivatedCommerceCoverage | null;
 }) {
   const scopedBrief = coherentDecision?.decisionBrief ?? decisionBrief;
   const coherentVerdict: PrimaryVerdict =
@@ -302,7 +308,9 @@ function DrawerBody({
   const why = getWhyQuantAIRecommends(p, list, comp);
   const trust = getStoreTrustScore(p.store);
   const avg = listAveragePrice(list);
-  const alternatives = pickSimilarAlternatives(p, list, 4);
+  const matchedOffers = commerceCoverage?.offers ?? [];
+  const showMatchedOffers = matchedOffers.length >= 2;
+  const alternatives = showMatchedOffers ? [] : pickSimilarAlternatives(p, list, 4);
 
   const matrixPrice =
     avg > 0 && p.price > 0
@@ -338,6 +346,7 @@ function DrawerBody({
       .replace(/\s+/g, " ")
       .trim();
   const listingReadSummary = [
+    commerceCoverage?.drawerOffersSummary,
     coherentDecision?.drawerRankingLine,
     activatedMarket?.drawerListingRead ||
       activatedBrief?.marketStatus ||
@@ -475,7 +484,36 @@ function DrawerBody({
         <p className="qa-ui-drawer-copy line-clamp-6">{listingReadSummary}</p>
       </DrawerModule>
 
-      {alternatives.length > 0 ? (
+      {showMatchedOffers ? (
+        <DrawerModule title="View all offers" act="fold" defaultOpen={false}>
+          <p className="qa-ui-drawer-copy line-clamp-3">{commerceCoverage?.drawerOffersSummary}</p>
+          <ul className="qa-ui-drawer-alt-list">
+            {matchedOffers.map((offer) => (
+              <li key={offer.link} className="qa-ui-drawer-alt-item">
+                <div className="min-w-0 flex-1">
+                  <p className="qa-ui-drawer-alt-title line-clamp-2">{offer.normalizedTitle}</p>
+                  <p className="qa-ui-drawer-alt-meta">
+                    {offer.store} · {offer.discountLabel} · {offer.availabilityStatus}
+                  </p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="qa-ui-drawer-alt-price tabular-nums">{offer.displayPrice}</p>
+                  <p className="qa-ui-drawer-alt-qi">Trust {Math.round(offer.trustScore)}</p>
+                </div>
+                <a
+                  href={offer.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="qa-ui-compare-icon-btn shrink-0"
+                  aria-label={`Open offer at ${offer.store}`}
+                >
+                  <ExternalLink className="size-3.5" strokeWidth={1.5} />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </DrawerModule>
+      ) : alternatives.length > 0 ? (
         <DrawerModule title="Peer alternatives" act="fold" defaultOpen={false}>
           <p className="qa-ui-drawer-copy line-clamp-3">
             {alternatives.length} peer listings remain within this decision envelope. Compare trust, pricing posture, and QI before execution.

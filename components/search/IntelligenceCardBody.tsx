@@ -30,6 +30,10 @@ import {
 } from "@/lib/ui/intelligenceCardSignals";
 import { INTEL_TERMS, merchantActionLabel } from "@/lib/ui/intelligenceTerminology";
 import { resolveProductImageDisplay } from "@/lib/ui/productImageQuality";
+import {
+  mergeCommerceCoverageChip,
+  type ActivatedCommerceCoverage,
+} from "@/lib/ui/commerceCoverageActivation";
 
 type Props = {
   product: QuantProduct;
@@ -53,6 +57,7 @@ type Props = {
   verdictSurface?: VerdictSurfaceContext | null;
   marketContext?: MarketContextInput | null;
   coherentDecision?: CoherentProductDecision | null;
+  commerceCoverage?: ActivatedCommerceCoverage | null;
 };
 
 const SUMMARY_SLOTS = 2;
@@ -88,6 +93,7 @@ export default function IntelligenceCardBody({
   verdictSurface = null,
   marketContext = null,
   coherentDecision = null,
+  commerceCoverage = null,
 }: Props) {
   const [imageErr, setImageErr] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -140,7 +146,10 @@ export default function IntelligenceCardBody({
     return activateMarketContext({ decisionBrief: scopedBrief, ...scopedMarketContext });
   }, [coherentDecision, scopedBrief, scopedMarketContext]);
   const whyChose = buildWhyQuantAIChoseThis(intelArgs);
-  const intelChips = useMemo(() => buildIntelligenceChips(intelArgs), [intelArgs]);
+  const intelChips = useMemo(
+    () => mergeCommerceCoverageChip(buildIntelligenceChips(intelArgs), commerceCoverage, 2),
+    [intelArgs, commerceCoverage]
+  );
   const expandedSignals = useMemo(() => {
     if (coherentDecision) return coherentDecision.expandedSignals;
     if (activatedBrief?.topSignals.length || activatedBrief?.riskSignals.length) {
@@ -177,7 +186,10 @@ export default function IntelligenceCardBody({
   }, [coherentDecision, optimizedSurface.summaryLines, activatedMarket]);
 
   const hasExpandedIntel =
-    expandedSignals.length > 0 || smartDecisions.length > 0 || quantVerdict.length > 0;
+    expandedSignals.length > 0 ||
+    smartDecisions.length > 0 ||
+    quantVerdict.length > 0 ||
+    Boolean(commerceCoverage?.viewAllOffersEnabled);
 
   return (
     <div className="qa-ref-intel-card__shell">
@@ -287,6 +299,16 @@ export default function IntelligenceCardBody({
           {merchantActionLabel(p.store)}
           <ExternalLink className="size-3.5 shrink-0 opacity-70" aria-hidden />
         </a>
+        {commerceCoverage?.viewAllOffersEnabled ? (
+          <button
+            type="button"
+            className="qa-ref-intel-card__details-toggle mt-1"
+            onClick={onOpenBrief}
+          >
+            {commerceCoverage.viewAllOffersLabel} · {commerceCoverage.merchantCount} merchants
+            <PanelRight className="size-3.5 opacity-70" aria-hidden />
+          </button>
+        ) : null}
       </div>
 
       <div className="qa-ref-intel-card__footer">
@@ -369,6 +391,21 @@ export default function IntelligenceCardBody({
                   <li key={tag.label}>{tag.label}</li>
                 ))}
               </ul>
+            ) : null}
+            {commerceCoverage?.viewAllOffersEnabled ? (
+              <div className="qa-ref-intel-card__intel-module">
+                <p className="qa-ref-intel-card__intel-module-kicker">{commerceCoverage.viewAllOffersLabel}</p>
+                <ul className="qa-ref-intel-card__intel-module-list qa-ref-intel-card__intel-module-list--decisions">
+                  {commerceCoverage.offers.slice(0, 4).map((offer) => (
+                    <li key={offer.link}>
+                      <span className="qa-ref-intel-card__decision-dot" aria-hidden />
+                      <span>
+                        {offer.store} · {offer.displayPrice} · {offer.availabilityStatus}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ) : null}
           </div>
         </div>

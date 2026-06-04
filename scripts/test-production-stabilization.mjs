@@ -119,6 +119,12 @@ assert.ok(
   ),
   "phase 14.1 ranking rationale activation present"
 );
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/commerceCoverageActivation.ts"), "utf8").includes(
+    "buildCommerceCoverageTray"
+  ),
+  "phase 15.0 commerce coverage activation present"
+);
 
 assert.ok(route.includes("applyPhase95CommerceMemory"), "phase 9.5 commerce memory wired");
 assert.ok(route.includes("applyVerdictIntelligence"), "phase 10.0 verdict intelligence wired");

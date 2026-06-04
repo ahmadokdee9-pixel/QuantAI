@@ -50,6 +50,7 @@ import SellerCoverageStrip from "./SellerCoverageStrip";
 import { useMobilePerf } from "@/lib/hooks/useMobilePerf";
 import { relatedTrayQueries } from "@/lib/search/relatedTrayQueries";
 import { buildUnifiedMarketGroup } from "@/lib/intelligence/unifiedMarketMatching";
+import { buildCommerceCoverageTray } from "@/lib/ui/commerceCoverageActivation";
 import { INTEL_TERMS } from "@/lib/ui/intelligenceTerminology";
 import {
   loadMarketMemory,
@@ -269,6 +270,13 @@ export default function ProductResultsSurface({
     () => buildUnifiedMarketGroup(sortedProducts, searchQuery.trim()).byLink,
     [sortedProducts, searchQuery]
   );
+  const commerceCoverageByLink = useMemo(
+    () => buildCommerceCoverageTray(sortedProducts, searchQuery.trim()),
+    [sortedProducts, searchQuery]
+  );
+  const detailCommerceCoverage = detailProduct
+    ? commerceCoverageByLink.get(detailProduct.link) ?? null
+    : null;
   const compactTray = sortedProducts.length > 0 && sortedProducts.length <= 4;
   const sparseTray = sortedProducts.length > 0 && sortedProducts.length <= 3;
   const relatedQueries = useMemo(
@@ -644,6 +652,7 @@ export default function ProductResultsSurface({
         decisionBrief={detailCoherence?.decisionBrief ?? decisionBrief}
         marketContext={detailCoherence?.marketContext ?? marketContext}
         coherentDecision={detailCoherence}
+        commerceCoverage={detailCommerceCoverage}
       />
 
       {mobilePerf ? (
@@ -681,6 +690,7 @@ export default function ProductResultsSurface({
                   verdictSurface={verdictSurface}
                   marketContext={marketContext}
                   coherentDecision={coherenceByLink.get(p.link) ?? null}
+                  commerceCoverage={commerceCoverageByLink.get(p.link) ?? null}
                 />
               </div>
             );
@@ -726,6 +736,8 @@ export default function ProductResultsSurface({
                     decisionBrief={decisionBrief}
                     verdictSurface={verdictSurface}
                     marketContext={marketContext}
+                    coherentDecision={coherenceByLink.get(p.link) ?? null}
+                    commerceCoverage={commerceCoverageByLink.get(p.link) ?? null}
                   />
                 </div>
               );

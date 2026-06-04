@@ -57,6 +57,7 @@ import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
 import type { VerdictSurfaceContext } from "@/lib/ui/verdictSurfaceOptimization";
 import type { MarketContextInput } from "@/lib/ui/marketContextActivation";
 import type { CoherentProductDecision } from "@/lib/ui/decisionCoherenceActivation";
+import type { ActivatedCommerceCoverage } from "@/lib/ui/commerceCoverageActivation";
 import { classifyListingOutlier } from "@/lib/ui/listingOutlierFilter";
 import IntelligenceCardBody from "./IntelligenceCardBody";
 import { recordViewedProductLink } from "@/lib/personalization/localSignals";
@@ -219,6 +220,7 @@ type Props = {
   verdictSurface?: VerdictSurfaceContext | null;
   marketContext?: MarketContextInput | null;
   coherentDecision?: CoherentProductDecision | null;
+  commerceCoverage?: ActivatedCommerceCoverage | null;
 };
 
 function ProductResultCard({
@@ -246,6 +248,7 @@ function ProductResultCard({
   verdictSurface = null,
   marketContext = null,
   coherentDecision = null,
+  commerceCoverage = null,
 }: Props) {
   const isTrayFocused = trayFocusLink === p.link;
   const isTrayDimmed = Boolean(trayFocusLink && trayFocusLink !== p.link);
@@ -496,6 +499,7 @@ function ProductResultCard({
             verdictSurface={verdictSurface}
             marketContext={coherentDecision?.marketContext ?? marketContext}
             coherentDecision={coherentDecision}
+            commerceCoverage={commerceCoverage}
           />
         </div>
       </motion.article>
@@ -553,6 +557,11 @@ function marketTrayEqual(a: Props["marketTray"], b: Props["marketTray"]): boolea
   );
 }
 
+function commerceCoverageFingerprint(c: ActivatedCommerceCoverage | null | undefined): string {
+  if (!c) return "";
+  return `${c.merchantCount}|${c.lowestPrice}|${c.bestTrustedLink}|${c.offers.length}|${c.viewAllOffersEnabled}`;
+}
+
 function coherentDecisionFingerprint(d: CoherentProductDecision | null | undefined): string {
   if (!d) return "";
   return `${d.verdict}|${d.reasonLine}|${d.alignmentScore}|${d.isLeadProduct}|${d.rankingRationaleLine}|${d.drawerRankingLine}|${d.summaryLines.join(";;")}|${d.decisionBrief?.explanation ?? ""}`;
@@ -563,6 +572,8 @@ function productResultCardPropsEqual(a: Props, b: Props): boolean {
   if (a.rank !== b.rank || a.index !== b.index) return false;
   if (a.lowPower !== b.lowPower || a.imagePriority !== b.imagePriority) return false;
   if (coherentDecisionFingerprint(a.coherentDecision) !== coherentDecisionFingerprint(b.coherentDecision))
+    return false;
+  if (commerceCoverageFingerprint(a.commerceCoverage) !== commerceCoverageFingerprint(b.commerceCoverage))
     return false;
   if ((a.decisionBrief?.explanation ?? "") !== (b.decisionBrief?.explanation ?? "")) return false;
   if (!unifiedMarketEqual(a.unifiedMarket, b.unifiedMarket)) return false;
