@@ -1,4 +1,5 @@
 /**
+ * QUANTAI_PHASE_26_2_STABLE_FROZEN — DO NOT MODIFY (verdict/reason pipeline binding).
  * Phase 14.0 — Decision Coherence Activation Layer.
  * Single institutional verdict authority with per-product binding (presentation only).
  */

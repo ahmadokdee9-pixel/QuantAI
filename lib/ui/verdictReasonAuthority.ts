@@ -1,4 +1,5 @@
 /**
+ * QUANTAI_PHASE_26_2_STABLE_FROZEN — DO NOT MODIFY (reason authority / pipeline).
  * Phase 26.2 — Verdict Reason Authority.
  * One dominant reason per verdict; card evidence filtered to match (presentation only).
  */

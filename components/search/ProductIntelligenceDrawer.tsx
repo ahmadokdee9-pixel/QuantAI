@@ -1,5 +1,6 @@
 "use client";
 
+/** QUANTAI_PHASE_26_2_STABLE_FROZEN — decision brief reason alignment. */
 import type { ReactNode } from "react";
 import { useEffect, useId, useLayoutEffect, useState } from "react";
 import { createPortal } from "react-dom";

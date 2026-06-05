@@ -1,3 +1,4 @@
+/** QUANTAI_PHASE_26_2_STABLE_FROZEN — final verdict alignment (tray authority). */
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
 import { getStoreTrustScore, type QuantProduct } from "@/lib/shoppingScore";
 import { deriveCardDecision, searchIntelActionLabel } from "@/lib/ui/decisionLanguage";

@@ -1,4 +1,5 @@
 /**
+ * QUANTAI_PHASE_26_2_STABLE_FROZEN — DO NOT MODIFY (verdict authority / pipeline).
  * Phase 26.1 — Unified Verdict Authority.
  * Tray-level verdict derived from the same per-card coherence pipeline (presentation only).
  */

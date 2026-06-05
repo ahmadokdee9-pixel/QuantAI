@@ -1,5 +1,6 @@
 "use client";
 
+/** QUANTAI_PHASE_26_2_STABLE_FROZEN — final verdict panel alignment. */
 import { useMemo } from "react";
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
 import type { QuantProduct } from "@/lib/shoppingScore";

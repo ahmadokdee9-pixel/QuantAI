@@ -126,6 +126,12 @@ assert.ok(
   "phase 26.2 verdict reason authority present"
 );
 assert.ok(
+  readFileSync(join(process.cwd(), "lib/governance/quantaiPhase262Freeze.ts"), "utf8").includes(
+    "QUANTAI_PHASE_26_2_STABLE_FROZEN"
+  ),
+  "QUANTAI_PHASE_26_2_STABLE_FROZEN lock present"
+);
+assert.ok(
   readFileSync(join(process.cwd(), "lib/ui/rankingRationaleActivation.ts"), "utf8").includes(
     "activateRankingRationale"
   ),

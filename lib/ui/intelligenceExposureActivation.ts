@@ -1,4 +1,5 @@
 /**
+ * QUANTAI_PHASE_26_2_STABLE_FROZEN — DO NOT MODIFY (card evidence + reason surface).
  * Phase 25.0 — Intelligence Exposure Activation.
  * Phase 26.0 — Unified decision surface (hierarchy only; no new intelligence).
  * Surfaces existing phase 14–23 outputs into card and drawer slots only.

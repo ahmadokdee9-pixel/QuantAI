@@ -78,6 +78,7 @@
     "test:phase260-unified-decision-surface": "npx --yes tsx scripts/test-phase260-unified-decision-surface.mjs",
     "test:phase261-unified-verdict-authority": "npx --yes tsx scripts/test-phase261-unified-verdict-authority.mjs",
     "test:phase262-verdict-reason-authority": "npx --yes tsx scripts/test-phase262-verdict-reason-authority.mjs",
+    "test:quantai-phase262-freeze": "npx --yes tsx scripts/test-quantai-phase262-freeze.mjs",
     "test:search-intelligence-upgrade": "npx --yes tsx scripts/test-search-intelligence-upgrade.mjs",
     "test:phase6-intelligence-hardening": "npx --yes tsx scripts/phase6-intelligence-hardening-validation.mjs",
     "test:phase8-ranking-validation": "npx --yes tsx scripts/phase8-ranking-validation-suite.mjs",

@@ -1,5 +1,6 @@
 ﻿"use client";
 
+/** QUANTAI_PHASE_26_2_STABLE_FROZEN — single verdict + reasoning pipeline wiring. */
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";

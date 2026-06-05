@@ -1,5 +1,6 @@
 "use client";
 
+/** QUANTAI_PHASE_26_2_STABLE_FROZEN — card evidence + reason surface alignment. */
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { AlertTriangle, Check, ChevronDown, ExternalLink, ImageIcon, PanelRight, Sparkles, X } from "lucide-react";
