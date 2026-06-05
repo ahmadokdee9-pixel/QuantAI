@@ -47,6 +47,7 @@ import {
   activateIntelligenceExposure,
   type ActivatedIntelligenceExposure,
 } from "@/lib/ui/intelligenceExposureActivation";
+import type { VerdictReasonAuthority } from "@/lib/ui/verdictReasonAuthority";
 import type { ProductRankingMeta } from "@/lib/ranking/productRankingApplication";
 import type { RankingSignalsMeta } from "@/lib/ranking/rankingSignalsAggregator";
 
@@ -95,6 +96,7 @@ export type CoherentProductDecision = {
   trustRisk: ActivatedTrustRisk;
   unifiedDecision: ActivatedUnifiedDecision;
   intelligenceExposure: ActivatedIntelligenceExposure;
+  reasonAuthority: VerdictReasonAuthority;
 };
 
 function clipLine(text: string | undefined | null, max = 112): string {
@@ -506,8 +508,10 @@ export function activateProductDecisionCoherence(args: {
     ? resolveActivatedBriefPresentation(scopedBrief, verdict)
     : null;
 
+  const alignmentScore = primaryVerdictAlignment(verdict);
   const intelligenceExposure = activateIntelligenceExposure({
     verdict,
+    alignmentScore,
     isLeadProduct: lead,
     decisionBrief: scopedBrief,
     activatedBrief,
@@ -528,8 +532,10 @@ export function activateProductDecisionCoherence(args: {
   const expandedSignals = [...intelligenceExposure.expandSlots];
   const smartDecisionLines = intelligenceExposure.smartDecisionLines;
 
+  const reasonAuthority = intelligenceExposure.reasonAuthority;
   const drawerDecisionLane = clipLine(
-    intelligenceExposure.summaryLines[0] ||
+    reasonAuthority.primaryReason.line ||
+      intelligenceExposure.summaryLines[0] ||
       optimizedSurface.verdictReason ||
       fallbackReason
   );
@@ -539,8 +545,8 @@ export function activateProductDecisionCoherence(args: {
 
   return {
     verdict,
-    reasonLine: optimizedSurface.verdictReason || fallbackReason,
-    alignmentScore: primaryVerdictAlignment(verdict),
+    reasonLine: clipLine(reasonAuthority.primaryReason.line || optimizedSurface.verdictReason || fallbackReason),
+    alignmentScore,
     trustMicro: trustMicroLabel(trustTier),
     decisionBrief: scopedBrief,
     marketContext: groundedMarket,
@@ -554,8 +560,16 @@ export function activateProductDecisionCoherence(args: {
     drawerDecisionLane,
     drawerStanceLabel: stanceLabel(verdict),
     drawerSynthesis: clipLine(
-      unifiedDecision.finalReasoning ||
-        buildDrawerSynthesis(verdict, optimizedSurface.verdictReason, scopedBrief, product),
+      [
+        `${reasonAuthority.primaryReason.label}: ${reasonAuthority.primaryReason.line}`,
+        reasonAuthority.secondaryReasons[0]
+          ? `${reasonAuthority.secondaryReasons[0].label}: ${reasonAuthority.secondaryReasons[0].line}`
+          : "",
+        unifiedDecision.finalReasoning ||
+          buildDrawerSynthesis(verdict, optimizedSurface.verdictReason, scopedBrief, product),
+      ]
+        .filter(Boolean)
+        .join(" "),
       280
     ),
     executionPosture: resolveExecutionPosture(product, verdict, scopedBrief),
@@ -569,5 +583,6 @@ export function activateProductDecisionCoherence(args: {
     trustRisk,
     unifiedDecision,
     intelligenceExposure,
+    reasonAuthority,
   };
 }

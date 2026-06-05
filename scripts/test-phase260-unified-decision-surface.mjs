@@ -150,6 +150,7 @@ const optimizedSurface = optimizeVerdictSurface({
 
 const exposure = activateIntelligenceExposure({
   verdict: "BUY READY",
+  alignmentScore: 88,
   isLeadProduct: true,
   decisionBrief: brief,
   activatedBrief,

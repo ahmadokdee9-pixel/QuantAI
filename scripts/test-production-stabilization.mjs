@@ -120,6 +120,12 @@ assert.ok(
   "phase 26.1 unified tray verdict authority present"
 );
 assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/verdictReasonAuthority.ts"), "utf8").includes(
+    "resolveProductReasonAuthority"
+  ),
+  "phase 26.2 verdict reason authority present"
+);
+assert.ok(
   readFileSync(join(process.cwd(), "lib/ui/rankingRationaleActivation.ts"), "utf8").includes(
     "activateRankingRationale"
   ),

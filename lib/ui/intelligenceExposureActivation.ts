@@ -17,6 +17,12 @@ import type { ActivatedUnifiedDecision, DecisionFactor, FinalDecision } from "@/
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
 import type { OptimizedVerdictSurface } from "@/lib/ui/verdictSurfaceOptimization";
+import {
+  buildSurfaceSummaryLines,
+  filterChipsForReasonAuthority,
+  resolveProductReasonAuthority,
+  type VerdictReasonAuthority,
+} from "@/lib/ui/verdictReasonAuthority";
 
 export type ExposureChipTone = "emerald" | "blue" | "violet" | "amber" | "slate";
 
@@ -48,12 +54,14 @@ export type ActivatedIntelligenceExposure = {
   chips: ExposureChip[];
   expandSlots: [string, string, string, string];
   smartDecisionLines: string[];
+  reasonAuthority: VerdictReasonAuthority;
   drawerHero: ExposureDrawerHero;
   drawerModules: ExposureDrawerModule[];
 };
 
 export type IntelligenceExposureInput = {
   verdict: PrimaryVerdict;
+  alignmentScore: number;
   isLeadProduct: boolean;
   decisionBrief: DecisionBriefDTO | null;
   activatedBrief: ActivatedBriefPresentation | null;
@@ -592,10 +600,24 @@ function buildDrawerModules(input: IntelligenceExposureInput): ExposureDrawerMod
 
 /** Activate intelligence exposure for one listing (existing outputs only). */
 export function activateIntelligenceExposure(input: IntelligenceExposureInput): ActivatedIntelligenceExposure {
+  const reasonAuthority = resolveProductReasonAuthority({
+    verdict: input.verdict,
+    alignmentScore: input.alignmentScore,
+    isLeadProduct: input.isLeadProduct,
+    rankingRationaleLine: input.rankingRationaleLine,
+    discountTruth: input.discountTruth,
+    buyWait: input.buyWait,
+    priceTarget: input.priceTarget,
+    alternativeAdvantage: input.alternativeAdvantage,
+    categoryIntelligence: input.categoryIntelligence,
+    intentIntelligence: input.intentIntelligence,
+    trustRisk: input.trustRisk,
+  });
+
   const seen = new Set<string>();
-  const summarySeen = new Set<string>();
-  const summaryLines = buildSummaryLines(input, summarySeen);
-  const chips = buildExposureChips(input, seen);
+  const [heroLine, supportLine] = buildSurfaceSummaryLines(reasonAuthority);
+  const summaryLines = [heroLine, supportLine];
+  const chips = filterChipsForReasonAuthority(buildExposureChips(input, seen), reasonAuthority);
   const expandSeen = new Set<string>([...seen]);
   const expandSlots = buildExpandSlots(input, expandSeen);
   const smartSeen = new Set<string>([...seen]);
@@ -606,6 +628,7 @@ export function activateIntelligenceExposure(input: IntelligenceExposureInput): 
     chips,
     expandSlots,
     smartDecisionLines,
+    reasonAuthority,
     drawerHero: buildDrawerHero(input),
     drawerModules: buildDrawerModules(input),
   };

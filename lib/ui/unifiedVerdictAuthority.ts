@@ -5,6 +5,11 @@
 
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import type { CoherentProductDecision } from "@/lib/ui/decisionCoherenceActivation";
+import {
+  buildTrayReasonNarrative,
+  resolveTrayReasonAuthority,
+  type VerdictReasonAuthority,
+} from "@/lib/ui/verdictReasonAuthority";
 
 export type TrayVerdictClusterCounts = {
   buyReady: number;
@@ -17,6 +22,7 @@ export type UnifiedTrayVerdict = {
   verdict: PrimaryVerdict;
   confidence: number;
   clusterCounts: TrayVerdictClusterCounts;
+  reasonAuthority: VerdictReasonAuthority;
   winningReason: string;
   losingReasons: string[];
   marketObservation: string;
@@ -170,14 +176,23 @@ export function resolveUnifiedTrayVerdict(
       ? Math.round(activeAlignments.reduce((sum, value) => sum + value, 0) / activeAlignments.length)
       : list[0]?.alignmentScore ?? 50;
 
-  const winningReason = buildWinningReason(verdict, counts, confidence);
-  const losingReasons = buildLosingReasons(verdict, counts, confidence);
-  const marketObservation = buildMarketObservation(verdict, winningReason, losingReasons);
+  const reasonAuthority = resolveTrayReasonAuthority(list, verdict);
+  const narrative = buildTrayReasonNarrative(reasonAuthority);
+  const clusterWinningReason = buildWinningReason(verdict, counts, confidence);
+  const clusterLosingReasons = buildLosingReasons(verdict, counts, confidence);
+  const winningReason = narrative.winningLine || clusterWinningReason;
+  const losingReasons = [
+    ...narrative.losingLines,
+    ...clusterLosingReasons.filter((line) => !narrative.losingLines.includes(line)),
+  ].slice(0, 3);
+  const marketObservation =
+    narrative.synthesis || buildMarketObservation(verdict, winningReason, losingReasons);
 
   return {
     verdict,
     confidence,
     clusterCounts: counts,
+    reasonAuthority,
     winningReason,
     losingReasons,
     marketObservation,

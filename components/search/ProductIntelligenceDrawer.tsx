@@ -339,6 +339,16 @@ function DrawerBody({
   const exposure = coherentDecision?.intelligenceExposure ?? null;
   const bandLabel = coherentDecision?.drawerStanceLabel ?? stanceLabelFromVerdict(coherentVerdict);
   const compactSynthesis =
+    (coherentDecision?.reasonAuthority
+      ? [
+          `${coherentDecision.reasonAuthority.primaryReason.label}: ${coherentDecision.reasonAuthority.primaryReason.line}`,
+          coherentDecision.reasonAuthority.secondaryReasons[0]
+            ? `${coherentDecision.reasonAuthority.secondaryReasons[0].label}: ${coherentDecision.reasonAuthority.secondaryReasons[0].line}`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" ")
+      : "") ||
     coherentDecision?.drawerSynthesis ||
     activatedBrief?.reasoning ||
     [quantVerdictLead(p, list), p.qiPsychology?.trim(), why]
