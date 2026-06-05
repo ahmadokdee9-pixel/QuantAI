@@ -504,6 +504,7 @@ export function activateProductDecisionCoherence(args: {
 
   const intelligenceExposure = activateIntelligenceExposure({
     verdict,
+    isLeadProduct: lead,
     decisionBrief: scopedBrief,
     activatedBrief,
     rankingRationaleLine,
@@ -524,9 +525,7 @@ export function activateProductDecisionCoherence(args: {
   const smartDecisionLines = intelligenceExposure.smartDecisionLines;
 
   const drawerDecisionLane = clipLine(
-    unifiedDecision.decisionSummary ||
-      buyWait.cardLine ||
-      activatedMarket?.timingFavorable ||
+    intelligenceExposure.summaryLines[0] ||
       optimizedSurface.verdictReason ||
       fallbackReason
   );

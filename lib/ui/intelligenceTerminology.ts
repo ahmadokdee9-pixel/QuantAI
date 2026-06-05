@@ -4,7 +4,7 @@ export const INTEL_TERMS = {
   retailSource: "Retail source",
   marketEntry: "Market entry",
   trustLayer: "Trust layer",
-  decisionConfidence: "Decision confidence",
+  decisionConfidence: "Decision Confidence",
   intelligenceAsset: "Intelligence asset",
   marketAlternative: "Market alternative",
   intelligenceResults: "Intelligence results",

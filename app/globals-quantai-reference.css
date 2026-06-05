@@ -9967,6 +9967,18 @@
   flex-shrink: 0;
 }
 
+.qa-ref-intel-card--uniform .qa-ref-intel-card__summary-line--hero span {
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.012em;
+}
+
+.qa-ref-intel-card--uniform .qa-ref-intel-card__confidence-block--decision .qa-ref-intel-card__field-label {
+  font-weight: 650;
+  text-transform: capitalize;
+  letter-spacing: 0.01em;
+}
+
 .qa-ref-intel-card--uniform .qa-ref-intel-card__signal-panel {
   display: flex;
   flex-wrap: nowrap;

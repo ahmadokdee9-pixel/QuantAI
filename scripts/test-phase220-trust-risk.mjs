@@ -236,12 +236,11 @@ const coherence = activateProductDecisionCoherence({
   searchQuery: "samsung galaxy s24 ultra",
 });
 assert.equal(coherence.verdict, "BUY READY", "phase 14.0 verdict authority preserved");
+assert.ok(coherence.summaryLines[0]?.length > 0, "phase 26 hero summary on card");
 assert.ok(
-  coherence.summaryLines[0]?.includes("Buy now") ||
-    coherence.summaryLines[0]?.includes("Wait") ||
-    coherence.summaryLines[0]?.includes("Compare") ||
-    coherence.summaryLines[0]?.includes("Avoid"),
-  "phase 25 unified summary on card"
+  !coherence.summaryLines[0]?.toLowerCase().includes("buy now ·") &&
+    !/\btrust\s+\d+\s*%/i.test(coherence.summaryLines[0] ?? ""),
+  "card summary does not compete with recommendation band"
 );
 assert.ok(
   coherence.summaryLines.some((line) => line.includes("Ranked first")) ||

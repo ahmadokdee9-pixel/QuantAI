@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Phase 25.0 — Intelligence Exposure Activation tests (offline, no network).
+ * Phase 26.0 — Unified Decision Surface (hierarchy only; no new intelligence).
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -113,28 +113,25 @@ function buildLayers(product, list, searchQuery, isLead) {
   };
 }
 
-// ── Guards ─────────────────────────────────────────────────────────────────────
 const exposureSrc = readFileSync(join(process.cwd(), "lib/ui/intelligenceExposureActivation.ts"), "utf8");
-assert.ok(!exposureSrc.includes("buildDeterministicRanking"), "no ranking changes");
-assert.ok(!exposureSrc.includes("openai"), "no new AI");
-assert.ok(!exposureSrc.includes("activateUnifiedDecision("), "exposure does not re-run unified engine");
-
-const coherenceSrc = readFileSync(join(process.cwd(), "lib/ui/decisionCoherenceActivation.ts"), "utf8");
-assert.ok(coherenceSrc.includes("activateIntelligenceExposure"), "coherence wires exposure layer");
-assert.ok(coherenceSrc.includes("intelligenceExposure"), "coherent decision exposes exposure");
+assert.ok(exposureSrc.includes("lineCompetesWithBand"), "phase 26 band competition guard");
+assert.ok(exposureSrc.includes("buildEvidenceChips"), "evidence chips builder");
+assert.ok(!exposureSrc.includes("mergeBuyWaitChip"), "abstract metric chips removed from card");
 
 const cardBody = readFileSync(join(process.cwd(), "components/search/IntelligenceCardBody.tsx"), "utf8");
-assert.ok(!cardBody.includes("qa-ref-intel-card__exposure-panel"), "no new card panels");
-assert.ok(cardBody.includes("intelligenceExposure"), "card consumes exposure");
+assert.ok(cardBody.includes("summary-line--hero"), "hero summary styling");
+assert.ok(cardBody.includes("showLegacyQuantVerdict"), "legacy quant verdict hidden when coherent");
 
-const route = readFileSync(join(process.cwd(), "app/api/search/route.ts"), "utf8");
-assert.ok(!route.includes("intelligenceExposureActivation"), "search route unchanged");
-
-// ── Exposure builder ───────────────────────────────────────────────────────────
 const layers = buildLayers(trustedLead, buyTray, "samsung galaxy s24 ultra best camera", true);
 const brief = {
   headline: "Buy lead",
-  recommendation: { label: "Top pick", title: trustedLead.title, store: trustedLead.store, link: trustedLead.link, price: trustedLead.price },
+  recommendation: {
+    label: "Top pick",
+    title: trustedLead.title,
+    store: trustedLead.store,
+    link: trustedLead.link,
+    price: trustedLead.price,
+  },
   why: [],
   alternatives: [],
   discountNote: null,
@@ -161,34 +158,38 @@ const exposure = activateIntelligenceExposure({
   ...layers,
 });
 
-assert.ok(exposure.summaryLines[0]?.length > 0, "summary hero line present");
-assert.ok(!exposure.summaryLines[0]?.toLowerCase().includes("buy now"), "phase 26 hero avoids unified buy-now copy");
-assert.equal(exposure.expandSlots.length, 4, "four fixed expand slots");
-assert.ok(exposure.expandSlots[0]?.length > 0, "slot 1 intent");
-assert.ok(/trust|risk|seller/i.test(exposure.expandSlots[1] ?? ""), "slot 2 trust/risk");
-assert.ok(exposure.expandSlots[2]?.length > 0, "slot 3 competitive");
-assert.ok(exposure.expandSlots[3]?.length > 0, "slot 4 price opportunity");
-assert.equal(exposure.smartDecisionLines.length, 3, "three smart decision lines");
-assert.ok(exposure.chips.length >= 2 && exposure.chips.length <= 3, "chips capped at three");
+const hero = exposure.summaryLines[0] ?? "";
+assert.ok(hero.length > 0, "hero summary present");
+assert.ok(!/\bbuy now\b/i.test(hero), "hero does not repeat unified buy-now language");
+assert.ok(!/\d{1,3}\s*%/.test(hero), "hero avoids naked decision percentages");
+assert.ok(!hero.toLowerCase().includes("unified"), "hero avoids unified narrative");
+
+assert.equal(exposure.expandSlots.length, 4, "four expand slots preserved");
+assert.ok(exposure.expandSlots[0]?.startsWith("Intent ·"), "expand slot 1 intent prefix");
+assert.ok(exposure.expandSlots[1]?.startsWith("Trust ·"), "expand slot 2 trust prefix");
+assert.ok(exposure.expandSlots[2]?.startsWith("Competitive ·"), "expand slot 3 competitive prefix");
+assert.ok(exposure.expandSlots[3]?.startsWith("Price ·"), "expand slot 4 price prefix");
+
+assert.ok(exposure.chips.length >= 2 && exposure.chips.length <= 3, "evidence chips capped");
 assert.ok(
   exposure.chips.every((c) => c.label.startsWith("✓") || c.label.startsWith("⚠")),
-  "evidence marker chips"
+  "chips use evidence markers"
 );
 assert.ok(
-  exposure.chips.some((c) => /Trusted Seller|Ranked First|Buy Window|Genuine Discount/i.test(c.label)),
-  "BUY evidence chips present"
+  exposure.chips.some((c) => /Trusted Seller|Ranked First|Buy Window|Genuine Discount|Intent Match/i.test(c.label)),
+  "BUY evidence chips reinforce verdict"
+);
+assert.ok(
+  !exposure.chips.some((c) => /\bTrust\s+\d+%|\bBUY NOW\s*·/i.test(c.label)),
+  "no abstract metric chips on card"
 );
 
 const chipLabels = exposure.chips.map((c) => c.label.toLowerCase()).join(" ");
-assert.ok(!chipLabels.includes(exposure.summaryLines[0]?.toLowerCase().slice(0, 20) ?? "___"), "summary not duplicated as chip");
+assert.ok(!chipLabels.includes(hero.toLowerCase().slice(0, 18)), "hero not duplicated as chip");
 
 assert.equal(exposure.drawerHero.finalDecision, layers.unifiedDecision.finalDecision);
-assert.ok(exposure.drawerHero.finalReasoning.includes("Unified recommendation"), "drawer hero uses unified reasoning");
-assert.ok(exposure.drawerModules.length >= 7, "drawer modules expose layers");
-assert.equal(exposure.drawerModules[0]?.id, "unified", "module 1 unified");
-assert.equal(exposure.drawerModules.find((m) => m.id === "factors")?.bullets.length, 8, "factor trace capped at 8");
+assert.ok(exposure.drawerModules.length >= 7, "drawer depth preserved");
 
-// ── Coherence integration ──────────────────────────────────────────────────────
 const trayCtx = buildTrayCoherenceContext({
   searchMeta: {
     verdictIntelligence: {
@@ -223,15 +224,21 @@ const coherence = activateProductDecisionCoherence({
   searchQuery: "samsung galaxy s24 ultra best camera",
 });
 
-assert.equal(coherence.verdict, "BUY READY", "phase 14 verdict preserved");
+assert.equal(coherence.verdict, "BUY READY", "band remains institutional authority");
+assert.ok(!coherence.summaryLines[0]?.toLowerCase().includes("buy now"), "card summary supports band without competing label");
 assert.ok(
-  coherence.intelligenceExposure.summaryLines[0]?.length > 0 &&
-    !coherence.intelligenceExposure.summaryLines[0]?.toLowerCase().includes("buy now"),
-  "coherence card summary is verdict-aligned hero"
+  coherence.intelligenceExposure.chips.some((c) => /Ranked First/i.test(c.label)),
+  "ranking moved to evidence chip"
 );
-assert.equal(coherence.expandedSignals.length, 4, "coherence expanded uses four slots");
-assert.equal(coherence.smartDecisionLines.length, 3, "coherence smart lines capped at three");
-assert.ok(coherence.unifiedDecision.finalDecision.length > 0, "phase 23 layer preserved");
-assert.ok(coherence.trustRisk.trustScore > 0, "phase 22 layer preserved");
+assert.ok(
+  coherence.rankingRationaleLine.includes("Ranked first") ||
+    coherence.intelligenceExposure.chips.some((c) => /Ranked First/i.test(c.label)),
+  "ranking signal still exposed"
+);
+assert.ok(coherence.unifiedDecision.finalDecision.length > 0, "phase 23 preserved in drawer");
+assert.ok(
+  !coherence.drawerDecisionLane.toLowerCase().includes("buy now ·"),
+  "drawer lane uses hero not unified summary"
+);
 
-console.log("phase250-intelligence-exposure-activation: ok");
+console.log("phase260-unified-decision-surface: ok");

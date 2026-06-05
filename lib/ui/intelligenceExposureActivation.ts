@@ -1,6 +1,7 @@
 /**
  * Phase 25.0 — Intelligence Exposure Activation.
- * Surfaces existing phase 14–23 outputs into card and drawer slots only (no new intelligence).
+ * Phase 26.0 — Unified decision surface (hierarchy only; no new intelligence).
+ * Surfaces existing phase 14–23 outputs into card and drawer slots only.
  */
 
 import type { ActivatedBriefPresentation } from "@/lib/ui/activatedDecisionBriefPresentation";
@@ -8,15 +9,10 @@ import type { ActivatedAlternativeAdvantage } from "@/lib/ui/alternativeAdvantag
 import type { ActivatedBuyWait } from "@/lib/ui/buyWaitActivation";
 import type { ActivatedCategoryIntelligence } from "@/lib/ui/categoryIntelligenceActivation";
 import type { ActivatedCommerceCoverage } from "@/lib/ui/commerceCoverageActivation";
-import {
-  mergeDiscountTruthChip,
-  type ActivatedDiscountTruth,
-} from "@/lib/ui/discountTruthActivation";
+import type { ActivatedDiscountTruth } from "@/lib/ui/discountTruthActivation";
 import type { ActivatedIntentIntelligence } from "@/lib/ui/intentIntelligenceActivation";
 import type { ActivatedPriceTarget } from "@/lib/ui/priceTargetActivation";
 import type { ActivatedTrustRisk } from "@/lib/ui/trustRiskActivation";
-import { mergeBuyWaitChip } from "@/lib/ui/buyWaitActivation";
-import { mergeTrustRiskChip } from "@/lib/ui/trustRiskActivation";
 import type { ActivatedUnifiedDecision, DecisionFactor, FinalDecision } from "@/lib/ui/unifiedDecisionActivation";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
@@ -24,9 +20,12 @@ import type { OptimizedVerdictSurface } from "@/lib/ui/verdictSurfaceOptimizatio
 
 export type ExposureChipTone = "emerald" | "blue" | "violet" | "amber" | "slate";
 
+export type ExposureChipEvidence = "positive" | "caution";
+
 export type ExposureChip = {
   label: string;
   tone: ExposureChipTone;
+  evidence?: ExposureChipEvidence;
 };
 
 export type ExposureDrawerHero = {
@@ -55,6 +54,7 @@ export type ActivatedIntelligenceExposure = {
 
 export type IntelligenceExposureInput = {
   verdict: PrimaryVerdict;
+  isLeadProduct: boolean;
   decisionBrief: DecisionBriefDTO | null;
   activatedBrief: ActivatedBriefPresentation | null;
   rankingRationaleLine: string;
@@ -102,6 +102,182 @@ function isDuplicate(line: string, seen: Set<string>): boolean {
   return false;
 }
 
+const HERO_FALLBACK: Record<PrimaryVerdict, string> = {
+  "BUY READY": "Best match for your search intent.",
+  WAIT: "Current price remains above fair historical value.",
+  AVOID: "Lower value than competing alternatives.",
+  COMPARE: "Strong option but better alternatives exist.",
+};
+
+/** Card-face lines must not compete with the recommendation band. */
+function lineCompetesWithBand(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  if (!t) return true;
+  if (/\bunified\b/.test(t)) return true;
+  if (/\b(buy now|wait|compare|avoid)\b/.test(t) && /\d{1,3}\s*%/.test(t)) return true;
+  if (/^(buy now|wait|compare|avoid)\b/.test(t)) return true;
+  if (/\btrust\s+\d{1,3}\s*%/.test(t) || /\brisk\s+\d{1,3}\s*%/.test(t)) return true;
+  return false;
+}
+
+function pickFirstSupportingLine(
+  candidates: Array<string | undefined | null>,
+  seen: Set<string>,
+  max = 96
+): string {
+  for (const value of candidates) {
+    const line = clipLine(value, max);
+    if (!line || lineCompetesWithBand(line)) continue;
+    if (isDuplicate(line, seen)) continue;
+    return line;
+  }
+  return "";
+}
+
+function buildHeroSummaryLine(input: IntelligenceExposureInput, seen: Set<string>): string {
+  const {
+    verdict,
+    intentIntelligence,
+    priceTarget,
+    buyWait,
+    alternativeAdvantage,
+    trustRisk,
+    activatedBrief,
+    optimizedSurface,
+    categoryIntelligence,
+  } = input;
+
+  const byVerdict: Record<PrimaryVerdict, Array<string | undefined | null>> = {
+    "BUY READY": [
+      intentIntelligence.matchExplanation,
+      intentIntelligence.intentReasons[0],
+      activatedBrief?.reasoning,
+      activatedBrief?.topSignals[0],
+      categoryIntelligence.categoryStrengths[0],
+      optimizedSurface.summaryLines[0],
+    ],
+    WAIT: [
+      priceTarget.reason,
+      priceTarget.explanation,
+      buyWait.reason,
+      buyWait.explanation,
+      activatedBrief?.marketStatus,
+      activatedBrief?.reasoning,
+    ],
+    AVOID: [
+      trustRisk.riskReason,
+      trustRisk.trustReason,
+      alternativeAdvantage.comparisonSummary,
+      activatedBrief?.riskSignals[0],
+      activatedBrief?.reasoning,
+    ],
+    COMPARE: [
+      alternativeAdvantage.comparisonSummary,
+      alternativeAdvantage.advantageReasons[0],
+      alternativeAdvantage.cardLine,
+      activatedBrief?.reasoning,
+    ],
+  };
+
+  const picked = pickFirstSupportingLine(byVerdict[verdict] ?? [], seen);
+  if (picked) return picked;
+  const fallback = HERO_FALLBACK[verdict];
+  if (!isDuplicate(fallback, seen)) seen.add(normalizeKey(fallback));
+  return fallback;
+}
+
+function buildSupportingSummaryLine(input: IntelligenceExposureInput, seen: Set<string>): string {
+  const { verdict, discountTruth, trustRisk, categoryIntelligence, alternativeAdvantage } = input;
+  const candidates =
+    verdict === "BUY READY"
+      ? [discountTruth.explanation, categoryIntelligence.categoryReasons[0]]
+      : verdict === "WAIT"
+        ? [discountTruth.reason, categoryIntelligence.categoryReasons[0]]
+        : verdict === "COMPARE"
+          ? [alternativeAdvantage.advantageReasons[1], categoryIntelligence.categoryReasons[0]]
+          : [trustRisk.trustReason, discountTruth.explanation];
+  return pickFirstSupportingLine(candidates, seen);
+}
+
+function pushEvidenceChip(
+  chips: ExposureChip[],
+  label: string,
+  tone: ExposureChipTone,
+  evidence: ExposureChipEvidence
+): void {
+  if (chips.length >= 3) return;
+  const marker = evidence === "positive" ? "✓" : "⚠";
+  chips.push({ label: `${marker} ${label}`, tone, evidence });
+}
+
+function buildEvidenceChips(input: IntelligenceExposureInput): ExposureChip[] {
+  const {
+    verdict,
+    trustRisk,
+    buyWait,
+    discountTruth,
+    rankingRationaleLine,
+    priceTarget,
+    alternativeAdvantage,
+    intentIntelligence,
+    isLeadProduct,
+  } = input;
+  const chips: ExposureChip[] = [];
+  const trusted = trustRisk.trustScore >= 62 && trustRisk.riskScore < 52;
+  const rankedFirst = /ranked first/i.test(rankingRationaleLine);
+  const genuine =
+    discountTruth.verdict === "Genuine" || discountTruth.verdict === "Likely Genuine";
+  const inflated =
+    discountTruth.verdict === "Inflated" || discountTruth.verdict === "Likely Inflated";
+  const priceElevated =
+    (priceTarget.distanceFromLowPct ?? 0) >= 5 ||
+    priceTarget.potentialSavings >= 5 ||
+    (priceTarget.opportunityScore ?? 0) >= 45;
+  const buyWindow = buyWait.verdict === "BUY NOW";
+  const waitRecommended = buyWait.verdict === "WAIT";
+  const betterAlt =
+    !isLeadProduct ||
+    alternativeAdvantage.leadAdvantageScore < 55 ||
+    /better alternative|stronger option/i.test(alternativeAdvantage.comparisonSummary);
+
+  if (verdict === "BUY READY") {
+    if (trusted) pushEvidenceChip(chips, "Trusted Seller", "emerald", "positive");
+    if (rankedFirst) pushEvidenceChip(chips, "Ranked First", "blue", "positive");
+    if (buyWindow) pushEvidenceChip(chips, "Buy Window Active", "emerald", "positive");
+    else if (genuine) pushEvidenceChip(chips, "Genuine Discount", "emerald", "positive");
+    if (intentIntelligence.intentMatchScore >= 58 && chips.length < 3) {
+      pushEvidenceChip(chips, "Strong Intent Match", "violet", "positive");
+    }
+  } else if (verdict === "WAIT") {
+    if (trusted) pushEvidenceChip(chips, "Trusted Seller", "slate", "positive");
+    if (priceElevated || waitRecommended) {
+      pushEvidenceChip(chips, "Price Elevated", "amber", "caution");
+    }
+    if (waitRecommended) pushEvidenceChip(chips, "Wait Recommended", "amber", "caution");
+    if (inflated) pushEvidenceChip(chips, "Inflated Discount", "amber", "caution");
+  } else if (verdict === "AVOID") {
+    if (trustRisk.riskScore >= 55) pushEvidenceChip(chips, "Elevated Risk", "amber", "caution");
+    if (trustRisk.trustScore < 52) pushEvidenceChip(chips, "Trust Concerns", "amber", "caution");
+    if (inflated) pushEvidenceChip(chips, "Inflated Discount", "amber", "caution");
+    if (trustRisk.factors.suspiciousOfferRisk >= 55) {
+      pushEvidenceChip(chips, "Suspicious Offer", "amber", "caution");
+    }
+  } else if (verdict === "COMPARE") {
+    if (trusted) pushEvidenceChip(chips, "Trusted Seller", "slate", "positive");
+    if (betterAlt) pushEvidenceChip(chips, "Better Alternative Found", "blue", "caution");
+    if (buyWait.verdict === "COMPARE") pushEvidenceChip(chips, "Compare Options", "blue", "positive");
+    if (rankedFirst && isLeadProduct) pushEvidenceChip(chips, "Ranked First", "blue", "positive");
+  }
+
+  return chips.slice(0, 3);
+}
+
+function prefixExpandSlot(role: string, line: string): string {
+  const body = clipLine(line, 88);
+  if (!body) return "";
+  return clipLine(`${role} · ${body}`, 96);
+}
+
 function pickInstitutionalReasoning(
   activatedBrief: ActivatedBriefPresentation | null,
   optimizedSurface: OptimizedVerdictSurface,
@@ -119,33 +295,23 @@ function pickInstitutionalReasoning(
 }
 
 function buildSummaryLines(input: IntelligenceExposureInput, seen: Set<string>): string[] {
-  const primary = clipLine(input.unifiedDecision.decisionSummary, 96);
   const lines: string[] = [];
-  if (primary && !isDuplicate(primary, seen)) lines.push(primary);
-
-  const ranking = clipLine(input.rankingRationaleLine, 96);
-  if (
-    ranking &&
-    input.rankingRationaleLine.includes("Ranked first") &&
-    !isDuplicate(ranking, seen) &&
-    lines.length < 2
-  ) {
-    lines.push(ranking);
+  const hero = buildHeroSummaryLine(input, seen);
+  if (hero) lines.push(hero);
+  if (lines.length < 2) {
+    const support = buildSupportingSummaryLine(input, seen);
+    if (support) lines.push(support);
   }
-
   while (lines.length < 2) lines.push("");
   return lines.slice(0, 2);
 }
 
 function buildExposureChips(input: IntelligenceExposureInput, seen: Set<string>): ExposureChip[] {
-  let chips: ExposureChip[] = [];
-  chips = mergeDiscountTruthChip(chips, input.discountTruth, 3);
-  chips = mergeBuyWaitChip(chips, input.buyWait, 3);
-  chips = mergeTrustRiskChip(chips, input.trustRisk, 3);
+  const chips = buildEvidenceChips(input);
   for (const chip of chips) {
     seen.add(normalizeKey(chip.label));
   }
-  return chips.slice(0, 3);
+  return chips;
 }
 
 function buildIntentSlot(input: IntelligenceExposureInput, seen: Set<string>): string {
@@ -156,9 +322,9 @@ function buildIntentSlot(input: IntelligenceExposureInput, seen: Set<string>): s
   ];
   for (const value of candidates) {
     const line = clipLine(value, 96);
-    if (line && !isDuplicate(line, seen)) return line;
+    if (line && !isDuplicate(line, seen)) return prefixExpandSlot("Intent", line);
   }
-  return clipLine("Search intent fit evaluated for this listing.", 96);
+  return prefixExpandSlot("Intent", "Search intent fit evaluated for this listing.");
 }
 
 function buildTrustRiskSlot(input: IntelligenceExposureInput, seen: Set<string>): string {
@@ -167,10 +333,13 @@ function buildTrustRiskSlot(input: IntelligenceExposureInput, seen: Set<string>)
     trustRisk.riskScore >= 52
       ? clipLine(`${trustRisk.riskReason} ${trustRisk.trustReason}`.trim(), 96)
       : clipLine(`${trustRisk.trustReason} ${trustRisk.riskReason}`.trim(), 96);
-  if (combined && !isDuplicate(combined, seen)) return combined;
+  if (combined && !isDuplicate(combined, seen)) return prefixExpandSlot("Trust", combined);
   const fallback = clipLine(trustRisk.cardLine, 96);
-  if (fallback && !isDuplicate(fallback, seen)) return fallback;
-  return clipLine(`Trust ${trustRisk.trustScore}/100 · Risk ${trustRisk.riskScore}/100.`, 96);
+  if (fallback && !isDuplicate(fallback, seen)) return prefixExpandSlot("Trust", fallback);
+  return prefixExpandSlot(
+    "Trust",
+    `Seller trust ${trustRisk.trustScore}/100 · risk ${trustRisk.riskScore}/100.`
+  );
 }
 
 function buildCompetitiveSlot(input: IntelligenceExposureInput, seen: Set<string>): string {
@@ -195,13 +364,13 @@ function buildCompetitiveSlot(input: IntelligenceExposureInput, seen: Set<string
       ];
   for (const value of candidates) {
     const line = clipLine(value, 96);
-    if (line && !isDuplicate(line, seen)) return line;
+    if (line && !isDuplicate(line, seen)) return prefixExpandSlot("Competitive", line);
   }
-  return clipLine(
+  return prefixExpandSlot(
+    "Competitive",
     categoryIntelligence.segmentLabel
       ? `${categoryIntelligence.segmentLabel} fit ${categoryIntelligence.categoryScore}/100.`
-      : "Competitive posture assessed against tray alternatives.",
-    96
+      : "Competitive posture assessed against tray alternatives."
   );
 }
 
@@ -213,14 +382,17 @@ function buildPriceOpportunitySlot(input: IntelligenceExposureInput, seen: Set<s
   if (hasTargetSignal) {
     for (const value of priceCandidates) {
       const line = clipLine(value, 96);
-      if (line && !isDuplicate(line, seen)) return line;
+      if (line && !isDuplicate(line, seen)) return prefixExpandSlot("Price", line);
     }
   }
   for (const value of [discountTruth.explanation, discountTruth.reason]) {
     const line = clipLine(value, 96);
-    if (line && !isDuplicate(line, seen)) return line;
+    if (line && !isDuplicate(line, seen)) return prefixExpandSlot("Price", line);
   }
-  return clipLine(discountTruth.label || "Price opportunity assessed from tray signals.", 96);
+  return prefixExpandSlot(
+    "Price",
+    discountTruth.label || "Price opportunity assessed from tray signals."
+  );
 }
 
 function buildExpandSlots(input: IntelligenceExposureInput, seen: Set<string>): [string, string, string, string] {
@@ -239,13 +411,28 @@ function buildSmartDecisionLines(input: IntelligenceExposureInput, seen: Set<str
     input.optimizedSurface,
     input.verdict
   );
-  if (institutional && !isDuplicate(institutional, seen)) lines.push(institutional);
+  if (institutional && !lineCompetesWithBand(institutional) && !isDuplicate(institutional, seen)) {
+    lines.push(institutional);
+  }
 
   const discount = clipLine(input.discountTruth.reason || input.discountTruth.explanation, 112);
-  if (discount && !isDuplicate(discount, seen)) lines.push(discount);
+  if (discount && !lineCompetesWithBand(discount) && !isDuplicate(discount, seen)) {
+    lines.push(discount);
+  }
 
-  const timing = clipLine(input.buyWait.reason || input.buyWait.explanation, 112);
-  if (timing && !isDuplicate(timing, seen)) lines.push(timing);
+  const timing = clipLine(input.buyWait.explanation || input.buyWait.reason, 112);
+  const timingFitsVerdict =
+    (input.verdict === "BUY READY" && input.buyWait.verdict === "BUY NOW") ||
+    (input.verdict === "WAIT" && input.buyWait.verdict === "WAIT") ||
+    (input.verdict === "COMPARE" && input.buyWait.verdict === "COMPARE");
+  if (
+    timing &&
+    timingFitsVerdict &&
+    !lineCompetesWithBand(timing) &&
+    !isDuplicate(timing, seen)
+  ) {
+    lines.push(timing);
+  }
 
   return lines.slice(0, 3);
 }

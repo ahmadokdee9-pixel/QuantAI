@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Check, ChevronDown, ExternalLink, ImageIcon, PanelRight, Sparkles, X } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, ExternalLink, ImageIcon, PanelRight, Sparkles, X } from "lucide-react";
 import type { ProductDealIntelligence } from "@/lib/intelligence/dealIntelligenceEngine";
 import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
 import type { QuantProduct } from "@/lib/shoppingScore";
@@ -184,10 +184,11 @@ export default function IntelligenceCardBody({
     );
   }, [coherentDecision, optimizedSurface.summaryLines, activatedMarket]);
 
+  const showLegacyQuantVerdict = !coherentDecision;
   const hasExpandedIntel =
     expandedSignals.length > 0 ||
     smartDecisions.length > 0 ||
-    quantVerdict.length > 0 ||
+    (showLegacyQuantVerdict && quantVerdict.length > 0) ||
     Boolean(commerceCoverage?.viewAllOffersEnabled);
 
   return (
@@ -248,7 +249,16 @@ export default function IntelligenceCardBody({
       <div className="qa-ref-intel-card__summary" aria-label="Intelligence summary">
         <ul className="qa-ref-intel-card__summary-list">
           {summaryReasons.map((reason, i) => (
-            <li key={`${reason || "empty"}-${i}`} className={reason ? "" : "qa-ref-intel-card__summary-empty"}>
+            <li
+              key={`${reason || "empty"}-${i}`}
+              className={
+                reason
+                  ? i === 0 && coherentDecision
+                    ? "qa-ref-intel-card__summary-line--hero"
+                    : ""
+                  : "qa-ref-intel-card__summary-empty"
+              }
+            >
               {reason ? (
                 <>
                   <Check className="size-3 shrink-0" aria-hidden />
@@ -262,15 +272,19 @@ export default function IntelligenceCardBody({
         </ul>
         {intelChips.length > 0 ? (
           <div className="qa-ref-intel-card__signal-panel" aria-label="Smart signal panel">
-            {intelChips.map((chip) => (
-              <span
-                key={chip.label}
-                className={`qa-ref-intel-card__intel-chip qa-ref-intel-card__intel-chip--${chip.tone}`}
-              >
-                <Check className="size-2.5 shrink-0" aria-hidden />
-                {chip.label}
-              </span>
-            ))}
+            {intelChips.map((chip) => {
+              const caution = chip.label.trimStart().startsWith("⚠");
+              const ChipIcon = caution ? AlertTriangle : Check;
+              return (
+                <span
+                  key={chip.label}
+                  className={`qa-ref-intel-card__intel-chip qa-ref-intel-card__intel-chip--${chip.tone}${caution ? " qa-ref-intel-card__intel-chip--caution" : ""}`}
+                >
+                  <ChipIcon className="size-2.5 shrink-0" aria-hidden />
+                  {chip.label}
+                </span>
+              );
+            })}
           </div>
         ) : null}
       </div>
@@ -379,10 +393,12 @@ export default function IntelligenceCardBody({
               </ul>
             </div>
 
-            <div className="qa-ref-intel-card__intel-module qa-ref-intel-card__intel-module--verdict">
-              <p className="qa-ref-intel-card__intel-module-kicker">QuantAI verdict</p>
-              <p className="qa-ref-intel-card__intel-module-verdict">{quantVerdict}</p>
-            </div>
+            {showLegacyQuantVerdict ? (
+              <div className="qa-ref-intel-card__intel-module qa-ref-intel-card__intel-module--verdict">
+                <p className="qa-ref-intel-card__intel-module-kicker">QuantAI verdict</p>
+                <p className="qa-ref-intel-card__intel-module-verdict">{quantVerdict}</p>
+              </div>
+            ) : null}
 
             {briefTags.length > 0 ? (
               <ul className="qa-ref-intel-card__brief-tags">

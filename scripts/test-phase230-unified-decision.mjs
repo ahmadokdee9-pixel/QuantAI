@@ -299,9 +299,10 @@ const coherence = activateProductDecisionCoherence({
   searchQuery: "samsung galaxy s24 ultra best camera phone",
 });
 assert.equal(coherence.verdict, "BUY READY", "phase 14.0 verdict authority preserved");
+assert.ok(coherence.summaryLines[0]?.length > 0, "phase 26 hero summary on card face");
 assert.ok(
-  coherence.summaryLines[0]?.includes("Buy now") || coherence.summaryLines[0]?.includes("Wait"),
-  "phase 25 unified summary dominates card summary"
+  !coherence.summaryLines[0]?.toLowerCase().includes("buy now"),
+  "unified buy-now copy stays in drawer not card hero"
 );
 assert.ok(
   coherence.summaryLines.some((line) => line.includes("Ranked first")) ||
@@ -315,8 +316,8 @@ assert.ok(
   "drawer synthesis carries unified reasoning"
 );
 assert.ok(
-  coherence.summaryLines.some((line) => line.includes("Buy now")),
-  "unified summary exposed in decision brief"
+  coherence.unifiedDecision.decisionSummary.includes("Buy now"),
+  "unified summary remains in phase 23 layer for drawer depth"
 );
 
 console.log("phase230-unified-decision-activation: ok");
