@@ -19,7 +19,7 @@ import {
   type MarketContextInput,
 } from "@/lib/ui/marketContextActivation";
 import type { CoherentProductDecision } from "@/lib/ui/decisionCoherenceActivation";
-import type { Phase270ProductPresentation } from "@/lib/ui/phase270PresentationActivation";
+import type { Phase271ProductPresentation } from "@/lib/ui/phase271PresentationActivation";
 import { formatListingPrice } from "@/lib/commerce/cues";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import {
@@ -57,8 +57,8 @@ type Props = {
   marketContext?: MarketContextInput | null;
   coherentDecision?: CoherentProductDecision | null;
   commerceCoverage?: ActivatedCommerceCoverage | null;
-  /** Phase 27 — confidence-ranked presentation overlay. */
-  phase270Presentation?: Phase270ProductPresentation | null;
+  /** Phase 27.1 — decision distribution + confidence spread overlay. */
+  phase271Presentation?: Phase271ProductPresentation | null;
 };
 
 const SUMMARY_SLOTS = 2;
@@ -95,7 +95,7 @@ export default function IntelligenceCardBody({
   marketContext = null,
   coherentDecision = null,
   commerceCoverage = null,
-  phase270Presentation = null,
+  phase271Presentation = null,
 }: Props) {
   const [imageErr, setImageErr] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -142,21 +142,22 @@ export default function IntelligenceCardBody({
       valueIntelligence: verdictSurface?.valueIntelligence ?? null,
     });
   }, [coherentDecision, resolvedVerdict, resolvedReason, scopedBrief, verdictSurface]);
-  const displayReasonLine = optimizedSurface.verdictReason || resolvedReason;
+  const displayReasonLine =
+    phase271Presentation?.distributionReason || optimizedSurface.verdictReason || resolvedReason;
   const activatedMarket = useMemo(() => {
     if (coherentDecision) return coherentDecision.activatedMarket;
     return activateMarketContext({ decisionBrief: scopedBrief, ...scopedMarketContext });
   }, [coherentDecision, scopedBrief, scopedMarketContext]);
   const whyChose = buildWhyQuantAIChoseThis(intelArgs);
   const intelChips = useMemo(() => {
-    if (phase270Presentation?.displayChips.length) {
-      return phase270Presentation.displayChips;
+    if (phase271Presentation?.displayChips.length) {
+      return phase271Presentation.displayChips;
     }
     if (coherentDecision?.intelligenceExposure?.chips.length) {
       return coherentDecision.intelligenceExposure.chips;
     }
     return buildIntelligenceChips(intelArgs).slice(0, 2);
-  }, [phase270Presentation?.displayChips, coherentDecision?.intelligenceExposure, intelArgs]);
+  }, [phase271Presentation?.displayChips, coherentDecision?.intelligenceExposure, intelArgs]);
   const expandedSignals = useMemo(() => {
     if (coherentDecision) return coherentDecision.expandedSignals;
     if (activatedBrief?.topSignals.length || activatedBrief?.riskSignals.length) {
@@ -184,13 +185,14 @@ export default function IntelligenceCardBody({
   const quantVerdict = useMemo(() => buildQuantAIVerdictNarrative(intelArgs), [intelArgs]);
 
   const summaryReasons = useMemo(() => {
+    if (phase271Presentation) return phase271Presentation.summaryLines;
     if (coherentDecision) return coherentDecision.summaryLines;
     return mergeMarketContextSummary(
       optimizedSurface.summaryLines.slice(0, SUMMARY_SLOTS),
       activatedMarket,
       SUMMARY_SLOTS
     );
-  }, [coherentDecision, optimizedSurface.summaryLines, activatedMarket]);
+  }, [phase271Presentation, coherentDecision, optimizedSurface.summaryLines, activatedMarket]);
 
   const showLegacyQuantVerdict = !coherentDecision;
   const hasExpandedIntel =
@@ -261,7 +263,7 @@ export default function IntelligenceCardBody({
               key={`${reason || "empty"}-${i}`}
               className={
                 reason
-                  ? i === 0 && coherentDecision
+                  ? i === 0 && (phase271Presentation || coherentDecision)
                     ? "qa-ref-intel-card__summary-line--hero"
                     : ""
                   : "qa-ref-intel-card__summary-empty"

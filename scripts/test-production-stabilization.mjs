@@ -132,6 +132,24 @@ assert.ok(
   "QUANTAI_PHASE_26_2_STABLE_FROZEN lock present"
 );
 assert.ok(
+  readFileSync(join(process.cwd(), "lib/governance/quantaiPhase271Freeze.ts"), "utf8").includes(
+    "QUANTAI_PHASE_27_1_STABLE_FROZEN"
+  ),
+  "QUANTAI_PHASE_27_1_STABLE_FROZEN lock present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/decisionDistributionAuthority.ts"), "utf8").includes(
+    "resolveDecisionDistribution"
+  ),
+  "phase 27.1 decision distribution authority present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/confidenceSpreadEngine.ts"), "utf8").includes(
+    "resolveConfidenceSpread"
+  ),
+  "phase 27.1 confidence spread engine present"
+);
+assert.ok(
   readFileSync(join(process.cwd(), "lib/ui/rankingRationaleActivation.ts"), "utf8").includes(
     "activateRankingRationale"
   ),
