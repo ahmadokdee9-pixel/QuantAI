@@ -40,6 +40,7 @@ import {
   buildTrayCoherenceContext,
   type CoherentProductDecision,
 } from "@/lib/ui/decisionCoherenceActivation";
+import { resolveUnifiedTrayVerdict } from "@/lib/ui/unifiedVerdictAuthority";
 import CompareIntelligencePanel from "./CompareIntelligencePanel";
 import IntelligenceCommandCenter from "./IntelligenceCommandCenter";
 import LiveIntelligenceRail from "./LiveIntelligenceRail";
@@ -260,24 +261,35 @@ export default function ProductResultsSurface({
     [sortedProducts, searchQuery, searchMeta?.phase93TrustDiscount]
   );
   const coherenceByLink = useMemo((): Map<string, CoherentProductDecision> => {
-    const map = new Map<string, CoherentProductDecision>();
-    for (let index = 0; index < sortedProducts.length; index++) {
-      const product = sortedProducts[index]!;
-      const rank = rankByLink.get(product.link) ?? index;
-      map.set(
-        product.link,
-        activateProductDecisionCoherence({
-          product,
-          list: sortedProducts,
-          rank,
-          tray: trayCoherence,
-          commerceCoverage: commerceCoverageByLink.get(product.link) ?? null,
-          searchQuery: searchQuery.trim(),
-        })
-      );
-    }
-    return map;
+    const buildMap = (trayVerdictAuthority: CoherentProductDecision["verdict"] | null) => {
+      const map = new Map<string, CoherentProductDecision>();
+      for (let index = 0; index < sortedProducts.length; index++) {
+        const product = sortedProducts[index]!;
+        const rank = rankByLink.get(product.link) ?? index;
+        map.set(
+          product.link,
+          activateProductDecisionCoherence({
+            product,
+            list: sortedProducts,
+            rank,
+            tray: trayCoherence,
+            commerceCoverage: commerceCoverageByLink.get(product.link) ?? null,
+            searchQuery: searchQuery.trim(),
+            trayVerdictAuthority,
+          })
+        );
+      }
+      return map;
+    };
+    const pass1 = buildMap(null);
+    const unified = resolveUnifiedTrayVerdict(pass1.values());
+    return buildMap(unified.verdict);
   }, [sortedProducts, rankByLink, trayCoherence, commerceCoverageByLink, searchQuery]);
+
+  const unifiedTrayVerdict = useMemo(
+    () => resolveUnifiedTrayVerdict(coherenceByLink.values()),
+    [coherenceByLink]
+  );
   const detailCoherence = detailProduct ? coherenceByLink.get(detailProduct.link) ?? null : null;
   const unifiedMarketByLink = useMemo(
     () => buildUnifiedMarketGroup(sortedProducts, searchQuery.trim()).byLink,
@@ -759,6 +771,7 @@ export default function ProductResultsSurface({
         products={sortedProducts}
         searchIntelligence={searchIntelligence}
         marketComparison={marketComparison ?? null}
+        trayVerdict={unifiedTrayVerdict}
       />
 
       {searchIntelligence && (

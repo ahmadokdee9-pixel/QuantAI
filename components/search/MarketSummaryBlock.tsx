@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { buildMarketSummary } from "@/lib/ui/marketSummary";
+import type { UnifiedTrayVerdict } from "@/lib/ui/unifiedVerdictAuthority";
 
 type Props = {
   products: QuantProduct[];
@@ -12,6 +13,8 @@ type Props = {
     merchantCount?: number;
     trustedMerchantCount?: number;
   } | null;
+  /** Phase 26.1 — same authority as product cards (no parallel final verdict). */
+  trayVerdict?: UnifiedTrayVerdict | null;
 };
 
 function verdictTone(action: string): "buy-ready" | "compare" | "wait" {
@@ -32,10 +35,11 @@ export default function MarketSummaryBlock({
   products,
   searchIntelligence = null,
   marketComparison = null,
+  trayVerdict = null,
 }: Props) {
   const summary = useMemo(
-    () => buildMarketSummary(products, searchIntelligence, marketComparison),
-    [products, searchIntelligence, marketComparison],
+    () => buildMarketSummary(products, searchIntelligence, marketComparison, trayVerdict),
+    [products, searchIntelligence, marketComparison, trayVerdict],
   );
 
   if (!summary) return null;

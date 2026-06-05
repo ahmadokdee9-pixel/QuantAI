@@ -390,9 +390,13 @@ export function activateProductDecisionCoherence(args: {
   tray: DecisionCoherenceTrayContext;
   commerceCoverage?: ActivatedCommerceCoverage | null;
   searchQuery?: string;
+  /** Phase 26.1 — tray authority from card cluster (replaces parallel verdict engine). */
+  trayVerdictAuthority?: PrimaryVerdict | null;
 }): CoherentProductDecision {
-  const { product, list, rank, tray, commerceCoverage = null, searchQuery = "" } = args;
-  const institutionalVerdict = resolveInstitutionalVerdict(tray.verdictIntelligence);
+  const { product, list, rank, tray, commerceCoverage = null, searchQuery = "", trayVerdictAuthority = null } =
+    args;
+  const institutionalVerdict =
+    trayVerdictAuthority ?? resolveInstitutionalVerdict(tray.verdictIntelligence);
   const phase93Assessment = findPhase93Assessment(tray.phase93, product);
   const lead = isLeadProduct({ product, rank, decisionBrief: tray.decisionBrief });
   const verdict = resolveCoherentProductVerdict({

@@ -1,6 +1,7 @@
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
 import { getStoreTrustScore, type QuantProduct } from "@/lib/shoppingScore";
 import { deriveCardDecision, searchIntelActionLabel } from "@/lib/ui/decisionLanguage";
+import type { UnifiedTrayVerdict } from "@/lib/ui/unifiedVerdictAuthority";
 
 export type MarketSummaryData = {
   averagePrice: number;
@@ -24,7 +25,8 @@ export function buildMarketSummary(
   marketComparison?: {
     merchantCount?: number;
     trustedMerchantCount?: number;
-  } | null
+  } | null,
+  trayVerdict?: UnifiedTrayVerdict | null
 ): MarketSummaryData | null {
   if (products.length === 0) return null;
 
@@ -57,13 +59,17 @@ export function buildMarketSummary(
       })
     : null;
 
-  const recommendedAction = searchIntelligence
-    ? searchIntelActionLabel(searchIntelligence.finalRecommendation)
-    : leadDecision?.verdict ?? "COMPARE";
+  const recommendedAction = trayVerdict
+    ? trayVerdict.verdict
+    : searchIntelligence
+      ? searchIntelActionLabel(searchIntelligence.finalRecommendation)
+      : (leadDecision?.verdict ?? "COMPARE");
 
-  const confidence = searchIntelligence
-    ? Math.round(Math.max(8, 100 - searchIntelligence.buyerUncertaintyScore))
-    : leadDecision?.alignmentScore ?? 50;
+  const confidence = trayVerdict
+    ? trayVerdict.confidence
+    : searchIntelligence
+      ? Math.round(Math.max(8, 100 - searchIntelligence.buyerUncertaintyScore))
+      : (leadDecision?.alignmentScore ?? 50);
 
   const minPrice = prices.length ? Math.min(...prices) : 0;
   const maxPrice = prices.length ? Math.max(...prices) : 0;
@@ -71,7 +77,7 @@ export function buildMarketSummary(
     minPrice > 0 && maxPrice > minPrice ? Math.round(((maxPrice - minPrice) / minPrice) * 100) : 0;
 
   const marketObservation =
-    searchIntelligence?.finalBody?.trim() ||
+    trayVerdict?.marketObservation?.trim() ||
     (spreadPct > 35
       ? "Price spread remains wide across sellers — compare before committing."
       : trustedSellerCount >= 2

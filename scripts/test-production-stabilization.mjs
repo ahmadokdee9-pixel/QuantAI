@@ -114,6 +114,12 @@ assert.ok(
   "phase 14.0 institutional verdict authority present"
 );
 assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/unifiedVerdictAuthority.ts"), "utf8").includes(
+    "resolveUnifiedTrayVerdict"
+  ),
+  "phase 26.1 unified tray verdict authority present"
+);
+assert.ok(
   readFileSync(join(process.cwd(), "lib/ui/rankingRationaleActivation.ts"), "utf8").includes(
     "activateRankingRationale"
   ),
