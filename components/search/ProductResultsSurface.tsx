@@ -42,6 +42,10 @@ import {
   type CoherentProductDecision,
 } from "@/lib/ui/decisionCoherenceActivation";
 import { resolveUnifiedTrayVerdict } from "@/lib/ui/unifiedVerdictAuthority";
+import {
+  activatePhase270TrayPresentation,
+  buildPhase270ProductMap,
+} from "@/lib/ui/phase270PresentationActivation";
 import CompareIntelligencePanel from "./CompareIntelligencePanel";
 import IntelligenceCommandCenter from "./IntelligenceCommandCenter";
 import LiveIntelligenceRail from "./LiveIntelligenceRail";
@@ -290,6 +294,14 @@ export default function ProductResultsSurface({
   const unifiedTrayVerdict = useMemo(
     () => resolveUnifiedTrayVerdict(coherenceByLink.values()),
     [coherenceByLink]
+  );
+  const phase270ByLink = useMemo(
+    () => buildPhase270ProductMap(coherenceByLink),
+    [coherenceByLink]
+  );
+  const phase270Tray = useMemo(
+    () => activatePhase270TrayPresentation(coherenceByLink, unifiedTrayVerdict),
+    [coherenceByLink, unifiedTrayVerdict]
   );
   const detailCoherence = detailProduct ? coherenceByLink.get(detailProduct.link) ?? null : null;
   const unifiedMarketByLink = useMemo(
@@ -713,6 +725,7 @@ export default function ProductResultsSurface({
                   marketContext={marketContext}
                   coherentDecision={coherenceByLink.get(p.link) ?? null}
                   commerceCoverage={commerceCoverageByLink.get(p.link) ?? null}
+                  phase270Presentation={phase270ByLink.get(p.link) ?? null}
                 />
               </div>
             );
@@ -760,6 +773,7 @@ export default function ProductResultsSurface({
                     marketContext={marketContext}
                     coherentDecision={coherenceByLink.get(p.link) ?? null}
                     commerceCoverage={commerceCoverageByLink.get(p.link) ?? null}
+                    phase270Presentation={phase270ByLink.get(p.link) ?? null}
                   />
                 </div>
               );
@@ -773,6 +787,7 @@ export default function ProductResultsSurface({
         searchIntelligence={searchIntelligence}
         marketComparison={marketComparison ?? null}
         trayVerdict={unifiedTrayVerdict}
+        phase270Tray={phase270Tray}
       />
 
       {searchIntelligence && (

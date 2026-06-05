@@ -3,6 +3,10 @@
  *
  * Freeze lock for Phase 26.0–26.2 presentation authority (verdict + reason pipelines).
  * Do not modify locked modules without an explicit unfreeze protocol.
+ *
+ * Phase 27.0 presentation overlay (confidenceAuthority / alternativeAuthority /
+ * phase270PresentationActivation) may extend UI consumers only — verdict and reason
+ * authority modules remain frozen.
  */
 
 export const QUANTAI_PHASE_26_2_STABLE_FROZEN = "QUANTAI_PHASE_26_2_STABLE_FROZEN" as const;

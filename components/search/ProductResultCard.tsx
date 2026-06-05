@@ -57,6 +57,7 @@ import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
 import type { VerdictSurfaceContext } from "@/lib/ui/verdictSurfaceOptimization";
 import type { MarketContextInput } from "@/lib/ui/marketContextActivation";
 import type { CoherentProductDecision } from "@/lib/ui/decisionCoherenceActivation";
+import type { Phase270ProductPresentation } from "@/lib/ui/phase270PresentationActivation";
 import type { ActivatedCommerceCoverage } from "@/lib/ui/commerceCoverageActivation";
 import { classifyListingOutlier } from "@/lib/ui/listingOutlierFilter";
 import IntelligenceCardBody from "./IntelligenceCardBody";
@@ -221,6 +222,8 @@ type Props = {
   marketContext?: MarketContextInput | null;
   coherentDecision?: CoherentProductDecision | null;
   commerceCoverage?: ActivatedCommerceCoverage | null;
+  /** Phase 27 — evidence-ranked confidence overlay (does not alter Phase 26.2 authority). */
+  phase270Presentation?: Phase270ProductPresentation | null;
 };
 
 function ProductResultCard({
@@ -249,6 +252,7 @@ function ProductResultCard({
   marketContext = null,
   coherentDecision = null,
   commerceCoverage = null,
+  phase270Presentation = null,
 }: Props) {
   const isTrayFocused = trayFocusLink === p.link;
   const isTrayDimmed = Boolean(trayFocusLink && trayFocusLink !== p.link);
@@ -500,6 +504,7 @@ function ProductResultCard({
             marketContext={coherentDecision?.marketContext ?? marketContext}
             coherentDecision={coherentDecision}
             commerceCoverage={commerceCoverage}
+            phase270Presentation={phase270Presentation}
           />
         </div>
       </motion.article>

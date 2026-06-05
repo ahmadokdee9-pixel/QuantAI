@@ -236,6 +236,7 @@ export function trustMicroLabel(trust: TrustTier): string {
 
 
 
+/** @deprecated Phase 27+ — legacy tray binding only; display uses confidenceAuthority. */
 export function primaryVerdictAlignment(verdict: PrimaryVerdict): number {
 
   switch (verdict) {
@@ -258,6 +259,18 @@ export function primaryVerdictAlignment(verdict: PrimaryVerdict): number {
 
   }
 
+}
+
+/** Evidence-based fallback confidence when coherence layers are unavailable. */
+export function deriveFallbackConfidence(args: {
+  trustScore: number;
+  peerCount?: number;
+  suspiciousPrice?: boolean;
+}): number {
+  const trust = Math.max(0, Math.min(100, Math.round(args.trustScore)));
+  const depth = (args.peerCount ?? 1) >= 4 ? 14 : (args.peerCount ?? 1) >= 2 ? 8 : 4;
+  const penalty = args.suspiciousPrice ? 18 : 0;
+  return Math.max(8, Math.min(100, Math.round(trust * 0.58 + depth + 12 - penalty)));
 }
 
 
@@ -306,7 +319,11 @@ export function deriveCardDecision(args: {
 
     reason: reason.length > 120 ? `${reason.slice(0, 119).trimEnd()}…` : reason,
 
-    alignmentScore: primaryVerdictAlignment(verdict),
+    alignmentScore: deriveFallbackConfidence({
+      trustScore: args.trustScore,
+      peerCount: args.peerCount,
+      suspiciousPrice: args.suspiciousPrice,
+    }),
 
     trustMicro: trustMicroLabel(trust),
 

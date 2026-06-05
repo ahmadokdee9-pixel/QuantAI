@@ -6,6 +6,7 @@ import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTyp
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { buildMarketSummary } from "@/lib/ui/marketSummary";
 import type { UnifiedTrayVerdict } from "@/lib/ui/unifiedVerdictAuthority";
+import type { Phase270TrayPresentation } from "@/lib/ui/phase270PresentationActivation";
 
 type Props = {
   products: QuantProduct[];
@@ -16,6 +17,8 @@ type Props = {
   } | null;
   /** Phase 26.1 — same authority as product cards (no parallel final verdict). */
   trayVerdict?: UnifiedTrayVerdict | null;
+  /** Phase 27 — confidence-ranked final verdict overlay (Phase 26.2 verdict authority unchanged). */
+  phase270Tray?: Phase270TrayPresentation | null;
 };
 
 function verdictTone(action: string): "buy-ready" | "compare" | "wait" {
@@ -37,6 +40,7 @@ export default function MarketSummaryBlock({
   searchIntelligence = null,
   marketComparison = null,
   trayVerdict = null,
+  phase270Tray = null,
 }: Props) {
   const summary = useMemo(
     () => buildMarketSummary(products, searchIntelligence, marketComparison, trayVerdict),
@@ -46,7 +50,11 @@ export default function MarketSummaryBlock({
   if (!summary) return null;
 
   const tone = verdictTone(summary.recommendedAction);
-  const segments = confidenceSegments(summary.confidence);
+  const displayConfidence = phase270Tray?.trayConfidence ?? summary.confidence;
+  const segments = confidenceSegments(displayConfidence);
+  const synthesisText = phase270Tray
+    ? `Reason: ${phase270Tray.winningReasonLine} Alternative Pressure: ${phase270Tray.alternativePressureLine}`
+    : summary.marketObservation;
 
   return (
     <section className="qa-ref-exec-brief qa-ref-exec-brief--climax" aria-label="Final verdict">
@@ -59,7 +67,10 @@ export default function MarketSummaryBlock({
 
         <div className="qa-ref-exec-brief__verdict-head">
           <span className="qa-ref-exec-brief__seal" aria-hidden />
-          <span className="qa-ref-exec-brief__verdict-label">{summary.recommendedAction}</span>
+          <span className="qa-ref-exec-brief__verdict-label">
+            {summary.recommendedAction}
+            {phase270Tray ? ` · ${displayConfidence}%` : ""}
+          </span>
           <span className={`qa-ref-exec-brief__confidence qa-ref-exec-brief__confidence--${tone}`} aria-hidden>
             <span className={segments >= 1 ? "qa-ref-exec-brief__confidence-bar qa-ref-exec-brief__confidence-bar--on" : "qa-ref-exec-brief__confidence-bar"} />
             <span className={segments >= 2 ? "qa-ref-exec-brief__confidence-bar qa-ref-exec-brief__confidence-bar--on" : "qa-ref-exec-brief__confidence-bar"} />
@@ -67,7 +78,7 @@ export default function MarketSummaryBlock({
           </span>
         </div>
 
-        <p className="qa-ref-exec-brief__synthesis">{summary.marketObservation}</p>
+        <p className="qa-ref-exec-brief__synthesis">{synthesisText}</p>
         <span className="qa-ref-exec-brief__lock" aria-hidden />
       </div>
     </section>

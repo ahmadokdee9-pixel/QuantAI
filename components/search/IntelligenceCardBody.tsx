@@ -19,6 +19,7 @@ import {
   type MarketContextInput,
 } from "@/lib/ui/marketContextActivation";
 import type { CoherentProductDecision } from "@/lib/ui/decisionCoherenceActivation";
+import type { Phase270ProductPresentation } from "@/lib/ui/phase270PresentationActivation";
 import { formatListingPrice } from "@/lib/commerce/cues";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import {
@@ -56,6 +57,8 @@ type Props = {
   marketContext?: MarketContextInput | null;
   coherentDecision?: CoherentProductDecision | null;
   commerceCoverage?: ActivatedCommerceCoverage | null;
+  /** Phase 27 — confidence-ranked presentation overlay. */
+  phase270Presentation?: Phase270ProductPresentation | null;
 };
 
 const SUMMARY_SLOTS = 2;
@@ -92,6 +95,7 @@ export default function IntelligenceCardBody({
   marketContext = null,
   coherentDecision = null,
   commerceCoverage = null,
+  phase270Presentation = null,
 }: Props) {
   const [imageErr, setImageErr] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -145,11 +149,14 @@ export default function IntelligenceCardBody({
   }, [coherentDecision, scopedBrief, scopedMarketContext]);
   const whyChose = buildWhyQuantAIChoseThis(intelArgs);
   const intelChips = useMemo(() => {
+    if (phase270Presentation?.displayChips.length) {
+      return phase270Presentation.displayChips;
+    }
     if (coherentDecision?.intelligenceExposure?.chips.length) {
       return coherentDecision.intelligenceExposure.chips;
     }
     return buildIntelligenceChips(intelArgs).slice(0, 2);
-  }, [coherentDecision?.intelligenceExposure, intelArgs]);
+  }, [phase270Presentation?.displayChips, coherentDecision?.intelligenceExposure, intelArgs]);
   const expandedSignals = useMemo(() => {
     if (coherentDecision) return coherentDecision.expandedSignals;
     if (activatedBrief?.topSignals.length || activatedBrief?.riskSignals.length) {
