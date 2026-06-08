@@ -368,7 +368,8 @@ export default function Home() {
 
     try {
       const commerceMemory = readCommerceSessionMemoryFromBrowser();
-      const res = await fetch("/api/search", {
+      const searchUrl = "/api/search";
+      const res = await fetch(searchUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -379,6 +380,14 @@ export default function Home() {
         signal: ac.signal,
         body: JSON.stringify({ query: q, commerceMemory }),
       });
+      if (process.env.NODE_ENV === "development") {
+        console.debug("[search] API response", {
+          requestUrl: searchUrl,
+          responseUrl: res.url,
+          status: res.status,
+          contentType: res.headers.get("content-type"),
+        });
+      }
       const parsed = await readApiJson(res);
       if (parsed.notJson) {
         console.error("[search] Non-JSON response", {

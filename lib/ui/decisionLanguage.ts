@@ -18,7 +18,7 @@ import type { QuantProduct } from "@/lib/shoppingScore";
 
 
 
-export type PrimaryVerdict = "BUY READY" | "WAIT" | "COMPARE" | "AVOID";
+export type PrimaryVerdict = "BUY READY" | "WAIT" | "COMPARE" | "AVOID" | "INSUFFICIENT DATA";
 
 
 
@@ -218,6 +218,9 @@ export function primaryVerdictReason(
         ? "Seller trust score below acceptable threshold for checkout."
         : "Listing quality or pricing is too weak to recommend.";
 
+    case "INSUFFICIENT DATA":
+      return "Not enough verified market data yet — compare trusted listings before checkout.";
+
   }
 
 }
@@ -256,6 +259,10 @@ export function primaryVerdictAlignment(verdict: PrimaryVerdict): number {
     case "AVOID":
 
       return 24;
+
+    case "INSUFFICIENT DATA":
+
+      return 40;
 
   }
 

@@ -65,6 +65,22 @@ export type DecisionBriefDTO = {
   topSignals?: string[];
   riskSignals?: string[];
   confidenceExplanation?: string;
+  /** Phase 44 — opportunity detection brief fields. */
+  opportunityScore?: number;
+  opportunityLabel?: string;
+  opportunityDrivers?: string[];
+  /** Phase 45 — production readiness brief fields. */
+  trueValueScore?: number;
+  categoryQualityScore?: number;
+  discountConfidenceScore?: number;
+  merchantReliabilityScore?: number;
+  /** Phase 35 — personal commerce brief enrichment (existing slots only). */
+  personalCommerce?: {
+    detectedBuyer: string;
+    detectedTaste: string;
+    buyerMatchPct: number;
+    tasteMatchPct: number;
+  };
 };
 
 export function buildDecisionBrief(args: {

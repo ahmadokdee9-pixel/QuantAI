@@ -20,6 +20,10 @@ import {
 } from "@/lib/ui/marketContextActivation";
 import type { CoherentProductDecision } from "@/lib/ui/decisionCoherenceActivation";
 import type { Phase271ProductPresentation } from "@/lib/ui/phase271PresentationActivation";
+import {
+  resolveCardAuthorityView,
+  type UniversalProductDecision,
+} from "@/lib/ui/universalProductDecision";
 import { formatListingPrice } from "@/lib/commerce/cues";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import {
@@ -57,7 +61,9 @@ type Props = {
   marketContext?: MarketContextInput | null;
   coherentDecision?: CoherentProductDecision | null;
   commerceCoverage?: ActivatedCommerceCoverage | null;
-  /** Phase 27.1 — decision distribution + confidence spread overlay. */
+  /** Phase 27.4 — universal product decision authority (single source for card face). */
+  universalProductDecision?: UniversalProductDecision | null;
+  /** @deprecated Use universalProductDecision — kept for transitional wiring. */
   phase271Presentation?: Phase271ProductPresentation | null;
 };
 
@@ -95,15 +101,38 @@ export default function IntelligenceCardBody({
   marketContext = null,
   coherentDecision = null,
   commerceCoverage = null,
+  universalProductDecision = null,
   phase271Presentation = null,
 }: Props) {
   const [imageErr, setImageErr] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
-  const resolvedVerdict = coherentDecision?.verdict ?? verdictLabel;
-  const resolvedReason = coherentDecision?.reasonLine ?? reasonLine;
-  const resolvedAlignment = coherentDecision?.alignmentScore ?? alignmentScore;
+  const universal =
+    universalProductDecision ??
+    (phase271Presentation
+      ? {
+          link: p.link,
+          verdict: phase271Presentation.distributionVerdict,
+          confidence: phase271Presentation.spreadConfidence,
+          confidenceReason: phase271Presentation.spreadConfidenceReason,
+          reasonLine: phase271Presentation.distributionReason,
+          reasonAuthority: phase271Presentation.reasonAuthority,
+          displayChips: phase271Presentation.displayChips,
+          summaryLines: phase271Presentation.summaryLines,
+          alternativePressureScore: phase271Presentation.alternativePressureScore,
+          buyerAuthority: 0,
+        }
+      : null);
+
+  const authority = resolveCardAuthorityView({
+    universal,
+    coherent: coherentDecision,
+    fallback: { verdict: verdictLabel, confidence: alignmentScore, reason: reasonLine },
+  });
+  const resolvedVerdict = authority.verdict;
+  const resolvedReason = authority.reason;
+  const resolvedAlignment = authority.confidence;
   const scopedBrief = coherentDecision?.decisionBrief ?? decisionBrief;
   const scopedMarketContext = coherentDecision?.marketContext ?? marketContext;
 
@@ -142,22 +171,18 @@ export default function IntelligenceCardBody({
       valueIntelligence: verdictSurface?.valueIntelligence ?? null,
     });
   }, [coherentDecision, resolvedVerdict, resolvedReason, scopedBrief, verdictSurface]);
-  const displayReasonLine =
-    phase271Presentation?.distributionReason || optimizedSurface.verdictReason || resolvedReason;
+  const displayReasonLine = resolvedReason || optimizedSurface.verdictReason;
   const activatedMarket = useMemo(() => {
     if (coherentDecision) return coherentDecision.activatedMarket;
     return activateMarketContext({ decisionBrief: scopedBrief, ...scopedMarketContext });
   }, [coherentDecision, scopedBrief, scopedMarketContext]);
   const whyChose = buildWhyQuantAIChoseThis(intelArgs);
   const intelChips = useMemo(() => {
-    if (phase271Presentation?.displayChips.length) {
-      return phase271Presentation.displayChips;
-    }
-    if (coherentDecision?.intelligenceExposure?.chips.length) {
-      return coherentDecision.intelligenceExposure.chips;
+    if (authority.chips.length) {
+      return authority.chips;
     }
     return buildIntelligenceChips(intelArgs).slice(0, 2);
-  }, [phase271Presentation?.displayChips, coherentDecision?.intelligenceExposure, intelArgs]);
+  }, [authority.chips, intelArgs]);
   const expandedSignals = useMemo(() => {
     if (coherentDecision) return coherentDecision.expandedSignals;
     if (activatedBrief?.topSignals.length || activatedBrief?.riskSignals.length) {
@@ -185,14 +210,14 @@ export default function IntelligenceCardBody({
   const quantVerdict = useMemo(() => buildQuantAIVerdictNarrative(intelArgs), [intelArgs]);
 
   const summaryReasons = useMemo(() => {
-    if (phase271Presentation) return phase271Presentation.summaryLines;
+    if (authority.summaryLines[0] || authority.summaryLines[1]) return authority.summaryLines;
     if (coherentDecision) return coherentDecision.summaryLines;
     return mergeMarketContextSummary(
       optimizedSurface.summaryLines.slice(0, SUMMARY_SLOTS),
       activatedMarket,
       SUMMARY_SLOTS
     );
-  }, [phase271Presentation, coherentDecision, optimizedSurface.summaryLines, activatedMarket]);
+  }, [authority.summaryLines, coherentDecision, optimizedSurface.summaryLines, activatedMarket]);
 
   const showLegacyQuantVerdict = !coherentDecision;
   const hasExpandedIntel =
@@ -263,7 +288,7 @@ export default function IntelligenceCardBody({
               key={`${reason || "empty"}-${i}`}
               className={
                 reason
-                  ? i === 0 && (phase271Presentation || coherentDecision)
+                  ? i === 0 && (universal || coherentDecision)
                     ? "qa-ref-intel-card__summary-line--hero"
                     : ""
                   : "qa-ref-intel-card__summary-empty"

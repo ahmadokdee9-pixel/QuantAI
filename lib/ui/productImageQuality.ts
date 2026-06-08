@@ -1,4 +1,5 @@
 import type { QuantProduct } from "@/lib/shoppingScore";
+import { resolveImageReliability, upgradeImageUrl } from "@/lib/intelligence/imageReliabilityEngine";
 
 export type ProductImageMode = "catalog" | "reference" | "placeholder";
 
@@ -7,6 +8,7 @@ export type ProductImageResolution = {
   mode: ProductImageMode;
   caption: string;
   showImage: boolean;
+  image_confidence: number;
 };
 
 const LOW_QUALITY_HOST_PATTERNS = [
@@ -20,60 +22,53 @@ function looksLowResolutionUrl(url: string): boolean {
   return LOW_QUALITY_HOST_PATTERNS.some((re) => re.test(url));
 }
 
-/** Attempt to upgrade marketplace thumbnail URLs to catalog-grade resolution. */
-function upgradeImageUrl(url: string): string {
-  let next = url;
-
-  if (/googleusercontent\.com/i.test(next) || /gstatic\.com/i.test(next)) {
-    next = next.replace(/=s\d+-c/, "=s800-c");
-    next = next.replace(/=s\d+(?![0-9])/i, "=s800");
-    next = next.replace(/=w\d+-h\d+/, "=w800-h800");
-  }
-
-  if (/images-amazon\.com/i.test(next)) {
-    next = next.replace(/\._[A-Z0-9_,]+_\./, "._SL800_.");
-  }
-
-  if (/ebayimg\.com/i.test(next)) {
-    next = next.replace(/s-l\d+/i, "s-l800");
-  }
-
-  return next;
-}
-
-/** Presentation-only image gate — prioritizes catalog-grade hero assets. */
+/** Presentation-only image gate — prioritizes catalog-grade hero assets with fallback chain. */
 export function resolveProductImageDisplay(product: QuantProduct): ProductImageResolution {
-  const raw = product.image?.trim() ?? "";
+  const reliability = resolveImageReliability(product);
+  const image_confidence = product.image_confidence ?? reliability.image_confidence;
   const identityConfidence = product.qiCanonicalIdentity?.identityConfidence ?? 0;
   const listingRisk = product.qiListingIdentity?.listingRisk01 ?? 0;
-  const contamination = product.qiListingIdentity?.contaminationRisk01 ?? 0;
   const titleQuality = Number(product.qiProductUnderstanding?.titleQuality ?? 55);
   const suspicious =
     product.qiCommerce?.priceAnomaly === "suspicious_low" ||
     product.qiCommerce?.priceAnomaly === "premium_outlier";
 
-  if (!raw) {
+  const chain = reliability.fallbackChain;
+  const primary = chain[0] ?? product.image?.trim() ?? "";
+  const upgraded = primary ? upgradeImageUrl(primary) : "";
+
+  if (!upgraded) {
     return {
       src: null,
       mode: "placeholder",
       caption: "Verified catalog imagery pending",
       showImage: false,
+      image_confidence,
     };
   }
 
-  const upgraded = upgradeImageUrl(raw);
   const weakVisual =
     looksLowResolutionUrl(upgraded) ||
     listingRisk > 0.28 ||
-    contamination > 0.62 ||
     titleQuality < 38;
 
-  if (weakVisual && suspicious) {
+  if (weakVisual && suspicious && image_confidence < 52) {
+    const fallback = chain.find((url) => !looksLowResolutionUrl(upgradeImageUrl(url)));
+    if (fallback) {
+      return {
+        src: upgradeImageUrl(fallback),
+        mode: "reference",
+        caption: "Alternate verified imagery",
+        showImage: true,
+        image_confidence,
+      };
+    }
     return {
       src: null,
       mode: "placeholder",
       caption: "Low-confidence seller imagery suppressed",
       showImage: false,
+      image_confidence,
     };
   }
 
@@ -83,15 +78,27 @@ export function resolveProductImageDisplay(product: QuantProduct): ProductImageR
       mode: "catalog",
       caption: "Official catalog reference",
       showImage: true,
+      image_confidence,
     };
   }
 
-  if (weakVisual) {
+  if (weakVisual && image_confidence < 45) {
+    const fallback = chain[1] ? upgradeImageUrl(chain[1]) : null;
+    if (fallback && !looksLowResolutionUrl(fallback)) {
+      return {
+        src: fallback,
+        mode: "reference",
+        caption: "Fallback catalog imagery",
+        showImage: true,
+        image_confidence,
+      };
+    }
     return {
       src: null,
       mode: "placeholder",
       caption: "Awaiting verified catalog imagery",
       showImage: false,
+      image_confidence,
     };
   }
 
@@ -100,5 +107,6 @@ export function resolveProductImageDisplay(product: QuantProduct): ProductImageR
     mode: listingRisk <= 0.14 ? "catalog" : "reference",
     caption: listingRisk <= 0.14 ? "Verified retail imagery" : "Verified retailer reference",
     showImage: true,
+    image_confidence,
   };
 }

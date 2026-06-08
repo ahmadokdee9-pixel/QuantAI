@@ -57,7 +57,7 @@ import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
 import type { VerdictSurfaceContext } from "@/lib/ui/verdictSurfaceOptimization";
 import type { MarketContextInput } from "@/lib/ui/marketContextActivation";
 import type { CoherentProductDecision } from "@/lib/ui/decisionCoherenceActivation";
-import type { Phase271ProductPresentation } from "@/lib/ui/phase271PresentationActivation";
+import type { UniversalProductDecision } from "@/lib/ui/universalProductDecision";
 import type { ActivatedCommerceCoverage } from "@/lib/ui/commerceCoverageActivation";
 import { classifyListingOutlier } from "@/lib/ui/listingOutlierFilter";
 import IntelligenceCardBody from "./IntelligenceCardBody";
@@ -222,8 +222,8 @@ type Props = {
   marketContext?: MarketContextInput | null;
   coherentDecision?: CoherentProductDecision | null;
   commerceCoverage?: ActivatedCommerceCoverage | null;
-  /** Phase 27.1 — decision distribution + confidence spread overlay. */
-  phase271Presentation?: Phase271ProductPresentation | null;
+  /** Phase 27.4 — universal product decision authority. */
+  universalProductDecision?: UniversalProductDecision | null;
 };
 
 function ProductResultCard({
@@ -252,7 +252,7 @@ function ProductResultCard({
   marketContext = null,
   coherentDecision = null,
   commerceCoverage = null,
-  phase271Presentation = null,
+  universalProductDecision = null,
 }: Props) {
   const isTrayFocused = trayFocusLink === p.link;
   const isTrayDimmed = Boolean(trayFocusLink && trayFocusLink !== p.link);
@@ -504,7 +504,7 @@ function ProductResultCard({
             marketContext={coherentDecision?.marketContext ?? marketContext}
             coherentDecision={coherentDecision}
             commerceCoverage={commerceCoverage}
-            phase271Presentation={phase271Presentation}
+            universalProductDecision={universalProductDecision}
           />
         </div>
       </motion.article>

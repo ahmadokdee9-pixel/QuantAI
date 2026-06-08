@@ -41,12 +41,11 @@ import {
   buildTrayCoherenceContext,
   type CoherentProductDecision,
 } from "@/lib/ui/decisionCoherenceActivation";
-import { resolveUnifiedTrayVerdict } from "@/lib/ui/unifiedVerdictAuthority";
 import {
-  activatePhase271TrayPresentation,
-  buildPhase271ProductMap,
-  resolveUnifiedTrayVerdictFromPhase271,
-} from "@/lib/ui/phase271PresentationActivation";
+  buildProductionReadinessDecisionMap,
+  buildProductionReadinessDisplayCoherenceByLink,
+  orderProductsBySearchRank,
+} from "@/lib/ui/phase45ProductionReadinessActivation";
 import CompareIntelligencePanel from "./CompareIntelligencePanel";
 import IntelligenceCommandCenter from "./IntelligenceCommandCenter";
 import LiveIntelligenceRail from "./LiveIntelligenceRail";
@@ -267,44 +266,75 @@ export default function ProductResultsSurface({
     [sortedProducts, searchQuery, searchMeta?.phase93TrustDiscount]
   );
   const coherenceByLink = useMemo((): Map<string, CoherentProductDecision> => {
-    const buildMap = (trayVerdictAuthority: CoherentProductDecision["verdict"] | null) => {
-      const map = new Map<string, CoherentProductDecision>();
-      for (let index = 0; index < sortedProducts.length; index++) {
-        const product = sortedProducts[index]!;
-        const rank = rankByLink.get(product.link) ?? index;
-        map.set(
-          product.link,
-          activateProductDecisionCoherence({
-            product,
-            list: sortedProducts,
-            rank,
-            tray: trayCoherence,
-            commerceCoverage: commerceCoverageByLink.get(product.link) ?? null,
-            searchQuery: searchQuery.trim(),
-            trayVerdictAuthority,
-          })
-        );
-      }
-      return map;
-    };
-    const pass1 = buildMap(null);
-    const unified = resolveUnifiedTrayVerdict(pass1.values());
-    return buildMap(unified.verdict);
+    const map = new Map<string, CoherentProductDecision>();
+    for (let index = 0; index < sortedProducts.length; index++) {
+      const product = sortedProducts[index]!;
+      const rank = rankByLink.get(product.link) ?? index;
+      map.set(
+        product.link,
+        activateProductDecisionCoherence({
+          product,
+          list: sortedProducts,
+          rank,
+          tray: trayCoherence,
+          commerceCoverage: commerceCoverageByLink.get(product.link) ?? null,
+          searchQuery: searchQuery.trim(),
+          trayVerdictAuthority: null,
+        })
+      );
+    }
+    return map;
   }, [sortedProducts, rankByLink, trayCoherence, commerceCoverageByLink, searchQuery]);
 
-  const phase271ByLink = useMemo(
-    () => buildPhase271ProductMap(coherenceByLink),
-    [coherenceByLink]
+  const metaByLink = useMemo(
+    () =>
+      new Map(
+        sortedProducts.map((product, index) => [
+          product.link,
+          {
+            price: product.price,
+            rank: rankByLink.get(product.link) ?? index,
+            rating: Number(product.rating) || 0,
+            reviewsCount: product.reviewsCount ?? 0,
+            store: product.store,
+          },
+        ])
+      ),
+    [sortedProducts, rankByLink]
   );
-  const unifiedTrayVerdict = useMemo(
-    () => resolveUnifiedTrayVerdictFromPhase271(coherenceByLink, phase271ByLink),
-    [coherenceByLink, phase271ByLink]
+  const productsByLink = useMemo(
+    () =>
+      new Map(
+        sortedProducts.map((product) => [
+          product.link,
+          { product, searchQuery: searchQuery.trim() },
+        ])
+      ),
+    [sortedProducts, searchQuery]
   );
-  const phase271Tray = useMemo(
-    () => activatePhase271TrayPresentation(phase271ByLink, unifiedTrayVerdict),
-    [phase271ByLink, unifiedTrayVerdict]
+  const commerceCore = useMemo(
+    () => buildProductionReadinessDecisionMap(coherenceByLink, metaByLink, productsByLink, marketMemoryState),
+    [coherenceByLink, metaByLink, productsByLink, marketMemoryState]
   );
-  const detailCoherence = detailProduct ? coherenceByLink.get(detailProduct.link) ?? null : null;
+  const universalByLink = commerceCore.decisions;
+  const phase45TrayContext = commerceCore.trayContext;
+  const intelligenceRankedProducts = useMemo(
+    () => orderProductsBySearchRank(sortedProducts, phase45TrayContext.intelligenceRankOrder),
+    [sortedProducts, phase45TrayContext.intelligenceRankOrder]
+  );
+  const intelligenceSearchRankByLink = useMemo(() => {
+    const m = new Map<string, number>();
+    phase45TrayContext.intelligenceRankOrder.forEach((link, index) => m.set(link, index));
+    return m;
+  }, [phase45TrayContext.intelligenceRankOrder]);
+  const displayCoherenceByLink = useMemo(
+    () => buildProductionReadinessDisplayCoherenceByLink(coherenceByLink, universalByLink, phase45TrayContext),
+    [coherenceByLink, universalByLink, phase45TrayContext]
+  );
+  const phase271Tray = null;
+  const detailCoherence = detailProduct
+    ? displayCoherenceByLink.get(detailProduct.link) ?? null
+    : null;
   const unifiedMarketByLink = useMemo(
     () => buildUnifiedMarketGroup(sortedProducts, searchQuery.trim()).byLink,
     [sortedProducts, searchQuery]
@@ -695,8 +725,8 @@ export default function ProductResultsSurface({
           className={`qi-tray-atmosphere min-w-0 ${resultsGridClass} ${gridMax}`}
           data-tray-focus={trayFocusLink ? "true" : "false"}
         >
-          {sortedProducts.map((p, index) => {
-            const rank = rankByLink.get(p.link) ?? index;
+          {intelligenceRankedProducts.map((p, index) => {
+            const rank = intelligenceSearchRankByLink.get(p.link) ?? rankByLink.get(p.link) ?? index;
             return (
               <div
                 key={`${p.id}-${p.link}`}
@@ -724,9 +754,9 @@ export default function ProductResultsSurface({
                   decisionBrief={decisionBrief}
                   verdictSurface={verdictSurface}
                   marketContext={marketContext}
-                  coherentDecision={coherenceByLink.get(p.link) ?? null}
+                  coherentDecision={displayCoherenceByLink.get(p.link) ?? null}
                   commerceCoverage={commerceCoverageByLink.get(p.link) ?? null}
-                  phase271Presentation={phase271ByLink.get(p.link) ?? null}
+                  universalProductDecision={universalByLink.get(p.link) ?? null}
                 />
               </div>
             );
@@ -743,8 +773,8 @@ export default function ProductResultsSurface({
             className={`qi-tray-atmosphere min-w-0 ${resultsGridClass} ${gridMax}`}
             data-tray-focus={trayFocusLink ? "true" : "false"}
           >
-            {sortedProducts.map((p, index) => {
-              const rank = rankByLink.get(p.link) ?? index;
+            {intelligenceRankedProducts.map((p, index) => {
+              const rank = intelligenceSearchRankByLink.get(p.link) ?? rankByLink.get(p.link) ?? index;
               return (
                 <div
                   key={`${p.id}-${p.link}`}
@@ -772,9 +802,9 @@ export default function ProductResultsSurface({
                     decisionBrief={decisionBrief}
                     verdictSurface={verdictSurface}
                     marketContext={marketContext}
-                    coherentDecision={coherenceByLink.get(p.link) ?? null}
+                    coherentDecision={displayCoherenceByLink.get(p.link) ?? null}
                     commerceCoverage={commerceCoverageByLink.get(p.link) ?? null}
-                    phase271Presentation={phase271ByLink.get(p.link) ?? null}
+                    universalProductDecision={universalByLink.get(p.link) ?? null}
                   />
                 </div>
               );
@@ -787,7 +817,9 @@ export default function ProductResultsSurface({
         products={sortedProducts}
         searchIntelligence={searchIntelligence}
         marketComparison={marketComparison ?? null}
-        trayVerdict={unifiedTrayVerdict}
+        marketCoverage={phase45TrayContext.marketCoverage}
+        searchDominanceSummary={phase45TrayContext.searchDominanceSummary}
+        marketSummaryV2={phase45TrayContext.marketSummaryV2}
         phase271Tray={phase271Tray}
       />
 

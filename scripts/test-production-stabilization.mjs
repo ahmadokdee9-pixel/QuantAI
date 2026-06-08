@@ -150,6 +150,276 @@ assert.ok(
   "phase 27.1 confidence spread engine present"
 );
 assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/compareDominanceAuthority.ts"), "utf8").includes(
+    "resolveCompareDominanceVerdict"
+  ),
+  "phase 27.2 compare dominance authority present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/phase272PresentationActivation.ts"), "utf8").includes(
+    "buildPhase272ProductMap"
+  ),
+  "phase 27.2 presentation overlay present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/phase273PresentationActivation.ts"), "utf8").includes(
+    "buildPhase273ProductMap"
+  ),
+  "phase 27.3 commerce intelligence overlay present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/universalProductDecision.ts"), "utf8").includes(
+    "UniversalProductDecision"
+  ),
+  "phase 27.4 universal product decision present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "components/search/IntelligenceCardBody.tsx"), "utf8").includes(
+    "resolveCardAuthorityView"
+  ),
+  "phase 27.4 card authority binding present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/universalFinalDecisionIntegrity.ts"), "utf8").includes(
+    "universalFinalDecisionIntegrity"
+  ),
+  "phase 27.5 final decision integrity present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/phase275PresentationActivation.ts"), "utf8").includes(
+    "buildIntegrityUniversalProductDecisionMap"
+  ),
+  "phase 27.5 presentation activation present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/universalProductIntelligenceEngine.ts"), "utf8").includes(
+    "resolveUniversalProductIntelligence"
+  ),
+  "phase 28 universal product intelligence engine present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/phase28ProductIntelligenceActivation.ts"), "utf8").includes(
+    "buildUniversalProductIntelligenceMap"
+  ),
+  "phase 28 product intelligence activation present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/buyOpportunityEngine.ts"), "utf8").includes(
+    "resolveBuyOpportunityAuthority"
+  ),
+  "phase 29 buy opportunity engine present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/phase29BuyOpportunityActivation.ts"), "utf8").includes(
+    "buildBuyOpportunityDecisionMap"
+  ),
+  "phase 29 buy opportunity activation present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/decisionAlignmentEngine.ts"), "utf8").includes(
+    "resolveDecisionAlignment"
+  ),
+  "phase 30 decision alignment engine present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/phase30DecisionAlignmentActivation.ts"), "utf8").includes(
+    "buildAlignedDecisionMap"
+  ),
+  "phase 30 decision alignment activation present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/decisionBriefAuthorityEngine.ts"), "utf8").includes(
+    "resolveDecisionBriefAuthority"
+  ),
+  "phase 31 decision brief authority engine present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/phase31DecisionBriefActivation.ts"), "utf8").includes(
+    "buildBriefAuthorityDecisionMap"
+  ),
+  "phase 31 decision brief activation present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/categoryReasoningAuthorityEngine.ts"), "utf8").includes(
+    "resolveCategoryDecisionBriefAuthority"
+  ),
+  "phase 32 category reasoning authority engine present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/phase32CategoryReasoningActivation.ts"), "utf8").includes(
+    "buildCategoryReasoningDecisionMap"
+  ),
+  "phase 32 category reasoning activation present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/phase33CommerceIntelligenceActivation.ts"), "utf8").includes(
+    "buildCommerceIntelligenceDecisionMap"
+  ),
+  "phase 33 commerce intelligence activation present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/intelligence/commerceIntelligenceAuthorityEngine.ts"), "utf8").includes(
+    "marketOpportunityScore"
+  ),
+  "phase 33 commerce intelligence authority engine present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/intelligence/imageReliabilityEngine.ts"), "utf8").includes(
+    "image_confidence"
+  ),
+  "phase 33 image reliability engine present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/phase34PreferenceIntelligenceActivation.ts"), "utf8").includes(
+    "buildPreferenceIntelligenceDecisionMap"
+  ),
+  "phase 34 preference intelligence activation present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/intelligence/buyerIdentityEngine.ts"), "utf8").includes(
+    "detectBuyerIdentity"
+  ),
+  "phase 34 buyer identity engine present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/phase38CommerceDominanceActivation.ts"), "utf8").includes(
+    "buildCommerceDominanceDecisionMap"
+  ),
+  "phase 38 commerce dominance activation present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/phase39CommerceCalibrationActivation.ts"), "utf8").includes(
+    "buildCommerceCalibrationDecisionMap"
+  ),
+  "phase 39 commerce calibration activation present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/phase40CommerceRankingActivation.ts"), "utf8").includes(
+    "buildCommerceRankingDecisionMap"
+  ),
+  "phase 40 commerce ranking activation present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/phase41GlobalCategoryActivation.ts"), "utf8").includes(
+    "buildGlobalCategoryDecisionMap"
+  ),
+  "phase 41 global category activation present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/phase42CommerceIntelligenceCoreActivation.ts"), "utf8").includes(
+    "buildCommerceIntelligenceCoreDecisionMap"
+  ),
+  "phase 42 commerce intelligence core activation present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/phase43DecisionCalibrationActivation.ts"), "utf8").includes(
+    "buildDecisionCalibrationDecisionMap"
+  ),
+  "phase 43 decision calibration activation present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/intelligence/decisionCalibrationEngine.ts"), "utf8").includes(
+    "calibrateProductDecision"
+  ),
+  "phase 43 decision calibration engine present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/phase44OpportunityDetectionActivation.ts"), "utf8").includes(
+    "buildOpportunityDetectionDecisionMap"
+  ),
+  "phase 44 opportunity detection activation present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/intelligence/opportunityDetectionEngine.ts"), "utf8").includes(
+    "computeOpportunityScore"
+  ),
+  "phase 44 opportunity detection engine present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/phase45ProductionReadinessActivation.ts"), "utf8").includes(
+    "buildProductionReadinessDecisionMap"
+  ),
+  "phase 45 production readiness activation present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/intelligence/categoryValueEngine.ts"), "utf8").includes(
+    "buildCategoryValueIntelligence"
+  ),
+  "phase 45 category value engine present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/intelligence/commerceDecisionCoreEngine.ts"), "utf8").includes(
+    "computeCommerceDecisionCore"
+  ),
+  "phase 42 commerce decision core engine present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/intelligence/globalCategoryIntelligenceEngine.ts"), "utf8").includes(
+    "buildGlobalCategoryIntelligence"
+  ),
+  "phase 41 category intelligence engine present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/intelligence/bestPlaceToBuyEngine.ts"), "utf8").includes(
+    "buildBestPlaceToBuy"
+  ),
+  "phase 38 best place to buy engine present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/phase37GlobalCommerceActivation.ts"), "utf8").includes(
+    "buildGlobalCommerceDecisionMap"
+  ),
+  "phase 37 global commerce activation present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/intelligence/universalOfferGraphEngine.ts"), "utf8").includes(
+    "buildUniversalOfferGraph"
+  ),
+  "phase 37 universal offer graph engine present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/intelligence/globalPriceIntelligenceEngine.ts"), "utf8").includes(
+    "buildGlobalPriceIntelligence"
+  ),
+  "phase 37 global price intelligence engine present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/phase36CommerceOpportunityActivation.ts"), "utf8").includes(
+    "buildCommerceOpportunityDecisionMap"
+  ),
+  "phase 36 commerce opportunity activation present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/intelligence/discountOpportunityEngine.ts"), "utf8").includes(
+    "buildDiscountOpportunityInsight"
+  ),
+  "phase 36 discount opportunity engine present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/intelligence/buyReadyRecoveryEngine.ts"), "utf8").includes(
+    "recoverBuyReadyIfMissing"
+  ),
+  "phase 36 buy ready recovery engine present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/phase35PersonalCommerceActivation.ts"), "utf8").includes(
+    "buildPersonalCommerceDecisionMap"
+  ),
+  "phase 35 personal commerce activation present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/intelligence/personalCommerceScoreEngine.ts"), "utf8").includes(
+    "personalCommerceScore"
+  ),
+  "phase 35 personal commerce score engine present"
+);
+assert.ok(
+  readFileSync(join(process.cwd(), "lib/ui/marketOpportunityBalancingEngine.ts"), "utf8").includes(
+    "assignBalancedTrayVerdictAuthority"
+  ),
+  "phase 32.5 market opportunity balancing engine present"
+);
+assert.ok(
   readFileSync(join(process.cwd(), "lib/ui/rankingRationaleActivation.ts"), "utf8").includes(
     "activateRankingRationale"
   ),

@@ -103,3 +103,10 @@ export function estimateForwardPriceHint(current: number, insight: PriceHistoryI
   }
   return `Band check on memory: most remembered trades fell ~${low}–${high} versus this ask.`;
 }
+
+/** Phase 38 — commerce price history labels (Good Price, Historical Low, etc.). */
+export {
+  buildCommercePriceHistoryIntelligence,
+  type CommercePriceHistoryIntelligence,
+  type PriceHistoryLabel,
+} from "@/lib/intelligence/commercePriceHistoryEngine";

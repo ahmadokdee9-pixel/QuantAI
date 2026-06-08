@@ -98,6 +98,8 @@ export type QuantProduct = {
   qiCommerceQuality?: CommerceQualityInsight;
   /** Universal buying decision output for user purchase guidance. */
   qiBuyingDecision?: BuyingDecisionSignal;
+  /** Phase 33 — image reliability confidence 0–100. */
+  image_confidence?: number;
 };
 
 export { getStoreTrustScore };

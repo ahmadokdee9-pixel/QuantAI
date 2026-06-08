@@ -39,12 +39,21 @@ export function resolveActivatedBriefPresentation(
   const topSignals = brief.topSignals ?? brief.keyReasons ?? [];
   const riskSignals = brief.riskSignals ?? [];
 
+  const personalSignals = brief.personalCommerce
+    ? [
+        `Detected Buyer: ${brief.personalCommerce.detectedBuyer}`,
+        `Detected Taste: ${brief.personalCommerce.detectedTaste}`,
+        `Buyer Match: ${brief.personalCommerce.buyerMatchPct}%`,
+        `Taste Match: ${brief.personalCommerce.tasteMatchPct}%`,
+      ]
+    : [];
+
   const summaryLines =
     verdict === "BUY READY"
-      ? topSignals.slice(0, 2)
+      ? uniqueLines([...personalSignals, ...topSignals]).slice(0, 2)
       : verdict === "COMPARE"
-        ? uniqueLines([reasoning, ...topSignals]).slice(0, 2)
-        : uniqueLines([reasoning, ...riskSignals]).slice(0, 2);
+        ? uniqueLines([...personalSignals, reasoning, ...topSignals]).slice(0, 2)
+        : uniqueLines([...personalSignals, reasoning, ...riskSignals]).slice(0, 2);
 
   return {
     summaryLines: summaryLines.filter(Boolean),
