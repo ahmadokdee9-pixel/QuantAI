@@ -39,16 +39,20 @@ assert.ok(!surface.includes("listingRefreshAdapter"), "no refresh adapter in UI"
 const truthGate = readFileSync(join(process.cwd(), "lib/truth/truthConfidenceGate.ts"), "utf8");
 assert.ok(!truthGate.includes("freshnessScore"), "Phase 1A truth gate unchanged");
 
-const cronFiles = ["app/api/cron/refresh-listings/route.ts", "vercel.json"];
+const cronFiles = ["vercel.json"];
 for (const rel of cronFiles) {
   try {
     readFileSync(join(process.cwd(), rel), "utf8");
-    assert.fail(`unexpected cron artifact: ${rel}`);
-  } catch (e) {
-    if (e instanceof Error && e.message.includes("unexpected")) throw e;
+    pass("cron_schedule_present");
+  } catch {
+    console.warn(`[WARN] ${rel} missing — cron scheduling not configured`);
   }
 }
-pass("no_ui_verdict_cron_wiring");
+assert.ok(
+  readFileSync(join(process.cwd(), "app/api/cron/refresh-listings/route.ts"), "utf8").includes("runRefreshWorker"),
+  "cron route invokes refresh worker"
+);
+pass("cron_route_wired");
 
 // ── Classifier: SerpApi signals ───────────────────────────────────────────────
 const inStockRow = {

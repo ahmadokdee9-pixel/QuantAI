@@ -210,3 +210,46 @@ export async function listAvailabilityObservationsForListing(
     return [];
   }
 }
+
+/** Latest observation per listing URL (service role read, batch). */
+export async function getLatestObservationsByListingUrls(
+  listingUrls: string[]
+): Promise<Map<string, AvailabilityObservationRow>> {
+  const db = supabaseAdmin;
+  const out = new Map<string, AvailabilityObservationRow>();
+  if (!db || listingUrls.length === 0) return out;
+
+  const urls = [...new Set(listingUrls.map((url) => normalizeListingUrl(url)).filter(Boolean))].slice(0, 200);
+  if (urls.length === 0) return out;
+
+  try {
+    const { data, error } = await db
+      .from(TABLE)
+      .select(
+        "id, listing_url, sku_id, observed_at, availability, availability_text, current_price, shipping_price, source, freshness_score, created_at"
+      )
+      .in("listing_url", urls)
+      .order("observed_at", { ascending: false })
+      .limit(Math.min(500, urls.length * 5));
+
+    if (error) {
+      if (!isBenignStorageSchemaError(error.message)) {
+        logDevWarn("availability_observations.latest_batch", error.message);
+      }
+      return out;
+    }
+
+    for (const raw of data ?? []) {
+      const row = mapRow(raw as Record<string, unknown>);
+      if (!row || out.has(row.listing_url)) continue;
+      out.set(row.listing_url, row);
+    }
+  } catch (e) {
+    if (!isBenignStorageSchemaError(String(e))) {
+      logDevWarn("availability_observations.latest_batch", String(e));
+    }
+  }
+
+  return out;
+}
+
