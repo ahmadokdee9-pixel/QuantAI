@@ -9,6 +9,7 @@ import type { MarketIntelligenceSnapshot } from "@/lib/truth/marketTruthRollup";
 import type { MerchantReliabilitySnapshot } from "@/lib/truth/merchantReliabilityTruth";
 import type { CommerceReasoningSnapshot } from "@/lib/truth/commerceReasoningLayer";
 import type { EvidenceReasoningGraph } from "@/lib/truth/evidenceReasoningGraph";
+import type { DecisionEngineSnapshot } from "@/lib/truth/decisionIntelligenceLayer";
 import type { TrustEngineSnapshot } from "@/lib/truth/unifiedTrustEngine";
 import type { CommerceIntelligenceSnapshot } from "@/lib/truth/universalCommerceIntelligence";
 import type { ProductIntelligenceSnapshot } from "@/lib/truth/productIntelligenceFoundation";
@@ -53,6 +54,7 @@ export type TruthFoundationSnapshot = {
   commerceReasoning: CommerceReasoningSnapshot;
   evidenceReasoningGraph: EvidenceReasoningGraph;
   trustEngine: TrustEngineSnapshot;
+  decisionEngine: DecisionEngineSnapshot;
   debugTrace?: TruthDebugTrace | null;
 };
 
@@ -133,6 +135,13 @@ export type ExtendedTruthEvidenceSources = {
   trustState: string;
   trustRiskCount: number;
   hasTrustEngine: boolean;
+  decisionScore: number;
+  decisionConfidence: number;
+  decisionState: string;
+  decisionRiskCount: number;
+  strongestPositiveFactor: string;
+  strongestNegativeFactor: string;
+  hasDecisionEngine: boolean;
 };
 
 export type { AvailabilityState } from "@/lib/truth/availabilityStateModel";
@@ -144,3 +153,4 @@ export type { CommerceIntelligenceSnapshot } from "@/lib/truth/universalCommerce
 export type { CommerceReasoningSnapshot } from "@/lib/truth/commerceReasoningLayer";
 export type { EvidenceReasoningGraph } from "@/lib/truth/evidenceReasoningGraph";
 export type { TrustEngineSnapshot } from "@/lib/truth/unifiedTrustEngine";
+export type { DecisionEngineSnapshot } from "@/lib/truth/decisionIntelligenceLayer";

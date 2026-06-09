@@ -37,6 +37,12 @@ import {
   buildUnifiedTrustEngine,
   hasTrustEngineSignal,
 } from "@/lib/truth/unifiedTrustEngine";
+import {
+  buildDecisionIntelligenceLayer,
+  getStrongestNegativeFactor,
+  getStrongestPositiveFactor,
+  hasDecisionEngineSignal,
+} from "@/lib/truth/decisionIntelligenceLayer";
 import { buildTruthDebugTrace } from "@/lib/truth/truthDebug";
 import type {
   ExtendedTruthEvidenceSources,
@@ -130,7 +136,8 @@ export function buildTruthFoundationSnapshot(args: {
     args.existing.commerceIntelligence &&
     args.existing.commerceReasoning &&
     args.existing.evidenceReasoningGraph &&
-    args.existing.trustEngine
+    args.existing.trustEngine &&
+    args.existing.decisionEngine
   ) {
     return args.existing;
   }
@@ -264,9 +271,14 @@ export function buildTruthFoundationSnapshot(args: {
     evidenceReasoningGraph: buildEvidenceReasoningGraph(withCommerceReasoning),
   };
 
-  return {
+  const withTrustEngine = {
     ...withEvidenceGraph,
     trustEngine: buildUnifiedTrustEngine(withEvidenceGraph),
+  };
+
+  return {
+    ...withTrustEngine,
+    decisionEngine: buildDecisionIntelligenceLayer(withTrustEngine),
   };
 }
 
@@ -321,6 +333,7 @@ export function buildExtendedTruthEvidenceSources(
       commerceReasoning: _ignoredCommerceReasoning,
       evidenceReasoningGraph: _ignoredEvidenceReasoningGraph,
       trustEngine: _ignoredTrustEngine,
+      decisionEngine: _ignoredDecisionEngine,
       ...foundationInput
     } = foundation;
     const productIntelligence = buildProductIntelligenceFoundation(foundationInput);
@@ -345,6 +358,14 @@ export function buildExtendedTruthEvidenceSources(
       commerceIntelligence,
       commerceReasoning,
       evidenceReasoningGraph,
+    });
+    const decisionEngine = buildDecisionIntelligenceLayer({
+      ...foundationInput,
+      productIntelligence,
+      commerceIntelligence,
+      commerceReasoning,
+      evidenceReasoningGraph,
+      trustEngine,
     });
 
     return {
@@ -421,6 +442,13 @@ export function buildExtendedTruthEvidenceSources(
       trustState: trustEngine.trustState,
       trustRiskCount: trustEngine.trustRisks.length,
       hasTrustEngine: hasTrustEngineSignal(trustEngine),
+      decisionScore: decisionEngine.decisionScore,
+      decisionConfidence: decisionEngine.decisionConfidence,
+      decisionState: decisionEngine.decisionState,
+      decisionRiskCount: decisionEngine.decisionRisks.length,
+      strongestPositiveFactor: getStrongestPositiveFactor(decisionEngine.decisionSignals),
+      strongestNegativeFactor: getStrongestNegativeFactor(decisionEngine.decisionRisks),
+      hasDecisionEngine: hasDecisionEngineSignal(decisionEngine),
     };
   }
 
@@ -510,6 +538,13 @@ export function buildExtendedTruthEvidenceSources(
     trustState: "TRUST_UNKNOWN",
     trustRiskCount: 0,
     hasTrustEngine: false,
+    decisionScore: 0,
+    decisionConfidence: 0,
+    decisionState: "UNKNOWN",
+    decisionRiskCount: 0,
+    strongestPositiveFactor: "Limited positive confirmation",
+    strongestNegativeFactor: "No major negative signal",
+    hasDecisionEngine: false,
   };
 }
 

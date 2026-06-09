@@ -61,6 +61,12 @@ import {
   WEAK_TRUST_SCORE_THRESHOLD,
   WEAK_TRUST_STRENGTH_THRESHOLD,
 } from "@/lib/truth/unifiedTrustEngine";
+import {
+  ELEVATED_DECISION_RISK_THRESHOLD,
+  isAvoidDecisionState,
+  WEAK_DECISION_CONFIDENCE_THRESHOLD,
+  WEAK_DECISION_SCORE_THRESHOLD,
+} from "@/lib/truth/decisionIntelligenceLayer";
 import type { ExtendedTruthEvidenceSources } from "@/lib/truth/truthFoundationTypes";
 import { discountEvidenceLine, mapDiscountVerificationStateToLabel } from "@/lib/truth/truthDiscountLanguage";
 import {
@@ -118,6 +124,10 @@ function isWeakEvidenceState(state: string): boolean {
 
 function hasTrustEngineEvidence(sources: TruthEvidenceSources): boolean {
   return sources.hasTrustEngine === true && Boolean(sources.canonicalSkuId);
+}
+
+function hasDecisionEngineEvidence(sources: TruthEvidenceSources): boolean {
+  return sources.hasDecisionEngine === true && Boolean(sources.canonicalSkuId);
 }
 
 function clamp01(n: number): number {
@@ -342,6 +352,19 @@ export function computeTruthConfidence(
   }
   if (hasTrustEngineEvidence(sources) && sources.trustRiskCount >= ELEVATED_TRUST_RISK_THRESHOLD) {
     gatesApplied.push("elevated_trust_risks");
+  }
+
+  if (hasDecisionEngineEvidence(sources) && sources.decisionScore < WEAK_DECISION_SCORE_THRESHOLD) {
+    gatesApplied.push("weak_decision_score");
+  }
+  if (hasDecisionEngineEvidence(sources) && sources.decisionConfidence < WEAK_DECISION_CONFIDENCE_THRESHOLD) {
+    gatesApplied.push("weak_decision_confidence");
+  }
+  if (hasDecisionEngineEvidence(sources) && sources.decisionRiskCount >= ELEVATED_DECISION_RISK_THRESHOLD) {
+    gatesApplied.push("elevated_decision_risks");
+  }
+  if (hasDecisionEngineEvidence(sources) && isAvoidDecisionState(sources.decisionState)) {
+    gatesApplied.push("avoid_decision_state");
   }
 
   if (sources.hasListingPrice) score += 0.06;
@@ -754,6 +777,42 @@ export function applyTruthConfidenceGate(args: {
     confidence = Math.min(confidence, 33);
   }
 
+  if (enteredAsBuyTier && hasDecisionEngineEvidence(sources) && sources.decisionScore < WEAK_DECISION_SCORE_THRESHOLD) {
+    gates.push("downgrade_weak_decision_score");
+    tier = downgradeTier(tier, "COMPARE");
+    verdict = "COMPARE";
+    confidence = Math.min(confidence, 32);
+  }
+
+  if (
+    enteredAsBuyTier &&
+    hasDecisionEngineEvidence(sources) &&
+    sources.decisionConfidence < WEAK_DECISION_CONFIDENCE_THRESHOLD
+  ) {
+    gates.push("downgrade_weak_decision_confidence");
+    tier = downgradeTier(tier, "COMPARE");
+    verdict = "COMPARE";
+    confidence = Math.min(confidence, 31);
+  }
+
+  if (
+    enteredAsBuyTier &&
+    hasDecisionEngineEvidence(sources) &&
+    sources.decisionRiskCount >= ELEVATED_DECISION_RISK_THRESHOLD
+  ) {
+    gates.push("downgrade_elevated_decision_risks");
+    tier = downgradeTier(tier, "COMPARE");
+    verdict = "COMPARE";
+    confidence = Math.min(confidence, 30);
+  }
+
+  if (enteredAsBuyTier && hasDecisionEngineEvidence(sources) && isAvoidDecisionState(sources.decisionState)) {
+    gates.push("downgrade_avoid_decision_state");
+    tier = downgradeTier(tier, "COMPARE");
+    verdict = "COMPARE";
+    confidence = Math.min(confidence, 29);
+  }
+
   if (tier === "BEST DEAL" && tc < TRUTH_THRESHOLDS.bestDeal) {
     gates.push("downgrade_best_deal_insufficient_truth");
     tier = downgradeTier(tier, tc >= TRUTH_THRESHOLDS.strongBuy ? "STRONG BUY" : tc >= TRUTH_THRESHOLDS.buyReady ? "BUY READY" : "COMPARE");
@@ -897,6 +956,10 @@ export function applyTruthGateToDecision(decision: UniversalProductDecision): Un
         `phase1m_trust_state_${(truthBundle.sources.trustState ?? "unknown").toLowerCase()}`,
         `phase1m_trust_score_${truthBundle.sources.trustScore}`,
         `phase1m_trust_confidence_${truthBundle.sources.trustConfidence}`,
+        "phase1n_decision_intelligence",
+        `phase1n_decision_state_${(truthBundle.sources.decisionState ?? "unknown").toLowerCase()}`,
+        `phase1n_decision_score_${truthBundle.sources.decisionScore}`,
+        `phase1n_decision_confidence_${truthBundle.sources.decisionConfidence}`,
         "phase1d5_truth_gate",
         `phase1d5_truth_confidence_${Math.round(gated.truthConfidence * 100)}`,
         `phase1d5_discount_${(truthBundle.sources.discountVerificationState ?? "none").toLowerCase()}`,

@@ -8,7 +8,7 @@ import type { TruthFoundationSnapshot } from "@/lib/truth/truthFoundationTypes";
 
 export type ProductIntelligenceFoundationInput = Omit<
   TruthFoundationSnapshot,
-  "productIntelligence" | "commerceIntelligence" | "commerceReasoning" | "evidenceReasoningGraph" | "trustEngine"
+  "productIntelligence" | "commerceIntelligence" | "commerceReasoning" | "evidenceReasoningGraph" | "trustEngine" | "decisionEngine"
 >;
 
 export type ProductIntelligenceState =
