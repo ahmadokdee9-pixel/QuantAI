@@ -44,6 +44,10 @@ import {
   hasDecisionEngineSignal,
 } from "@/lib/truth/decisionIntelligenceLayer";
 import { buildIntentIntelligenceEngine } from "@/lib/truth/intentIntelligenceEngine";
+import {
+  buildIntentAwareRetrieval,
+  hasIntentRetrievalSignal,
+} from "@/lib/truth/intentAwareRetrievalEngine";
 import { buildTruthDebugTrace } from "@/lib/truth/truthDebug";
 import type {
   ExtendedTruthEvidenceSources,
@@ -139,7 +143,8 @@ export function buildTruthFoundationSnapshot(args: {
     args.existing.evidenceReasoningGraph &&
     args.existing.trustEngine &&
     args.existing.decisionEngine &&
-    args.existing.intentEngine
+    args.existing.intentEngine &&
+    args.existing.intentRetrieval
   ) {
     return args.existing;
   }
@@ -283,9 +288,17 @@ export function buildTruthFoundationSnapshot(args: {
     decisionEngine: buildDecisionIntelligenceLayer(withTrustEngine),
   };
 
-  return {
+  const withIntentEngine = {
     ...withDecisionEngine,
     intentEngine: buildIntentIntelligenceEngine(args.searchQuery ?? ""),
+  };
+
+  return {
+    ...withIntentEngine,
+    intentRetrieval: buildIntentAwareRetrieval({
+      product: args.product,
+      intentEngine: withIntentEngine.intentEngine,
+    }),
   };
 }
 
@@ -456,6 +469,9 @@ export function buildExtendedTruthEvidenceSources(
       strongestPositiveFactor: getStrongestPositiveFactor(decisionEngine.decisionSignals),
       strongestNegativeFactor: getStrongestNegativeFactor(decisionEngine.decisionRisks),
       hasDecisionEngine: hasDecisionEngineSignal(decisionEngine),
+      retrievalIntentScore: foundation.intentRetrieval?.retrievalIntentScore ?? 0,
+      retrievalReasons: foundation.intentRetrieval?.retrievalReasons ?? [],
+      hasIntentRetrieval: hasIntentRetrievalSignal(foundation.intentRetrieval),
     };
   }
 
@@ -552,6 +568,9 @@ export function buildExtendedTruthEvidenceSources(
     strongestPositiveFactor: "Limited positive confirmation",
     strongestNegativeFactor: "No major negative signal",
     hasDecisionEngine: false,
+    retrievalIntentScore: 0,
+    retrievalReasons: [],
+    hasIntentRetrieval: false,
   };
 }
 

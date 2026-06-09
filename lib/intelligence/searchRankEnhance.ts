@@ -18,6 +18,11 @@ import { getMarketplaceSellerRiskTier } from "@/lib/retailTrust";
 import { relationshipGraphRankAdjustment, alternativeSeekingRankAdjustment } from "@/lib/intelligence/alternativeRanking";
 import { tasteCompositeLift, tasteProductAlignment01 } from "@/lib/commerce-os";
 import { normalizeQiListingIdentity } from "@/lib/intelligence/normalizeIntelligenceSignals";
+import { buildIntentIntelligenceEngine } from "@/lib/truth/intentIntelligenceEngine";
+import {
+  buildIntentAwareRetrieval,
+  intentRetrievalRankNudge,
+} from "@/lib/truth/intentAwareRetrievalEngine";
 
 export type PurchaseIntent =
   | "neutral"
@@ -246,6 +251,7 @@ export function sortByCompositeRankEnhanced(list: QuantProduct[], query: string)
   if (list.length === 0) return list;
   const intents = parseCommerceSearchIntents(query);
   const humanSearch = query.trim() ? extractHumanSearchIntent(query) : null;
+  const intentEngine = query.trim() ? buildIntentIntelligenceEngine(query) : null;
   const intent = purchaseIntentFromQuery(query);
   const prices = list.map((x) => x.price).filter((n) => n > 0).sort((a, b) => a - b);
   const medianPrice = prices[Math.floor(prices.length / 2)] ?? 0;
@@ -304,6 +310,10 @@ export function sortByCompositeRankEnhanced(list: QuantProduct[], query: string)
     c += (queryListingRelevance01(query, p) - 0.5) * 10;
     if (humanSearch) {
       c += adaptiveListingScoreDelta(p, list, intents, humanSearch);
+    }
+    if (intentEngine) {
+      const retrieval = buildIntentAwareRetrieval({ product: p, intentEngine });
+      c += intentRetrievalRankNudge(retrieval.retrievalIntentScore);
     }
     const mp = getMarketplaceSellerRiskTier(p.store, p.title);
     if (mp === "high") c -= 3.4;
