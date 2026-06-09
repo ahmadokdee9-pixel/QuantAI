@@ -21,7 +21,7 @@ export type DecisionEngineSnapshot = {
   decisionState: DecisionState;
 };
 
-export type DecisionEngineInput = Omit<TruthFoundationSnapshot, "decisionEngine">;
+export type DecisionEngineInput = Omit<TruthFoundationSnapshot, "decisionEngine" | "intentEngine">;
 
 export const WEAK_DECISION_SCORE_THRESHOLD = 52;
 export const WEAK_DECISION_CONFIDENCE_THRESHOLD = 50;

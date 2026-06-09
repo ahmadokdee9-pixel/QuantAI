@@ -43,6 +43,7 @@ import {
   getStrongestPositiveFactor,
   hasDecisionEngineSignal,
 } from "@/lib/truth/decisionIntelligenceLayer";
+import { buildIntentIntelligenceEngine } from "@/lib/truth/intentIntelligenceEngine";
 import { buildTruthDebugTrace } from "@/lib/truth/truthDebug";
 import type {
   ExtendedTruthEvidenceSources,
@@ -137,7 +138,8 @@ export function buildTruthFoundationSnapshot(args: {
     args.existing.commerceReasoning &&
     args.existing.evidenceReasoningGraph &&
     args.existing.trustEngine &&
-    args.existing.decisionEngine
+    args.existing.decisionEngine &&
+    args.existing.intentEngine
   ) {
     return args.existing;
   }
@@ -276,9 +278,14 @@ export function buildTruthFoundationSnapshot(args: {
     trustEngine: buildUnifiedTrustEngine(withEvidenceGraph),
   };
 
-  return {
+  const withDecisionEngine = {
     ...withTrustEngine,
     decisionEngine: buildDecisionIntelligenceLayer(withTrustEngine),
+  };
+
+  return {
+    ...withDecisionEngine,
+    intentEngine: buildIntentIntelligenceEngine(args.searchQuery ?? ""),
   };
 }
 

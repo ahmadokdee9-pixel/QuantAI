@@ -9,6 +9,7 @@ import type { MarketIntelligenceSnapshot } from "@/lib/truth/marketTruthRollup";
 import type { MerchantReliabilitySnapshot } from "@/lib/truth/merchantReliabilityTruth";
 import type { CommerceReasoningSnapshot } from "@/lib/truth/commerceReasoningLayer";
 import type { EvidenceReasoningGraph } from "@/lib/truth/evidenceReasoningGraph";
+import type { IntentEngineSnapshot } from "@/lib/truth/intentIntelligenceEngine";
 import type { DecisionEngineSnapshot } from "@/lib/truth/decisionIntelligenceLayer";
 import type { TrustEngineSnapshot } from "@/lib/truth/unifiedTrustEngine";
 import type { CommerceIntelligenceSnapshot } from "@/lib/truth/universalCommerceIntelligence";
@@ -55,6 +56,7 @@ export type TruthFoundationSnapshot = {
   evidenceReasoningGraph: EvidenceReasoningGraph;
   trustEngine: TrustEngineSnapshot;
   decisionEngine: DecisionEngineSnapshot;
+  intentEngine: IntentEngineSnapshot;
   debugTrace?: TruthDebugTrace | null;
 };
 
@@ -154,3 +156,4 @@ export type { CommerceReasoningSnapshot } from "@/lib/truth/commerceReasoningLay
 export type { EvidenceReasoningGraph } from "@/lib/truth/evidenceReasoningGraph";
 export type { TrustEngineSnapshot } from "@/lib/truth/unifiedTrustEngine";
 export type { DecisionEngineSnapshot } from "@/lib/truth/decisionIntelligenceLayer";
+export type { IntentEngineSnapshot, IntentSnapshot } from "@/lib/truth/intentIntelligenceEngine";
