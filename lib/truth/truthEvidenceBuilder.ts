@@ -9,6 +9,7 @@ import { classifyAvailability, classifiedLabelToDbStatus } from "@/lib/truth/ava
 import type { AvailabilityObservationRow } from "@/lib/truth/availabilityObservationTypes";
 import { deriveAvailabilityState, STALE_LISTING_HOURS } from "@/lib/truth/availabilityStateModel";
 import { aggregateCrossMerchantTruth } from "@/lib/truth/crossMerchantTruthAggregator";
+import { buildMarketTruthRollup } from "@/lib/truth/marketTruthRollup";
 import { computeFreshnessScoreFromObservedAt } from "@/lib/truth/freshnessScore";
 import type { HistoricalPriceObservationRow } from "@/lib/truth/priceHistoryTypes";
 import { buildPriceTruthBundle } from "@/lib/truth/priceTruth";
@@ -96,7 +97,12 @@ export function buildTruthFoundationSnapshot(args: {
   prefetch?: TruthFoundationPrefetchEntry | null;
   existing?: TruthFoundationSnapshot | null;
 }): TruthFoundationSnapshot {
-  if (args.existing?.version === 1 && args.existing.availabilityState && args.existing.merchantCount != null) {
+  if (
+    args.existing?.version === 1 &&
+    args.existing.availabilityState &&
+    args.existing.merchantCount != null &&
+    args.existing.marketIntelligence
+  ) {
     return args.existing;
   }
 
@@ -143,6 +149,19 @@ export function buildTruthFoundationSnapshot(args: {
     currentPrice,
   });
 
+  const marketIntelligence = buildMarketTruthRollup({
+    merchantCount: crossMerchant.merchantCount,
+    availabilityConsensus: crossMerchant.availabilityConsensus,
+    crossMerchantReferencePrice: crossMerchant.crossMerchantReferencePrice,
+    marketPriceSpread: crossMerchant.marketPriceSpread,
+    merchantAgreementScore: crossMerchant.merchantAgreementScore,
+    listingPriceOutlier: crossMerchant.listingPriceOutlier,
+    priceTruthConfidence: priceTruth?.priceTruthConfidence ?? 0,
+    baselineSamples90d: priceTruth?.baselineCoverage?.samples90d ?? 0,
+    availabilityState,
+    availabilityFreshness: availability.freshnessScore,
+  });
+
   const snapshot: TruthFoundationSnapshot = {
     version: 1,
     canonicalSkuId: sku.canonicalSkuId,
@@ -159,6 +178,7 @@ export function buildTruthFoundationSnapshot(args: {
     marketPriceSpread: crossMerchant.marketPriceSpread,
     merchantAgreementScore: crossMerchant.merchantAgreementScore,
     listingPriceOutlier: crossMerchant.listingPriceOutlier,
+    marketIntelligence,
     debugTrace: buildTruthDebugTrace({
       listingUrl: args.listingUrl,
       canonicalSkuId: sku.canonicalSkuId,
@@ -227,7 +247,10 @@ export function buildExtendedTruthEvidenceSources(
     return {
       priceHistorySamples: foundation.baselineCoverage?.samples90d ?? 0,
       identityConfidence: foundation.skuIdentityConfidence,
-      marketCoverageScore: intel.marketDepth?.marketCoverageScore ?? intel.marketCoverage?.coveragePct ?? 50,
+      marketCoverageScore: Math.max(
+        foundation.marketIntelligence.marketCoverage,
+        intel.marketDepth?.marketCoverageScore ?? intel.marketCoverage?.coveragePct ?? 0
+      ),
       discountProofScore: foundation.priceTruthConfidence,
       discountFake: foundation.priceTruth?.fakeDiscount.isFake === true,
       merchantTrustScore:
@@ -253,6 +276,11 @@ export function buildExtendedTruthEvidenceSources(
       merchantAgreementScore: foundation.merchantAgreementScore,
       listingPriceOutlier: foundation.listingPriceOutlier,
       currentListingPrice: intel.globalPriceIntelligence?.lowestPriceFound ?? null,
+      marketDepth: foundation.marketIntelligence.marketDepth,
+      marketCoverage: foundation.marketIntelligence.marketCoverage,
+      marketAgreementScore: foundation.marketIntelligence.marketAgreementScore,
+      marketPriceConfidence: foundation.marketIntelligence.marketPriceConfidence,
+      marketAvailabilityConfidence: foundation.marketIntelligence.marketAvailabilityConfidence,
     };
   }
 
@@ -300,6 +328,11 @@ export function buildExtendedTruthEvidenceSources(
     currentListingPrice: (intel.globalPriceIntelligence?.lowestPriceFound ?? 0) > 0
       ? (intel.globalPriceIntelligence?.lowestPriceFound ?? null)
       : null,
+    marketDepth: 0,
+    marketCoverage: 0,
+    marketAgreementScore: 0,
+    marketPriceConfidence: 0,
+    marketAvailabilityConfidence: 0,
   };
 }
 

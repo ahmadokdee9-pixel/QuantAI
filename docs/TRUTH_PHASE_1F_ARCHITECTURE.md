@@ -77,4 +77,4 @@ npm run test:phase1-truth-regression
 
 ## Next: Phase 1G
 
-Market Intelligence Layer — unified market context from cross-merchant truth rollups.
+Market Intelligence Layer — **Complete** — see `docs/TRUTH_PHASE_1G_ARCHITECTURE.md`.
