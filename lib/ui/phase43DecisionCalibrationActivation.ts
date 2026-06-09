@@ -42,12 +42,13 @@ function resolveMerchantScore(
   merchant: NonNullable<typeof intel.realMerchantVerification> | undefined,
   core: NonNullable<typeof intel.commerceDecisionCore>
 ): number {
+  const trust = intel.merchantTrustIntelligence;
+  const v2Composite = trust?.version === 2 ? trust.compositeCheckoutScore : undefined;
   const candidates = [
     merchant?.merchantTrustScore,
     core.merchantTrustScore,
-    intel.merchantTrustIntelligence?.trustScore,
-    intel.merchantTrustV2?.trustScore,
-    intel.merchantTrustV2?.compositeCheckoutScore,
+    trust?.trustScore,
+    v2Composite,
   ].filter((n): n is number => typeof n === "number" && Number.isFinite(n));
   return candidates.length ? Math.max(...candidates) : 0;
 }
@@ -183,7 +184,10 @@ export function buildDecisionCalibrationDecisionMap(
       confidenceReason: `Calibrated confidence ${confidence}% from verified discount, merchant trust, coverage, and value evidence.`,
       reasonLine: primaryLine,
       primaryReason: primaryLine,
-      summaryLines: [primaryLine, ...(decision.summaryLines ?? [])].slice(0, 4),
+      summaryLines: [
+        primaryLine,
+        (decision.summaryLines ?? [""])[1] ?? (decision.summaryLines ?? [""])[0] ?? "",
+      ],
       productIntelligence: {
         ...intel,
         commercePriorityLabel: tierToPriorityLabel(tier) as typeof intel.commercePriorityLabel,

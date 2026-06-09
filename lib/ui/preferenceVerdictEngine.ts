@@ -22,6 +22,7 @@ type RankedPreferenceRow = {
   spreadScore: number;
   rankIndex: number;
   gapFromTop: number;
+  rankBand: PersonalizedDecisionScore["rankBand"];
   avoid: boolean;
   buyEligible: boolean;
   compareEligible: boolean;
@@ -77,6 +78,7 @@ export function assignPreferenceAwareVerdicts(args: {
           spreadScore: 0,
           rankIndex: 0,
           gapFromTop: 99,
+          rankBand: "avoid" as const,
           avoid: true,
           buyEligible: false,
           compareEligible: false,
@@ -89,6 +91,7 @@ export function assignPreferenceAwareVerdicts(args: {
         spreadScore: spread.spreadScore,
         rankIndex: 0,
         gapFromTop: 0,
+        rankBand: spread.rankBand,
         avoid,
         buyEligible: !avoid && isBuyEligible({ spread, commerce }),
         compareEligible: !avoid && spread.spreadScore >= 58 && spread.rankBand !== "weak",
@@ -208,6 +211,7 @@ export function preferenceVerdictDistribution(
     WAIT: [...authority.values()].filter((row) => row.verdict === "WAIT").length,
     COMPARE: [...authority.values()].filter((row) => row.verdict === "COMPARE").length,
     AVOID: [...authority.values()].filter((row) => row.verdict === "AVOID").length,
+    "INSUFFICIENT DATA": [...authority.values()].filter((row) => row.verdict === "INSUFFICIENT DATA").length,
   };
 }
 

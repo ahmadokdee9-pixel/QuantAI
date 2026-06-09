@@ -21,6 +21,9 @@ export type MerchantTrustV2 = Omit<MerchantTrustIntelligence, "version"> & {
   v2Reasoning: string;
 };
 
+/** Union of v1 and v2 merchant trust — both expose trustScore and returnPolicyScore. */
+export type MerchantTrustSignal = MerchantTrustIntelligence | MerchantTrustV2;
+
 function clamp(n: number, lo: number, hi: number): number {
   if (!Number.isFinite(n)) return lo;
   return Math.min(hi, Math.max(lo, n));

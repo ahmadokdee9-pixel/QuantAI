@@ -6,7 +6,7 @@
 import type { OpportunityLabel } from "@/lib/intelligence/opportunityLabelEngine";
 import { isStrongOpportunity } from "@/lib/intelligence/opportunityLabelEngine";
 import type { RealDiscountValidationV3 } from "@/lib/intelligence/realDiscountValidationV3Engine";
-import type { MerchantTrustIntelligence } from "@/lib/intelligence/merchantTrustIntelligenceEngine";
+import type { MerchantTrustSignal } from "@/lib/intelligence/merchantTrustEngineV2";
 import type { GlobalPriceIntelligence } from "@/lib/intelligence/globalPriceIntelligenceEngine";
 import type { MarketCoverageIntelligence } from "@/lib/intelligence/marketCoverageEngine";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
@@ -34,7 +34,7 @@ const MIN_QUALITY = 52;
 export function validateBuyReadyV2(args: {
   currentVerdict: PrimaryVerdict;
   opportunityLabel: OpportunityLabel;
-  merchantTrust: MerchantTrustIntelligence;
+  merchantTrust: MerchantTrustSignal;
   globalPrice: GlobalPriceIntelligence;
   realDiscount: RealDiscountValidationV3;
   coverage: MarketCoverageIntelligence;

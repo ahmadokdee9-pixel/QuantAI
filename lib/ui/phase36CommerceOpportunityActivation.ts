@@ -11,6 +11,7 @@ import {
 } from "@/lib/intelligence/commerceOpportunityReasoningEngine";
 import type { CommerceIntelligenceAuthority } from "@/lib/intelligence/commerceIntelligenceAuthorityEngine";
 import { findEquivalentMatches } from "@/lib/intelligence/equivalentProductMatchingEngine";
+import type { PersonalCommerceScore } from "@/lib/intelligence/personalCommerceScoreEngine";
 import { enrichTrayImageReliability, trayImageCoverage } from "@/lib/intelligence/imageReliabilityEngine";
 import { buildTrayCommerceSummary } from "@/lib/intelligence/trayVerdictSummaryEngine";
 import type { CoherentProductDecision } from "@/lib/ui/decisionCoherenceActivation";
@@ -124,10 +125,7 @@ export function buildCommerceOpportunityDecisionMap(
     ReturnType<typeof findEquivalentMatches>
   >();
   const commerceByLink = new Map<string, CommerceIntelligenceAuthority>();
-  const personalByLink = new Map<
-    string,
-    NonNullable<UniversalProductDecision["productIntelligence"]>["personalCommerceScore"]
-  >();
+  const personalByLink = new Map<string, PersonalCommerceScore>();
   const pricesByLink = new Map<string, number>();
 
   for (const [link, decision] of baseMap) {

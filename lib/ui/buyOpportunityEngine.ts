@@ -267,6 +267,7 @@ export function verdictDistribution(rows: Array<{ verdict: PrimaryVerdict }>): R
     WAIT: rows.filter((row) => row.verdict === "WAIT").length,
     COMPARE: rows.filter((row) => row.verdict === "COMPARE").length,
     AVOID: rows.filter((row) => row.verdict === "AVOID").length,
+    "INSUFFICIENT DATA": rows.filter((row) => row.verdict === "INSUFFICIENT DATA").length,
   };
 }
 

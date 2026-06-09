@@ -311,6 +311,15 @@ function pickLayerLine(input: ReasonLayerInput, code: ReasonCode): string | unde
   }
 }
 
+function buildInsufficientDataAuthority(input: ReasonLayerInput): VerdictReasonAuthority {
+  return {
+    verdict: "INSUFFICIENT DATA",
+    primaryReason: reasonItem("INSUFFICIENT_DATA", pickLayerLine(input, "INSUFFICIENT_DATA")),
+    secondaryReasons: [],
+    rejectedReasons: [reasonItem("TRUST"), reasonItem("PRICE")],
+  };
+}
+
 /** Resolve one dominant reason set for a product verdict (existing layers only). */
 export function resolveProductReasonAuthority(input: ReasonLayerInput): VerdictReasonAuthority {
   switch (input.verdict) {
@@ -322,6 +331,8 @@ export function resolveProductReasonAuthority(input: ReasonLayerInput): VerdictR
       return buildAvoidAuthority(input);
     case "COMPARE":
       return buildCompareAuthority(input);
+    case "INSUFFICIENT DATA":
+      return buildInsufficientDataAuthority(input);
   }
 }
 

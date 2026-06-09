@@ -4,7 +4,7 @@
 
 import type { DiscountIntelligenceV2 } from "@/lib/intelligence/discountIntelligenceV2Engine";
 import type { GlobalPriceIntelligence } from "@/lib/intelligence/globalPriceIntelligenceEngine";
-import type { MerchantTrustIntelligence } from "@/lib/intelligence/merchantTrustIntelligenceEngine";
+import type { MerchantTrustSignal } from "@/lib/intelligence/merchantTrustEngineV2";
 
 export type BestDealFoundAssessment = {
   version: 1;
@@ -22,7 +22,7 @@ const DISCOUNT_TRUST_THRESHOLD = 55;
 export function assessBestDealFound(args: {
   globalPrice: GlobalPriceIntelligence;
   discountV2: DiscountIntelligenceV2;
-  merchantTrust: MerchantTrustIntelligence;
+  merchantTrust: MerchantTrustSignal;
   isLowestInUniverse: boolean;
 }): BestDealFoundAssessment {
   const { globalPrice, discountV2, merchantTrust, isLowestInUniverse } = args;

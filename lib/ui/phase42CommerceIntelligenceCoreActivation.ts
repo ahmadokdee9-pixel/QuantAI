@@ -17,6 +17,7 @@ import {
 import { computeMarketDepth } from "@/lib/intelligence/marketDepthEngine";
 import { proveRealDiscount, discountProofAllowsRealLabel } from "@/lib/intelligence/realDiscountProofEngine";
 import { verifyMerchant, merchantTrustAffectsRanking } from "@/lib/intelligence/realMerchantVerificationEngine";
+import { buildMerchantTrustV2 } from "@/lib/intelligence/merchantTrustEngineV2";
 import { computeValueIntelligenceCore } from "@/lib/intelligence/valueIntelligenceCoreEngine";
 import type { MarketMemoryState } from "@/lib/intelligence/marketMemory";
 import type { CoherentProductDecision } from "@/lib/ui/decisionCoherenceActivation";
@@ -89,15 +90,18 @@ export function buildCommerceIntelligenceCoreDecisionMap(
     const intel = decision.productIntelligence;
     if (!row?.product || !intel?.globalPriceIntelligence || !intel.realDiscountValidationV3) continue;
 
+    const merchantTrust =
+      intel.merchantTrustIntelligence ?? buildMerchantTrustV2(row.product);
+
     const merchant = verifyMerchant({
       product: row.product,
-      baseTrust: intel.merchantTrustIntelligence as import("@/lib/intelligence/merchantTrustEngineV2").MerchantTrustV2 | undefined,
+      baseTrust: merchantTrust.version === 2 ? merchantTrust : undefined,
     });
 
     const categoryIntel = buildCategoryIntelligenceCore({
       product: row.product,
       searchQuery,
-      merchantTrust: merchant,
+      merchantTrust,
       segment: intel.segment ?? null,
     });
 
@@ -170,11 +174,16 @@ export function buildCommerceIntelligenceCoreDecisionMap(
       continue;
     }
 
-    const merchant = verifyMerchant({ product: row.product });
+    const merchantTrust =
+      intel.merchantTrustIntelligence ?? buildMerchantTrustV2(row.product);
+    const merchant = verifyMerchant({
+      product: row.product,
+      baseTrust: merchantTrust.version === 2 ? merchantTrust : undefined,
+    });
     const categoryIntel = buildCategoryIntelligenceCore({
       product: row.product,
       searchQuery,
-      merchantTrust: merchant,
+      merchantTrust,
       segment: intel.segment ?? null,
     });
     const discountProof = proveRealDiscount({

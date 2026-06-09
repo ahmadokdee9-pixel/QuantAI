@@ -72,7 +72,7 @@ export function resolveGlobalProductIdentity(
   const generation = extractGeneration(product.title, searchQuery);
   const dimensions = extractDimensions(product.title);
 
-  const quality = (product.rating as number) * 20 ?? 50;
+  const quality = Math.round(((product.rating as number) || 4) * 20);
   const priceVsPeers =
     trayMedianQuality > 0 && product.price > 0 ? (trayMedianQuality - product.price) / trayMedianQuality : 0;
 

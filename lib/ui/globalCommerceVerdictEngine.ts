@@ -19,7 +19,8 @@ export type GlobalCommercePriorityLabel =
   | "BUY READY"
   | "COMPARE"
   | "WAIT"
-  | "AVOID";
+  | "AVOID"
+  | "INSUFFICIENT DATA";
 
 export type GlobalVerdictRow = PreferenceVerdictRow & {
   commercePriorityLabel: GlobalCommercePriorityLabel;
@@ -53,6 +54,7 @@ function priorityLabel(
   if (verdict === "AVOID") return "AVOID";
   if (verdict === "WAIT") return "WAIT";
   if (verdict === "COMPARE") return "COMPARE";
+  if (verdict === "INSUFFICIENT DATA") return "INSUFFICIENT DATA";
   if (buyOpportunity.bestDealFound || globalPrice.priceLabel === "BEST PRICE FOUND" || discountV2.discountLabel === "BEST DEAL FOUND") {
     return "BEST DEAL FOUND";
   }
@@ -77,7 +79,7 @@ export function assignGlobalCommerceVerdicts(args: {
       let score = buy?.buyOpportunityScore ?? 0;
       if (buy?.valueLedBuy) score += 10;
       if (price?.priceLabel === "BEST PRICE FOUND") score += 8;
-      if (price?.priceAdvantagePct >= 8) score += 5;
+      if (price?.priceAdvantagePct != null && price.priceAdvantagePct >= 8) score += 5;
       const avoid =
         !buy ||
         !price ||

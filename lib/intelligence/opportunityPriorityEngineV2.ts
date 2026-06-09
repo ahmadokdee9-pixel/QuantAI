@@ -4,7 +4,7 @@
 
 import type { DiscountIntelligenceV2 } from "@/lib/intelligence/discountIntelligenceV2Engine";
 import type { GlobalPriceIntelligence } from "@/lib/intelligence/globalPriceIntelligenceEngine";
-import type { MerchantTrustIntelligence } from "@/lib/intelligence/merchantTrustIntelligenceEngine";
+import type { MerchantTrustSignal } from "@/lib/intelligence/merchantTrustEngineV2";
 import type { RealDiscountValidationV3 } from "@/lib/intelligence/realDiscountValidationV3Engine";
 
 export type OpportunityPriorityV2 = {
@@ -27,7 +27,7 @@ function clamp(n: number, lo: number, hi: number): number {
 /** Compute v2 opportunity score — value can trigger BUY READY without huge discounts. */
 export function computeOpportunityPriorityV2(args: {
   globalPrice: GlobalPriceIntelligence;
-  merchantTrust: MerchantTrustIntelligence;
+  merchantTrust: MerchantTrustSignal;
   discountV2: DiscountIntelligenceV2;
   realDiscount: RealDiscountValidationV3;
   qualityScore: number;

@@ -291,5 +291,8 @@ export function buildQuantAIVerdictNarrative(args: CardIntelArgs): string {
       return "Multiple competitive offers — compare before buying.";
     case "AVOID":
       return "Risk profile exceeds acceptable threshold for checkout.";
+    case "INSUFFICIENT DATA":
+      return "More verified market evidence is needed before checkout.";
   }
+  return "Compare verified listings before committing.";
 }

@@ -185,6 +185,7 @@ export function commerceOpportunityVerdictDistribution(
     WAIT: [...authority.values()].filter((row) => row.verdict === "WAIT").length,
     COMPARE: [...authority.values()].filter((row) => row.verdict === "COMPARE").length,
     AVOID: [...authority.values()].filter((row) => row.verdict === "AVOID").length,
+    "INSUFFICIENT DATA": [...authority.values()].filter((row) => row.verdict === "INSUFFICIENT DATA").length,
   };
 }
 

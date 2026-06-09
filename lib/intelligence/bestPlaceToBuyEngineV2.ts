@@ -3,7 +3,7 @@
  */
 
 import type { BestPlaceToBuy } from "@/lib/intelligence/bestPlaceToBuyEngine";
-import type { MerchantTrustIntelligence } from "@/lib/intelligence/merchantTrustIntelligenceEngine";
+import type { MerchantTrustSignal } from "@/lib/intelligence/merchantTrustEngineV2";
 import type { GlobalPriceIntelligence } from "@/lib/intelligence/globalPriceIntelligenceEngine";
 
 export type BestPlaceToBuyV2 = Omit<BestPlaceToBuy, "version"> & {
@@ -20,7 +20,7 @@ export type BestPlaceToBuyV2 = Omit<BestPlaceToBuy, "version"> & {
 export function buildBestPlaceToBuyV2(args: {
   base: BestPlaceToBuy;
   globalPrice: GlobalPriceIntelligence;
-  merchantTrust: MerchantTrustIntelligence;
+  merchantTrust: MerchantTrustSignal;
   productTitle: string;
 }): BestPlaceToBuyV2 {
   const { base, globalPrice, merchantTrust, productTitle } = args;

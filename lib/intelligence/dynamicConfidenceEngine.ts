@@ -6,7 +6,7 @@
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import { confidenceBandForVerdict } from "@/lib/intelligence/confidenceCalibrationEngine";
 import type { RealDiscountValidationV3 } from "@/lib/intelligence/realDiscountValidationV3Engine";
-import type { MerchantTrustIntelligence } from "@/lib/intelligence/merchantTrustIntelligenceEngine";
+import type { MerchantTrustSignal } from "@/lib/intelligence/merchantTrustEngineV2";
 import type { GlobalPriceIntelligence } from "@/lib/intelligence/globalPriceIntelligenceEngine";
 import type { MarketCoverageIntelligence } from "@/lib/intelligence/marketCoverageEngine";
 
@@ -42,7 +42,7 @@ function spreadWithinBand(link: string, bandMin: number, bandMax: number, raw: n
 export function computeDynamicConfidence(args: {
   link: string;
   verdict: PrimaryVerdict;
-  merchantTrust: MerchantTrustIntelligence;
+  merchantTrust: MerchantTrustSignal;
   globalPrice: GlobalPriceIntelligence;
   realDiscount: RealDiscountValidationV3;
   coverage: MarketCoverageIntelligence;

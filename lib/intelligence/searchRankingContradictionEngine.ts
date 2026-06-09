@@ -9,7 +9,7 @@ import { isWeakOpportunity } from "@/lib/intelligence/opportunityLabelEngine";
 import type { WaitForecastV2 } from "@/lib/intelligence/waitForecastEngineV2";
 import type { SearchRankEntry } from "@/lib/intelligence/searchRankingEngine";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
-import type { MerchantTrustIntelligence } from "@/lib/intelligence/merchantTrustIntelligenceEngine";
+import type { MerchantTrustSignal } from "@/lib/intelligence/merchantTrustEngineV2";
 
 export type SearchContradictionReport = {
   valid: boolean;
@@ -20,7 +20,7 @@ export function validateSearchRankingConsistency(args: {
   verdict: PrimaryVerdict;
   confidence: DynamicConfidence;
   opportunityLabel: OpportunityLabel;
-  merchantTrust: MerchantTrustIntelligence;
+  merchantTrust: MerchantTrustSignal;
   waitForecast?: WaitForecastV2;
   searchRank?: SearchRankEntry;
   globalWinner?: boolean;
@@ -58,7 +58,7 @@ export function resolveSearchRankingContradictions(args: {
   verdict: PrimaryVerdict;
   confidence: DynamicConfidence;
   opportunityLabel: OpportunityLabel;
-  merchantTrust: MerchantTrustIntelligence;
+  merchantTrust: MerchantTrustSignal;
   waitForecast?: WaitForecastV2;
 }): { verdict: PrimaryVerdict; confidence: DynamicConfidence } {
   let verdict = args.verdict;

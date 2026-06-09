@@ -14,8 +14,8 @@ import type {
   UniversalProductDecision,
   UniversalProductIntelligenceSnapshot,
 } from "@/lib/ui/universalProductDecision";
-import { assignBalancedTrayVerdictAuthority } from "@/lib/ui/marketOpportunityBalancingEngine";
-export type { TrayVerdictAuthorityRow } from "@/lib/ui/marketOpportunityBalancingEngine";
+import { assignBalancedTrayVerdictAuthority, type TrayVerdictAuthorityRow } from "@/lib/ui/marketOpportunityBalancingEngine";
+export type { TrayVerdictAuthorityRow };
 
 type StandardDimensionSpec = {
   key: string;

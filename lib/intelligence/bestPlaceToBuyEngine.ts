@@ -5,7 +5,7 @@
 
 import type { GlobalAlternatives } from "@/lib/intelligence/globalAlternativeEngine";
 import type { GlobalPriceIntelligence } from "@/lib/intelligence/globalPriceIntelligenceEngine";
-import type { MerchantTrustIntelligence } from "@/lib/intelligence/merchantTrustIntelligenceEngine";
+import type { MerchantTrustSignal } from "@/lib/intelligence/merchantTrustEngineV2";
 import type { QuantProduct } from "@/lib/shoppingScore";
 
 export type BestPlaceToBuy = {
@@ -27,7 +27,7 @@ export function buildBestPlaceToBuy(args: {
   product: QuantProduct;
   globalPrice: GlobalPriceIntelligence;
   alternatives: GlobalAlternatives;
-  merchantTrust: MerchantTrustIntelligence;
+  merchantTrust: MerchantTrustSignal;
 }): BestPlaceToBuy {
   const { product, globalPrice, alternatives, merchantTrust } = args;
 

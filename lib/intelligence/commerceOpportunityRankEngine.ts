@@ -7,7 +7,7 @@ import type { BestPlaceToBuy } from "@/lib/intelligence/bestPlaceToBuyEngine";
 import type { DiscountIntelligenceV2 } from "@/lib/intelligence/discountIntelligenceV2Engine";
 import type { GlobalBuyOpportunity } from "@/lib/intelligence/globalBuyOpportunityEngine";
 import type { GlobalPriceIntelligence } from "@/lib/intelligence/globalPriceIntelligenceEngine";
-import type { MerchantTrustIntelligence } from "@/lib/intelligence/merchantTrustIntelligenceEngine";
+import type { MerchantTrustSignal } from "@/lib/intelligence/merchantTrustEngineV2";
 
 export type OpportunityClass =
   | "Best Deal Found"
@@ -30,7 +30,7 @@ function classifyOpportunity(args: {
   globalPrice: GlobalPriceIntelligence;
   discountV2: DiscountIntelligenceV2;
   buyOpportunity: GlobalBuyOpportunity;
-  merchantTrust: MerchantTrustIntelligence;
+  merchantTrust: MerchantTrustSignal;
   bestPlace: BestPlaceToBuy;
 }): OpportunityClass {
   const { globalPrice, discountV2, buyOpportunity, merchantTrust, bestPlace } = args;
@@ -57,7 +57,7 @@ export function rankCommerceOpportunities(
     globalPrice: GlobalPriceIntelligence;
     discountV2: DiscountIntelligenceV2;
     buyOpportunity: GlobalBuyOpportunity;
-    merchantTrust: MerchantTrustIntelligence;
+    merchantTrust: MerchantTrustSignal;
     bestPlace: BestPlaceToBuy;
   }>
 ): RankedCommerceOpportunity[] {

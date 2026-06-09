@@ -116,6 +116,7 @@ const HERO_FALLBACK: Record<PrimaryVerdict, string> = {
   WAIT: "Current price remains above fair historical value.",
   AVOID: "Lower value than competing alternatives.",
   COMPARE: "Strong option but better alternatives exist.",
+  "INSUFFICIENT DATA": "More market evidence is needed before recommending checkout.",
 };
 
 /** Card-face lines must not compete with the recommendation band. */
@@ -185,6 +186,11 @@ function buildHeroSummaryLine(input: IntelligenceExposureInput, seen: Set<string
       alternativeAdvantage.advantageReasons[0],
       alternativeAdvantage.cardLine,
       activatedBrief?.reasoning,
+    ],
+    "INSUFFICIENT DATA": [
+      activatedBrief?.reasoning,
+      activatedBrief?.marketStatus,
+      trustRisk.trustReason,
     ],
   };
 

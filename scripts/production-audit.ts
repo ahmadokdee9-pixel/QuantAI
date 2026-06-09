@@ -9,10 +9,11 @@ import { join } from "node:path";
 import {
   activateProductDecisionCoherence,
   buildTrayCoherenceContext,
-} from "../lib/ui/decisionCoherenceActivation.ts";
-import { buildProductionReadinessDecisionMap } from "../lib/ui/phase45ProductionReadinessActivation.ts";
-import { validateTraySafety } from "../lib/intelligence/productionSafetyEngine.ts";
-import { distributionWithinTargets } from "../lib/intelligence/buySignalBalancingEngine.ts";
+} from "@/lib/ui/decisionCoherenceActivation";
+import { buildProductionReadinessDecisionMap } from "@/lib/ui/phase45ProductionReadinessActivation";
+import { validateTraySafety } from "@/lib/intelligence/productionSafetyEngine";
+import { distributionWithinTargets } from "@/lib/intelligence/buySignalBalancingEngine";
+import type { QuantProduct } from "@/lib/shoppingScore";
 
 type AuditCheck = { name: string; pass: boolean; weight: number; detail: string };
 
@@ -38,7 +39,7 @@ const base = {
   image: "https://images.example.com/product.jpg",
 };
 
-function listing(id: number, title: string, store: string, price: number, oldPrice: number, tag: string) {
+function listing(id: number, title: string, store: string, price: number, oldPrice: number, tag: string): QuantProduct {
   return {
     ...base,
     id,
@@ -46,6 +47,7 @@ function listing(id: number, title: string, store: string, price: number, oldPri
     title,
     store,
     price,
+    displayPrice: `$${price}`,
     oldPrice,
     rating: 4.5,
     reviewsCount: 120,
@@ -103,7 +105,13 @@ function runScenario(query: string, tray: ReturnType<typeof listing>[]) {
   const metaByLink = new Map(
     tray.map((product, rank) => [
       product.link,
-      { price: product.price, rank, rating: product.rating, reviewsCount: product.reviewsCount, store: product.store },
+      {
+        price: product.price,
+        rank,
+        rating: typeof product.rating === "number" ? product.rating : Number(product.rating) || 4.5,
+        reviewsCount: product.reviewsCount ?? 0,
+        store: product.store,
+      },
     ])
   );
 

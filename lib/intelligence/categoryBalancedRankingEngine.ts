@@ -4,7 +4,7 @@
  */
 
 import type { GlobalCategoryIntelligence } from "@/lib/intelligence/globalCategoryIntelligenceEngine";
-import type { MerchantTrustIntelligence } from "@/lib/intelligence/merchantTrustIntelligenceEngine";
+import type { MerchantTrustSignal } from "@/lib/intelligence/merchantTrustEngineV2";
 
 export type CategoryBalancedScore = {
   version: 1;
@@ -22,7 +22,7 @@ export function computeCategoryBalancedScore(args: {
   price: number;
   medianPrice: number;
   qualityScore: number;
-  merchantTrust: MerchantTrustIntelligence;
+  merchantTrust: MerchantTrustSignal;
   categoryIntel: GlobalCategoryIntelligence;
   conditionBlob: string;
 }): CategoryBalancedScore {

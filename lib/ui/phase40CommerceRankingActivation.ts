@@ -7,6 +7,11 @@ import { computeBestSavings } from "@/lib/intelligence/bestSavingsEngine";
 import { validateBuyReadyV2 } from "@/lib/intelligence/buyReadyValidationV2";
 import { computeDynamicConfidence, hasStaticConfidenceCluster } from "@/lib/intelligence/dynamicConfidenceEngine";
 import { computeGlobalWinner, isGlobalWinner } from "@/lib/intelligence/globalWinnerEngine";
+import type { GlobalBuyOpportunity } from "@/lib/intelligence/globalBuyOpportunityEngine";
+import type { GlobalPriceIntelligence } from "@/lib/intelligence/globalPriceIntelligenceEngine";
+import type { MerchantTrustSignal } from "@/lib/intelligence/merchantTrustEngineV2";
+import type { OpportunityPriorityV2 } from "@/lib/intelligence/opportunityPriorityEngineV2";
+import type { RealDiscountValidationV3 } from "@/lib/intelligence/realDiscountValidationV3Engine";
 import { interpretOpportunityScore } from "@/lib/intelligence/opportunityLabelEngine";
 import {
   rankSearchResults,
@@ -123,11 +128,11 @@ export function buildCommerceRankingDecisionMap(
   const winnerRows: Array<{
     link: string;
     product: QuantProduct;
-    globalPrice: NonNullable<UniversalProductDecision["productIntelligence"]>["globalPriceIntelligence"];
-    merchantTrust: NonNullable<UniversalProductDecision["productIntelligence"]>["merchantTrustIntelligence"];
-    buyOpportunity: NonNullable<UniversalProductDecision["productIntelligence"]>["globalBuyOpportunity"];
-    opportunity: NonNullable<UniversalProductDecision["productIntelligence"]>["opportunityPriorityV2"];
-    realDiscount: NonNullable<UniversalProductDecision["productIntelligence"]>["realDiscountValidationV3"];
+    globalPrice: GlobalPriceIntelligence;
+    merchantTrust: MerchantTrustSignal;
+    buyOpportunity: GlobalBuyOpportunity;
+    opportunity: OpportunityPriorityV2;
+    realDiscount: RealDiscountValidationV3;
   }> = [];
 
   const rankingInputRows: Array<{
@@ -145,25 +150,26 @@ export function buildCommerceRankingDecisionMap(
   for (const [link, decision] of base.decisions) {
     const row = productsByLink.get(link);
     const intel = decision.productIntelligence;
-    if (
-      !row?.product ||
-      !intel?.globalPriceIntelligence ||
-      !intel.merchantTrustIntelligence ||
-      !intel.globalBuyOpportunity ||
-      !intel.opportunityPriorityV2 ||
-      !intel.realDiscountValidationV3
-    ) {
+    if (!row?.product || !intel) continue;
+
+    const globalPrice = intel.globalPriceIntelligence;
+    const merchantTrust = intel.merchantTrustIntelligence;
+    const buyOpportunity = intel.globalBuyOpportunity;
+    const opportunity = intel.opportunityPriorityV2;
+    const realDiscount = intel.realDiscountValidationV3;
+
+    if (!globalPrice || !merchantTrust || !buyOpportunity || !opportunity || !realDiscount) {
       continue;
     }
 
     winnerRows.push({
       link,
       product: row.product,
-      globalPrice: intel.globalPriceIntelligence,
-      merchantTrust: intel.merchantTrustIntelligence,
-      buyOpportunity: intel.globalBuyOpportunity,
-      opportunity: intel.opportunityPriorityV2,
-      realDiscount: intel.realDiscountValidationV3,
+      globalPrice,
+      merchantTrust,
+      buyOpportunity,
+      opportunity,
+      realDiscount,
     });
   }
 

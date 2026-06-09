@@ -5,10 +5,10 @@
 
 import type { GlobalCategoryIntelligence } from "@/lib/intelligence/globalCategoryIntelligenceEngine";
 import { buildGlobalCategoryIntelligence } from "@/lib/intelligence/globalCategoryIntelligenceEngine";
-import type { MerchantTrustIntelligence } from "@/lib/intelligence/merchantTrustIntelligenceEngine";
+import type { MerchantTrustSignal } from "@/lib/intelligence/merchantTrustEngineV2";
 import type { QuantProduct } from "@/lib/shoppingScore";
 
-export type CategoryIntelligenceCore = GlobalCategoryIntelligence & {
+export type CategoryIntelligenceCore = Omit<GlobalCategoryIntelligence, "version"> & {
   version: 2;
   categoryIntelligenceScore: number;
   coreDimensions: string[];
@@ -45,7 +45,7 @@ function scoreTvDimension(dim: string, blob: string, rating: number): number {
 export function buildCategoryIntelligenceCore(args: {
   product: QuantProduct;
   searchQuery: string;
-  merchantTrust: MerchantTrustIntelligence;
+  merchantTrust: MerchantTrustSignal;
   segment?: import("@/lib/ui/universalProductIntelligenceEngine").ProductIntelligenceSegment | null;
 }): CategoryIntelligenceCore {
   const base = buildGlobalCategoryIntelligence(args);

@@ -20,7 +20,7 @@ export type GlobalDecisionReasoning = {
   whyThisPrice: string;
   whyNotCompetitor: string;
   analystSummary: string;
-  commercePriorityLabel: "BEST DEAL FOUND" | "BUY READY" | "COMPARE" | "WAIT" | "AVOID";
+  commercePriorityLabel: "BEST DEAL FOUND" | "BUY READY" | "COMPARE" | "WAIT" | "AVOID" | "INSUFFICIENT DATA";
 };
 
 const GENERIC_BANNED = [

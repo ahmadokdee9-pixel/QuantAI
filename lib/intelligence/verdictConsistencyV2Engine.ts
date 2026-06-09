@@ -7,7 +7,7 @@ import type { BillionDollarDiscountIntelligence } from "@/lib/intelligence/billi
 import type { ProductIdentityMatchV2 } from "@/lib/intelligence/productIdentityMatchingV2Engine";
 import type { SearchRankEntry } from "@/lib/intelligence/searchRankingEngine";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
-import type { MerchantTrustIntelligence } from "@/lib/intelligence/merchantTrustIntelligenceEngine";
+import type { MerchantTrustSignal } from "@/lib/intelligence/merchantTrustEngineV2";
 
 export type VerdictBlocker =
   | "fake_discount"
@@ -29,7 +29,7 @@ export type VerdictConsistencyV2 = {
 
 function detectBlockers(args: {
   verdict: PrimaryVerdict;
-  merchantTrust: MerchantTrustIntelligence;
+  merchantTrust: MerchantTrustSignal;
   discount: BillionDollarDiscountIntelligence;
   identity: ProductIdentityMatchV2;
   availability: string;
@@ -53,7 +53,7 @@ export function resolveVerdictConsistencyV2(args: {
   confidence: number;
   searchRank?: SearchRankEntry;
   isGlobalWinner: boolean;
-  merchantTrust: MerchantTrustIntelligence;
+  merchantTrust: MerchantTrustSignal;
   discount: BillionDollarDiscountIntelligence;
   identity: ProductIdentityMatchV2;
   availability: string;

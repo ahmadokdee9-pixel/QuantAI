@@ -71,6 +71,8 @@ function buildWinningReason(verdict: PrimaryVerdict, counts: TrayVerdictClusterC
           ? "Listings are comparison-first — narrow to two trusted rows before committing."
           : "Tray signals are mixed — compare trusted alternatives before buying."
       );
+    case "INSUFFICIENT DATA":
+      return clipLine("Tray lacks enough verified listing depth for a checkout recommendation.");
   }
 }
 
@@ -148,7 +150,7 @@ export function resolveUnifiedTrayVerdict(
     counts.buyReady += row.verdict === "BUY READY" ? 1 : 0;
     counts.wait += row.verdict === "WAIT" ? 1 : 0;
     counts.avoid += row.verdict === "AVOID" ? 1 : 0;
-    if (row.verdict !== "COMPARE") {
+    if (row.verdict === "BUY READY" || row.verdict === "WAIT" || row.verdict === "AVOID") {
       alignmentByVerdict[row.verdict].push(row.alignmentScore);
     }
   }
@@ -169,12 +171,14 @@ export function resolveUnifiedTrayVerdict(
   }
 
   const activeAlignments =
-    verdict === "COMPARE"
+    verdict === "COMPARE" || verdict === "INSUFFICIENT DATA"
       ? actionable.map((row) => row.alignmentScore)
       : alignmentByVerdict[verdict];
   const confidence =
     activeAlignments.length > 0
-      ? Math.round(activeAlignments.reduce((sum, value) => sum + value, 0) / activeAlignments.length)
+      ? Math.round(
+          activeAlignments.reduce((sum: number, value: number) => sum + value, 0) / activeAlignments.length
+        )
       : list[0]?.alignmentScore ?? 50;
 
   const reasonAuthority = resolveTrayReasonAuthority(list, verdict);

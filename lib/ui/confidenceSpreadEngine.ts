@@ -17,6 +17,7 @@ const VERDICT_RANGES: Record<PrimaryVerdict, [number, number]> = {
   COMPARE: [55, 82],
   WAIT: [38, 68],
   AVOID: [15, 45],
+  "INSUFFICIENT DATA": [25, 50],
 };
 
 function clampScore(value: number): number {

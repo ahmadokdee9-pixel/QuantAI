@@ -7,7 +7,7 @@ import type { BestDealFoundAssessment } from "@/lib/intelligence/bestDealFoundEn
 import type { BestPlaceToBuy } from "@/lib/intelligence/bestPlaceToBuyEngine";
 import type { GlobalAlternatives } from "@/lib/intelligence/globalAlternativeEngine";
 import type { GlobalPriceIntelligence } from "@/lib/intelligence/globalPriceIntelligenceEngine";
-import type { MerchantTrustIntelligence } from "@/lib/intelligence/merchantTrustIntelligenceEngine";
+import type { MerchantTrustSignal } from "@/lib/intelligence/merchantTrustEngineV2";
 import type { ShopperIntentProfile } from "@/lib/intelligence/shopperIntentModeEngine";
 import type { WaitPrediction } from "@/lib/intelligence/waitPredictionEngine";
 
@@ -42,7 +42,7 @@ export function buildBuyExplanation(args: {
   link: string;
   bestPlace: BestPlaceToBuy;
   globalPrice: GlobalPriceIntelligence;
-  merchantTrust: MerchantTrustIntelligence;
+  merchantTrust: MerchantTrustSignal;
   alternatives: GlobalAlternatives;
   waitPrediction: WaitPrediction;
   bestDeal: BestDealFoundAssessment;

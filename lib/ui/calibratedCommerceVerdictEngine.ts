@@ -9,7 +9,7 @@ import { calibrateConfidenceForVerdict } from "@/lib/intelligence/confidenceCali
 import type { CalibratedConfidence } from "@/lib/intelligence/confidenceCalibrationEngine";
 import type { GlobalBuyOpportunity } from "@/lib/intelligence/globalBuyOpportunityEngine";
 import type { GlobalPriceIntelligence } from "@/lib/intelligence/globalPriceIntelligenceEngine";
-import type { MerchantTrustIntelligence } from "@/lib/intelligence/merchantTrustIntelligenceEngine";
+import type { MerchantTrustSignal } from "@/lib/intelligence/merchantTrustEngineV2";
 import type { OpportunityPriorityV2 } from "@/lib/intelligence/opportunityPriorityEngineV2";
 import { resolveContradictions } from "@/lib/intelligence/noContradictionEngine";
 import type { RealDiscountValidationV3 } from "@/lib/intelligence/realDiscountValidationV3Engine";
@@ -55,7 +55,7 @@ function pctDiff(a: number, b: number): number {
 
 function isSevereAvoid(args: {
   globalPrice: GlobalPriceIntelligence;
-  merchantTrust: MerchantTrustIntelligence;
+  merchantTrust: MerchantTrustSignal;
   buyOpportunity: GlobalBuyOpportunity;
   hasSuperiorAlternative: boolean;
   realDiscount: RealDiscountValidationV3;
@@ -74,7 +74,7 @@ function isSevereAvoid(args: {
 
 function hasInsufficientData(args: {
   decision: UniversalProductDecision;
-  merchantTrust: MerchantTrustIntelligence;
+  merchantTrust: MerchantTrustSignal;
   globalPrice: GlobalPriceIntelligence;
 }): boolean {
   const intel = args.decision.productIntelligence;
@@ -113,7 +113,7 @@ function peersAreClose(args: {
 
 function trustedFairPrice(args: {
   globalPrice: GlobalPriceIntelligence;
-  merchantTrust: MerchantTrustIntelligence;
+  merchantTrust: MerchantTrustSignal;
   realDiscount: RealDiscountValidationV3;
 }): boolean {
   return (
@@ -128,7 +128,7 @@ export function assignCalibratedCommerceVerdicts(args: {
   decisions: Map<string, UniversalProductDecision>;
   buyOpportunityByLink: Map<string, GlobalBuyOpportunity>;
   globalPriceByLink: Map<string, GlobalPriceIntelligence>;
-  merchantTrustByLink: Map<string, MerchantTrustIntelligence>;
+  merchantTrustByLink: Map<string, MerchantTrustSignal>;
   waitPredictionByLink: Map<string, WaitPrediction>;
   priceHistoryByLink: Map<string, CommercePriceHistoryIntelligence>;
   opportunityV2ByLink: Map<string, OpportunityPriorityV2>;
@@ -198,7 +198,13 @@ export function assignCalibratedCommerceVerdicts(args: {
           autoBuyReady: false,
           headline: "Insufficient data",
         },
-        realDiscount,
+        realDiscount: realDiscount ?? {
+          version: 3,
+          fakeDiscountScore: 100,
+          realDiscountScore: 0,
+          fakeDiscountScoreHigh: true,
+          reasoning: "Insufficient discount data.",
+        },
         waitJustified: false,
         fairTrusted: false,
       });

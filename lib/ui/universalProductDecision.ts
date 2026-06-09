@@ -76,7 +76,7 @@ export type UniversalProductIntelligenceSnapshot = UniversalProductIntelligenceS
   /** Phase 38 — commerce dominance intelligence. */
   bestPlaceToBuy?: import("@/lib/intelligence/bestPlaceToBuyEngine").BestPlaceToBuy;
   marketCoverage?: import("@/lib/intelligence/marketCoverageEngine").MarketCoverageIntelligence;
-  merchantTrustIntelligence?: import("@/lib/intelligence/merchantTrustIntelligenceEngine").MerchantTrustIntelligence;
+  merchantTrustIntelligence?: import("@/lib/intelligence/merchantTrustEngineV2").MerchantTrustSignal;
   shopperIntentMode?: import("@/lib/intelligence/shopperIntentModeEngine").ShopperIntentProfile;
   productUniverse?: import("@/lib/intelligence/productUniverseEngine").ProductUniverse;
   commercePriceHistory?: import("@/lib/intelligence/commercePriceHistoryEngine").CommercePriceHistoryIntelligence;

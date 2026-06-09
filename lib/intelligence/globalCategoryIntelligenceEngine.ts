@@ -10,7 +10,7 @@ import {
   type CategoryProfileSpec,
 } from "@/lib/intelligence/categoryProfileRegistry";
 import type { QuantProduct } from "@/lib/shoppingScore";
-import type { MerchantTrustIntelligence } from "@/lib/intelligence/merchantTrustIntelligenceEngine";
+import type { MerchantTrustSignal } from "@/lib/intelligence/merchantTrustEngineV2";
 
 export type CategoryDimensionScore = {
   key: string;
@@ -38,7 +38,12 @@ function scoreFromRating(product: QuantProduct): number {
   return clamp(Math.round(((product.rating as number) || 4) * 20), 0, 100);
 }
 
-function scoreDimension(key: string, product: QuantProduct, merchantTrust: MerchantTrustIntelligence, searchQuery: string): number {
+function scoreDimension(
+  key: string,
+  product: QuantProduct,
+  merchantTrust: MerchantTrustSignal,
+  searchQuery: string
+): number {
   const blob = `${product.title} ${product.extensions?.join(" ") ?? ""} ${searchQuery}`.toLowerCase();
   const rating = scoreFromRating(product);
 
@@ -92,7 +97,7 @@ function scoreDimension(key: string, product: QuantProduct, merchantTrust: Merch
 export function buildGlobalCategoryIntelligence(args: {
   product: QuantProduct;
   searchQuery: string;
-  merchantTrust: MerchantTrustIntelligence;
+  merchantTrust: MerchantTrustSignal;
   segment?: import("@/lib/ui/universalProductIntelligenceEngine").ProductIntelligenceSegment | null;
 }): GlobalCategoryIntelligence {
   const { product, searchQuery, merchantTrust, segment = null } = args;

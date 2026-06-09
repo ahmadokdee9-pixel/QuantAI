@@ -6,7 +6,7 @@
 import { recoverBuyReadyIfMissing, assessTrayValidity } from "@/lib/intelligence/buyReadyRecoveryEngine";
 import type { BestDealFoundAssessment } from "@/lib/intelligence/bestDealFoundEngine";
 import type { GlobalBuyOpportunity } from "@/lib/intelligence/globalBuyOpportunityEngine";
-import type { MerchantTrustIntelligence } from "@/lib/intelligence/merchantTrustIntelligenceEngine";
+import type { MerchantTrustSignal } from "@/lib/intelligence/merchantTrustEngineV2";
 import type { GlobalPriceIntelligence } from "@/lib/intelligence/globalPriceIntelligenceEngine";
 import type { ShopperIntentProfile } from "@/lib/intelligence/shopperIntentModeEngine";
 import { intentModeBuyBoost } from "@/lib/intelligence/shopperIntentModeEngine";
@@ -34,7 +34,7 @@ function countVerdict(map: Map<string, PrimaryVerdict>, verdict: PrimaryVerdict)
 
 function hasInsufficientData(args: {
   decision: UniversalProductDecision;
-  merchantTrust: MerchantTrustIntelligence;
+  merchantTrust: MerchantTrustSignal;
   globalPrice: GlobalPriceIntelligence;
 }): boolean {
   const intel = args.decision.productIntelligence;
@@ -47,7 +47,7 @@ function hasInsufficientData(args: {
 
 function isSevereAvoid(args: {
   globalPrice: GlobalPriceIntelligence;
-  merchantTrust: MerchantTrustIntelligence;
+  merchantTrust: MerchantTrustSignal;
   buyOpportunity: GlobalBuyOpportunity;
   hasSuperiorAlternative: boolean;
 }): boolean {
@@ -79,7 +79,7 @@ export function assignCommerceDominanceVerdicts(args: {
   decisions: Map<string, UniversalProductDecision>;
   buyOpportunityByLink: Map<string, GlobalBuyOpportunity>;
   globalPriceByLink: Map<string, GlobalPriceIntelligence>;
-  merchantTrustByLink: Map<string, MerchantTrustIntelligence>;
+  merchantTrustByLink: Map<string, MerchantTrustSignal>;
   bestDealByLink: Map<string, BestDealFoundAssessment>;
   waitPredictionByLink: Map<string, WaitPrediction>;
   intent: ShopperIntentProfile;

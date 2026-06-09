@@ -36,6 +36,7 @@ const GLANCE_HOOK: Record<PrimaryVerdict, string> = {
   COMPARE: "Compare closely — signals do not fully agree.",
   WAIT: "Wait — timing or trust is not ready yet.",
   AVOID: "Avoid — risk outweighs the upside.",
+  "INSUFFICIENT DATA": "Not enough verified data to recommend checkout.",
 };
 
 function clipLine(text: string | undefined | null, max = 112): string {

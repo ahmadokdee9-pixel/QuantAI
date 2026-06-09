@@ -109,6 +109,23 @@ type SpreadRow = {
   avoid: boolean;
 };
 
+type PersonalizedScoreInputRow = {
+  link: string;
+  product: QuantProduct;
+  intelligence: UniversalProductIntelligenceSnapshot;
+  commerce: CommerceIntelligenceAuthority;
+  buyer: BuyerIdentityProfile;
+  tasteMatchScore: number;
+  avoid: boolean;
+  searchQuery: string;
+};
+
+type EnrichedSpreadRow = SpreadRow & {
+  buyerIdentityScore: number;
+  tasteMatchScore: number;
+  source: PersonalizedScoreInputRow;
+};
+
 /** Spread tray scores into distinct bands while preserving rank order. */
 export function spreadTrayScores(rows: SpreadRow[]): Map<string, PersonalizedDecisionScore> {
   const sorted = [...rows].sort((a, b) => b.rawScore - a.rawScore);
@@ -167,7 +184,7 @@ export function buildPersonalizedDecisionScores(args: {
     searchQuery: string;
   }>;
 }): Map<string, PersonalizedDecisionScore> {
-  const rawRows: SpreadRow[] = args.rows.map((row) => {
+  const rawRows: EnrichedSpreadRow[] = args.rows.map((row) => {
     const buyerIdentityScore = computeBuyerIdentityScore(
       row.buyer,
       row.product,
@@ -181,7 +198,7 @@ export function buildPersonalizedDecisionScores(args: {
       buyerIdentityScore,
       tasteMatchScore: row.tasteMatchScore,
     });
-    return { link: row.link, rawScore, avoid: row.avoid, buyerIdentityScore, tasteMatchScore: row.tasteMatchScore, row };
+    return { link: row.link, rawScore, avoid: row.avoid, buyerIdentityScore, tasteMatchScore: row.tasteMatchScore, source: row };
   });
 
   const spreadMap = spreadTrayScores(rawRows.map(({ link, rawScore, avoid }) => ({ link, rawScore, avoid })));
@@ -191,7 +208,7 @@ export function buildPersonalizedDecisionScores(args: {
     if (!spread) continue;
     const categoryQualityScore = clamp(
       Math.round(
-        entry.row.intelligence.productQualityScore * 0.55 + entry.row.intelligence.categoryFitScore * 0.45
+        entry.source.intelligence.productQualityScore * 0.55 + entry.source.intelligence.categoryFitScore * 0.45
       ),
       0,
       100
@@ -202,8 +219,8 @@ export function buildPersonalizedDecisionScores(args: {
       buyerIdentityScore: entry.buyerIdentityScore,
       tasteMatchScore: entry.tasteMatchScore,
       categoryQualityScore,
-      marketOpportunityScore: entry.row.commerce.marketOpportunityScore,
-      merchantTrustScore: entry.row.commerce.merchantTrustScore,
+      marketOpportunityScore: entry.source.commerce.marketOpportunityScore,
+      merchantTrustScore: entry.source.commerce.merchantTrustScore,
     });
   }
 

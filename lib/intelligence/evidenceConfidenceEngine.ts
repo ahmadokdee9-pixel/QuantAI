@@ -7,7 +7,7 @@ import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import type { BillionDollarDiscountIntelligence } from "@/lib/intelligence/billionDollarDiscountEngine";
 import type { GlobalCategoryIntelligence } from "@/lib/intelligence/globalCategoryIntelligenceEngine";
 import type { MarketBreadthIntelligence } from "@/lib/intelligence/marketBreadthEngine";
-import type { MerchantTrustIntelligence } from "@/lib/intelligence/merchantTrustIntelligenceEngine";
+import type { MerchantTrustSignal } from "@/lib/intelligence/merchantTrustEngineV2";
 
 export type EvidenceConfidence = {
   version: 1;
@@ -24,7 +24,7 @@ function clamp(n: number, lo: number, hi: number): number {
 /** Map evidence to confidence bands per Phase 41 rules. */
 export function computeEvidenceConfidence(args: {
   verdict: PrimaryVerdict;
-  merchantTrust: MerchantTrustIntelligence;
+  merchantTrust: MerchantTrustSignal;
   categoryIntel: GlobalCategoryIntelligence;
   discount: BillionDollarDiscountIntelligence;
   breadth: MarketBreadthIntelligence;
