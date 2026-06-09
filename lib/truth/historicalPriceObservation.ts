@@ -118,6 +118,49 @@ export async function listHistoricalPriceObservationsForSku(
   }
 }
 
+/** Historical price observations for multiple canonical SKUs (service role read, batch). */
+export async function listHistoricalPriceObservationsForSkus(
+  canonicalSkuIds: string[],
+  limitPerSku = 120
+): Promise<Map<string, HistoricalPriceObservationRow[]>> {
+  const db = supabaseAdmin;
+  const out = new Map<string, HistoricalPriceObservationRow[]>();
+  if (!db || canonicalSkuIds.length === 0) return out;
+
+  const ids = [...new Set(canonicalSkuIds.map((id) => id.trim()).filter(Boolean))].slice(0, 200);
+  if (ids.length === 0) return out;
+
+  const safeLimit = Math.min(1000, Math.max(1, Math.round(limitPerSku)));
+  try {
+    const { data, error } = await db
+      .from(TABLE)
+      .select(
+        "id, canonical_sku_id, merchant_key, listing_url, observed_price, currency, observed_at, availability_status, source, created_at"
+      )
+      .in("canonical_sku_id", ids)
+      .order("observed_at", { ascending: false })
+      .limit(Math.min(2000, ids.length * safeLimit));
+
+    if (error) {
+      if (!isBenignStorageSchemaError(error.message)) logDevWarn("historical_price_observations.list_batch", error.message);
+      return out;
+    }
+
+    for (const raw of data ?? []) {
+      const row = mapRow(raw as Record<string, unknown>);
+      if (!row) continue;
+      const bucket = out.get(row.canonical_sku_id) ?? [];
+      if (bucket.length >= safeLimit) continue;
+      bucket.push(row);
+      out.set(row.canonical_sku_id, bucket);
+    }
+  } catch (e) {
+    if (!isBenignStorageSchemaError(String(e))) logDevWarn("historical_price_observations.list_batch", String(e));
+  }
+
+  return out;
+}
+
 /** Skip duplicate price point within 24h at same price (dedupe writes). */
 export function isDuplicateHistoricalPriceObservation(
   prior: HistoricalPriceObservationRow | null | undefined,

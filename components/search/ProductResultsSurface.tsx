@@ -46,6 +46,7 @@ import {
   buildProductionReadinessDisplayCoherenceByLink,
   orderProductsBySearchRank,
 } from "@/lib/ui/phase45ProductionReadinessActivation";
+import { parseTruthFoundationPrefetch } from "@/lib/truth/truthFoundationLoader";
 import CompareIntelligencePanel from "./CompareIntelligencePanel";
 import IntelligenceCommandCenter from "./IntelligenceCommandCenter";
 import LiveIntelligenceRail from "./LiveIntelligenceRail";
@@ -312,9 +313,20 @@ export default function ProductResultsSurface({
       ),
     [sortedProducts, searchQuery]
   );
+  const truthPrefetchByLink = useMemo(
+    () => parseTruthFoundationPrefetch(searchMeta?.truthFoundationPrefetch),
+    [searchMeta?.truthFoundationPrefetch]
+  );
   const commerceCore = useMemo(
-    () => buildProductionReadinessDecisionMap(coherenceByLink, metaByLink, productsByLink, marketMemoryState),
-    [coherenceByLink, metaByLink, productsByLink, marketMemoryState]
+    () =>
+      buildProductionReadinessDecisionMap(
+        coherenceByLink,
+        metaByLink,
+        productsByLink,
+        marketMemoryState,
+        truthPrefetchByLink
+      ),
+    [coherenceByLink, metaByLink, productsByLink, marketMemoryState, truthPrefetchByLink]
   );
   const universalByLink = commerceCore.decisions;
   const phase45TrayContext = commerceCore.trayContext;

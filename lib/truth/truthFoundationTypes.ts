@@ -1,14 +1,18 @@
 /**
- * Phase 1D.5 — Truth foundation snapshot types for gate integration.
+ * Phase 1D.5 + 1E — Truth foundation snapshot types for gate integration.
  */
 
+import type { AvailabilityState } from "@/lib/truth/availabilityStateModel";
 import type { AvailabilityStatus } from "@/lib/truth/availabilityObservationTypes";
+import type { TruthDebugTrace } from "@/lib/truth/truthDebug";
 import type {
   BaselineCoverage,
   DiscountEvidence,
   DiscountVerificationState,
+  HistoricalPriceObservationRow,
   PriceTruthBundle,
 } from "@/lib/truth/priceHistoryTypes";
+import type { AvailabilityObservationRow } from "@/lib/truth/availabilityObservationTypes";
 
 export type AvailabilityFreshnessSnapshot = {
   freshnessScore: number;
@@ -21,11 +25,23 @@ export type TruthFoundationSnapshot = {
   version: 1;
   canonicalSkuId: string | null;
   skuIdentityConfidence: number;
+  availabilityState: AvailabilityState;
   availability: AvailabilityFreshnessSnapshot;
   priceTruth: PriceTruthBundle | null;
   discountEvidence: DiscountEvidence | null;
   baselineCoverage: BaselineCoverage | null;
   priceTruthConfidence: number;
+  debugTrace?: TruthDebugTrace | null;
+};
+
+export type TruthFoundationPrefetchEntry = {
+  listingUrl: string;
+  canonicalSkuId: string;
+  skuIdentityConfidence: number;
+  availabilityObservation: AvailabilityObservationRow | null;
+  priceObservations: HistoricalPriceObservationRow[];
+  availabilityDataSource: "db" | "inline";
+  priceHistoryDataSource: "db" | "memory" | "inline";
 };
 
 export type ExtendedTruthEvidenceSources = {
@@ -39,6 +55,7 @@ export type ExtendedTruthEvidenceSources = {
   priceTruthConfidence: number;
   discountEvidence: DiscountEvidence | null;
   baselineCoverage: BaselineCoverage | null;
+  availabilityState: AvailabilityState;
   availabilityFreshness: number;
   listingAgeHours: number;
   availabilityStatus: AvailabilityStatus | "unknown";
@@ -46,3 +63,5 @@ export type ExtendedTruthEvidenceSources = {
   skuIdentityConfidence: number;
   discountVerificationState: DiscountVerificationState | null;
 };
+
+export type { AvailabilityState } from "@/lib/truth/availabilityStateModel";

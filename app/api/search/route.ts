@@ -99,6 +99,10 @@ import { applyRetailerIntelligence } from "@/lib/intelligence/retailerIntelligen
 import { applyDealIntelligence } from "@/lib/intelligence/phase109DealIntelligenceEngine";
 import { applyCommerceFusion } from "@/lib/intelligence/commerceFusionEngine";
 import {
+  prefetchTruthFoundationBatch,
+  serializeTruthFoundationPrefetch,
+} from "@/lib/truth/truthFoundationLoader";
+import {
   circuitSnapshot,
   getGuestStaleTray,
   isCircuitOpen,
@@ -2120,6 +2124,15 @@ async function handleSearch(
       latencyBudget,
     });
 
+    const truthFoundationPrefetchMap = await prefetchTruthFoundationBatch(
+      products.slice(0, 36).map((product) => ({
+        product,
+        listingUrl: product.link,
+        searchQuery: query,
+      }))
+    );
+    const truthFoundationPrefetch = serializeTruthFoundationPrefetch(truthFoundationPrefetchMap);
+
     const data: SearchDataPayload = {
       products,
       dealClusters,
@@ -2186,6 +2199,7 @@ async function handleSearch(
         retailerIntelligence: retailerIntelligence.meta,
         dealIntelligence: dealIntelligence.meta,
         commerceFusion: commerceFusion.meta,
+        truthFoundationPrefetch,
         identityDebug: debugMeta.identityDebug,
         liveDiscovery,
         liveDiscoveryStatus: liveDiscovery.status,

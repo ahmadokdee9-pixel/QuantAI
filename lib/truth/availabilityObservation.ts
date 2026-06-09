@@ -253,3 +253,83 @@ export async function getLatestObservationsByListingUrls(
   return out;
 }
 
+/** Latest observation for a canonical SKU id (service role read). */
+export async function getLatestAvailabilityObservationBySkuId(
+  canonicalSkuId: string
+): Promise<AvailabilityObservationRow | null> {
+  const db = supabaseAdmin;
+  if (!db) return null;
+
+  const sku_id = canonicalSkuId.trim();
+  if (!sku_id) return null;
+
+  try {
+    const { data, error } = await db
+      .from(TABLE)
+      .select(
+        "id, listing_url, sku_id, observed_at, availability, availability_text, current_price, shipping_price, source, freshness_score, created_at"
+      )
+      .eq("sku_id", sku_id)
+      .order("observed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      if (!isBenignStorageSchemaError(error.message)) {
+        logDevWarn("availability_observations.latest_by_sku", error.message);
+      }
+      return null;
+    }
+
+    if (!data || typeof data !== "object") return null;
+    return mapRow(data as Record<string, unknown>);
+  } catch (e) {
+    if (!isBenignStorageSchemaError(String(e))) {
+      logDevWarn("availability_observations.latest_by_sku", String(e));
+    }
+    return null;
+  }
+}
+
+/** Latest observation per canonical SKU id (service role read, batch). */
+export async function getLatestObservationsBySkuIds(
+  canonicalSkuIds: string[]
+): Promise<Map<string, AvailabilityObservationRow>> {
+  const db = supabaseAdmin;
+  const out = new Map<string, AvailabilityObservationRow>();
+  if (!db || canonicalSkuIds.length === 0) return out;
+
+  const ids = [...new Set(canonicalSkuIds.map((id) => id.trim()).filter(Boolean))].slice(0, 200);
+  if (ids.length === 0) return out;
+
+  try {
+    const { data, error } = await db
+      .from(TABLE)
+      .select(
+        "id, listing_url, sku_id, observed_at, availability, availability_text, current_price, shipping_price, source, freshness_score, created_at"
+      )
+      .in("sku_id", ids)
+      .order("observed_at", { ascending: false })
+      .limit(Math.min(500, ids.length * 5));
+
+    if (error) {
+      if (!isBenignStorageSchemaError(error.message)) {
+        logDevWarn("availability_observations.latest_by_sku_batch", error.message);
+      }
+      return out;
+    }
+
+    for (const raw of data ?? []) {
+      const row = mapRow(raw as Record<string, unknown>);
+      if (!row?.sku_id || out.has(row.sku_id)) continue;
+      out.set(row.sku_id, row);
+    }
+  } catch (e) {
+    if (!isBenignStorageSchemaError(String(e))) {
+      logDevWarn("availability_observations.latest_by_sku_batch", String(e));
+    }
+  }
+
+  return out;
+}
+

@@ -120,4 +120,4 @@ Search route **unchanged**. Stale availability downgrades activate when `truthFo
 
 ## Next: Phase 1E
 
-Truth Foundation Stabilization — DB-backed availability freshness at read time, observability, and gate tuning.
+Truth Foundation Stabilization — DB-backed availability freshness at read time, observability, and gate tuning. **Complete** — see `docs/TRUTH_PHASE_1E_ARCHITECTURE.md`.

@@ -69,7 +69,8 @@ export function buildProductionReadinessDecisionMap(
   coherenceByLink: Map<string, CoherentProductDecision>,
   metaByLink: Map<string, ProductTrayMeta>,
   productsByLink: Map<string, { product: QuantProduct; searchQuery: string }>,
-  marketMemory: MarketMemoryState | null = null
+  marketMemory: MarketMemoryState | null = null,
+  truthPrefetchByLink: Map<string, import("@/lib/truth/truthFoundationTypes").TruthFoundationPrefetchEntry> | null = null
 ): { decisions: Map<string, UniversalProductDecision>; trayContext: Phase45TrayContext } {
   const base = buildOpportunityDetectionDecisionMap(
     coherenceByLink,
@@ -212,6 +213,7 @@ export function buildProductionReadinessDecisionMap(
             product: ctx.product,
             searchQuery: ctx.searchQuery,
             marketMemory,
+            prefetch: truthPrefetchByLink?.get(link) ?? null,
           })
         : decision;
       result.set(link, sanitizeUniversalDecision(withFoundation));
@@ -286,6 +288,7 @@ export function buildProductionReadinessDecisionMap(
           product: ctx.product,
           searchQuery: ctx.searchQuery,
           marketMemory,
+          prefetch: truthPrefetchByLink?.get(link) ?? null,
         })
       : updated;
 

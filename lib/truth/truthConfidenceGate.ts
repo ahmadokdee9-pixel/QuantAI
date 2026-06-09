@@ -8,6 +8,12 @@ import type { CommerceDecisionTier } from "@/lib/intelligence/commerceDecisionCo
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import type { UniversalProductDecision } from "@/lib/ui/universalProductDecision";
 import { buildExtendedTruthEvidenceSources } from "@/lib/truth/truthEvidenceBuilder";
+import {
+  isStaleAvailabilityState,
+  isUnavailableAvailabilityState,
+  isUnknownAvailabilityState,
+  STALE_LISTING_HOURS,
+} from "@/lib/truth/availabilityStateModel";
 import type { ExtendedTruthEvidenceSources } from "@/lib/truth/truthFoundationTypes";
 import { discountEvidenceLine, mapDiscountVerificationStateToLabel } from "@/lib/truth/truthDiscountLanguage";
 import {
@@ -25,9 +31,7 @@ export type TruthConfidenceBundle = {
   insufficientEvidence: boolean;
 };
 
-const STALE_LISTING_HOURS = 24;
 const WEAK_SKU_IDENTITY_THRESHOLD = 55;
-const UNAVAILABLE_STATUSES = new Set(["out_of_stock", "removed", "seller_unavailable"]);
 
 function clamp01(n: number): number {
   if (!Number.isFinite(n)) return 0;
@@ -89,8 +93,9 @@ export function computeTruthConfidence(
   else if (sources.availabilityFreshness >= 50) score += 0.04;
   else gatesApplied.push("stale_availability_signal");
 
-  if (UNAVAILABLE_STATUSES.has(sources.availabilityStatus)) gatesApplied.push("listing_unavailable_signal");
-  else if (sources.availabilityStatus === "unknown") gatesApplied.push("unknown_availability_signal");
+  if (isUnavailableAvailabilityState(sources.availabilityState)) gatesApplied.push("listing_unavailable_signal");
+  else if (isUnknownAvailabilityState(sources.availabilityState)) gatesApplied.push("unknown_availability_signal");
+  else if (isStaleAvailabilityState(sources.availabilityState)) gatesApplied.push("stale_availability_state");
 
   if (sources.hasListingPrice) score += 0.06;
   else gatesApplied.push("missing_price");
@@ -131,21 +136,25 @@ export function applyTruthConfidenceGate(args: {
 
   const tc = truthBundle.truthConfidence;
 
-  if (isBuyTier(tier) && sources.listingAgeHours > STALE_LISTING_HOURS) {
+  if (isBuyTier(tier) && (isStaleAvailabilityState(sources.availabilityState) || sources.listingAgeHours > STALE_LISTING_HOURS)) {
     gates.push("downgrade_stale_listing_24h");
     tier = downgradeTier(tier, "WAIT");
     verdict = "WAIT";
     confidence = Math.min(confidence, 62);
   }
 
-  if (isBuyTier(tier) && UNAVAILABLE_STATUSES.has(sources.availabilityStatus)) {
+  if (isBuyTier(tier) && isUnavailableAvailabilityState(sources.availabilityState)) {
     gates.push("downgrade_listing_unavailable");
     tier = downgradeTier(tier, "WAIT");
     verdict = "INSUFFICIENT DATA";
     confidence = Math.min(confidence, 52);
   }
 
-  if (isBuyTier(tier) && sources.availabilityStatus === "unknown" && sources.availabilityFreshness < 50) {
+  if (
+    isBuyTier(tier) &&
+    isUnknownAvailabilityState(sources.availabilityState) &&
+    sources.availabilityFreshness < 50
+  ) {
     gates.push("downgrade_unknown_availability");
     tier = downgradeTier(tier, "WAIT");
     verdict = "WAIT";
@@ -292,6 +301,8 @@ export function applyTruthGateToDecision(decision: UniversalProductDecision): Un
         : intel.buyOpportunityCore,
       alignmentFlags: [
         ...(intel.alignmentFlags ?? []),
+        "phase1e_truth_foundation",
+        `phase1e_availability_${(intel.truthFoundation?.availabilityState ?? "unknown").toLowerCase()}`,
         "phase1d5_truth_gate",
         `phase1d5_truth_confidence_${Math.round(gated.truthConfidence * 100)}`,
         `phase1d5_discount_${(truthBundle.sources.discountVerificationState ?? "none").toLowerCase()}`,
