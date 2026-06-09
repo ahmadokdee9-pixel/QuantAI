@@ -69,6 +69,7 @@
     "test:phase160-discount-truth": "npx --yes tsx scripts/test-phase160-discount-truth.mjs",
     "test:phase1b-availability-intelligence": "npx --yes tsx scripts/test-phase1b-availability-intelligence.mjs",
     "test:phase1b-refresh-worker": "npx --yes tsx scripts/test-phase1b-refresh-worker.mjs",
+    "test:phase1c-sku-identity": "npx --yes tsx scripts/test-phase1c-sku-identity.mjs",
     "test:phase170-buy-wait": "npx --yes tsx scripts/test-phase170-buy-wait.mjs",
     "test:phase180-price-target": "npx --yes tsx scripts/test-phase180-price-target.mjs",
     "test:phase190-alternative-advantage": "npx --yes tsx scripts/test-phase190-alternative-advantage.mjs",

@@ -11,6 +11,8 @@ import {
 } from "@/lib/truth/availabilityObservation";
 import { computeObservationAgeHours } from "@/lib/truth/freshnessScore";
 import { normalizeListingUrlForMatch } from "@/lib/truth/listingRefreshAdapter";
+import { attachSkuIdsToRefreshTargets } from "@/lib/truth/refreshQueueSku";
+import { getSkuMappingsByListingUrls } from "@/lib/truth/skuIdentityRegistry";
 import type {
   RefreshCandidate,
   RefreshJobSource,
@@ -189,8 +191,12 @@ export async function loadRefreshQueueTargets(): Promise<RefreshJobTarget[]> {
     loadSavedProductRefreshCandidates(),
   ]);
   const deduped = dedupeRefreshCandidates([...watchlist, ...saved]);
-  const observations = await getLatestObservationsByListingUrls(deduped.map((c) => c.listingUrl));
-  return attachObservationMeta(deduped, observations);
+  const [observations, skuMappings] = await Promise.all([
+    getLatestObservationsByListingUrls(deduped.map((c) => c.listingUrl)),
+    getSkuMappingsByListingUrls(deduped.map((c) => c.listingUrl)),
+  ]);
+  const withObservations = attachObservationMeta(deduped, observations);
+  return attachSkuIdsToRefreshTargets(withObservations, skuMappings);
 }
 
 /** Prevent duplicate refresh jobs within a run (by normalized listing URL). */

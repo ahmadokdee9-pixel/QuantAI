@@ -11,8 +11,12 @@ import {
   getLatestObservationsByListingUrls,
   insertAvailabilityObservation,
 } from "@/lib/truth/availabilityObservation";
-import { buildNormalizedAvailabilityObservation } from "@/lib/truth/listingRefreshAdapter";
+import { buildNormalizedAvailabilityObservation, matchListingInSearchResults } from "@/lib/truth/listingRefreshAdapter";
 import type { NormalizedAvailabilityObservation } from "@/lib/truth/listingRefreshAdapter";
+import {
+  resolveAndPersistSkuIdentity,
+  type SkuIdentityPersistResult,
+} from "@/lib/truth/skuIdentityRegistry";
 import {
   groupRefreshJobsBySearchQuery,
   loadRefreshQueueTargets,
@@ -29,11 +33,31 @@ import {
 
 const OBSERVATION_SOURCE = "cron_refresh";
 
+function jobToQuantProduct(job: RefreshJobTarget): QuantProduct {
+  return {
+    id: 0,
+    title: job.title,
+    store: job.store,
+    price: job.referencePrice ?? 0,
+    displayPrice: job.referencePrice != null ? String(job.referencePrice) : "",
+    rating: "N/A",
+    link: job.listingUrl,
+    image: "",
+    reviewsCount: null,
+    shipping: null,
+    availability: null,
+    oldPrice: null,
+    priceTrend: "stable",
+    extensions: [],
+  };
+}
+
 export type RefreshWorkerDeps = {
   loadTargets?: () => Promise<RefreshJobTarget[]>;
   fetchProducts?: (query: string) => Promise<QuantProduct[] | null>;
   getLatestObservations?: (urls: string[]) => Promise<Map<string, AvailabilityObservationRow>>;
   insertObservation?: typeof insertAvailabilityObservation;
+  resolveSkuIdentity?: typeof resolveAndPersistSkuIdentity;
   sleep?: (ms: number) => Promise<void>;
   now?: () => Date;
 };
@@ -113,13 +137,31 @@ async function processRefreshJob(args: {
   products: QuantProduct[];
   prior: AvailabilityObservationRow | null;
   insertObservation: typeof insertAvailabilityObservation;
+  resolveSku: typeof resolveAndPersistSkuIdentity;
 }): Promise<RefreshJobResult> {
+  const match = matchListingInSearchResults(
+    {
+      listingUrl: args.job.listingUrl,
+      title: args.job.title,
+      store: args.job.store,
+      referencePrice: args.job.referencePrice,
+    },
+    args.products
+  );
+  const productForSku = match.product ?? jobToQuantProduct(args.job);
+  const skuPersist: SkuIdentityPersistResult | null = await args.resolveSku({
+    product: productForSku,
+    listingUrl: args.job.listingUrl,
+    searchQuery: args.job.searchQuery,
+  });
+  const canonicalSkuId = skuPersist?.canonicalSkuId ?? args.job.skuId ?? null;
+
   const normalized = buildNormalizedAvailabilityObservation({
     target: {
       listingUrl: args.job.listingUrl,
       title: args.job.title,
       store: args.job.store,
-      skuId: args.job.skuId,
+      skuId: canonicalSkuId,
       searchQuery: args.job.searchQuery,
       referencePrice: args.job.referencePrice,
     },
@@ -188,6 +230,7 @@ export async function runRefreshWorker(
   const fetchProducts = deps.fetchProducts ?? defaultFetchProducts;
   const getLatestObservations = deps.getLatestObservations ?? getLatestObservationsByListingUrls;
   const insertObservation = deps.insertObservation ?? insertAvailabilityObservation;
+  const resolveSku = deps.resolveSkuIdentity ?? resolveAndPersistSkuIdentity;
 
   const emptyReport = (partial: Partial<RefreshWorkerRunReport>): RefreshWorkerRunReport => ({
     runId,
@@ -254,6 +297,7 @@ export async function runRefreshWorker(
           products: fetchResult.products,
           prior,
           insertObservation,
+          resolveSku,
         });
         results.push({ ...result, retries: fetchResult.retries });
       } catch (e) {
