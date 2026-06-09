@@ -13,6 +13,12 @@ import {
 } from "@/lib/truth/availabilityObservation";
 import { buildNormalizedAvailabilityObservation, matchListingInSearchResults } from "@/lib/truth/listingRefreshAdapter";
 import type { NormalizedAvailabilityObservation } from "@/lib/truth/listingRefreshAdapter";
+import { currencySymbolFromListing } from "@/lib/commerce/cues";
+import {
+  getLatestHistoricalPriceObservation,
+  insertHistoricalPriceObservation,
+  isDuplicateHistoricalPriceObservation,
+} from "@/lib/truth/historicalPriceObservation";
 import {
   resolveAndPersistSkuIdentity,
   type SkuIdentityPersistResult,
@@ -92,6 +98,44 @@ export function isDuplicateAvailabilityObservation(
   if (!pricesClose(prior.current_price, next.current_price ?? null)) return false;
   if ((prior.availability_text ?? "") !== (next.availability_text ?? "")) return false;
   return true;
+}
+
+function currencyCodeFromProduct(product: QuantProduct): string {
+  const symbol = currencySymbolFromListing(product);
+  if (symbol === "£") return "GBP";
+  if (symbol === "$") return "USD";
+  return "EUR";
+}
+
+async function recordHistoricalPriceObservation(args: {
+  skuPersist: SkuIdentityPersistResult | null;
+  normalized: NormalizedAvailabilityObservation;
+  product: QuantProduct;
+  listingUrl: string;
+  insertHistorical?: typeof insertHistoricalPriceObservation;
+  getLatestHistorical?: typeof getLatestHistoricalPriceObservation;
+}): Promise<void> {
+  if (!args.skuPersist?.canonicalSkuId || args.normalized.current_price == null || args.normalized.current_price <= 0) {
+    return;
+  }
+  const insertHistorical = args.insertHistorical ?? insertHistoricalPriceObservation;
+  const getLatestHistorical = args.getLatestHistorical ?? getLatestHistoricalPriceObservation;
+  const payload = {
+    canonical_sku_id: args.skuPersist.canonicalSkuId,
+    merchant_key: args.skuPersist.merchantKey,
+    listing_url: args.listingUrl,
+    observed_price: args.normalized.current_price,
+    currency: currencyCodeFromProduct(args.product),
+    observed_at: args.normalized.observed_at,
+    availability_status: args.normalized.availability,
+    source: OBSERVATION_SOURCE,
+  };
+  const prior = await getLatestHistorical({
+    canonicalSkuId: args.skuPersist.canonicalSkuId,
+    merchantKey: args.skuPersist.merchantKey,
+  });
+  if (isDuplicateHistoricalPriceObservation(prior, payload)) return;
+  await insertHistorical(payload);
 }
 
 function toInsertPayload(observation: NormalizedAvailabilityObservation) {
@@ -204,6 +248,13 @@ async function processRefreshJob(args: {
       searchQuery: buildRefreshSearchQuery(args.job),
     };
   }
+
+  await recordHistoricalPriceObservation({
+    skuPersist,
+    normalized,
+    product: productForSku,
+    listingUrl: args.job.listingUrl,
+  });
 
   return {
     jobId: args.job.jobId,

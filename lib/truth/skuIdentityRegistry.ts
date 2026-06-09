@@ -134,6 +134,9 @@ export async function resolveAndPersistSkuIdentity(args: {
   if (!registryUpserted && !mappingUpserted) return null;
   return {
     canonicalSkuId: identity.canonicalSkuId,
+    merchantKey: identity.merchantKey,
+    resolverMethod: identity.resolverMethod,
+    identityConfidence: identity.identityConfidence,
     registryUpserted,
     mappingUpserted,
   };

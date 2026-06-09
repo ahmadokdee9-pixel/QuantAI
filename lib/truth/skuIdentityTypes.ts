@@ -81,6 +81,9 @@ export type SkuIdentityMappingRow = {
 
 export type SkuIdentityPersistResult = {
   canonicalSkuId: string;
+  merchantKey: string;
+  resolverMethod: SkuResolverMethod;
+  identityConfidence: number;
   registryUpserted: boolean;
   mappingUpserted: boolean;
 };
