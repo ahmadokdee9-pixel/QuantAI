@@ -14,6 +14,11 @@ import {
   isUnknownAvailabilityState,
   STALE_LISTING_HOURS,
 } from "@/lib/truth/availabilityStateModel";
+import { isConsensusConflict } from "@/lib/truth/availabilityConsensusModel";
+import {
+  MIN_MERCHANTS_FOR_CROSS_MERCHANT_GATES,
+  WEAK_MERCHANT_AGREEMENT_THRESHOLD,
+} from "@/lib/truth/crossMerchantTruthAggregator";
 import type { ExtendedTruthEvidenceSources } from "@/lib/truth/truthFoundationTypes";
 import { discountEvidenceLine, mapDiscountVerificationStateToLabel } from "@/lib/truth/truthDiscountLanguage";
 import {
@@ -96,6 +101,15 @@ export function computeTruthConfidence(
   if (isUnavailableAvailabilityState(sources.availabilityState)) gatesApplied.push("listing_unavailable_signal");
   else if (isUnknownAvailabilityState(sources.availabilityState)) gatesApplied.push("unknown_availability_signal");
   else if (isStaleAvailabilityState(sources.availabilityState)) gatesApplied.push("stale_availability_state");
+
+  if (isConsensusConflict(sources.availabilityConsensus)) gatesApplied.push("cross_merchant_availability_conflict");
+  if (sources.listingPriceOutlier) gatesApplied.push("cross_merchant_price_outlier");
+  if (
+    sources.merchantCount >= MIN_MERCHANTS_FOR_CROSS_MERCHANT_GATES &&
+    sources.merchantAgreementScore < WEAK_MERCHANT_AGREEMENT_THRESHOLD
+  ) {
+    gatesApplied.push("weak_cross_merchant_agreement");
+  }
 
   if (sources.hasListingPrice) score += 0.06;
   else gatesApplied.push("missing_price");
@@ -185,6 +199,35 @@ export function applyTruthConfidenceGate(args: {
     tier = downgradeTier(tier, "COMPARE");
     verdict = "COMPARE";
     confidence = Math.min(confidence, 64);
+  }
+
+  if (
+    isBuyTier(tier) &&
+    sources.merchantCount >= MIN_MERCHANTS_FOR_CROSS_MERCHANT_GATES &&
+    sources.listingPriceOutlier
+  ) {
+    gates.push("downgrade_cross_merchant_price_outlier");
+    tier = downgradeTier(tier, "COMPARE");
+    verdict = "COMPARE";
+    confidence = Math.min(confidence, 63);
+  }
+
+  if (isBuyTier(tier) && isConsensusConflict(sources.availabilityConsensus)) {
+    gates.push("downgrade_cross_merchant_availability_conflict");
+    tier = downgradeTier(tier, "WAIT");
+    verdict = "WAIT";
+    confidence = Math.min(confidence, 58);
+  }
+
+  if (
+    isBuyTier(tier) &&
+    sources.merchantCount >= MIN_MERCHANTS_FOR_CROSS_MERCHANT_GATES &&
+    sources.merchantAgreementScore < WEAK_MERCHANT_AGREEMENT_THRESHOLD
+  ) {
+    gates.push("downgrade_weak_cross_merchant_agreement");
+    tier = downgradeTier(tier, "COMPARE");
+    verdict = "COMPARE";
+    confidence = Math.min(confidence, 61);
   }
 
   if (tier === "BEST DEAL" && tc < TRUTH_THRESHOLDS.bestDeal) {
@@ -303,6 +346,9 @@ export function applyTruthGateToDecision(decision: UniversalProductDecision): Un
         ...(intel.alignmentFlags ?? []),
         "phase1e_truth_foundation",
         `phase1e_availability_${(intel.truthFoundation?.availabilityState ?? "unknown").toLowerCase()}`,
+        "phase1f_cross_merchant_truth",
+        `phase1f_consensus_${(truthBundle.sources.availabilityConsensus ?? "unknown").toLowerCase()}`,
+        `phase1f_merchants_${truthBundle.sources.merchantCount}`,
         "phase1d5_truth_gate",
         `phase1d5_truth_confidence_${Math.round(gated.truthConfidence * 100)}`,
         `phase1d5_discount_${(truthBundle.sources.discountVerificationState ?? "none").toLowerCase()}`,

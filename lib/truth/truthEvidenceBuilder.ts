@@ -8,6 +8,7 @@ import type { QuantProduct } from "@/lib/shoppingScore";
 import { classifyAvailability, classifiedLabelToDbStatus } from "@/lib/truth/availabilityClassifier";
 import type { AvailabilityObservationRow } from "@/lib/truth/availabilityObservationTypes";
 import { deriveAvailabilityState, STALE_LISTING_HOURS } from "@/lib/truth/availabilityStateModel";
+import { aggregateCrossMerchantTruth } from "@/lib/truth/crossMerchantTruthAggregator";
 import { computeFreshnessScoreFromObservedAt } from "@/lib/truth/freshnessScore";
 import type { HistoricalPriceObservationRow } from "@/lib/truth/priceHistoryTypes";
 import { buildPriceTruthBundle } from "@/lib/truth/priceTruth";
@@ -95,7 +96,9 @@ export function buildTruthFoundationSnapshot(args: {
   prefetch?: TruthFoundationPrefetchEntry | null;
   existing?: TruthFoundationSnapshot | null;
 }): TruthFoundationSnapshot {
-  if (args.existing?.version === 1 && args.existing.availabilityState) return args.existing;
+  if (args.existing?.version === 1 && args.existing.availabilityState && args.existing.merchantCount != null) {
+    return args.existing;
+  }
 
   const sku = args.prefetch
     ? {
@@ -135,6 +138,11 @@ export function buildTruthFoundationSnapshot(args: {
     hasObservation: Boolean(args.prefetch?.availabilityObservation),
   });
 
+  const crossMerchant = aggregateCrossMerchantTruth({
+    observations: historicalRows,
+    currentPrice,
+  });
+
   const snapshot: TruthFoundationSnapshot = {
     version: 1,
     canonicalSkuId: sku.canonicalSkuId,
@@ -145,6 +153,12 @@ export function buildTruthFoundationSnapshot(args: {
     discountEvidence: priceTruth?.discountEvidence ?? null,
     baselineCoverage: priceTruth?.baselineCoverage ?? null,
     priceTruthConfidence: priceTruth?.priceTruthConfidence ?? 0,
+    merchantCount: crossMerchant.merchantCount,
+    availabilityConsensus: crossMerchant.availabilityConsensus,
+    crossMerchantReferencePrice: crossMerchant.crossMerchantReferencePrice,
+    marketPriceSpread: crossMerchant.marketPriceSpread,
+    merchantAgreementScore: crossMerchant.merchantAgreementScore,
+    listingPriceOutlier: crossMerchant.listingPriceOutlier,
     debugTrace: buildTruthDebugTrace({
       listingUrl: args.listingUrl,
       canonicalSkuId: sku.canonicalSkuId,
@@ -232,6 +246,13 @@ export function buildExtendedTruthEvidenceSources(
       canonicalSkuId: foundation.canonicalSkuId,
       skuIdentityConfidence: foundation.skuIdentityConfidence,
       discountVerificationState: foundation.discountEvidence?.state ?? null,
+      merchantCount: foundation.merchantCount,
+      availabilityConsensus: foundation.availabilityConsensus,
+      crossMerchantReferencePrice: foundation.crossMerchantReferencePrice,
+      marketPriceSpread: foundation.marketPriceSpread,
+      merchantAgreementScore: foundation.merchantAgreementScore,
+      listingPriceOutlier: foundation.listingPriceOutlier,
+      currentListingPrice: intel.globalPriceIntelligence?.lowestPriceFound ?? null,
     };
   }
 
@@ -270,6 +291,15 @@ export function buildExtendedTruthEvidenceSources(
     canonicalSkuId: null,
     skuIdentityConfidence: identityConfidence,
     discountVerificationState: null,
+    merchantCount: 0,
+    availabilityConsensus: "CONSENSUS_UNKNOWN",
+    crossMerchantReferencePrice: null,
+    marketPriceSpread: null,
+    merchantAgreementScore: 0,
+    listingPriceOutlier: false,
+    currentListingPrice: (intel.globalPriceIntelligence?.lowestPriceFound ?? 0) > 0
+      ? (intel.globalPriceIntelligence?.lowestPriceFound ?? null)
+      : null,
   };
 }
 

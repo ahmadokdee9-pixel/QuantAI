@@ -1,7 +1,8 @@
 /**
- * Phase 1D.5 + 1E — Truth foundation snapshot types for gate integration.
+ * Phase 1D.5 + 1E + 1F — Truth foundation snapshot types for gate integration.
  */
 
+import type { AvailabilityConsensus } from "@/lib/truth/availabilityConsensusModel";
 import type { AvailabilityState } from "@/lib/truth/availabilityStateModel";
 import type { AvailabilityStatus } from "@/lib/truth/availabilityObservationTypes";
 import type { TruthDebugTrace } from "@/lib/truth/truthDebug";
@@ -31,6 +32,12 @@ export type TruthFoundationSnapshot = {
   discountEvidence: DiscountEvidence | null;
   baselineCoverage: BaselineCoverage | null;
   priceTruthConfidence: number;
+  merchantCount: number;
+  availabilityConsensus: AvailabilityConsensus;
+  crossMerchantReferencePrice: number | null;
+  marketPriceSpread: number | null;
+  merchantAgreementScore: number;
+  listingPriceOutlier: boolean;
   debugTrace?: TruthDebugTrace | null;
 };
 
@@ -62,6 +69,14 @@ export type ExtendedTruthEvidenceSources = {
   canonicalSkuId: string | null;
   skuIdentityConfidence: number;
   discountVerificationState: DiscountVerificationState | null;
+  merchantCount: number;
+  availabilityConsensus: AvailabilityConsensus;
+  crossMerchantReferencePrice: number | null;
+  marketPriceSpread: number | null;
+  merchantAgreementScore: number;
+  listingPriceOutlier: boolean;
+  currentListingPrice: number | null;
 };
 
 export type { AvailabilityState } from "@/lib/truth/availabilityStateModel";
+export type { AvailabilityConsensus } from "@/lib/truth/availabilityConsensusModel";

@@ -92,4 +92,4 @@ npm run test:phase1-truth-regression
 
 ## Next: Phase 1F
 
-Cross Merchant Truth Aggregation — canonical SKU rollups across merchants for unified truth confidence.
+Cross Merchant Truth Aggregation — **Complete** — see `docs/TRUTH_PHASE_1F_ARCHITECTURE.md`.
