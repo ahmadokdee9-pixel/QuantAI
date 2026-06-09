@@ -11,6 +11,12 @@ import { deriveAvailabilityState, STALE_LISTING_HOURS } from "@/lib/truth/availa
 import { aggregateCrossMerchantTruth } from "@/lib/truth/crossMerchantTruthAggregator";
 import { buildMarketTruthRollup } from "@/lib/truth/marketTruthRollup";
 import { buildMerchantReliabilityTruth } from "@/lib/truth/merchantReliabilityTruth";
+import {
+  buildProductIntelligenceFoundation,
+  computeProductTruthConfidence,
+  hasProductIntelligenceSignal,
+  type ProductIntelligenceFoundationInput,
+} from "@/lib/truth/productIntelligenceFoundation";
 import { computeFreshnessScoreFromObservedAt } from "@/lib/truth/freshnessScore";
 import type { HistoricalPriceObservationRow } from "@/lib/truth/priceHistoryTypes";
 import { buildPriceTruthBundle } from "@/lib/truth/priceTruth";
@@ -103,7 +109,8 @@ export function buildTruthFoundationSnapshot(args: {
     args.existing.availabilityState &&
     args.existing.merchantCount != null &&
     args.existing.marketIntelligence &&
-    args.existing.merchantReliability
+    args.existing.merchantReliability &&
+    args.existing.productIntelligence
   ) {
     return args.existing;
   }
@@ -174,7 +181,7 @@ export function buildTruthFoundationSnapshot(args: {
     listingAgeHours: availability.listingAgeHours,
   });
 
-  const snapshot: TruthFoundationSnapshot = {
+  const snapshotWithoutProductIntelligence = {
     version: 1,
     canonicalSkuId: sku.canonicalSkuId,
     skuIdentityConfidence: sku.identityConfidence,
@@ -215,9 +222,12 @@ export function buildTruthFoundationSnapshot(args: {
       priceTruthConfidence: priceTruth?.priceTruthConfidence ?? 0,
       discountState: priceTruth?.discountEvidence?.state ?? null,
     }),
-  };
+  } satisfies ProductIntelligenceFoundationInput;
 
-  return snapshot;
+  return {
+    ...snapshotWithoutProductIntelligence,
+    productIntelligence: buildProductIntelligenceFoundation(snapshotWithoutProductIntelligence),
+  };
 }
 
 /** Attach truth foundation to a universal decision before gating. */
@@ -265,6 +275,9 @@ export function buildExtendedTruthEvidenceSources(
       hasObservation: foundation.availability.observedAt != null,
     });
 
+    const { productIntelligence: _ignoredProductIntelligence, ...foundationInput } = foundation;
+    const productIntelligence = buildProductIntelligenceFoundation(foundationInput);
+
     return {
       priceHistorySamples: foundation.baselineCoverage?.samples90d ?? 0,
       identityConfidence: foundation.skuIdentityConfidence,
@@ -309,6 +322,12 @@ export function buildExtendedTruthEvidenceSources(
       merchantVolatilityScore: foundation.merchantReliability.merchantVolatilityScore,
       merchantState: foundation.merchantReliability.merchantState,
       merchantObservationCount: foundation.merchantObservationCount,
+      overallProductConfidence: productIntelligence.overallProductConfidence,
+      productMarketConfidence: productIntelligence.marketConfidence,
+      productMerchantReliabilityConfidence: productIntelligence.merchantReliabilityConfidence,
+      productTruthConfidence: computeProductTruthConfidence(productIntelligence),
+      intelligenceState: productIntelligence.intelligenceState,
+      hasProductIntelligence: hasProductIntelligenceSignal(productIntelligence),
     };
   }
 
@@ -368,6 +387,12 @@ export function buildExtendedTruthEvidenceSources(
     merchantVolatilityScore: 0,
     merchantState: "UNKNOWN",
     merchantObservationCount: 0,
+    overallProductConfidence: 0,
+    productMarketConfidence: 0,
+    productMerchantReliabilityConfidence: 0,
+    productTruthConfidence: 0,
+    intelligenceState: "PRODUCT_UNKNOWN",
+    hasProductIntelligence: false,
   };
 }
 

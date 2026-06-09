@@ -7,6 +7,7 @@ import type { AvailabilityState } from "@/lib/truth/availabilityStateModel";
 import type { AvailabilityStatus } from "@/lib/truth/availabilityObservationTypes";
 import type { MarketIntelligenceSnapshot } from "@/lib/truth/marketTruthRollup";
 import type { MerchantReliabilitySnapshot } from "@/lib/truth/merchantReliabilityTruth";
+import type { ProductIntelligenceSnapshot } from "@/lib/truth/productIntelligenceFoundation";
 import type { TruthDebugTrace } from "@/lib/truth/truthDebug";
 import type {
   BaselineCoverage,
@@ -43,6 +44,7 @@ export type TruthFoundationSnapshot = {
   marketIntelligence: MarketIntelligenceSnapshot;
   merchantReliability: MerchantReliabilitySnapshot;
   merchantObservationCount: number;
+  productIntelligence: ProductIntelligenceSnapshot;
   debugTrace?: TruthDebugTrace | null;
 };
 
@@ -93,9 +95,16 @@ export type ExtendedTruthEvidenceSources = {
   merchantVolatilityScore: number;
   merchantState: string;
   merchantObservationCount: number;
+  overallProductConfidence: number;
+  productMarketConfidence: number;
+  productMerchantReliabilityConfidence: number;
+  productTruthConfidence: number;
+  intelligenceState: string;
+  hasProductIntelligence: boolean;
 };
 
 export type { AvailabilityState } from "@/lib/truth/availabilityStateModel";
 export type { AvailabilityConsensus } from "@/lib/truth/availabilityConsensusModel";
 export type { MarketIntelligenceSnapshot } from "@/lib/truth/marketTruthRollup";
 export type { MerchantReliabilitySnapshot } from "@/lib/truth/merchantReliabilityTruth";
+export type { ProductIntelligenceSnapshot } from "@/lib/truth/productIntelligenceFoundation";
