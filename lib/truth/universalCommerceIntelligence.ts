@@ -24,7 +24,10 @@ export type CommerceIntelligenceSnapshot = {
   commerceState: CommerceIntelligenceState;
 };
 
-export type CommerceIntelligenceInput = Omit<TruthFoundationSnapshot, "commerceIntelligence" | "commerceReasoning">;
+export type CommerceIntelligenceInput = Omit<
+  TruthFoundationSnapshot,
+  "commerceIntelligence" | "commerceReasoning" | "evidenceReasoningGraph"
+>;
 
 export const WEAK_COMMERCE_CONFIDENCE_THRESHOLD = 52;
 export const WEAK_COMMERCE_MARKET_TRUTH_THRESHOLD = 45;

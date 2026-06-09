@@ -32,7 +32,7 @@ export type CommerceReasoningSnapshot = {
   reasoningState: CommerceReasoningState;
 };
 
-export type CommerceReasoningInput = Omit<TruthFoundationSnapshot, "commerceReasoning">;
+export type CommerceReasoningInput = Omit<TruthFoundationSnapshot, "commerceReasoning" | "evidenceReasoningGraph">;
 
 export const WEAK_COMMERCE_REASONING_CONFIDENCE_THRESHOLD = 52;
 export const HIGH_PRIMARY_RISK_SIGNALS = new Set([

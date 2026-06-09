@@ -29,6 +29,10 @@ import {
   buildCommerceReasoningLayer,
   hasCommerceReasoningSignal,
 } from "@/lib/truth/commerceReasoningLayer";
+import {
+  buildEvidenceReasoningGraph,
+  hasEvidenceReasoningGraphSignal,
+} from "@/lib/truth/evidenceReasoningGraph";
 import { buildTruthDebugTrace } from "@/lib/truth/truthDebug";
 import type {
   ExtendedTruthEvidenceSources,
@@ -120,7 +124,8 @@ export function buildTruthFoundationSnapshot(args: {
     args.existing.merchantReliability &&
     args.existing.productIntelligence &&
     args.existing.commerceIntelligence &&
-    args.existing.commerceReasoning
+    args.existing.commerceReasoning &&
+    args.existing.evidenceReasoningGraph
   ) {
     return args.existing;
   }
@@ -244,9 +249,14 @@ export function buildTruthFoundationSnapshot(args: {
     commerceIntelligence: buildUniversalCommerceIntelligence(withProductIntelligence),
   };
 
-  return {
+  const withCommerceReasoning = {
     ...withCommerceIntelligence,
     commerceReasoning: buildCommerceReasoningLayer(withCommerceIntelligence),
+  };
+
+  return {
+    ...withCommerceReasoning,
+    evidenceReasoningGraph: buildEvidenceReasoningGraph(withCommerceReasoning),
   };
 }
 
@@ -299,6 +309,7 @@ export function buildExtendedTruthEvidenceSources(
       productIntelligence: _ignoredProductIntelligence,
       commerceIntelligence: _ignoredCommerceIntelligence,
       commerceReasoning: _ignoredCommerceReasoning,
+      evidenceReasoningGraph: _ignoredEvidenceReasoningGraph,
       ...foundationInput
     } = foundation;
     const productIntelligence = buildProductIntelligenceFoundation(foundationInput);
@@ -310,6 +321,12 @@ export function buildExtendedTruthEvidenceSources(
       ...foundationInput,
       productIntelligence,
       commerceIntelligence,
+    });
+    const evidenceReasoningGraph = buildEvidenceReasoningGraph({
+      ...foundationInput,
+      productIntelligence,
+      commerceIntelligence,
+      commerceReasoning,
     });
 
     return {
@@ -375,6 +392,11 @@ export function buildExtendedTruthEvidenceSources(
       strongestPositiveSignal: commerceReasoning.strongestPositiveSignal,
       strongestNegativeSignal: commerceReasoning.strongestNegativeSignal,
       hasCommerceReasoning: hasCommerceReasoningSignal(commerceReasoning),
+      evidenceStrength: evidenceReasoningGraph.evidenceStrength,
+      evidenceCompleteness: evidenceReasoningGraph.evidenceCompleteness,
+      evidenceState: evidenceReasoningGraph.evidenceState,
+      conflictingEvidenceCount: evidenceReasoningGraph.conflictingEvidence.length,
+      hasEvidenceReasoningGraph: hasEvidenceReasoningGraphSignal(evidenceReasoningGraph),
     };
   }
 
@@ -453,6 +475,11 @@ export function buildExtendedTruthEvidenceSources(
     strongestPositiveSignal: "Limited positive confirmation",
     strongestNegativeSignal: "No major negative signal",
     hasCommerceReasoning: false,
+    evidenceStrength: 0,
+    evidenceCompleteness: 0,
+    evidenceState: "EVIDENCE_UNKNOWN",
+    conflictingEvidenceCount: 0,
+    hasEvidenceReasoningGraph: false,
   };
 }
 
