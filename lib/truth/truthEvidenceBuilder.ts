@@ -10,6 +10,7 @@ import type { AvailabilityObservationRow } from "@/lib/truth/availabilityObserva
 import { deriveAvailabilityState, STALE_LISTING_HOURS } from "@/lib/truth/availabilityStateModel";
 import { aggregateCrossMerchantTruth } from "@/lib/truth/crossMerchantTruthAggregator";
 import { buildMarketTruthRollup } from "@/lib/truth/marketTruthRollup";
+import { buildMerchantReliabilityTruth } from "@/lib/truth/merchantReliabilityTruth";
 import { computeFreshnessScoreFromObservedAt } from "@/lib/truth/freshnessScore";
 import type { HistoricalPriceObservationRow } from "@/lib/truth/priceHistoryTypes";
 import { buildPriceTruthBundle } from "@/lib/truth/priceTruth";
@@ -101,7 +102,8 @@ export function buildTruthFoundationSnapshot(args: {
     args.existing?.version === 1 &&
     args.existing.availabilityState &&
     args.existing.merchantCount != null &&
-    args.existing.marketIntelligence
+    args.existing.marketIntelligence &&
+    args.existing.merchantReliability
   ) {
     return args.existing;
   }
@@ -162,6 +164,16 @@ export function buildTruthFoundationSnapshot(args: {
     availabilityFreshness: availability.freshnessScore,
   });
 
+  const merchantReliabilityBundle = buildMerchantReliabilityTruth({
+    store: args.product.store,
+    listingUrl: args.listingUrl,
+    observations: historicalRows,
+    availabilityObservation: args.prefetch?.availabilityObservation ?? null,
+    currentPrice,
+    referencePrice: crossMerchant.crossMerchantReferencePrice,
+    listingAgeHours: availability.listingAgeHours,
+  });
+
   const snapshot: TruthFoundationSnapshot = {
     version: 1,
     canonicalSkuId: sku.canonicalSkuId,
@@ -179,6 +191,15 @@ export function buildTruthFoundationSnapshot(args: {
     merchantAgreementScore: crossMerchant.merchantAgreementScore,
     listingPriceOutlier: crossMerchant.listingPriceOutlier,
     marketIntelligence,
+    merchantReliability: {
+      merchantReliabilityScore: merchantReliabilityBundle.merchantReliabilityScore,
+      merchantAvailabilityReliability: merchantReliabilityBundle.merchantAvailabilityReliability,
+      merchantPricingReliability: merchantReliabilityBundle.merchantPricingReliability,
+      merchantFreshnessReliability: merchantReliabilityBundle.merchantFreshnessReliability,
+      merchantVolatilityScore: merchantReliabilityBundle.merchantVolatilityScore,
+      merchantState: merchantReliabilityBundle.merchantState,
+    },
+    merchantObservationCount: merchantReliabilityBundle.merchantObservationCount,
     debugTrace: buildTruthDebugTrace({
       listingUrl: args.listingUrl,
       canonicalSkuId: sku.canonicalSkuId,
@@ -281,6 +302,13 @@ export function buildExtendedTruthEvidenceSources(
       marketAgreementScore: foundation.marketIntelligence.marketAgreementScore,
       marketPriceConfidence: foundation.marketIntelligence.marketPriceConfidence,
       marketAvailabilityConfidence: foundation.marketIntelligence.marketAvailabilityConfidence,
+      merchantReliabilityScore: foundation.merchantReliability.merchantReliabilityScore,
+      merchantAvailabilityReliability: foundation.merchantReliability.merchantAvailabilityReliability,
+      merchantPricingReliability: foundation.merchantReliability.merchantPricingReliability,
+      merchantFreshnessReliability: foundation.merchantReliability.merchantFreshnessReliability,
+      merchantVolatilityScore: foundation.merchantReliability.merchantVolatilityScore,
+      merchantState: foundation.merchantReliability.merchantState,
+      merchantObservationCount: foundation.merchantObservationCount,
     };
   }
 
@@ -333,6 +361,13 @@ export function buildExtendedTruthEvidenceSources(
     marketAgreementScore: 0,
     marketPriceConfidence: 0,
     marketAvailabilityConfidence: 0,
+    merchantReliabilityScore: 0,
+    merchantAvailabilityReliability: 0,
+    merchantPricingReliability: 0,
+    merchantFreshnessReliability: 0,
+    merchantVolatilityScore: 0,
+    merchantState: "UNKNOWN",
+    merchantObservationCount: 0,
   };
 }
 

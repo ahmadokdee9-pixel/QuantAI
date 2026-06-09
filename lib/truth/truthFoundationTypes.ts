@@ -1,11 +1,12 @@
 /**
- * Phase 1D.5 + 1E + 1F + 1G — Truth foundation snapshot types for gate integration.
+ * Phase 1D.5 + 1E + 1F + 1G + 1H — Truth foundation snapshot types for gate integration.
  */
 
 import type { AvailabilityConsensus } from "@/lib/truth/availabilityConsensusModel";
 import type { AvailabilityState } from "@/lib/truth/availabilityStateModel";
 import type { AvailabilityStatus } from "@/lib/truth/availabilityObservationTypes";
 import type { MarketIntelligenceSnapshot } from "@/lib/truth/marketTruthRollup";
+import type { MerchantReliabilitySnapshot } from "@/lib/truth/merchantReliabilityTruth";
 import type { TruthDebugTrace } from "@/lib/truth/truthDebug";
 import type {
   BaselineCoverage,
@@ -40,6 +41,8 @@ export type TruthFoundationSnapshot = {
   merchantAgreementScore: number;
   listingPriceOutlier: boolean;
   marketIntelligence: MarketIntelligenceSnapshot;
+  merchantReliability: MerchantReliabilitySnapshot;
+  merchantObservationCount: number;
   debugTrace?: TruthDebugTrace | null;
 };
 
@@ -83,8 +86,16 @@ export type ExtendedTruthEvidenceSources = {
   marketAgreementScore: number;
   marketPriceConfidence: number;
   marketAvailabilityConfidence: number;
+  merchantReliabilityScore: number;
+  merchantAvailabilityReliability: number;
+  merchantPricingReliability: number;
+  merchantFreshnessReliability: number;
+  merchantVolatilityScore: number;
+  merchantState: string;
+  merchantObservationCount: number;
 };
 
 export type { AvailabilityState } from "@/lib/truth/availabilityStateModel";
 export type { AvailabilityConsensus } from "@/lib/truth/availabilityConsensusModel";
 export type { MarketIntelligenceSnapshot } from "@/lib/truth/marketTruthRollup";
+export type { MerchantReliabilitySnapshot } from "@/lib/truth/merchantReliabilityTruth";

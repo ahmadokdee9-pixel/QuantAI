@@ -68,4 +68,4 @@ npm run test:phase1-truth-regression
 
 ## Next: Phase 1H
 
-Merchant Reliability Intelligence — per-merchant trust signals layered on market truth.
+Merchant Reliability Intelligence — **Complete** — see `docs/TRUTH_PHASE_1H_ARCHITECTURE.md`.

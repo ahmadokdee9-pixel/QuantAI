@@ -26,6 +26,14 @@ import {
   WEAK_MARKET_AVAILABILITY_CONFIDENCE_THRESHOLD,
   WEAK_MARKET_PRICE_CONFIDENCE_THRESHOLD,
 } from "@/lib/truth/marketTruthRollup";
+import {
+  hasMerchantReliabilitySignal,
+  HIGH_VOLATILITY_THRESHOLD,
+  POOR_AVAILABILITY_RELIABILITY_THRESHOLD,
+  POOR_PRICING_RELIABILITY_THRESHOLD,
+  STALE_FRESHNESS_RELIABILITY_THRESHOLD,
+  UNRELIABLE_MERCHANT_THRESHOLD,
+} from "@/lib/truth/merchantReliabilityTruth";
 import type { ExtendedTruthEvidenceSources } from "@/lib/truth/truthFoundationTypes";
 import { discountEvidenceLine, mapDiscountVerificationStateToLabel } from "@/lib/truth/truthDiscountLanguage";
 import {
@@ -51,6 +59,10 @@ function hasMarketIntelligenceSignal(sources: TruthEvidenceSources): boolean {
     sources.priceHistorySamples >= 3 ||
     sources.priceTruthConfidence >= 45
   );
+}
+
+function hasMerchantReliabilityEvidence(sources: TruthEvidenceSources): boolean {
+  return hasMerchantReliabilitySignal(sources.merchantObservationCount);
 }
 
 function clamp01(n: number): number {
@@ -150,6 +162,32 @@ export function computeTruthConfidence(
     sources.marketAvailabilityConfidence < WEAK_MARKET_AVAILABILITY_CONFIDENCE_THRESHOLD
   ) {
     gatesApplied.push("weak_market_availability_confidence");
+  }
+
+  if (hasMerchantReliabilityEvidence(sources) && sources.merchantReliabilityScore < UNRELIABLE_MERCHANT_THRESHOLD) {
+    gatesApplied.push("unreliable_merchant");
+  }
+  if (hasMerchantReliabilityEvidence(sources) && sources.merchantVolatilityScore >= HIGH_VOLATILITY_THRESHOLD) {
+    gatesApplied.push("highly_volatile_merchant");
+  }
+  if (
+    hasMerchantReliabilityEvidence(sources) &&
+    sources.merchantAvailabilityReliability < POOR_AVAILABILITY_RELIABILITY_THRESHOLD
+  ) {
+    gatesApplied.push("poor_merchant_availability_reliability");
+  }
+  if (
+    hasMerchantReliabilityEvidence(sources) &&
+    (sources.merchantFreshnessReliability < STALE_FRESHNESS_RELIABILITY_THRESHOLD ||
+      sources.merchantState === "STALE")
+  ) {
+    gatesApplied.push("stale_merchant_observations");
+  }
+  if (
+    hasMerchantReliabilityEvidence(sources) &&
+    sources.merchantPricingReliability < POOR_PRICING_RELIABILITY_THRESHOLD
+  ) {
+    gatesApplied.push("abnormal_merchant_pricing");
   }
 
   if (sources.hasListingPrice) score += 0.06;
@@ -323,6 +361,54 @@ export function applyTruthConfidenceGate(args: {
     confidence = Math.min(confidence, 56);
   }
 
+  if (isBuyTier(tier) && hasMerchantReliabilityEvidence(sources) && sources.merchantReliabilityScore < UNRELIABLE_MERCHANT_THRESHOLD) {
+    gates.push("downgrade_unreliable_merchant");
+    tier = downgradeTier(tier, "COMPARE");
+    verdict = "COMPARE";
+    confidence = Math.min(confidence, 55);
+  }
+
+  if (isBuyTier(tier) && hasMerchantReliabilityEvidence(sources) && sources.merchantVolatilityScore >= HIGH_VOLATILITY_THRESHOLD) {
+    gates.push("downgrade_highly_volatile_merchant");
+    tier = downgradeTier(tier, "COMPARE");
+    verdict = "COMPARE";
+    confidence = Math.min(confidence, 54);
+  }
+
+  if (
+    isBuyTier(tier) &&
+    hasMerchantReliabilityEvidence(sources) &&
+    sources.merchantAvailabilityReliability < POOR_AVAILABILITY_RELIABILITY_THRESHOLD
+  ) {
+    gates.push("downgrade_poor_merchant_availability_reliability");
+    tier = downgradeTier(tier, "WAIT");
+    verdict = "WAIT";
+    confidence = Math.min(confidence, 53);
+  }
+
+  if (
+    isBuyTier(tier) &&
+    hasMerchantReliabilityEvidence(sources) &&
+    (sources.merchantFreshnessReliability < STALE_FRESHNESS_RELIABILITY_THRESHOLD ||
+      sources.merchantState === "STALE")
+  ) {
+    gates.push("downgrade_stale_merchant_observations");
+    tier = downgradeTier(tier, "WAIT");
+    verdict = "WAIT";
+    confidence = Math.min(confidence, 52);
+  }
+
+  if (
+    isBuyTier(tier) &&
+    hasMerchantReliabilityEvidence(sources) &&
+    sources.merchantPricingReliability < POOR_PRICING_RELIABILITY_THRESHOLD
+  ) {
+    gates.push("downgrade_abnormal_merchant_pricing");
+    tier = downgradeTier(tier, "COMPARE");
+    verdict = "COMPARE";
+    confidence = Math.min(confidence, 51);
+  }
+
   if (tier === "BEST DEAL" && tc < TRUTH_THRESHOLDS.bestDeal) {
     gates.push("downgrade_best_deal_insufficient_truth");
     tier = downgradeTier(tier, tc >= TRUTH_THRESHOLDS.strongBuy ? "STRONG BUY" : tc >= TRUTH_THRESHOLDS.buyReady ? "BUY READY" : "COMPARE");
@@ -445,6 +531,9 @@ export function applyTruthGateToDecision(decision: UniversalProductDecision): Un
         "phase1g_market_intelligence",
         `phase1g_market_depth_${truthBundle.sources.marketDepth}`,
         `phase1g_market_agreement_${truthBundle.sources.marketAgreementScore}`,
+        "phase1h_merchant_reliability",
+        `phase1h_merchant_state_${(truthBundle.sources.merchantState ?? "unknown").toLowerCase()}`,
+        `phase1h_merchant_reliability_${truthBundle.sources.merchantReliabilityScore}`,
         "phase1d5_truth_gate",
         `phase1d5_truth_confidence_${Math.round(gated.truthConfidence * 100)}`,
         `phase1d5_discount_${(truthBundle.sources.discountVerificationState ?? "none").toLowerCase()}`,
