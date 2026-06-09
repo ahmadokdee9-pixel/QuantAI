@@ -147,6 +147,8 @@ export type UniversalProductIntelligenceSnapshot = UniversalProductIntelligenceS
     marketDepthHeadline: string;
     executiveRule: string;
   };
+  /** Phase 1D.5 — truth foundation snapshot for confidence gates. */
+  truthFoundation?: import("@/lib/truth/truthFoundationTypes").TruthFoundationSnapshot;
 };
 
 export type UniversalProductDecision = {

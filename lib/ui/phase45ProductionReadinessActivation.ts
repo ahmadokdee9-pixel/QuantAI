@@ -20,6 +20,7 @@ import {
   marketOpportunityFromIntel,
   type TrueValueIntelligence,
 } from "@/lib/intelligence/trueValueEngine";
+import { attachTruthFoundationToDecision } from "@/lib/truth/truthEvidenceBuilder";
 import {
   sanitizeUniversalDecision,
   validateTraySafety,
@@ -205,7 +206,15 @@ export function buildProductionReadinessDecisionMap(
     const tier = balancedTiers.get(link) ?? intel?.buyOpportunityCore?.tier ?? "COMPARE";
 
     if (!intel?.buyOpportunityCore || !intel.commerceDecisionCore || !enrichment) {
-      result.set(link, sanitizeUniversalDecision(decision));
+      const ctx = productsByLink.get(link);
+      const withFoundation = ctx
+        ? attachTruthFoundationToDecision(decision, {
+            product: ctx.product,
+            searchQuery: ctx.searchQuery,
+            marketMemory,
+          })
+        : decision;
+      result.set(link, sanitizeUniversalDecision(withFoundation));
       continue;
     }
 
@@ -271,7 +280,16 @@ export function buildProductionReadinessDecisionMap(
       },
     };
 
-    result.set(link, sanitizeUniversalDecision(updated));
+    const ctx = productsByLink.get(link);
+    const withFoundation = ctx
+      ? attachTruthFoundationToDecision(updated, {
+          product: ctx.product,
+          searchQuery: ctx.searchQuery,
+          marketMemory,
+        })
+      : updated;
+
+    result.set(link, sanitizeUniversalDecision(withFoundation));
   }
 
   const safety = validateTraySafety(result);

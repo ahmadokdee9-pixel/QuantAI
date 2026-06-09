@@ -23,7 +23,7 @@ assert.ok(!surface.includes("buildPriceTruthBundle"), "UI not wired");
 const searchRoute = readFileSync(join(process.cwd(), "app/api/search/route.ts"), "utf8");
 assert.ok(!searchRoute.includes("priceTruth"), "search route unchanged");
 const truthGate = readFileSync(join(process.cwd(), "lib/truth/truthConfidenceGate.ts"), "utf8");
-assert.ok(!truthGate.includes("buildPriceTruthBundle"), "truth gate unchanged (1D.5 next)");
+assert.ok(truthGate.includes("buildExtendedTruthEvidenceSources"), "truth gate wired via evidence builder (1D.5)");
 pass("no_ui_search_verdict_wiring");
 
 const SKU = "bm:abc123canonical";

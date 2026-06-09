@@ -58,7 +58,7 @@ Never emits raw "Verified Discount" per Phase 1A policy.
 }
 ```
 
-Phase **1D.5** will wire `priceTruthConfidence` into `computeTruthConfidence()`.
+Phase **1D.5** wires `priceTruthConfidence` into `computeTruthConfidence()` — see `docs/TRUTH_PHASE_1D5_ARCHITECTURE.md`.
 
 ---
 
