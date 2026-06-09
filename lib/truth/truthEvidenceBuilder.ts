@@ -33,6 +33,10 @@ import {
   buildEvidenceReasoningGraph,
   hasEvidenceReasoningGraphSignal,
 } from "@/lib/truth/evidenceReasoningGraph";
+import {
+  buildUnifiedTrustEngine,
+  hasTrustEngineSignal,
+} from "@/lib/truth/unifiedTrustEngine";
 import { buildTruthDebugTrace } from "@/lib/truth/truthDebug";
 import type {
   ExtendedTruthEvidenceSources,
@@ -125,7 +129,8 @@ export function buildTruthFoundationSnapshot(args: {
     args.existing.productIntelligence &&
     args.existing.commerceIntelligence &&
     args.existing.commerceReasoning &&
-    args.existing.evidenceReasoningGraph
+    args.existing.evidenceReasoningGraph &&
+    args.existing.trustEngine
   ) {
     return args.existing;
   }
@@ -254,9 +259,14 @@ export function buildTruthFoundationSnapshot(args: {
     commerceReasoning: buildCommerceReasoningLayer(withCommerceIntelligence),
   };
 
-  return {
+  const withEvidenceGraph = {
     ...withCommerceReasoning,
     evidenceReasoningGraph: buildEvidenceReasoningGraph(withCommerceReasoning),
+  };
+
+  return {
+    ...withEvidenceGraph,
+    trustEngine: buildUnifiedTrustEngine(withEvidenceGraph),
   };
 }
 
@@ -310,6 +320,7 @@ export function buildExtendedTruthEvidenceSources(
       commerceIntelligence: _ignoredCommerceIntelligence,
       commerceReasoning: _ignoredCommerceReasoning,
       evidenceReasoningGraph: _ignoredEvidenceReasoningGraph,
+      trustEngine: _ignoredTrustEngine,
       ...foundationInput
     } = foundation;
     const productIntelligence = buildProductIntelligenceFoundation(foundationInput);
@@ -327,6 +338,13 @@ export function buildExtendedTruthEvidenceSources(
       productIntelligence,
       commerceIntelligence,
       commerceReasoning,
+    });
+    const trustEngine = buildUnifiedTrustEngine({
+      ...foundationInput,
+      productIntelligence,
+      commerceIntelligence,
+      commerceReasoning,
+      evidenceReasoningGraph,
     });
 
     return {
@@ -397,6 +415,12 @@ export function buildExtendedTruthEvidenceSources(
       evidenceState: evidenceReasoningGraph.evidenceState,
       conflictingEvidenceCount: evidenceReasoningGraph.conflictingEvidence.length,
       hasEvidenceReasoningGraph: hasEvidenceReasoningGraphSignal(evidenceReasoningGraph),
+      trustScore: trustEngine.trustScore,
+      trustConfidence: trustEngine.trustConfidence,
+      trustStrength: trustEngine.trustStrength,
+      trustState: trustEngine.trustState,
+      trustRiskCount: trustEngine.trustRisks.length,
+      hasTrustEngine: hasTrustEngineSignal(trustEngine),
     };
   }
 
@@ -480,6 +504,12 @@ export function buildExtendedTruthEvidenceSources(
     evidenceState: "EVIDENCE_UNKNOWN",
     conflictingEvidenceCount: 0,
     hasEvidenceReasoningGraph: false,
+    trustScore: 0,
+    trustConfidence: 0,
+    trustStrength: 0,
+    trustState: "TRUST_UNKNOWN",
+    trustRiskCount: 0,
+    hasTrustEngine: false,
   };
 }
 
