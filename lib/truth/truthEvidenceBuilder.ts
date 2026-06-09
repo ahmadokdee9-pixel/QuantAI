@@ -48,6 +48,10 @@ import {
   buildIntentAwareRetrieval,
   hasIntentRetrievalSignal,
 } from "@/lib/truth/intentAwareRetrievalEngine";
+import {
+  buildProductMatchingEngine,
+  hasProductMatchSignal,
+} from "@/lib/truth/productMatchingEngine";
 import { buildTruthDebugTrace } from "@/lib/truth/truthDebug";
 import type {
   ExtendedTruthEvidenceSources,
@@ -144,7 +148,8 @@ export function buildTruthFoundationSnapshot(args: {
     args.existing.trustEngine &&
     args.existing.decisionEngine &&
     args.existing.intentEngine &&
-    args.existing.intentRetrieval
+    args.existing.intentRetrieval &&
+    args.existing.productMatch
   ) {
     return args.existing;
   }
@@ -293,9 +298,17 @@ export function buildTruthFoundationSnapshot(args: {
     intentEngine: buildIntentIntelligenceEngine(args.searchQuery ?? ""),
   };
 
-  return {
+  const withIntentRetrieval = {
     ...withIntentEngine,
     intentRetrieval: buildIntentAwareRetrieval({
+      product: args.product,
+      intentEngine: withIntentEngine.intentEngine,
+    }),
+  };
+
+  return {
+    ...withIntentRetrieval,
+    productMatch: buildProductMatchingEngine({
       product: args.product,
       intentEngine: withIntentEngine.intentEngine,
     }),
@@ -472,6 +485,15 @@ export function buildExtendedTruthEvidenceSources(
       retrievalIntentScore: foundation.intentRetrieval?.retrievalIntentScore ?? 0,
       retrievalReasons: foundation.intentRetrieval?.retrievalReasons ?? [],
       hasIntentRetrieval: hasIntentRetrievalSignal(foundation.intentRetrieval),
+      overallMatchScore: foundation.productMatch?.overallMatchScore ?? 0,
+      intentMatchScore: foundation.productMatch?.intentMatchScore ?? 0,
+      budgetMatchScore: foundation.productMatch?.budgetMatchScore ?? 0,
+      qualityMatchScore: foundation.productMatch?.qualityMatchScore ?? 0,
+      brandMatchScore: foundation.productMatch?.brandMatchScore ?? 0,
+      useCaseMatchScore: foundation.productMatch?.useCaseMatchScore ?? 0,
+      strongestMatchReason: foundation.productMatch?.strongestMatchReason ?? "General intent alignment",
+      strongestMismatchReason: foundation.productMatch?.strongestMismatchReason ?? "No major mismatch detected",
+      hasProductMatch: hasProductMatchSignal(foundation.productMatch),
     };
   }
 
@@ -571,6 +593,15 @@ export function buildExtendedTruthEvidenceSources(
     retrievalIntentScore: 0,
     retrievalReasons: [],
     hasIntentRetrieval: false,
+    overallMatchScore: 0,
+    intentMatchScore: 0,
+    budgetMatchScore: 0,
+    qualityMatchScore: 0,
+    brandMatchScore: 0,
+    useCaseMatchScore: 0,
+    strongestMatchReason: "General intent alignment",
+    strongestMismatchReason: "No major mismatch detected",
+    hasProductMatch: false,
   };
 }
 

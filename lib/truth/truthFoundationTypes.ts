@@ -11,6 +11,7 @@ import type { CommerceReasoningSnapshot } from "@/lib/truth/commerceReasoningLay
 import type { EvidenceReasoningGraph } from "@/lib/truth/evidenceReasoningGraph";
 import type { IntentEngineSnapshot } from "@/lib/truth/intentIntelligenceEngine";
 import type { IntentRetrievalSnapshot } from "@/lib/truth/intentAwareRetrievalEngine";
+import type { ProductMatchSnapshot } from "@/lib/truth/productMatchingEngine";
 import type { DecisionEngineSnapshot } from "@/lib/truth/decisionIntelligenceLayer";
 import type { TrustEngineSnapshot } from "@/lib/truth/unifiedTrustEngine";
 import type { CommerceIntelligenceSnapshot } from "@/lib/truth/universalCommerceIntelligence";
@@ -59,6 +60,7 @@ export type TruthFoundationSnapshot = {
   decisionEngine: DecisionEngineSnapshot;
   intentEngine: IntentEngineSnapshot;
   intentRetrieval: IntentRetrievalSnapshot;
+  productMatch: ProductMatchSnapshot;
   debugTrace?: TruthDebugTrace | null;
 };
 
@@ -149,6 +151,15 @@ export type ExtendedTruthEvidenceSources = {
   retrievalIntentScore: number;
   retrievalReasons: string[];
   hasIntentRetrieval: boolean;
+  overallMatchScore: number;
+  intentMatchScore: number;
+  budgetMatchScore: number;
+  qualityMatchScore: number;
+  brandMatchScore: number;
+  useCaseMatchScore: number;
+  strongestMatchReason: string;
+  strongestMismatchReason: string;
+  hasProductMatch: boolean;
 };
 
 export type { AvailabilityState } from "@/lib/truth/availabilityStateModel";
@@ -163,3 +174,4 @@ export type { TrustEngineSnapshot } from "@/lib/truth/unifiedTrustEngine";
 export type { DecisionEngineSnapshot } from "@/lib/truth/decisionIntelligenceLayer";
 export type { IntentEngineSnapshot, IntentSnapshot } from "@/lib/truth/intentIntelligenceEngine";
 export type { IntentRetrievalSnapshot } from "@/lib/truth/intentAwareRetrievalEngine";
+export type { ProductMatchSnapshot } from "@/lib/truth/productMatchingEngine";
