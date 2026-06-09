@@ -52,6 +52,11 @@ import {
   buildProductMatchingEngine,
   hasProductMatchSignal,
 } from "@/lib/truth/productMatchingEngine";
+import {
+  buildProductReasoningEngine,
+  buildProductReasoningEvidenceChain,
+  hasProductReasoningSignal,
+} from "@/lib/truth/productReasoningEngine";
 import { buildTruthDebugTrace } from "@/lib/truth/truthDebug";
 import type {
   ExtendedTruthEvidenceSources,
@@ -149,7 +154,8 @@ export function buildTruthFoundationSnapshot(args: {
     args.existing.decisionEngine &&
     args.existing.intentEngine &&
     args.existing.intentRetrieval &&
-    args.existing.productMatch
+    args.existing.productMatch &&
+    args.existing.productReasoning
   ) {
     return args.existing;
   }
@@ -306,12 +312,17 @@ export function buildTruthFoundationSnapshot(args: {
     }),
   };
 
-  return {
+  const withProductMatch = {
     ...withIntentRetrieval,
     productMatch: buildProductMatchingEngine({
       product: args.product,
       intentEngine: withIntentEngine.intentEngine,
     }),
+  };
+
+  return {
+    ...withProductMatch,
+    productReasoning: buildProductReasoningEngine(withProductMatch),
   };
 }
 
@@ -400,6 +411,7 @@ export function buildExtendedTruthEvidenceSources(
       evidenceReasoningGraph,
       trustEngine,
     });
+    const { productReasoning: _ignoredProductReasoning, ...reasoningInput } = foundation;
 
     return {
       priceHistorySamples: foundation.baselineCoverage?.samples90d ?? 0,
@@ -494,6 +506,15 @@ export function buildExtendedTruthEvidenceSources(
       strongestMatchReason: foundation.productMatch?.strongestMatchReason ?? "General intent alignment",
       strongestMismatchReason: foundation.productMatch?.strongestMismatchReason ?? "No major mismatch detected",
       hasProductMatch: hasProductMatchSignal(foundation.productMatch),
+      recommendationStrength: foundation.productReasoning?.recommendationStrength ?? "UNKNOWN",
+      productReasoningConfidence: foundation.productReasoning?.reasoningConfidence ?? 0,
+      explainabilityScore: foundation.productReasoning?.explainabilityScore ?? 0,
+      summaryReason: foundation.productReasoning?.summaryReason ?? "",
+      shortReason: foundation.productReasoning?.shortReason ?? "",
+      topPositiveReasonCount: foundation.productReasoning?.topPositiveReasons.length ?? 0,
+      topNegativeReasonCount: foundation.productReasoning?.topNegativeReasons.length ?? 0,
+      reasoningEvidenceChain: buildProductReasoningEvidenceChain(reasoningInput),
+      hasProductReasoning: hasProductReasoningSignal(foundation.productReasoning),
     };
   }
 
@@ -602,6 +623,15 @@ export function buildExtendedTruthEvidenceSources(
     strongestMatchReason: "General intent alignment",
     strongestMismatchReason: "No major mismatch detected",
     hasProductMatch: false,
+    recommendationStrength: "UNKNOWN",
+    productReasoningConfidence: 0,
+    explainabilityScore: 0,
+    summaryReason: "",
+    shortReason: "",
+    topPositiveReasonCount: 0,
+    topNegativeReasonCount: 0,
+    reasoningEvidenceChain: [],
+    hasProductReasoning: false,
   };
 }
 
