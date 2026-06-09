@@ -25,6 +25,10 @@ import {
   buildUniversalCommerceIntelligence,
   hasCommerceIntelligenceSignal,
 } from "@/lib/truth/universalCommerceIntelligence";
+import {
+  buildCommerceReasoningLayer,
+  hasCommerceReasoningSignal,
+} from "@/lib/truth/commerceReasoningLayer";
 import { buildTruthDebugTrace } from "@/lib/truth/truthDebug";
 import type {
   ExtendedTruthEvidenceSources,
@@ -115,7 +119,8 @@ export function buildTruthFoundationSnapshot(args: {
     args.existing.marketIntelligence &&
     args.existing.merchantReliability &&
     args.existing.productIntelligence &&
-    args.existing.commerceIntelligence
+    args.existing.commerceIntelligence &&
+    args.existing.commerceReasoning
   ) {
     return args.existing;
   }
@@ -234,9 +239,14 @@ export function buildTruthFoundationSnapshot(args: {
     productIntelligence: buildProductIntelligenceFoundation(snapshotWithoutProductIntelligence),
   };
 
-  return {
+  const withCommerceIntelligence = {
     ...withProductIntelligence,
     commerceIntelligence: buildUniversalCommerceIntelligence(withProductIntelligence),
+  };
+
+  return {
+    ...withCommerceIntelligence,
+    commerceReasoning: buildCommerceReasoningLayer(withCommerceIntelligence),
   };
 }
 
@@ -285,12 +295,21 @@ export function buildExtendedTruthEvidenceSources(
       hasObservation: foundation.availability.observedAt != null,
     });
 
-    const { productIntelligence: _ignoredProductIntelligence, commerceIntelligence: _ignoredCommerceIntelligence, ...foundationInput } =
-      foundation;
+    const {
+      productIntelligence: _ignoredProductIntelligence,
+      commerceIntelligence: _ignoredCommerceIntelligence,
+      commerceReasoning: _ignoredCommerceReasoning,
+      ...foundationInput
+    } = foundation;
     const productIntelligence = buildProductIntelligenceFoundation(foundationInput);
     const commerceIntelligence = buildUniversalCommerceIntelligence({
       ...foundationInput,
       productIntelligence,
+    });
+    const commerceReasoning = buildCommerceReasoningLayer({
+      ...foundationInput,
+      productIntelligence,
+      commerceIntelligence,
     });
 
     return {
@@ -349,6 +368,13 @@ export function buildExtendedTruthEvidenceSources(
       commerceMerchantConfidence: commerceIntelligence.merchantConfidence,
       commerceState: commerceIntelligence.commerceState,
       hasCommerceIntelligence: hasCommerceIntelligenceSignal(commerceIntelligence),
+      reasoningConfidence: commerceReasoning.reasoningConfidence,
+      reasoningState: commerceReasoning.reasoningState,
+      primaryRisk: commerceReasoning.primaryRisk,
+      secondaryRisk: commerceReasoning.secondaryRisk,
+      strongestPositiveSignal: commerceReasoning.strongestPositiveSignal,
+      strongestNegativeSignal: commerceReasoning.strongestNegativeSignal,
+      hasCommerceReasoning: hasCommerceReasoningSignal(commerceReasoning),
     };
   }
 
@@ -420,6 +446,13 @@ export function buildExtendedTruthEvidenceSources(
     commerceMerchantConfidence: 0,
     commerceState: "COMMERCE_UNKNOWN",
     hasCommerceIntelligence: false,
+    reasoningConfidence: 0,
+    reasoningState: "COMMERCE_REASONING_UNKNOWN",
+    primaryRisk: "none",
+    secondaryRisk: "none",
+    strongestPositiveSignal: "Limited positive confirmation",
+    strongestNegativeSignal: "No major negative signal",
+    hasCommerceReasoning: false,
   };
 }
 

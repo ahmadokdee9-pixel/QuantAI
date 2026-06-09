@@ -46,6 +46,10 @@ import {
   WEAK_COMMERCE_MERCHANT_TRUTH_THRESHOLD,
   WEAK_COMMERCE_PRODUCT_TRUTH_THRESHOLD,
 } from "@/lib/truth/universalCommerceIntelligence";
+import {
+  isHighPrimaryRisk,
+  WEAK_COMMERCE_REASONING_CONFIDENCE_THRESHOLD,
+} from "@/lib/truth/commerceReasoningLayer";
 import type { ExtendedTruthEvidenceSources } from "@/lib/truth/truthFoundationTypes";
 import { discountEvidenceLine, mapDiscountVerificationStateToLabel } from "@/lib/truth/truthDiscountLanguage";
 import {
@@ -83,6 +87,14 @@ function hasProductIntelligenceEvidence(sources: TruthEvidenceSources): boolean 
 
 function hasCommerceIntelligenceEvidence(sources: TruthEvidenceSources): boolean {
   return sources.hasCommerceIntelligence === true && Boolean(sources.canonicalSkuId);
+}
+
+function hasCommerceReasoningEvidence(sources: TruthEvidenceSources): boolean {
+  return sources.hasCommerceReasoning === true && Boolean(sources.canonicalSkuId);
+}
+
+function isUncertainReasoningState(state: string): boolean {
+  return state === "COMMERCE_REASONING_WEAK" || state === "COMMERCE_REASONING_UNKNOWN";
 }
 
 function clamp01(n: number): number {
@@ -262,6 +274,19 @@ export function computeTruthConfidence(
     sources.commerceProductConfidence < WEAK_COMMERCE_PRODUCT_TRUTH_THRESHOLD
   ) {
     gatesApplied.push("weak_product_truth");
+  }
+
+  if (
+    hasCommerceReasoningEvidence(sources) &&
+    sources.reasoningConfidence < WEAK_COMMERCE_REASONING_CONFIDENCE_THRESHOLD
+  ) {
+    gatesApplied.push("weak_commerce_reasoning");
+  }
+  if (hasCommerceReasoningEvidence(sources) && isHighPrimaryRisk(sources.primaryRisk)) {
+    gatesApplied.push("primary_commerce_risk");
+  }
+  if (hasCommerceReasoningEvidence(sources) && isUncertainReasoningState(sources.reasoningState)) {
+    gatesApplied.push("uncertain_commerce_reasoning");
   }
 
   if (sources.hasListingPrice) score += 0.06;
@@ -576,6 +601,35 @@ export function applyTruthConfidenceGate(args: {
     confidence = Math.min(confidence, 43);
   }
 
+  if (
+    enteredAsBuyTier &&
+    hasCommerceReasoningEvidence(sources) &&
+    sources.reasoningConfidence < WEAK_COMMERCE_REASONING_CONFIDENCE_THRESHOLD
+  ) {
+    gates.push("downgrade_weak_commerce_reasoning");
+    tier = downgradeTier(tier, "COMPARE");
+    verdict = "COMPARE";
+    confidence = Math.min(confidence, 42);
+  }
+
+  if (enteredAsBuyTier && hasCommerceReasoningEvidence(sources) && isHighPrimaryRisk(sources.primaryRisk)) {
+    gates.push("downgrade_primary_commerce_risk");
+    tier = downgradeTier(tier, "COMPARE");
+    verdict = "COMPARE";
+    confidence = Math.min(confidence, 41);
+  }
+
+  if (
+    enteredAsBuyTier &&
+    hasCommerceReasoningEvidence(sources) &&
+    isUncertainReasoningState(sources.reasoningState)
+  ) {
+    gates.push("downgrade_reasoning_uncertainty");
+    tier = downgradeTier(tier, "COMPARE");
+    verdict = "COMPARE";
+    confidence = Math.min(confidence, 40);
+  }
+
   if (tier === "BEST DEAL" && tc < TRUTH_THRESHOLDS.bestDeal) {
     gates.push("downgrade_best_deal_insufficient_truth");
     tier = downgradeTier(tier, tc >= TRUTH_THRESHOLDS.strongBuy ? "STRONG BUY" : tc >= TRUTH_THRESHOLDS.buyReady ? "BUY READY" : "COMPARE");
@@ -707,6 +761,10 @@ export function applyTruthGateToDecision(decision: UniversalProductDecision): Un
         "phase1j_commerce_intelligence",
         `phase1j_commerce_state_${(truthBundle.sources.commerceState ?? "unknown").toLowerCase()}`,
         `phase1j_commerce_confidence_${truthBundle.sources.commerceConfidence}`,
+        "phase1k_commerce_reasoning",
+        `phase1k_reasoning_state_${(truthBundle.sources.reasoningState ?? "unknown").toLowerCase()}`,
+        `phase1k_reasoning_confidence_${truthBundle.sources.reasoningConfidence}`,
+        `phase1k_primary_risk_${(truthBundle.sources.primaryRisk ?? "none").toLowerCase()}`,
         "phase1d5_truth_gate",
         `phase1d5_truth_confidence_${Math.round(gated.truthConfidence * 100)}`,
         `phase1d5_discount_${(truthBundle.sources.discountVerificationState ?? "none").toLowerCase()}`,
