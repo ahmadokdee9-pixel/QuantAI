@@ -40,6 +40,12 @@ import {
   WEAK_PRODUCT_MERCHANT_CONFIDENCE_THRESHOLD,
   WEAK_PRODUCT_TRUTH_CONFIDENCE_THRESHOLD,
 } from "@/lib/truth/productIntelligenceFoundation";
+import {
+  WEAK_COMMERCE_CONFIDENCE_THRESHOLD,
+  WEAK_COMMERCE_MARKET_TRUTH_THRESHOLD,
+  WEAK_COMMERCE_MERCHANT_TRUTH_THRESHOLD,
+  WEAK_COMMERCE_PRODUCT_TRUTH_THRESHOLD,
+} from "@/lib/truth/universalCommerceIntelligence";
 import type { ExtendedTruthEvidenceSources } from "@/lib/truth/truthFoundationTypes";
 import { discountEvidenceLine, mapDiscountVerificationStateToLabel } from "@/lib/truth/truthDiscountLanguage";
 import {
@@ -73,6 +79,10 @@ function hasMerchantReliabilityEvidence(sources: TruthEvidenceSources): boolean 
 
 function hasProductIntelligenceEvidence(sources: TruthEvidenceSources): boolean {
   return sources.hasProductIntelligence === true;
+}
+
+function hasCommerceIntelligenceEvidence(sources: TruthEvidenceSources): boolean {
+  return sources.hasCommerceIntelligence === true && Boolean(sources.canonicalSkuId);
 }
 
 function clamp01(n: number): number {
@@ -225,6 +235,33 @@ export function computeTruthConfidence(
     sources.productTruthConfidence < WEAK_PRODUCT_TRUTH_CONFIDENCE_THRESHOLD
   ) {
     gatesApplied.push("weak_product_truth_confidence");
+  }
+
+  if (
+    hasCommerceIntelligenceEvidence(sources) &&
+    sources.commerceConfidence < WEAK_COMMERCE_CONFIDENCE_THRESHOLD
+  ) {
+    gatesApplied.push("weak_commerce_confidence");
+  }
+  if (
+    hasCommerceIntelligenceEvidence(sources) &&
+    hasMarketIntelligenceSignal(sources) &&
+    sources.commerceMarketConfidence < WEAK_COMMERCE_MARKET_TRUTH_THRESHOLD
+  ) {
+    gatesApplied.push("weak_market_truth");
+  }
+  if (
+    hasCommerceIntelligenceEvidence(sources) &&
+    hasMerchantReliabilityEvidence(sources) &&
+    sources.commerceMerchantConfidence < WEAK_COMMERCE_MERCHANT_TRUTH_THRESHOLD
+  ) {
+    gatesApplied.push("weak_merchant_truth");
+  }
+  if (
+    hasCommerceIntelligenceEvidence(sources) &&
+    sources.commerceProductConfidence < WEAK_COMMERCE_PRODUCT_TRUTH_THRESHOLD
+  ) {
+    gatesApplied.push("weak_product_truth");
   }
 
   if (sources.hasListingPrice) score += 0.06;
@@ -493,6 +530,52 @@ export function applyTruthConfidenceGate(args: {
     confidence = Math.min(confidence, 47);
   }
 
+  if (
+    enteredAsBuyTier &&
+    hasCommerceIntelligenceEvidence(sources) &&
+    sources.commerceConfidence < WEAK_COMMERCE_CONFIDENCE_THRESHOLD
+  ) {
+    gates.push("downgrade_weak_commerce_confidence");
+    tier = downgradeTier(tier, "COMPARE");
+    verdict = "COMPARE";
+    confidence = Math.min(confidence, 46);
+  }
+
+  if (
+    enteredAsBuyTier &&
+    hasCommerceIntelligenceEvidence(sources) &&
+    hasMarketIntelligenceSignal(sources) &&
+    sources.commerceMarketConfidence < WEAK_COMMERCE_MARKET_TRUTH_THRESHOLD
+  ) {
+    gates.push("downgrade_weak_market_truth");
+    tier = downgradeTier(tier, "COMPARE");
+    verdict = "COMPARE";
+    confidence = Math.min(confidence, 45);
+  }
+
+  if (
+    enteredAsBuyTier &&
+    hasCommerceIntelligenceEvidence(sources) &&
+    hasMerchantReliabilityEvidence(sources) &&
+    sources.commerceMerchantConfidence < WEAK_COMMERCE_MERCHANT_TRUTH_THRESHOLD
+  ) {
+    gates.push("downgrade_weak_merchant_truth");
+    tier = downgradeTier(tier, "COMPARE");
+    verdict = "COMPARE";
+    confidence = Math.min(confidence, 44);
+  }
+
+  if (
+    enteredAsBuyTier &&
+    hasCommerceIntelligenceEvidence(sources) &&
+    sources.commerceProductConfidence < WEAK_COMMERCE_PRODUCT_TRUTH_THRESHOLD
+  ) {
+    gates.push("downgrade_weak_product_truth");
+    tier = downgradeTier(tier, "COMPARE");
+    verdict = "COMPARE";
+    confidence = Math.min(confidence, 43);
+  }
+
   if (tier === "BEST DEAL" && tc < TRUTH_THRESHOLDS.bestDeal) {
     gates.push("downgrade_best_deal_insufficient_truth");
     tier = downgradeTier(tier, tc >= TRUTH_THRESHOLDS.strongBuy ? "STRONG BUY" : tc >= TRUTH_THRESHOLDS.buyReady ? "BUY READY" : "COMPARE");
@@ -621,6 +704,9 @@ export function applyTruthGateToDecision(decision: UniversalProductDecision): Un
         "phase1i_product_intelligence",
         `phase1i_intelligence_state_${(truthBundle.sources.intelligenceState ?? "unknown").toLowerCase()}`,
         `phase1i_overall_confidence_${truthBundle.sources.overallProductConfidence}`,
+        "phase1j_commerce_intelligence",
+        `phase1j_commerce_state_${(truthBundle.sources.commerceState ?? "unknown").toLowerCase()}`,
+        `phase1j_commerce_confidence_${truthBundle.sources.commerceConfidence}`,
         "phase1d5_truth_gate",
         `phase1d5_truth_confidence_${Math.round(gated.truthConfidence * 100)}`,
         `phase1d5_discount_${(truthBundle.sources.discountVerificationState ?? "none").toLowerCase()}`,

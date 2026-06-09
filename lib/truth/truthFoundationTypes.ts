@@ -7,6 +7,7 @@ import type { AvailabilityState } from "@/lib/truth/availabilityStateModel";
 import type { AvailabilityStatus } from "@/lib/truth/availabilityObservationTypes";
 import type { MarketIntelligenceSnapshot } from "@/lib/truth/marketTruthRollup";
 import type { MerchantReliabilitySnapshot } from "@/lib/truth/merchantReliabilityTruth";
+import type { CommerceIntelligenceSnapshot } from "@/lib/truth/universalCommerceIntelligence";
 import type { ProductIntelligenceSnapshot } from "@/lib/truth/productIntelligenceFoundation";
 import type { TruthDebugTrace } from "@/lib/truth/truthDebug";
 import type {
@@ -45,6 +46,7 @@ export type TruthFoundationSnapshot = {
   merchantReliability: MerchantReliabilitySnapshot;
   merchantObservationCount: number;
   productIntelligence: ProductIntelligenceSnapshot;
+  commerceIntelligence: CommerceIntelligenceSnapshot;
   debugTrace?: TruthDebugTrace | null;
 };
 
@@ -101,6 +103,12 @@ export type ExtendedTruthEvidenceSources = {
   productTruthConfidence: number;
   intelligenceState: string;
   hasProductIntelligence: boolean;
+  commerceConfidence: number;
+  commerceProductConfidence: number;
+  commerceMarketConfidence: number;
+  commerceMerchantConfidence: number;
+  commerceState: string;
+  hasCommerceIntelligence: boolean;
 };
 
 export type { AvailabilityState } from "@/lib/truth/availabilityStateModel";
@@ -108,3 +116,4 @@ export type { AvailabilityConsensus } from "@/lib/truth/availabilityConsensusMod
 export type { MarketIntelligenceSnapshot } from "@/lib/truth/marketTruthRollup";
 export type { MerchantReliabilitySnapshot } from "@/lib/truth/merchantReliabilityTruth";
 export type { ProductIntelligenceSnapshot } from "@/lib/truth/productIntelligenceFoundation";
+export type { CommerceIntelligenceSnapshot } from "@/lib/truth/universalCommerceIntelligence";

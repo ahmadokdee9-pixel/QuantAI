@@ -21,6 +21,10 @@ import { computeFreshnessScoreFromObservedAt } from "@/lib/truth/freshnessScore"
 import type { HistoricalPriceObservationRow } from "@/lib/truth/priceHistoryTypes";
 import { buildPriceTruthBundle } from "@/lib/truth/priceTruth";
 import { resolveSkuIdentity } from "@/lib/truth/skuResolver";
+import {
+  buildUniversalCommerceIntelligence,
+  hasCommerceIntelligenceSignal,
+} from "@/lib/truth/universalCommerceIntelligence";
 import { buildTruthDebugTrace } from "@/lib/truth/truthDebug";
 import type {
   ExtendedTruthEvidenceSources,
@@ -110,7 +114,8 @@ export function buildTruthFoundationSnapshot(args: {
     args.existing.merchantCount != null &&
     args.existing.marketIntelligence &&
     args.existing.merchantReliability &&
-    args.existing.productIntelligence
+    args.existing.productIntelligence &&
+    args.existing.commerceIntelligence
   ) {
     return args.existing;
   }
@@ -224,9 +229,14 @@ export function buildTruthFoundationSnapshot(args: {
     }),
   } satisfies ProductIntelligenceFoundationInput;
 
-  return {
+  const withProductIntelligence = {
     ...snapshotWithoutProductIntelligence,
     productIntelligence: buildProductIntelligenceFoundation(snapshotWithoutProductIntelligence),
+  };
+
+  return {
+    ...withProductIntelligence,
+    commerceIntelligence: buildUniversalCommerceIntelligence(withProductIntelligence),
   };
 }
 
@@ -275,8 +285,13 @@ export function buildExtendedTruthEvidenceSources(
       hasObservation: foundation.availability.observedAt != null,
     });
 
-    const { productIntelligence: _ignoredProductIntelligence, ...foundationInput } = foundation;
+    const { productIntelligence: _ignoredProductIntelligence, commerceIntelligence: _ignoredCommerceIntelligence, ...foundationInput } =
+      foundation;
     const productIntelligence = buildProductIntelligenceFoundation(foundationInput);
+    const commerceIntelligence = buildUniversalCommerceIntelligence({
+      ...foundationInput,
+      productIntelligence,
+    });
 
     return {
       priceHistorySamples: foundation.baselineCoverage?.samples90d ?? 0,
@@ -328,6 +343,12 @@ export function buildExtendedTruthEvidenceSources(
       productTruthConfidence: computeProductTruthConfidence(productIntelligence),
       intelligenceState: productIntelligence.intelligenceState,
       hasProductIntelligence: hasProductIntelligenceSignal(productIntelligence),
+      commerceConfidence: commerceIntelligence.commerceConfidence,
+      commerceProductConfidence: commerceIntelligence.productConfidence,
+      commerceMarketConfidence: commerceIntelligence.marketConfidence,
+      commerceMerchantConfidence: commerceIntelligence.merchantConfidence,
+      commerceState: commerceIntelligence.commerceState,
+      hasCommerceIntelligence: hasCommerceIntelligenceSignal(commerceIntelligence),
     };
   }
 
@@ -393,6 +414,12 @@ export function buildExtendedTruthEvidenceSources(
     productTruthConfidence: 0,
     intelligenceState: "PRODUCT_UNKNOWN",
     hasProductIntelligence: false,
+    commerceConfidence: 0,
+    commerceProductConfidence: 0,
+    commerceMarketConfidence: 0,
+    commerceMerchantConfidence: 0,
+    commerceState: "COMMERCE_UNKNOWN",
+    hasCommerceIntelligence: false,
   };
 }
 

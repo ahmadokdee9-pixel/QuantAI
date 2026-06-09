@@ -6,7 +6,10 @@
 import type { DiscountVerificationState } from "@/lib/truth/priceHistoryTypes";
 import type { TruthFoundationSnapshot } from "@/lib/truth/truthFoundationTypes";
 
-export type ProductIntelligenceFoundationInput = Omit<TruthFoundationSnapshot, "productIntelligence">;
+export type ProductIntelligenceFoundationInput = Omit<
+  TruthFoundationSnapshot,
+  "productIntelligence" | "commerceIntelligence"
+>;
 
 export type ProductIntelligenceState =
   | "PRODUCT_CONFIDENT"
