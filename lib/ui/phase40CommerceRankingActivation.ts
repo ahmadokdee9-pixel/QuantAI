@@ -294,7 +294,8 @@ export function buildCommerceRankingDecisionMap(
     }
 
     const winner = isGlobalWinner(link, globalWinner);
-    const commercePriorityLabel = winner && verdict === "BUY READY" ? "BEST DEAL FOUND" : intel.commercePriorityLabel;
+    const commercePriorityLabel =
+      winner && verdict === "BUY READY" ? "LIKELY DEAL SIGNAL" : intel.commercePriorityLabel;
 
     let primaryLine = decision.primaryReason ?? decision.reasonLine;
     if (verdict === "WAIT" && waitForecast.forecastValid) {

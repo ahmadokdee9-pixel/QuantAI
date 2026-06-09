@@ -98,8 +98,8 @@ export function buildDecisionCalibrationDecisionMap(
     }
 
     const merchantScore = resolveMerchantScore(intel, merchant, core);
-    const fakeDiscount = discount?.band === "Fake Discount";
-    const discountVerified = discount?.verified === true && discount?.band !== "Fake Discount";
+    const fakeDiscount = discount?.band.includes("Fake") ?? false;
+    const discountVerified = discount?.verified === true && !(discount?.band.includes("Fake") ?? false);
     const valueScore = intel?.valueIntelligenceCore?.valueScore ?? core.valueScore;
     const valueAboveMedian = valueScore >= valueMedian;
     const majorRiskFlags =

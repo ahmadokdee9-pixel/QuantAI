@@ -291,7 +291,8 @@ export function buildCommerceCalibrationDecisionMap(
         waitPrediction: intel.waitPrediction!,
         bestDeal: intel.bestDealFound!,
         intent: intel.shopperIntentMode ?? { version: 1, primaryMode: "Value Buyer", secondaryMode: null, confidence: 0.6, signals: [] },
-        isBestDealFound: commercePriorityLabel === "BEST DEAL FOUND",
+        isBestDealFound:
+          commercePriorityLabel === "LIKELY DEAL SIGNAL" || commercePriorityLabel === "BEST DEAL FOUND",
       });
 
       let next: UniversalProductDecision = {

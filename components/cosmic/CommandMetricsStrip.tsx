@@ -19,7 +19,7 @@ export default function CommandMetricsStrip({ entityCount = 0, scanning = false 
       </div>
       <div className="qc-command-metric">
         <p className="qc-command-metric-label">Trust mesh</p>
-        <p className="qc-command-metric-value">Verified</p>
+        <p className="qc-command-metric-value">Signal-based</p>
       </div>
       <div className="qc-command-metric">
         <p className="qc-command-metric-label">Market sync</p>

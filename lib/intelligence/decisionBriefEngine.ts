@@ -148,7 +148,7 @@ export function buildDecisionBrief(args: {
 
   let discountNote: string | null = null;
   if (discount.bestVerifiedDiscount && discount.bestVerifiedDiscount.link === pick.link) {
-    discountNote = `Best Verified Discount — save ~${Math.round(discount.bestVerifiedDiscount.savingsVsMedian)} vs tray median at ${discount.bestVerifiedDiscount.store}`;
+    discountNote = `Strongest discount signal in this search sample — save ~${Math.round(discount.bestVerifiedDiscount.savingsVsMedian)} vs sample median at ${discount.bestVerifiedDiscount.store}`;
   }
 
   const alternatives = [

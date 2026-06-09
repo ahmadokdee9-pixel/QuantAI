@@ -9,10 +9,10 @@ import type { CommercePriceHistoryIntelligence } from "@/lib/intelligence/commer
 import type { QuantProduct } from "@/lib/shoppingScore";
 
 export type DiscountAuthenticityBand =
-  | "Fake Discount"
-  | "Unverified Discount"
-  | "Verified Discount"
-  | "Exceptional Discount";
+  | "Fake Discount Signal"
+  | "Weak Discount Signal"
+  | "Discount Signal"
+  | "Exceptional Discount Signal";
 
 export type RealDiscountProof = {
   version: 1;
@@ -35,10 +35,10 @@ function clamp(n: number, lo: number, hi: number): number {
 }
 
 function bandForScore(score: number): DiscountAuthenticityBand {
-  if (score >= 85) return "Exceptional Discount";
-  if (score >= 70) return "Verified Discount";
-  if (score >= 40) return "Unverified Discount";
-  return "Fake Discount";
+  if (score >= 85) return "Exceptional Discount Signal";
+  if (score >= 70) return "Discount Signal";
+  if (score >= 40) return "Weak Discount Signal";
+  return "Fake Discount Signal";
 }
 
 /** Verify discount authenticity using price history, medians, and competition. */
@@ -81,10 +81,10 @@ export function proveRealDiscount(args: {
     : 0;
 
   const discountAuthenticityLine = verified
-    ? `Verified saving €${verifiedSavingEur} — ${band}.`
-    : band === "Fake Discount"
-      ? "Discount authenticity failed — marketing may be inflated."
-      : `Unverified discount — ${band}. Compare before trusting markdown.`;
+    ? `Observed saving signal €${verifiedSavingEur} — ${band}.`
+    : band.includes("Fake")
+      ? "Discount signal failed — marketing may be inflated."
+      : `Weak discount signal — ${band}. Compare before trusting markdown.`;
 
   return {
     version: 1,
@@ -98,7 +98,7 @@ export function proveRealDiscount(args: {
     equivalentMedian: equivMedian,
     merchantHistoricalPrice: merchantHistorical,
     verified,
-    displayLine: `Verified Saving: €${verifiedSavingEur} · Discount Authenticity: ${band} · Market Median Diff: ${marketMedianDifferencePct}%`,
+    displayLine: `Saving Signal: €${verifiedSavingEur} · Discount Signal: ${band} · Search-Sample Median Diff: ${marketMedianDifferencePct}%`,
   };
 }
 

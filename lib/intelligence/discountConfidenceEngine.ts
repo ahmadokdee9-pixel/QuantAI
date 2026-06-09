@@ -8,10 +8,10 @@ import type { CommercePriceHistoryIntelligence } from "@/lib/intelligence/commer
 import type { QuantProduct } from "@/lib/shoppingScore";
 
 export type DiscountConfidenceLabel =
-  | "Unverified Discount"
-  | "Verified Discount"
-  | "Strong Verified Discount"
-  | "Exceptional Verified Discount";
+  | "Weak Discount Signal"
+  | "Discount Signal"
+  | "Strong Discount Signal"
+  | "Exceptional Discount Signal";
 
 export type DiscountConfidenceIntelligence = {
   version: 1;
@@ -31,10 +31,10 @@ function clamp(n: number, lo: number, hi: number): number {
 }
 
 function labelForConfidence(score: number, verified: boolean): DiscountConfidenceLabel {
-  if (!verified || score < 55) return "Unverified Discount";
-  if (score >= 88) return "Exceptional Verified Discount";
-  if (score >= 72) return "Strong Verified Discount";
-  return "Verified Discount";
+  if (!verified || score < 55) return "Weak Discount Signal";
+  if (score >= 88) return "Exceptional Discount Signal";
+  if (score >= 72) return "Strong Discount Signal";
+  return "Discount Signal";
 }
 
 /** Upgrade discount verification with confidence scoring. */
@@ -47,8 +47,8 @@ export function computeDiscountConfidence(args: {
 }): DiscountConfidenceIntelligence {
   const { product, discountProof, priceHistory, categoryMedianPrice, merchantTrustScore = 70 } = args;
 
-  const verified = discountProof?.verified === true && discountProof.band !== "Fake Discount";
-  const fake = discountProof?.band === "Fake Discount";
+  const verified = discountProof?.verified === true && !discountProof?.band.includes("Fake");
+  const fake = discountProof?.band.includes("Fake") ?? false;
 
   let historicalEvidence = 50;
   if (priceHistory?.label === "Historical Low") historicalEvidence = 92;
@@ -81,14 +81,14 @@ export function computeDiscountConfidence(args: {
     100
   );
 
-  const label = fake ? "Unverified Discount" : labelForConfidence(discountConfidence, verified);
+  const label = fake ? "Weak Discount Signal" : labelForConfidence(discountConfidence, verified);
   const allowsPromotionalWording = !fake && discountConfidence >= 70 && verified;
 
   const displayLine = allowsPromotionalWording
-    ? `${label} — ${discountConfidence}% discount confidence from historical and category evidence.`
+    ? `${label} — ${discountConfidence}% discount signal strength from search-sample and category cues.`
     : fake
-      ? "Discount confidence too weak for promotional wording."
-      : `${label} — evidence still building (${discountConfidence}% confidence).`;
+      ? "Discount signal too weak for promotional wording."
+      : `${label} — evidence still building (${discountConfidence}% signal strength).`;
 
   return {
     version: 1,

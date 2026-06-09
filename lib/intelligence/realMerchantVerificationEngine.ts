@@ -32,7 +32,7 @@ function clamp(n: number, lo: number, hi: number): number {
 }
 
 function bandForScore(score: number): MerchantTrustBand {
-  if (score >= 95) return "Elite Merchant";
+  if (score >= 95) return "Elite Merchant"; // internal; display via qualifyMerchantTrustBand
   if (score >= 85) return "Trusted Merchant";
   if (score >= 70) return "Acceptable Merchant";
   return "Risky Merchant";
@@ -50,7 +50,7 @@ export function verifyMerchant(args: {
   const merchantAge = /refurb|renewed|outlet/i.test(blob)
     ? "Established channel"
     : marketplaceVerified
-      ? "Verified marketplace retailer"
+      ? "Recognized storefront signal"
       : "Standard retailer";
 
   const deliveryReliability = base.deliveryTransparencyScore;

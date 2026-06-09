@@ -85,7 +85,7 @@ export function buildIntelligenceSignals(args: {
     (p.qiCommerce?.valueForMoney ?? 50) >= 62 ? "High" : "Standard";
 
   const deliveryReliability =
-    p.shipping?.trim() || p.availability?.trim() ? "Verified lane" : "Check at checkout";
+    p.shipping?.trim() || p.availability?.trim() ? "Fulfillment signal present" : "Check at checkout";
 
   const historicalValue =
     p.priceTrend === "down"
@@ -116,12 +116,12 @@ export function buildIntelligenceSignals(args: {
 
 const CHIP_SUMMARY_EQUIV: Record<string, string> = {
   "Under Market Average": "Under market average",
-  "Trusted Retailer": "Trusted retailer",
-  "Strong Trust Network": "Strong trust network",
+  "Seller Trust Signal": "Seller trust signal",
+  "Strong Trust Signal": "Strong trust signal",
   "Stable Inventory": "Stable inventory",
   "Low Fulfillment Risk": "Low fulfillment risk",
   "Reliable Pricing": "Reliable pricing",
-  "Verified Seller": "Verified seller",
+  "Seller Trust Signal (High)": "Seller trust signal",
 };
 
 export function buildWhyQuantAIChoseThis(args: {
@@ -203,10 +203,10 @@ export function buildIntelligenceChips(args: CardIntelArgs): IntelligenceChip[] 
     chips.push({ label: "Under Market Average", tone: "emerald" });
   }
   if (trustScore >= 72) {
-    chips.push({ label: "Trusted Retailer", tone: "blue" });
+    chips.push({ label: "Seller Trust Signal", tone: "blue" });
   }
   if (trustScore >= 78) {
-    chips.push({ label: "Strong Trust Network", tone: "blue" });
+    chips.push({ label: "Strong Trust Signal", tone: "blue" });
   }
   if ((p.qiCommerce?.valueForMoney ?? 50) >= 58) {
     chips.push({ label: "Stable Inventory", tone: "violet" });
@@ -224,10 +224,6 @@ export function buildIntelligenceChips(args: CardIntelArgs): IntelligenceChip[] 
   ) {
     chips.push({ label: "Reliable Pricing", tone: "slate" });
   }
-  if (trustScore >= 75) {
-    chips.push({ label: "Verified Seller", tone: "blue" });
-  }
-
   return chips
     .filter((chip) => {
       const equiv = CHIP_SUMMARY_EQUIV[chip.label];
@@ -261,7 +257,7 @@ export function buildSmartDecisionLines(args: CardIntelArgs): string[] {
   ) {
     decisions.push("Low fulfillment risk");
   }
-  if (trustScore >= 72) decisions.push("Trust verified");
+  if (trustScore >= 72) decisions.push("Seller trust signal");
   if (deal.hasDiscount && (deal.discountPct ?? 0) >= 10) decisions.push("Credible markdown");
   if (spread >= 12) decisions.push("Premium pricing watch");
   if (verdict === "WAIT") decisions.push("Timing favors patience");
@@ -282,8 +278,8 @@ export function buildQuantAIVerdictNarrative(args: CardIntelArgs): string {
 
   switch (verdict) {
     case "BUY READY":
-      if (avg > 0 && p.price < avg * 0.92) return "Best value among trusted sellers.";
-      return "Price and seller trust support a confident checkout.";
+      if (avg > 0 && p.price < avg * 0.92) return "Price opportunity with seller trust signal in this search sample.";
+      return "Confidence-based recommendation from search-sample price and seller signals.";
     case "WAIT":
       return "Wait for better opportunity.";
     case "COMPARE":
@@ -292,7 +288,7 @@ export function buildQuantAIVerdictNarrative(args: CardIntelArgs): string {
     case "AVOID":
       return "Risk profile exceeds acceptable threshold for checkout.";
     case "INSUFFICIENT DATA":
-      return "More verified market evidence is needed before checkout.";
+      return "Insufficient evidence in this search sample — gather more signals before checkout.";
   }
-  return "Compare verified listings before committing.";
+  return "Compare listings in this search sample before committing.";
 }

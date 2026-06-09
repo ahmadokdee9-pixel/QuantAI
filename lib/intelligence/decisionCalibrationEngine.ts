@@ -102,17 +102,17 @@ function buildReasoning(args: {
     return "Confidence too low for purchase — patience advised.";
   }
   if (args.promotionApplied === "compare_to_buy_ready") {
-    return "Verified discount, trusted merchant, and strong confidence — calibrated to buy ready.";
+    return "Discount signal, seller trust signal, and strong confidence — calibrated to confidence-based buy signal.";
   }
   if (args.promotionApplied === "buy_ready_to_strong_buy") {
-    return "Verified discount, trusted merchant, coverage, and above-median value — calibrated to strong buy.";
+    return "Discount signal, seller trust signal, coverage, and above-median value — calibrated to strong buy signal.";
   }
   if (args.promotionApplied === "strong_buy_to_best_deal") {
-    return "Rare market-leading opportunity with elite merchant trust and verified discount — best deal.";
+    return "Leading opportunity in search sample with high trust signal seller and discount signal — likely deal signal.";
   }
-  if (args.tier === "BEST DEAL") return "Calibrated best deal — exceptional evidence across trust, discount, and market position.";
-  if (args.tier === "STRONG BUY") return "Calibrated strong buy — high-confidence purchase path with verified evidence.";
-  if (args.tier === "BUY READY") return "Calibrated buy ready — confident checkout path with balanced evidence.";
+  if (args.tier === "BEST DEAL") return "Calibrated likely deal signal — strong evidence across trust, discount, and search-sample position.";
+  if (args.tier === "STRONG BUY") return "Calibrated strong buy signal — high-confidence path from search-sample evidence.";
+  if (args.tier === "BUY READY") return "Calibrated confidence-based buy signal — balanced evidence from this search sample.";
   if (args.tier === "WAIT") return "Calibrated wait — insufficient confidence or unfavorable market signals.";
   return "Calibrated compare — good option but alternatives deserve review before checkout.";
 }

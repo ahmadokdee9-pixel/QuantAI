@@ -256,7 +256,7 @@ function buildEvidenceChips(input: IntelligenceExposureInput): ExposureChip[] {
     /better alternative|stronger option/i.test(alternativeAdvantage.comparisonSummary);
 
   if (verdict === "BUY READY") {
-    if (trusted) pushEvidenceChip(chips, "Trusted Seller", "emerald", "positive");
+    if (trusted) pushEvidenceChip(chips, "Seller Trust Signal", "emerald", "positive");
     if (rankedFirst) pushEvidenceChip(chips, "Ranked First", "blue", "positive");
     if (buyWindow) pushEvidenceChip(chips, "Buy Window Active", "emerald", "positive");
     else if (genuine) pushEvidenceChip(chips, "Genuine Discount", "emerald", "positive");
@@ -264,7 +264,7 @@ function buildEvidenceChips(input: IntelligenceExposureInput): ExposureChip[] {
       pushEvidenceChip(chips, "Strong Intent Match", "violet", "positive");
     }
   } else if (verdict === "WAIT") {
-    if (trusted) pushEvidenceChip(chips, "Trusted Seller", "slate", "positive");
+    if (trusted) pushEvidenceChip(chips, "Seller Trust Signal", "slate", "positive");
     if (priceElevated || waitRecommended) {
       pushEvidenceChip(chips, "Price Elevated", "amber", "caution");
     }
@@ -278,7 +278,7 @@ function buildEvidenceChips(input: IntelligenceExposureInput): ExposureChip[] {
       pushEvidenceChip(chips, "Suspicious Offer", "amber", "caution");
     }
   } else if (verdict === "COMPARE") {
-    if (trusted) pushEvidenceChip(chips, "Trusted Seller", "slate", "positive");
+    if (trusted) pushEvidenceChip(chips, "Seller Trust Signal", "slate", "positive");
     if (betterAlt) pushEvidenceChip(chips, "Better Alternative Found", "blue", "caution");
     if (buyWait.verdict === "COMPARE") pushEvidenceChip(chips, "Compare Options", "blue", "positive");
     if (rankedFirst && isLeadProduct) pushEvidenceChip(chips, "Ranked First", "blue", "positive");

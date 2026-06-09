@@ -58,7 +58,7 @@ function decisionSurfaceClass(code: CommerceBrainFinalCode): string {
 
 function trustPosture(trust: number, weak: boolean): string {
   if (weak || trust < 52) return "Weak seller route";
-  if (trust >= 78) return "Trusted seller";
+  if (trust >= 78) return "Seller trust signal";
   if (trust >= 62) return "Solid trust";
   return "Moderate trust";
 }

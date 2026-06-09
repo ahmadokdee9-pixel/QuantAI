@@ -57,9 +57,9 @@ export function buildBestPlaceToBuy(args: {
   if (cheaper && cheaper.link !== product.link) {
     advantage = `Buy at ${cheaper.store} — same product cheaper by €${Math.round(savings)} vs this listing.`;
   } else if (globalPrice.priceLabel === "BEST PRICE FOUND") {
-    advantage = "This listing is the best price found across scanned merchants.";
+    advantage = "Market sample lowest observed across listings in this search sample.";
   } else if (merchantTrust.trustScore >= 75) {
-    advantage = "Trusted seller with strong fulfillment and return policy signals.";
+    advantage = "Seller trust signal with favorable fulfillment and return policy cues.";
   }
 
   return {

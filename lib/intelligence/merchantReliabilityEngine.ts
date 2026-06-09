@@ -6,7 +6,11 @@
 import type { RealMerchantVerification } from "@/lib/intelligence/realMerchantVerificationEngine";
 import type { QuantProduct } from "@/lib/shoppingScore";
 
-export type MerchantReliabilityLabel = "Standard Merchant" | "Trusted Merchant" | "Strong Merchant" | "Elite Merchant";
+export type MerchantReliabilityLabel =
+  | "Standard Seller Signal"
+  | "Seller Trust Signal"
+  | "Strong Seller Trust Signal"
+  | "High Trust Signal Seller";
 
 export type MerchantReliabilityIntelligence = {
   version: 1;
@@ -27,10 +31,10 @@ function clamp(n: number, lo: number, hi: number): number {
 }
 
 function labelForScore(score: number): MerchantReliabilityLabel {
-  if (score >= 92) return "Elite Merchant";
-  if (score >= 82) return "Strong Merchant";
-  if (score >= 70) return "Trusted Merchant";
-  return "Standard Merchant";
+  if (score >= 92) return "High Trust Signal Seller";
+  if (score >= 82) return "Strong Seller Trust Signal";
+  if (score >= 70) return "Seller Trust Signal";
+  return "Standard Seller Signal";
 }
 
 /** Compute merchant reliability from evidence signals only. */

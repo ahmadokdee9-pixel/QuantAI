@@ -91,7 +91,7 @@ export function computeGlobalBuyOpportunity(args: {
 
   let buyReasoning = "";
   if (valueLedBuy || buyNowEligible) {
-    buyReasoning = `Excellent value at €${product.price} vs market median €${globalPrice.medianMarketPrice}. Strong quality and seller trust support buying now${discountV2.realDiscount ? " with verified discount" : " even without a huge markdown"}.`;
+    buyReasoning = `Excellent value at €${product.price} vs search-sample median €${globalPrice.medianMarketPrice}. Strong quality and seller trust signal support buying now${discountV2.realDiscount ? " with discount signal" : " even without a huge markdown"}.`;
   }
 
   const waitReasoning =

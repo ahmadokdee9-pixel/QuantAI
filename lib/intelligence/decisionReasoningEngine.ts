@@ -143,10 +143,10 @@ export function buildDecisionReasoningIntelligence(input: DecisionReasoningInput
   const primaryLine = generateCategoryAwareReasoning(input);
   const reasoningFocus: string[] = [];
 
-  if (input.discountVerified) reasoningFocus.push("Verified Discount");
+  if (input.discountVerified) reasoningFocus.push("Discount Signal");
   if (input.qualityScore >= 75) reasoningFocus.push("Strong Category Quality");
   if (input.trueValueScore >= 78) reasoningFocus.push("True Value Alignment");
-  if (input.merchantLabel === "Strong Merchant" || input.merchantLabel === "Elite Merchant") {
+  if (input.merchantLabel === "Strong Seller Trust Signal" || input.merchantLabel === "High Trust Signal Seller") {
     reasoningFocus.push(input.merchantLabel);
   }
   if (input.priceAdvantagePct >= 10) reasoningFocus.push("Market Value Advantage");

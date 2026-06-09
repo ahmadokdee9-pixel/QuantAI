@@ -16,7 +16,7 @@ export type VerifiedDiscountOffer = {
   savingsVsHighest: number;
   trustScore: number;
   fakeDiscountRisk: "low" | "medium" | "high";
-  label: "Best Verified Discount" | null;
+  label: "Strongest Discount Signal" | null;
 };
 
 export type DiscountIntelligenceResult = {
@@ -104,7 +104,7 @@ export function buildDiscountIntelligence(
 
   let bestVerifiedDiscount: VerifiedDiscountOffer | null = null;
   if (offers.length && offers[0]!.savingsVsMedian >= 8 && offers[0]!.trustScore >= 65) {
-    bestVerifiedDiscount = { ...offers[0]!, label: "Best Verified Discount" };
+    bestVerifiedDiscount = { ...offers[0]!, label: "Strongest Discount Signal" };
     offers[0] = bestVerifiedDiscount;
   }
 

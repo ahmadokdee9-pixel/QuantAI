@@ -6,6 +6,7 @@
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import type { CommerceDecisionTier } from "@/lib/intelligence/commerceDecisionCoreEngine";
 import type { UniversalProductDecision } from "@/lib/ui/universalProductDecision";
+import { applyTruthGateToDecision } from "@/lib/truth/truthConfidenceGate";
 
 export type ProductionSafetyResult = {
   safe: boolean;
@@ -65,9 +66,7 @@ export function validateProductionDecision(args: {
 
   if (!Number.isFinite(args.confidence)) issues.push(`${args.link}: confidence was non-finite`);
   if (confidence < 45 || confidence > 98) issues.push(`${args.link}: confidence clamped`);
-  if (tier === "BEST DEAL" && confidence < 90) confidence = 90;
-  if (tier === "STRONG BUY" && confidence < 85) confidence = 85;
-  if (tier === "BUY READY" && confidence < 70) confidence = 70;
+  // Phase 1A: do not inflate confidence floors — truth gate handles downgrade
   if (tier === "WAIT" && confidence > 68) confidence = 68;
 
   verdict = sanitizeVerdict(verdict, tier);
@@ -128,12 +127,14 @@ export function sanitizeUniversalDecision(decision: UniversalProductDecision): U
       }
     : intel;
 
-  return {
+  const sanitized: UniversalProductDecision = {
     ...decision,
     verdict: validated.verdict,
     confidence: validated.confidence,
     productIntelligence: safeIntel,
   };
+
+  return applyTruthGateToDecision(sanitized);
 }
 
 export function validateTraySafety(

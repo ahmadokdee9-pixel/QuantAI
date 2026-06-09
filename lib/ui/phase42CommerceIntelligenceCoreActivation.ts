@@ -47,10 +47,10 @@ function buildCoreChips(args: {
   existing: ExposureChip[];
 }): ExposureChip[] {
   const chips: ExposureChip[] = [];
-  if (args.tier === "BEST DEAL") chips.push({ label: "BEST DEAL", tone: "emerald", evidence: "positive" });
-  else if (args.tier === "STRONG BUY") chips.push({ label: "STRONG BUY", tone: "emerald", evidence: "positive" });
+  if (args.tier === "BEST DEAL") chips.push({ label: "Likely Deal Signal", tone: "emerald", evidence: "positive" });
+  else if (args.tier === "STRONG BUY") chips.push({ label: "Strong Buy Signal", tone: "emerald", evidence: "positive" });
   chips.push({ label: args.valueBand, tone: "blue" });
-  if (args.discountLine.includes("Verified")) chips.push({ label: "Verified Discount", tone: "emerald", evidence: "positive" });
+  if (args.discountLine.toLowerCase().includes("discount signal")) chips.push({ label: "Discount Signal", tone: "emerald", evidence: "positive" });
   const seen = new Set(chips.map((c) => c.label));
   for (const chip of args.existing) {
     if (!seen.has(chip.label)) chips.push(chip);
@@ -213,7 +213,7 @@ export function buildCommerceIntelligenceCoreDecisionMap(
     const confidence = core.decisionConfidence;
     const primaryLine = clipLine(opportunity.reasoning);
     const discountLabels = discountProofAllowsRealLabel(discountProof)
-      ? ["Verified Discount", discountProof.band]
+      ? ["Discount Signal", discountProof.band]
       : [discountProof.band];
 
     result.set(link, {

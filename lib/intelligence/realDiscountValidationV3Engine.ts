@@ -48,10 +48,10 @@ export function validateRealDiscountV3(args: {
   const fakeDiscountScoreHigh = fakeDiscountScore >= 58;
 
   const reasoning = fakeDiscountScoreHigh
-    ? "Discount marketing looks inflated versus market median and competitor pricing."
+    ? "Discount marketing looks inflated versus search-sample median and peer listings."
     : realDiscountScore >= 60
-      ? "Real savings verified against market median and price history."
-      : "Discount badge is secondary — value comes from fair market pricing.";
+      ? "Discount signal vs search-sample median and remembered price snapshots."
+      : "Discount badge is secondary — value comes from fair pricing in this search sample.";
 
   return {
     version: 3,

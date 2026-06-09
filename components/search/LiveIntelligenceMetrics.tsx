@@ -45,9 +45,9 @@ export default function LiveIntelligenceMetrics({
         detail: searchQuery.trim() ? `"${searchQuery.trim()}"` : "Live tray",
       },
       {
-        label: "Trusted sellers",
+        label: "Seller trust signals",
         value: String(summary?.trustedSellerCount ?? trusted),
-        detail: "Verified merchant read",
+        detail: "Signal-based merchant read",
       },
       {
         label: "Active retailers",

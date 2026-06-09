@@ -272,7 +272,7 @@ export function buildHardenedDiscountIntelligence(
     topAssessment.discountAuthenticity >= 72 &&
     topAssessment.fakeDiscountRisk === "low"
   ) {
-    bestVerifiedDiscount = { ...top, label: "Best Verified Discount" };
+    bestVerifiedDiscount = { ...top, label: "Strongest Discount Signal" };
     offers[0] = bestVerifiedDiscount;
   }
 
@@ -444,7 +444,7 @@ export function applyPhase93TrustDiscountHardening(
       confidence: verdictConfidence.score,
       discountNote:
         verdictConfidence.discountAuthentic && hardenedDiscount.bestVerifiedDiscount
-          ? `Verified discount (authenticity ${assessmentByLink.get(hardenedDiscount.bestVerifiedDiscount.link)?.discountAuthenticity ?? 0}/100) — save ~${Math.round(hardenedDiscount.bestVerifiedDiscount.savingsVsMedian)} vs tray median`
+          ? `Discount signal (authenticity ${assessmentByLink.get(hardenedDiscount.bestVerifiedDiscount.link)?.discountAuthenticity ?? 0}/100) — save ~${Math.round(hardenedDiscount.bestVerifiedDiscount.savingsVsMedian)} vs search-sample median`
           : decisionBrief.discountNote,
     };
   }

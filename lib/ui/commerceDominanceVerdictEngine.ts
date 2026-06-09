@@ -14,8 +14,11 @@ import type { WaitPrediction } from "@/lib/intelligence/waitPredictionEngine";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import type { UniversalProductDecision } from "@/lib/ui/universalProductDecision";
 import type { PreferenceVerdictRow } from "@/lib/ui/preferenceVerdictEngine";
+import { isLikelyDealPriorityLabel } from "@/lib/truth/truthLanguagePolicy";
 
 export type CommercePriorityLabel =
+  | "LIKELY DEAL SIGNAL"
+  | "CONFIDENCE-BASED BUY SIGNAL"
   | "BEST DEAL FOUND"
   | "BUY READY"
   | "COMPARE"
@@ -220,7 +223,7 @@ export function commerceDominanceVerdictDistribution(
 
   for (const row of authority.values()) {
     dist[row.verdict] += 1;
-    if (row.commercePriorityLabel === "BEST DEAL FOUND") dist.bestDealFound += 1;
+    if (isLikelyDealPriorityLabel(row.commercePriorityLabel)) dist.bestDealFound += 1;
     if (row.verdict === "INSUFFICIENT DATA") dist.insufficientData += 1;
   }
   return dist;

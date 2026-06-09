@@ -22,7 +22,9 @@ export function enrichDecisionBriefWithGlobalCommerce(
     args.headline,
     `Search universe: ${args.offerGraph.totalOffers} offers across ${args.offerGraph.storeCount} merchants.`,
     args.shouldBuyNow ? "Global verdict: buy opportunity identified." : "Global verdict: compare or wait before purchasing.",
-    args.commercePriorityLabel === "BEST DEAL FOUND" ? "Best deal found in current search universe." : null,
+    args.commercePriorityLabel === "LIKELY DEAL SIGNAL" || args.commercePriorityLabel === "BEST DEAL FOUND"
+      ? "Likely deal signal in current search sample."
+      : null,
   ].filter(Boolean) as string[];
 
   return {

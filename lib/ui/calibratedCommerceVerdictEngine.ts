@@ -21,6 +21,7 @@ import type { WaitPrediction } from "@/lib/intelligence/waitPredictionEngine";
 import type { CommercePriceHistoryIntelligence } from "@/lib/intelligence/commercePriceHistoryEngine";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import type { CommercePriorityLabel } from "@/lib/ui/commerceDominanceVerdictEngine";
+import { isLikelyDealPriorityLabel } from "@/lib/truth/truthLanguagePolicy";
 import type { UniversalProductDecision } from "@/lib/ui/universalProductDecision";
 
 export type CalibratedVerdictRow = {
@@ -92,8 +93,8 @@ function priorityLabel(
   if (verdict === "AVOID") return "AVOID";
   if (verdict === "WAIT") return "WAIT";
   if (verdict === "COMPARE") return "COMPARE";
-  if (isBestDeal && verdict === "BUY READY") return "BEST DEAL FOUND";
-  return "BUY READY";
+  if (isBestDeal && verdict === "BUY READY") return "LIKELY DEAL SIGNAL";
+  return "CONFIDENCE-BASED BUY SIGNAL";
 }
 
 function peersAreClose(args: {
@@ -429,7 +430,7 @@ export function calibratedVerdictDistribution(
 
   for (const row of authority.values()) {
     dist[row.verdict] += 1;
-    if (row.commercePriorityLabel === "BEST DEAL FOUND") dist.bestDealFound += 1;
+    if (isLikelyDealPriorityLabel(row.commercePriorityLabel)) dist.bestDealFound += 1;
     if (row.calibratedConfidence.band === "STRONG BUY") dist.strongBuy += 1;
     if (row.calibratedConfidence.aligned) dist.alignedConfidence += 1;
   }

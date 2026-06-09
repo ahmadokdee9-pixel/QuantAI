@@ -51,7 +51,7 @@ export function buildCommercePriceHistoryIntelligence(args: {
 
   const forward = estimateForwardPriceHint(currentPrice, insight);
   let reasoning = insight.compactTimelineSummary;
-  if (label === "Historical Low") reasoning = `Historical low territory — current ask near remembered floor. ${forward}`.trim();
+  if (label === "Historical Low") reasoning = `Observed price floor signal — current ask near remembered snapshot low. ${forward}`.trim();
   else if (label === "Historical Opportunity") reasoning = `Historical opportunity — pricing trend and volatility favor patient buyers. ${forward}`.trim();
   else if (label === "Great Price" || label === "Good Price") {
     reasoning = `${label} vs tray median €${averageMarketPrice}. ${insight.compactTimelineSummary}`;

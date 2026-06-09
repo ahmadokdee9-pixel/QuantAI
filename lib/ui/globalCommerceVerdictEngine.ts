@@ -13,8 +13,11 @@ import type { GlobalPriceIntelligence } from "@/lib/intelligence/globalPriceInte
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import type { UniversalProductDecision } from "@/lib/ui/universalProductDecision";
 import type { PreferenceVerdictRow } from "@/lib/ui/preferenceVerdictEngine";
+import { isLikelyDealPriorityLabel } from "@/lib/truth/truthLanguagePolicy";
 
 export type GlobalCommercePriorityLabel =
+  | "LIKELY DEAL SIGNAL"
+  | "CONFIDENCE-BASED BUY SIGNAL"
   | "BEST DEAL FOUND"
   | "BUY READY"
   | "COMPARE"
@@ -181,7 +184,7 @@ export function globalCommerceVerdictDistribution(
 
   for (const row of authority.values()) {
     dist[row.verdict] += 1;
-    if (row.commercePriorityLabel === "BEST DEAL FOUND") dist.bestDealFound += 1;
+    if (isLikelyDealPriorityLabel(row.commercePriorityLabel)) dist.bestDealFound += 1;
   }
   return dist;
 }

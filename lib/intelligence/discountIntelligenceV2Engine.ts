@@ -95,7 +95,7 @@ export function buildDiscountIntelligenceV2(args: {
 
   let discountReasoning = "No strong markdown signal — value may come from fair market pricing instead.";
   if (discountLabel === "BEST DEAL FOUND") {
-    discountReasoning = "Best deal found in this search universe — strongest price plus trustworthy discount context.";
+    discountReasoning = "Likely deal signal in this search sample — strongest price plus favorable discount context.";
   } else if (discountLabel === "STRONG DISCOUNT") {
     discountReasoning = visible != null
       ? `Verified ${visible}% discount with low manipulation risk.`

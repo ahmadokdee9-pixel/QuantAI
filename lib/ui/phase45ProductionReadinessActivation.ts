@@ -128,7 +128,7 @@ export function buildProductionReadinessDecisionMap(
     });
 
     const discountProof = intel.realDiscountProof;
-    const discountVerified = discountProof?.verified === true && discountProof.band !== "Fake Discount";
+    const discountVerified = discountProof?.verified === true && !discountProof.band.includes("Fake");
 
     const discountConfidence = computeDiscountConfidence({
       product: row.product,
@@ -217,7 +217,7 @@ export function buildProductionReadinessDecisionMap(
       discountLabel: enrichment.discountConfidence.label,
       merchantLabel: enrichment.merchantReliability.label,
       discountVerified:
-        intel.realDiscountProof?.verified === true && intel.realDiscountProof.band !== "Fake Discount",
+        intel.realDiscountProof?.verified === true && !intel.realDiscountProof.band.includes("Fake"),
       priceAdvantagePct: Math.max(
         0,
         intel.realDiscountProof?.marketMedianDifferencePct ?? intel.globalPriceIntelligence?.priceAdvantagePct ?? 0

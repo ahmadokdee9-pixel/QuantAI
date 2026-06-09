@@ -20,7 +20,15 @@ export type GlobalDecisionReasoning = {
   whyThisPrice: string;
   whyNotCompetitor: string;
   analystSummary: string;
-  commercePriorityLabel: "BEST DEAL FOUND" | "BUY READY" | "COMPARE" | "WAIT" | "AVOID" | "INSUFFICIENT DATA";
+  commercePriorityLabel:
+    | "LIKELY DEAL SIGNAL"
+    | "CONFIDENCE-BASED BUY SIGNAL"
+    | "BEST DEAL FOUND"
+    | "BUY READY"
+    | "COMPARE"
+    | "WAIT"
+    | "AVOID"
+    | "INSUFFICIENT DATA";
 };
 
 const GENERIC_BANNED = [
@@ -117,9 +125,13 @@ export function buildGlobalDecisionReasoning(args: {
   const whyAvoid = clip(buyOpportunity.avoidReasoning);
 
   let primaryLine = "";
-  if (commercePriorityLabel === "BEST DEAL FOUND" || (verdict === "BUY READY" && buyOpportunity.bestDealFound)) {
+  if (
+    commercePriorityLabel === "LIKELY DEAL SIGNAL" ||
+    commercePriorityLabel === "BEST DEAL FOUND" ||
+    (verdict === "BUY READY" && buyOpportunity.bestDealFound)
+  ) {
     primaryLine = clip(
-      `Best deal found: buy ${shortTitle} at ${store} for €${price} — strongest price + value in this search universe. ${discountV2.discountReasoning}`
+      `Likely deal signal: buy ${shortTitle} at ${store} for €${price} — strongest price + value in this search sample. ${discountV2.discountReasoning}`
     );
   } else if (verdict === "BUY READY") {
     const openers = [

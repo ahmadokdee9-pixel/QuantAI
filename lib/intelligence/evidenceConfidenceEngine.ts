@@ -12,7 +12,7 @@ import type { MerchantTrustSignal } from "@/lib/intelligence/merchantTrustEngine
 export type EvidenceConfidence = {
   version: 1;
   confidence: number;
-  band: "verified_deal" | "strong_buy" | "good_compare" | "weak_uncertain" | "avoid_wait";
+  band: "signal_deal" | "strong_buy" | "good_compare" | "weak_uncertain" | "avoid_wait";
   reason: string;
 };
 
@@ -62,7 +62,7 @@ export function computeEvidenceConfidence(args: {
     band = "avoid_wait";
     confidence = clamp(Math.round(raw * 0.75), 30, 55);
   } else if (raw >= 88 && merchantTrust.trustScore >= 75 && !discount.labels.includes("FAKE DISCOUNT RISK")) {
-    band = "verified_deal";
+    band = "signal_deal";
     confidence = clamp(Math.round(raw), 95, 100);
   } else if (raw >= 72 && verdict === "BUY READY") {
     band = "strong_buy";

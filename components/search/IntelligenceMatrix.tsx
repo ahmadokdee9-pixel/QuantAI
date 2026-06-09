@@ -90,7 +90,7 @@ export default function IntelligenceMatrix({
 
           <span className="qi-field-live-label">Trust mesh</span>
 
-          <span className="qi-field-live-value">Verified</span>
+          <span className="qi-field-live-value">Signal-based</span>
 
         </div>
 

@@ -4,6 +4,7 @@
  */
 
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
+import { qualifyTierPriorityLabel, sanitizeUserFacingProse } from "@/lib/truth/truthLanguagePolicy";
 import type { AlternativeDiscovery } from "@/lib/intelligence/alternativeDiscoveryEngine";
 import type { CategoryIntelligenceCore } from "@/lib/intelligence/categoryIntelligenceCoreEngine";
 import type { MarketDepthIntelligence } from "@/lib/intelligence/marketDepthEngine";
@@ -75,7 +76,7 @@ export function computeCommerceDecisionCore(args: {
 
   let tier: CommerceDecisionTier = "COMPARE";
   if (!executiveWouldBuy && compositeScore < 50) tier = "WAIT";
-  else if (executiveWouldBuy && compositeScore >= 88 && discountProof.band === "Exceptional Discount") tier = "BEST DEAL";
+  else if (executiveWouldBuy && compositeScore >= 88 && discountProof.band.includes("Exceptional")) tier = "BEST DEAL";
   else if (executiveWouldBuy && compositeScore >= 82) tier = "STRONG BUY";
   else if (executiveWouldBuy && compositeScore >= 72) tier = "BUY READY";
   else if (executiveWouldBuy) tier = "COMPARE";
@@ -103,15 +104,17 @@ export function computeCommerceDecisionCore(args: {
   if (tier === "STRONG BUY" && decisionConfidence < 80) decisionConfidence = 80;
   if (tier === "BEST DEAL" && decisionConfidence < 85) decisionConfidence = 85;
 
-  const reasoning = executiveWouldBuy
-    ? tier === "BEST DEAL"
-      ? "QuantAI would spend its own money — rare market-leading value with verified discount and trusted merchant."
-      : tier === "STRONG BUY"
-        ? "QuantAI would buy with high confidence — exceptional value, trust, and market position."
-        : "QuantAI would buy — strong purchase opportunity with balanced evidence."
-    : tier === "WAIT"
-      ? "QuantAI would wait — market conditions or trust/discount signals are unfavorable."
-      : "QuantAI would compare first — good option but alternatives deserve review.";
+  const reasoning = sanitizeUserFacingProse(
+    executiveWouldBuy
+      ? tier === "BEST DEAL"
+        ? "Confidence-based recommendation — strongest price opportunity in this search sample with discount and seller trust signals."
+        : tier === "STRONG BUY"
+          ? "Confidence-based recommendation — strong value, seller trust signal, and favorable position in this search sample."
+          : "Confidence-based recommendation — balanced evidence from this search sample supports checkout consideration."
+      : tier === "WAIT"
+        ? "Wait signal — market sample or trust/discount signals are unfavorable for immediate checkout."
+        : "Compare signal — viable option but alternatives in this search sample deserve review."
+  );
 
   return {
     version: 1,
@@ -131,7 +134,5 @@ export function computeCommerceDecisionCore(args: {
 }
 
 export function tierToPriorityLabel(tier: CommerceDecisionTier): string {
-  if (tier === "BEST DEAL") return "BEST DEAL FOUND";
-  if (tier === "STRONG BUY") return "BUY READY";
-  return tier;
+  return qualifyTierPriorityLabel(tier);
 }

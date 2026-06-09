@@ -141,12 +141,12 @@ export function buildOpportunityDrivers(input: {
 }): string[] {
   const drivers: string[] = [];
 
-  if (input.discountVerified && !input.fakeDiscount) drivers.push("Verified Discount");
+  if (input.discountVerified && !input.fakeDiscount) drivers.push("Discount Signal");
   if (input.valueBelowMedianPct >= 20) drivers.push("Exceptional Value");
   else if (input.valueBelowMedianPct >= 10) drivers.push("Strong Value Advantage");
   else if (input.valueBelowMedianPct >= 5) drivers.push("Value Advantage");
 
-  if (input.merchantTrust >= 85) drivers.push("Elite Merchant");
+  if (input.merchantTrust >= 85) drivers.push("High Trust Signal Seller");
   else if (input.merchantTrust >= 75) drivers.push("Strong Merchant");
 
   if (input.categoryRankPercentile <= 10) drivers.push("Top Category Ranking");

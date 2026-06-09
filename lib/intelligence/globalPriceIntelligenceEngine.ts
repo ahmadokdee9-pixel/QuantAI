@@ -89,7 +89,7 @@ export function buildGlobalPriceIntelligence(args: {
 
   let priceReasoning = `Priced at €${product.price} against tray median €${Math.round(medianMarketPrice)}.`;
   if (priceLabel === "BEST PRICE FOUND") {
-    priceReasoning = `Best price found in this search universe at €${product.price} — lowest among comparable offers.`;
+    priceReasoning = `Market sample lowest observed at €${product.price} — lowest among listings in this search sample.`;
   } else if (priceLabel === "STRONG DEAL" || priceLabel === "RARE DEAL") {
     priceReasoning = `${priceAdvantagePct}% below median market price (€${Math.round(medianMarketPrice)}) — strong purchase value.`;
   } else if (priceLabel === "UNDERPRICED") {

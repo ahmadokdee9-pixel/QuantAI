@@ -108,7 +108,7 @@ export function buildOpportunityDetectionDecisionMap(
 
     const merchantTrust = resolveMerchantScore(intel, merchant, core);
     const rawMerchantTrust = merchant?.merchantTrustScore ?? core.merchantTrustScore;
-    const fakeDiscount = discount?.band === "Fake Discount";
+    const fakeDiscount = discount?.band.includes("Fake") ?? false;
     const discountVerified = discount?.verified === true && !fakeDiscount;
     const valueBelowMedianPct = Math.max(
       0,
