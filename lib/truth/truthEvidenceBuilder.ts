@@ -61,6 +61,11 @@ import {
   buildRecommendationIntelligenceEngine,
   hasRecommendationIntelligenceSignal,
 } from "@/lib/truth/recommendationIntelligenceEngine";
+import {
+  buildExplainableAIEngine,
+  buildExplainableAIEvidenceChain,
+  hasExplainableAISignal,
+} from "@/lib/truth/explainableAIEngine";
 import { buildTruthDebugTrace } from "@/lib/truth/truthDebug";
 import type {
   ExtendedTruthEvidenceSources,
@@ -160,7 +165,8 @@ export function buildTruthFoundationSnapshot(args: {
     args.existing.intentRetrieval &&
     args.existing.productMatch &&
     args.existing.productReasoning &&
-    args.existing.recommendationIntelligence
+    args.existing.recommendationIntelligence &&
+    args.existing.explainableAI
   ) {
     return args.existing;
   }
@@ -330,9 +336,14 @@ export function buildTruthFoundationSnapshot(args: {
     productReasoning: buildProductReasoningEngine(withProductMatch),
   };
 
-  return {
+  const withRecommendationIntelligence = {
     ...withProductReasoning,
     recommendationIntelligence: buildRecommendationIntelligenceEngine(withProductReasoning),
+  };
+
+  return {
+    ...withRecommendationIntelligence,
+    explainableAI: buildExplainableAIEngine(withRecommendationIntelligence),
   };
 }
 
@@ -535,6 +546,19 @@ export function buildExtendedTruthEvidenceSources(
       shouldHighlight: foundation.recommendationIntelligence?.shouldHighlight ?? false,
       recommendationEvidenceChain: foundation.recommendationIntelligence?.recommendationEvidenceChain ?? [],
       hasRecommendationIntelligence: hasRecommendationIntelligenceSignal(foundation.recommendationIntelligence),
+      explainableHeadline: foundation.explainableAI?.headline ?? "",
+      explainableNarrative: foundation.explainableAI?.recommendationNarrative ?? "",
+      whyThisProduct: foundation.explainableAI?.whyThisProduct ?? "",
+      explainableStrengthCount: foundation.explainableAI?.strengths.length ?? 0,
+      explainableWeaknessCount: foundation.explainableAI?.weaknesses.length ?? 0,
+      trustSummary: foundation.explainableAI?.trustSummary ?? "",
+      valueSummary: foundation.explainableAI?.valueSummary ?? "",
+      explainableFinalVerdict: foundation.explainableAI?.finalVerdict ?? "",
+      explainabilityConfidence: foundation.explainableAI?.explainabilityConfidence ?? 0,
+      explainableEvidenceChain: foundation.explainableAI
+        ? buildExplainableAIEvidenceChain(foundation.explainableAI)
+        : [],
+      hasExplainableAI: hasExplainableAISignal(foundation.explainableAI),
     };
   }
 
@@ -662,6 +686,17 @@ export function buildExtendedTruthEvidenceSources(
     shouldHighlight: false,
     recommendationEvidenceChain: [],
     hasRecommendationIntelligence: false,
+    explainableHeadline: "",
+    explainableNarrative: "",
+    whyThisProduct: "",
+    explainableStrengthCount: 0,
+    explainableWeaknessCount: 0,
+    trustSummary: "",
+    valueSummary: "",
+    explainableFinalVerdict: "",
+    explainabilityConfidence: 0,
+    explainableEvidenceChain: [],
+    hasExplainableAI: false,
   };
 }
 

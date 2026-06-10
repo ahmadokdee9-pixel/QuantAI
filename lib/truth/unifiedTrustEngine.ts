@@ -22,7 +22,7 @@ export type TrustEngineSnapshot = {
   trustState: TrustState;
 };
 
-export type TrustEngineInput = Omit<TruthFoundationSnapshot, "trustEngine" | "decisionEngine" | "intentEngine" | "intentRetrieval" | "productMatch" | "productReasoning" | "recommendationIntelligence">;
+export type TrustEngineInput = Omit<TruthFoundationSnapshot, "trustEngine" | "decisionEngine" | "intentEngine" | "intentRetrieval" | "productMatch" | "productReasoning" | "recommendationIntelligence" | "explainableAI">;
 
 export const WEAK_TRUST_SCORE_THRESHOLD = 52;
 export const WEAK_TRUST_CONFIDENCE_THRESHOLD = 50;

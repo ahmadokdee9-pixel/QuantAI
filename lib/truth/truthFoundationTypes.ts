@@ -14,6 +14,7 @@ import type { IntentRetrievalSnapshot } from "@/lib/truth/intentAwareRetrievalEn
 import type { ProductMatchSnapshot } from "@/lib/truth/productMatchingEngine";
 import type { ProductReasoningSnapshot } from "@/lib/truth/productReasoningEngine";
 import type { RecommendationSnapshot } from "@/lib/truth/recommendationIntelligenceEngine";
+import type { ExplainableAISnapshot } from "@/lib/truth/explainableAIEngine";
 import type { DecisionEngineSnapshot } from "@/lib/truth/decisionIntelligenceLayer";
 import type { TrustEngineSnapshot } from "@/lib/truth/unifiedTrustEngine";
 import type { CommerceIntelligenceSnapshot } from "@/lib/truth/universalCommerceIntelligence";
@@ -65,6 +66,7 @@ export type TruthFoundationSnapshot = {
   productMatch: ProductMatchSnapshot;
   productReasoning: ProductReasoningSnapshot;
   recommendationIntelligence: RecommendationSnapshot;
+  explainableAI: ExplainableAISnapshot;
   debugTrace?: TruthDebugTrace | null;
 };
 
@@ -183,6 +185,17 @@ export type ExtendedTruthEvidenceSources = {
   shouldHighlight: boolean;
   recommendationEvidenceChain: string[];
   hasRecommendationIntelligence: boolean;
+  explainableHeadline: string;
+  explainableNarrative: string;
+  whyThisProduct: string;
+  explainableStrengthCount: number;
+  explainableWeaknessCount: number;
+  trustSummary: string;
+  valueSummary: string;
+  explainableFinalVerdict: string;
+  explainabilityConfidence: number;
+  explainableEvidenceChain: string[];
+  hasExplainableAI: boolean;
 };
 
 export type { AvailabilityState } from "@/lib/truth/availabilityStateModel";
@@ -200,3 +213,4 @@ export type { IntentRetrievalSnapshot } from "@/lib/truth/intentAwareRetrievalEn
 export type { ProductMatchSnapshot } from "@/lib/truth/productMatchingEngine";
 export type { ProductReasoningSnapshot, RecommendationStrength } from "@/lib/truth/productReasoningEngine";
 export type { RecommendationSnapshot, RecommendationTier } from "@/lib/truth/recommendationIntelligenceEngine";
+export type { ExplainableAISnapshot } from "@/lib/truth/explainableAIEngine";
