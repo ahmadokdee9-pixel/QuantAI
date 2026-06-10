@@ -81,6 +81,11 @@ import {
   buildUserDecisionEvidenceChain,
   hasUserDecisionIntelligenceSignal,
 } from "@/lib/truth/userDecisionIntelligenceEngine";
+import {
+  buildPurchaseMotivationEngine,
+  buildPurchaseMotivationEvidenceChain,
+  hasPurchaseMotivationSignal,
+} from "@/lib/truth/purchaseMotivationEngine";
 import { buildTruthDebugTrace } from "@/lib/truth/truthDebug";
 import type {
   ExtendedTruthEvidenceSources,
@@ -184,7 +189,8 @@ export function buildTruthFoundationSnapshot(args: {
     args.existing.explainableAI &&
     args.existing.conversationalIntent &&
     args.existing.tastePreference &&
-    args.existing.userDecisionIntelligence
+    args.existing.userDecisionIntelligence &&
+    args.existing.purchaseMotivation
   ) {
     return args.existing;
   }
@@ -374,10 +380,18 @@ export function buildTruthFoundationSnapshot(args: {
     tastePreference: buildTastePreferenceEngine(withConversationalIntent, args.searchQuery ?? ""),
   };
 
-  return {
+  const withUserDecisionIntelligence = {
     ...withTastePreference,
     userDecisionIntelligence: buildUserDecisionIntelligenceEngine(
       withTastePreference,
+      args.searchQuery ?? ""
+    ),
+  };
+
+  return {
+    ...withUserDecisionIntelligence,
+    purchaseMotivation: buildPurchaseMotivationEngine(
+      withUserDecisionIntelligence,
       args.searchQuery ?? ""
     ),
   };
@@ -645,6 +659,28 @@ export function buildExtendedTruthEvidenceSources(
         ? buildUserDecisionEvidenceChain(foundation.userDecisionIntelligence)
         : [],
       hasUserDecisionIntelligence: hasUserDecisionIntelligenceSignal(foundation.userDecisionIntelligence),
+      purchaseMotivation: foundation.purchaseMotivation?.motivation ?? "productivity",
+      purchaseMotivationConfidence: foundation.purchaseMotivation?.motivationConfidence ?? 0,
+      purchaseMotivationSignalCount: foundation.purchaseMotivation?.motivationSignals.length ?? 0,
+      productivityMotivationScore: foundation.purchaseMotivation?.motivationScores.productivity ?? 0,
+      statusMotivationScore: foundation.purchaseMotivation?.motivationScores.status ?? 0,
+      luxuryMotivationScore: foundation.purchaseMotivation?.motivationScores.luxury ?? 0,
+      enjoymentMotivationScore: foundation.purchaseMotivation?.motivationScores.enjoyment ?? 0,
+      gamingMotivationScore: foundation.purchaseMotivation?.motivationScores.gaming ?? 0,
+      creativityMotivationScore: foundation.purchaseMotivation?.motivationScores.creativity ?? 0,
+      workMotivationScore: foundation.purchaseMotivation?.motivationScores.work ?? 0,
+      educationMotivationScore: foundation.purchaseMotivation?.motivationScores.education ?? 0,
+      travelMotivationScore: foundation.purchaseMotivation?.motivationScores.travel ?? 0,
+      fitnessMotivationScore: foundation.purchaseMotivation?.motivationScores.fitness ?? 0,
+      giftingMotivationScore: foundation.purchaseMotivation?.motivationScores.gifting ?? 0,
+      replacementMotivationScore: foundation.purchaseMotivation?.motivationScores.replacement ?? 0,
+      necessityMotivationScore: foundation.purchaseMotivation?.motivationScores.necessity ?? 0,
+      curiosityMotivationScore: foundation.purchaseMotivation?.motivationScores.curiosity ?? 0,
+      innovationMotivationScore: foundation.purchaseMotivation?.motivationScores.innovation ?? 0,
+      purchaseMotivationEvidenceChain: foundation.purchaseMotivation
+        ? buildPurchaseMotivationEvidenceChain(foundation.purchaseMotivation)
+        : [],
+      hasPurchaseMotivation: hasPurchaseMotivationSignal(foundation.purchaseMotivation),
     };
   }
 
@@ -825,6 +861,26 @@ export function buildExtendedTruthEvidenceSources(
     experimentalChoiceStrategyScore: 0,
     userDecisionEvidenceChain: [],
     hasUserDecisionIntelligence: false,
+    purchaseMotivation: "productivity",
+    purchaseMotivationConfidence: 0,
+    purchaseMotivationSignalCount: 0,
+    productivityMotivationScore: 0,
+    statusMotivationScore: 0,
+    luxuryMotivationScore: 0,
+    enjoymentMotivationScore: 0,
+    gamingMotivationScore: 0,
+    creativityMotivationScore: 0,
+    workMotivationScore: 0,
+    educationMotivationScore: 0,
+    travelMotivationScore: 0,
+    fitnessMotivationScore: 0,
+    giftingMotivationScore: 0,
+    replacementMotivationScore: 0,
+    necessityMotivationScore: 0,
+    curiosityMotivationScore: 0,
+    innovationMotivationScore: 0,
+    purchaseMotivationEvidenceChain: [],
+    hasPurchaseMotivation: false,
   };
 }
 

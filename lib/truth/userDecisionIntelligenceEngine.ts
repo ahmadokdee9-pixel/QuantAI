@@ -37,7 +37,7 @@ export type UserDecisionSnapshot = {
   decisionEvidenceChain: string[];
 };
 
-export type UserDecisionIntelligenceInput = Omit<TruthFoundationSnapshot, "userDecisionIntelligence">;
+export type UserDecisionIntelligenceInput = Omit<TruthFoundationSnapshot, "userDecisionIntelligence" | "purchaseMotivation">;
 
 const STRATEGY_ORDER: UserDecisionStrategy[] = [
   "bestValue",

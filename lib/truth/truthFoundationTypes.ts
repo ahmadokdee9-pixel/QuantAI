@@ -18,6 +18,7 @@ import type { ExplainableAISnapshot } from "@/lib/truth/explainableAIEngine";
 import type { ConversationalIntentSnapshot } from "@/lib/truth/conversationalIntentEngine";
 import type { TastePreferenceSnapshot } from "@/lib/truth/tastePreferenceEngine";
 import type { UserDecisionSnapshot } from "@/lib/truth/userDecisionIntelligenceEngine";
+import type { PurchaseMotivationSnapshot } from "@/lib/truth/purchaseMotivationEngine";
 import type { DecisionEngineSnapshot } from "@/lib/truth/decisionIntelligenceLayer";
 import type { TrustEngineSnapshot } from "@/lib/truth/unifiedTrustEngine";
 import type { CommerceIntelligenceSnapshot } from "@/lib/truth/universalCommerceIntelligence";
@@ -73,6 +74,7 @@ export type TruthFoundationSnapshot = {
   conversationalIntent: ConversationalIntentSnapshot;
   tastePreference: TastePreferenceSnapshot;
   userDecisionIntelligence: UserDecisionSnapshot;
+  purchaseMotivation: PurchaseMotivationSnapshot;
   debugTrace?: TruthDebugTrace | null;
 };
 
@@ -244,6 +246,26 @@ export type ExtendedTruthEvidenceSources = {
   experimentalChoiceStrategyScore: number;
   userDecisionEvidenceChain: string[];
   hasUserDecisionIntelligence: boolean;
+  purchaseMotivation: string;
+  purchaseMotivationConfidence: number;
+  purchaseMotivationSignalCount: number;
+  productivityMotivationScore: number;
+  statusMotivationScore: number;
+  luxuryMotivationScore: number;
+  enjoymentMotivationScore: number;
+  gamingMotivationScore: number;
+  creativityMotivationScore: number;
+  workMotivationScore: number;
+  educationMotivationScore: number;
+  travelMotivationScore: number;
+  fitnessMotivationScore: number;
+  giftingMotivationScore: number;
+  replacementMotivationScore: number;
+  necessityMotivationScore: number;
+  curiosityMotivationScore: number;
+  innovationMotivationScore: number;
+  purchaseMotivationEvidenceChain: string[];
+  hasPurchaseMotivation: boolean;
 };
 
 export type { AvailabilityState } from "@/lib/truth/availabilityStateModel";
@@ -274,3 +296,8 @@ export type {
   UserDecisionStrategy,
   UserDecisionStrategyScores,
 } from "@/lib/truth/userDecisionIntelligenceEngine";
+export type {
+  PurchaseMotivationSnapshot,
+  PurchaseMotivation,
+  PurchaseMotivationScores,
+} from "@/lib/truth/purchaseMotivationEngine";
