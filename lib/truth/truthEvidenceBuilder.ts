@@ -76,6 +76,11 @@ import {
   buildTastePreferenceEvidenceChain,
   hasTastePreferenceSignal,
 } from "@/lib/truth/tastePreferenceEngine";
+import {
+  buildUserDecisionIntelligenceEngine,
+  buildUserDecisionEvidenceChain,
+  hasUserDecisionIntelligenceSignal,
+} from "@/lib/truth/userDecisionIntelligenceEngine";
 import { buildTruthDebugTrace } from "@/lib/truth/truthDebug";
 import type {
   ExtendedTruthEvidenceSources,
@@ -178,7 +183,8 @@ export function buildTruthFoundationSnapshot(args: {
     args.existing.recommendationIntelligence &&
     args.existing.explainableAI &&
     args.existing.conversationalIntent &&
-    args.existing.tastePreference
+    args.existing.tastePreference &&
+    args.existing.userDecisionIntelligence
   ) {
     return args.existing;
   }
@@ -363,9 +369,17 @@ export function buildTruthFoundationSnapshot(args: {
     conversationalIntent: buildConversationalIntentEngine(withExplainableAI, args.searchQuery ?? ""),
   };
 
-  return {
+  const withTastePreference = {
     ...withConversationalIntent,
     tastePreference: buildTastePreferenceEngine(withConversationalIntent, args.searchQuery ?? ""),
+  };
+
+  return {
+    ...withTastePreference,
+    userDecisionIntelligence: buildUserDecisionIntelligenceEngine(
+      withTastePreference,
+      args.searchQuery ?? ""
+    ),
   };
 }
 
@@ -613,6 +627,24 @@ export function buildExtendedTruthEvidenceSources(
         ? buildTastePreferenceEvidenceChain(foundation.tastePreference)
         : [],
       hasTastePreference: hasTastePreferenceSignal(foundation.tastePreference),
+      userDecisionStrategy: foundation.userDecisionIntelligence?.decisionStrategy ?? "bestValue",
+      userDecisionBehavior: foundation.userDecisionIntelligence?.decisionBehavior ?? "",
+      userDecisionConfidence: foundation.userDecisionIntelligence?.decisionConfidence ?? 0,
+      userDecisionSignalCount: foundation.userDecisionIntelligence?.decisionSignals.length ?? 0,
+      bestValueStrategyScore: foundation.userDecisionIntelligence?.strategyScores.bestValue ?? 0,
+      bestQualityStrategyScore: foundation.userDecisionIntelligence?.strategyScores.bestQuality ?? 0,
+      premiumChoiceStrategyScore: foundation.userDecisionIntelligence?.strategyScores.premiumChoice ?? 0,
+      budgetChoiceStrategyScore: foundation.userDecisionIntelligence?.strategyScores.budgetChoice ?? 0,
+      longTermInvestmentStrategyScore:
+        foundation.userDecisionIntelligence?.strategyScores.longTermInvestment ?? 0,
+      fastPurchaseStrategyScore: foundation.userDecisionIntelligence?.strategyScores.fastPurchase ?? 0,
+      safeChoiceStrategyScore: foundation.userDecisionIntelligence?.strategyScores.safeChoice ?? 0,
+      experimentalChoiceStrategyScore:
+        foundation.userDecisionIntelligence?.strategyScores.experimentalChoice ?? 0,
+      userDecisionEvidenceChain: foundation.userDecisionIntelligence
+        ? buildUserDecisionEvidenceChain(foundation.userDecisionIntelligence)
+        : [],
+      hasUserDecisionIntelligence: hasUserDecisionIntelligenceSignal(foundation.userDecisionIntelligence),
     };
   }
 
@@ -779,6 +811,20 @@ export function buildExtendedTruthEvidenceSources(
     tasteConfidence: 0,
     tasteEvidenceChain: [],
     hasTastePreference: false,
+    userDecisionStrategy: "bestValue",
+    userDecisionBehavior: "",
+    userDecisionConfidence: 0,
+    userDecisionSignalCount: 0,
+    bestValueStrategyScore: 0,
+    bestQualityStrategyScore: 0,
+    premiumChoiceStrategyScore: 0,
+    budgetChoiceStrategyScore: 0,
+    longTermInvestmentStrategyScore: 0,
+    fastPurchaseStrategyScore: 0,
+    safeChoiceStrategyScore: 0,
+    experimentalChoiceStrategyScore: 0,
+    userDecisionEvidenceChain: [],
+    hasUserDecisionIntelligence: false,
   };
 }
 

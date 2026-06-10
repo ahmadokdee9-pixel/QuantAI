@@ -26,7 +26,7 @@ export type ConversationalIntentSnapshot = {
   conversationalConfidence: number;
 };
 
-export type ConversationalIntentInput = Omit<TruthFoundationSnapshot, "conversationalIntent" | "tastePreference">;
+export type ConversationalIntentInput = Omit<TruthFoundationSnapshot, "conversationalIntent" | "tastePreference" | "userDecisionIntelligence">;
 
 function clampScore(value: number): number {
   if (!Number.isFinite(value)) return 0;

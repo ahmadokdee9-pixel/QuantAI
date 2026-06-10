@@ -22,7 +22,7 @@ export type TastePreferenceSnapshot = {
   tasteConfidence: number;
 };
 
-export type TastePreferenceInput = Omit<TruthFoundationSnapshot, "tastePreference">;
+export type TastePreferenceInput = Omit<TruthFoundationSnapshot, "tastePreference" | "userDecisionIntelligence">;
 
 function clampScore(value: number): number {
   if (!Number.isFinite(value)) return 0;

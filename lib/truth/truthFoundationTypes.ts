@@ -17,6 +17,7 @@ import type { RecommendationSnapshot } from "@/lib/truth/recommendationIntellige
 import type { ExplainableAISnapshot } from "@/lib/truth/explainableAIEngine";
 import type { ConversationalIntentSnapshot } from "@/lib/truth/conversationalIntentEngine";
 import type { TastePreferenceSnapshot } from "@/lib/truth/tastePreferenceEngine";
+import type { UserDecisionSnapshot } from "@/lib/truth/userDecisionIntelligenceEngine";
 import type { DecisionEngineSnapshot } from "@/lib/truth/decisionIntelligenceLayer";
 import type { TrustEngineSnapshot } from "@/lib/truth/unifiedTrustEngine";
 import type { CommerceIntelligenceSnapshot } from "@/lib/truth/universalCommerceIntelligence";
@@ -71,6 +72,7 @@ export type TruthFoundationSnapshot = {
   explainableAI: ExplainableAISnapshot;
   conversationalIntent: ConversationalIntentSnapshot;
   tastePreference: TastePreferenceSnapshot;
+  userDecisionIntelligence: UserDecisionSnapshot;
   debugTrace?: TruthDebugTrace | null;
 };
 
@@ -228,6 +230,20 @@ export type ExtendedTruthEvidenceSources = {
   tasteConfidence: number;
   tasteEvidenceChain: string[];
   hasTastePreference: boolean;
+  userDecisionStrategy: string;
+  userDecisionBehavior: string;
+  userDecisionConfidence: number;
+  userDecisionSignalCount: number;
+  bestValueStrategyScore: number;
+  bestQualityStrategyScore: number;
+  premiumChoiceStrategyScore: number;
+  budgetChoiceStrategyScore: number;
+  longTermInvestmentStrategyScore: number;
+  fastPurchaseStrategyScore: number;
+  safeChoiceStrategyScore: number;
+  experimentalChoiceStrategyScore: number;
+  userDecisionEvidenceChain: string[];
+  hasUserDecisionIntelligence: boolean;
 };
 
 export type { AvailabilityState } from "@/lib/truth/availabilityStateModel";
@@ -253,3 +269,8 @@ export type {
   BrandFlexibility,
 } from "@/lib/truth/conversationalIntentEngine";
 export type { TastePreferenceSnapshot } from "@/lib/truth/tastePreferenceEngine";
+export type {
+  UserDecisionSnapshot,
+  UserDecisionStrategy,
+  UserDecisionStrategyScores,
+} from "@/lib/truth/userDecisionIntelligenceEngine";

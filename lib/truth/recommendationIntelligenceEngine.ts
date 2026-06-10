@@ -19,7 +19,7 @@ export type RecommendationSnapshot = {
   recommendationEvidenceChain: string[];
 };
 
-export type RecommendationIntelligenceInput = Omit<TruthFoundationSnapshot, "recommendationIntelligence" | "explainableAI" | "conversationalIntent" | "tastePreference">;
+export type RecommendationIntelligenceInput = Omit<TruthFoundationSnapshot, "recommendationIntelligence" | "explainableAI" | "conversationalIntent" | "tastePreference" | "userDecisionIntelligence">;
 
 function clampScore(value: number): number {
   if (!Number.isFinite(value)) return 0;
