@@ -16,6 +16,7 @@ import type { ProductReasoningSnapshot } from "@/lib/truth/productReasoningEngin
 import type { RecommendationSnapshot } from "@/lib/truth/recommendationIntelligenceEngine";
 import type { ExplainableAISnapshot } from "@/lib/truth/explainableAIEngine";
 import type { ConversationalIntentSnapshot } from "@/lib/truth/conversationalIntentEngine";
+import type { TastePreferenceSnapshot } from "@/lib/truth/tastePreferenceEngine";
 import type { DecisionEngineSnapshot } from "@/lib/truth/decisionIntelligenceLayer";
 import type { TrustEngineSnapshot } from "@/lib/truth/unifiedTrustEngine";
 import type { CommerceIntelligenceSnapshot } from "@/lib/truth/universalCommerceIntelligence";
@@ -69,6 +70,7 @@ export type TruthFoundationSnapshot = {
   recommendationIntelligence: RecommendationSnapshot;
   explainableAI: ExplainableAISnapshot;
   conversationalIntent: ConversationalIntentSnapshot;
+  tastePreference: TastePreferenceSnapshot;
   debugTrace?: TruthDebugTrace | null;
 };
 
@@ -212,6 +214,20 @@ export type ExtendedTruthEvidenceSources = {
   conversationalConfidence: number;
   conversationalEvidenceChain: string[];
   hasConversationalIntent: boolean;
+  aestheticProfile: string;
+  styleProfile: string;
+  premiumAffinity: number;
+  valueAffinity: number;
+  minimalistPreference: number;
+  performancePreference: number;
+  portabilityPreference: number;
+  luxuryPreference: number;
+  practicalityPreference: number;
+  innovationPreference: number;
+  tasteSignalCount: number;
+  tasteConfidence: number;
+  tasteEvidenceChain: string[];
+  hasTastePreference: boolean;
 };
 
 export type { AvailabilityState } from "@/lib/truth/availabilityStateModel";
@@ -236,3 +252,4 @@ export type {
   ExpertiseLevel,
   BrandFlexibility,
 } from "@/lib/truth/conversationalIntentEngine";
+export type { TastePreferenceSnapshot } from "@/lib/truth/tastePreferenceEngine";

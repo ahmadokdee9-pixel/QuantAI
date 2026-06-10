@@ -71,6 +71,11 @@ import {
   buildConversationalIntentEvidenceChain,
   hasConversationalIntentSignal,
 } from "@/lib/truth/conversationalIntentEngine";
+import {
+  buildTastePreferenceEngine,
+  buildTastePreferenceEvidenceChain,
+  hasTastePreferenceSignal,
+} from "@/lib/truth/tastePreferenceEngine";
 import { buildTruthDebugTrace } from "@/lib/truth/truthDebug";
 import type {
   ExtendedTruthEvidenceSources,
@@ -172,7 +177,8 @@ export function buildTruthFoundationSnapshot(args: {
     args.existing.productReasoning &&
     args.existing.recommendationIntelligence &&
     args.existing.explainableAI &&
-    args.existing.conversationalIntent
+    args.existing.conversationalIntent &&
+    args.existing.tastePreference
   ) {
     return args.existing;
   }
@@ -352,9 +358,14 @@ export function buildTruthFoundationSnapshot(args: {
     explainableAI: buildExplainableAIEngine(withRecommendationIntelligence),
   };
 
-  return {
+  const withConversationalIntent = {
     ...withExplainableAI,
     conversationalIntent: buildConversationalIntentEngine(withExplainableAI, args.searchQuery ?? ""),
+  };
+
+  return {
+    ...withConversationalIntent,
+    tastePreference: buildTastePreferenceEngine(withConversationalIntent, args.searchQuery ?? ""),
   };
 }
 
@@ -586,6 +597,22 @@ export function buildExtendedTruthEvidenceSources(
         ? buildConversationalIntentEvidenceChain(foundation.conversationalIntent)
         : [],
       hasConversationalIntent: hasConversationalIntentSignal(foundation.conversationalIntent),
+      aestheticProfile: foundation.tastePreference?.aestheticProfile ?? "balanced",
+      styleProfile: foundation.tastePreference?.styleProfile ?? "general",
+      premiumAffinity: foundation.tastePreference?.premiumAffinity ?? 0,
+      valueAffinity: foundation.tastePreference?.valueAffinity ?? 0,
+      minimalistPreference: foundation.tastePreference?.minimalistPreference ?? 0,
+      performancePreference: foundation.tastePreference?.performancePreference ?? 0,
+      portabilityPreference: foundation.tastePreference?.portabilityPreference ?? 0,
+      luxuryPreference: foundation.tastePreference?.luxuryPreference ?? 0,
+      practicalityPreference: foundation.tastePreference?.practicalityPreference ?? 0,
+      innovationPreference: foundation.tastePreference?.innovationPreference ?? 0,
+      tasteSignalCount: foundation.tastePreference?.tasteSignals.length ?? 0,
+      tasteConfidence: foundation.tastePreference?.tasteConfidence ?? 0,
+      tasteEvidenceChain: foundation.tastePreference
+        ? buildTastePreferenceEvidenceChain(foundation.tastePreference)
+        : [],
+      hasTastePreference: hasTastePreferenceSignal(foundation.tastePreference),
     };
   }
 
@@ -738,6 +765,20 @@ export function buildExtendedTruthEvidenceSources(
     conversationalConfidence: 0,
     conversationalEvidenceChain: [],
     hasConversationalIntent: false,
+    aestheticProfile: "balanced",
+    styleProfile: "general",
+    premiumAffinity: 0,
+    valueAffinity: 0,
+    minimalistPreference: 0,
+    performancePreference: 0,
+    portabilityPreference: 0,
+    luxuryPreference: 0,
+    practicalityPreference: 0,
+    innovationPreference: 0,
+    tasteSignalCount: 0,
+    tasteConfidence: 0,
+    tasteEvidenceChain: [],
+    hasTastePreference: false,
   };
 }
 

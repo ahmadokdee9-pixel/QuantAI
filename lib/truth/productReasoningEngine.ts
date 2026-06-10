@@ -19,7 +19,7 @@ export type ProductReasoningSnapshot = {
   explainabilityScore: number;
 };
 
-export type ProductReasoningInput = Omit<TruthFoundationSnapshot, "productReasoning" | "recommendationIntelligence" | "explainableAI" | "conversationalIntent">;
+export type ProductReasoningInput = Omit<TruthFoundationSnapshot, "productReasoning" | "recommendationIntelligence" | "explainableAI" | "conversationalIntent" | "tastePreference">;
 
 function clampScore(value: number): number {
   if (!Number.isFinite(value)) return 0;
