@@ -32,7 +32,7 @@ export type EvidenceReasoningGraph = {
   evidenceState: EvidenceState;
 };
 
-export type EvidenceReasoningGraphInput = Omit<TruthFoundationSnapshot, "evidenceReasoningGraph" | "trustEngine" | "decisionEngine" | "intentEngine" | "intentRetrieval" | "productMatch" | "productReasoning">;
+export type EvidenceReasoningGraphInput = Omit<TruthFoundationSnapshot, "evidenceReasoningGraph" | "trustEngine" | "decisionEngine" | "intentEngine" | "intentRetrieval" | "productMatch" | "productReasoning" | "recommendationIntelligence">;
 
 export const WEAK_EVIDENCE_STRENGTH_THRESHOLD = 52;
 export const WEAK_EVIDENCE_COMPLETENESS_THRESHOLD = 45;

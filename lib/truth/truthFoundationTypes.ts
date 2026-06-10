@@ -13,6 +13,7 @@ import type { IntentEngineSnapshot } from "@/lib/truth/intentIntelligenceEngine"
 import type { IntentRetrievalSnapshot } from "@/lib/truth/intentAwareRetrievalEngine";
 import type { ProductMatchSnapshot } from "@/lib/truth/productMatchingEngine";
 import type { ProductReasoningSnapshot } from "@/lib/truth/productReasoningEngine";
+import type { RecommendationSnapshot } from "@/lib/truth/recommendationIntelligenceEngine";
 import type { DecisionEngineSnapshot } from "@/lib/truth/decisionIntelligenceLayer";
 import type { TrustEngineSnapshot } from "@/lib/truth/unifiedTrustEngine";
 import type { CommerceIntelligenceSnapshot } from "@/lib/truth/universalCommerceIntelligence";
@@ -63,6 +64,7 @@ export type TruthFoundationSnapshot = {
   intentRetrieval: IntentRetrievalSnapshot;
   productMatch: ProductMatchSnapshot;
   productReasoning: ProductReasoningSnapshot;
+  recommendationIntelligence: RecommendationSnapshot;
   debugTrace?: TruthDebugTrace | null;
 };
 
@@ -171,6 +173,16 @@ export type ExtendedTruthEvidenceSources = {
   topNegativeReasonCount: number;
   reasoningEvidenceChain: string[];
   hasProductReasoning: boolean;
+  recommendationTier: string;
+  recommendationScore: number;
+  recommendationConfidenceScore: number;
+  recommendationSummary: string;
+  primaryRecommendationReason: string;
+  primaryWarningReason: string;
+  shouldRecommend: boolean;
+  shouldHighlight: boolean;
+  recommendationEvidenceChain: string[];
+  hasRecommendationIntelligence: boolean;
 };
 
 export type { AvailabilityState } from "@/lib/truth/availabilityStateModel";
@@ -187,3 +199,4 @@ export type { IntentEngineSnapshot, IntentSnapshot } from "@/lib/truth/intentInt
 export type { IntentRetrievalSnapshot } from "@/lib/truth/intentAwareRetrievalEngine";
 export type { ProductMatchSnapshot } from "@/lib/truth/productMatchingEngine";
 export type { ProductReasoningSnapshot, RecommendationStrength } from "@/lib/truth/productReasoningEngine";
+export type { RecommendationSnapshot, RecommendationTier } from "@/lib/truth/recommendationIntelligenceEngine";

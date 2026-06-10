@@ -57,6 +57,10 @@ import {
   buildProductReasoningEvidenceChain,
   hasProductReasoningSignal,
 } from "@/lib/truth/productReasoningEngine";
+import {
+  buildRecommendationIntelligenceEngine,
+  hasRecommendationIntelligenceSignal,
+} from "@/lib/truth/recommendationIntelligenceEngine";
 import { buildTruthDebugTrace } from "@/lib/truth/truthDebug";
 import type {
   ExtendedTruthEvidenceSources,
@@ -155,7 +159,8 @@ export function buildTruthFoundationSnapshot(args: {
     args.existing.intentEngine &&
     args.existing.intentRetrieval &&
     args.existing.productMatch &&
-    args.existing.productReasoning
+    args.existing.productReasoning &&
+    args.existing.recommendationIntelligence
   ) {
     return args.existing;
   }
@@ -320,9 +325,14 @@ export function buildTruthFoundationSnapshot(args: {
     }),
   };
 
-  return {
+  const withProductReasoning = {
     ...withProductMatch,
     productReasoning: buildProductReasoningEngine(withProductMatch),
+  };
+
+  return {
+    ...withProductReasoning,
+    recommendationIntelligence: buildRecommendationIntelligenceEngine(withProductReasoning),
   };
 }
 
@@ -515,6 +525,16 @@ export function buildExtendedTruthEvidenceSources(
       topNegativeReasonCount: foundation.productReasoning?.topNegativeReasons.length ?? 0,
       reasoningEvidenceChain: buildProductReasoningEvidenceChain(reasoningInput),
       hasProductReasoning: hasProductReasoningSignal(foundation.productReasoning),
+      recommendationTier: foundation.recommendationIntelligence?.recommendationTier ?? "NOT_RECOMMENDED",
+      recommendationScore: foundation.recommendationIntelligence?.recommendationScore ?? 0,
+      recommendationConfidenceScore: foundation.recommendationIntelligence?.confidenceScore ?? 0,
+      recommendationSummary: foundation.recommendationIntelligence?.recommendationSummary ?? "",
+      primaryRecommendationReason: foundation.recommendationIntelligence?.primaryRecommendationReason ?? "",
+      primaryWarningReason: foundation.recommendationIntelligence?.primaryWarningReason ?? "",
+      shouldRecommend: foundation.recommendationIntelligence?.shouldRecommend ?? false,
+      shouldHighlight: foundation.recommendationIntelligence?.shouldHighlight ?? false,
+      recommendationEvidenceChain: foundation.recommendationIntelligence?.recommendationEvidenceChain ?? [],
+      hasRecommendationIntelligence: hasRecommendationIntelligenceSignal(foundation.recommendationIntelligence),
     };
   }
 
@@ -632,6 +652,16 @@ export function buildExtendedTruthEvidenceSources(
     topNegativeReasonCount: 0,
     reasoningEvidenceChain: [],
     hasProductReasoning: false,
+    recommendationTier: "NOT_RECOMMENDED",
+    recommendationScore: 0,
+    recommendationConfidenceScore: 0,
+    recommendationSummary: "",
+    primaryRecommendationReason: "",
+    primaryWarningReason: "",
+    shouldRecommend: false,
+    shouldHighlight: false,
+    recommendationEvidenceChain: [],
+    hasRecommendationIntelligence: false,
   };
 }
 
