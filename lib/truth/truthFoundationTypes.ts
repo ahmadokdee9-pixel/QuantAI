@@ -15,6 +15,7 @@ import type { ProductMatchSnapshot } from "@/lib/truth/productMatchingEngine";
 import type { ProductReasoningSnapshot } from "@/lib/truth/productReasoningEngine";
 import type { RecommendationSnapshot } from "@/lib/truth/recommendationIntelligenceEngine";
 import type { ExplainableAISnapshot } from "@/lib/truth/explainableAIEngine";
+import type { ConversationalIntentSnapshot } from "@/lib/truth/conversationalIntentEngine";
 import type { DecisionEngineSnapshot } from "@/lib/truth/decisionIntelligenceLayer";
 import type { TrustEngineSnapshot } from "@/lib/truth/unifiedTrustEngine";
 import type { CommerceIntelligenceSnapshot } from "@/lib/truth/universalCommerceIntelligence";
@@ -67,6 +68,7 @@ export type TruthFoundationSnapshot = {
   productReasoning: ProductReasoningSnapshot;
   recommendationIntelligence: RecommendationSnapshot;
   explainableAI: ExplainableAISnapshot;
+  conversationalIntent: ConversationalIntentSnapshot;
   debugTrace?: TruthDebugTrace | null;
 };
 
@@ -196,6 +198,20 @@ export type ExtendedTruthEvidenceSources = {
   explainabilityConfidence: number;
   explainableEvidenceChain: string[];
   hasExplainableAI: boolean;
+  explicitIntent: string;
+  implicitIntent: string;
+  shoppingGoal: string;
+  conversationalUserContext: string;
+  conversationalExpertiseLevel: string;
+  conversationalUrgencyLevel: string;
+  conversationalBudgetSensitivity: string;
+  conversationalQualitySensitivity: string;
+  conversationalBrandFlexibility: string;
+  conversationalRiskTolerance: string;
+  preferenceSignalCount: number;
+  conversationalConfidence: number;
+  conversationalEvidenceChain: string[];
+  hasConversationalIntent: boolean;
 };
 
 export type { AvailabilityState } from "@/lib/truth/availabilityStateModel";
@@ -214,3 +230,9 @@ export type { ProductMatchSnapshot } from "@/lib/truth/productMatchingEngine";
 export type { ProductReasoningSnapshot, RecommendationStrength } from "@/lib/truth/productReasoningEngine";
 export type { RecommendationSnapshot, RecommendationTier } from "@/lib/truth/recommendationIntelligenceEngine";
 export type { ExplainableAISnapshot } from "@/lib/truth/explainableAIEngine";
+export type {
+  ConversationalIntentSnapshot,
+  ConversationalLevel,
+  ExpertiseLevel,
+  BrandFlexibility,
+} from "@/lib/truth/conversationalIntentEngine";

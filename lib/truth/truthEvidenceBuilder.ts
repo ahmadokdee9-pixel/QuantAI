@@ -66,6 +66,11 @@ import {
   buildExplainableAIEvidenceChain,
   hasExplainableAISignal,
 } from "@/lib/truth/explainableAIEngine";
+import {
+  buildConversationalIntentEngine,
+  buildConversationalIntentEvidenceChain,
+  hasConversationalIntentSignal,
+} from "@/lib/truth/conversationalIntentEngine";
 import { buildTruthDebugTrace } from "@/lib/truth/truthDebug";
 import type {
   ExtendedTruthEvidenceSources,
@@ -166,7 +171,8 @@ export function buildTruthFoundationSnapshot(args: {
     args.existing.productMatch &&
     args.existing.productReasoning &&
     args.existing.recommendationIntelligence &&
-    args.existing.explainableAI
+    args.existing.explainableAI &&
+    args.existing.conversationalIntent
   ) {
     return args.existing;
   }
@@ -341,9 +347,14 @@ export function buildTruthFoundationSnapshot(args: {
     recommendationIntelligence: buildRecommendationIntelligenceEngine(withProductReasoning),
   };
 
-  return {
+  const withExplainableAI = {
     ...withRecommendationIntelligence,
     explainableAI: buildExplainableAIEngine(withRecommendationIntelligence),
+  };
+
+  return {
+    ...withExplainableAI,
+    conversationalIntent: buildConversationalIntentEngine(withExplainableAI, args.searchQuery ?? ""),
   };
 }
 
@@ -559,6 +570,22 @@ export function buildExtendedTruthEvidenceSources(
         ? buildExplainableAIEvidenceChain(foundation.explainableAI)
         : [],
       hasExplainableAI: hasExplainableAISignal(foundation.explainableAI),
+      explicitIntent: foundation.conversationalIntent?.explicitIntent ?? "",
+      implicitIntent: foundation.conversationalIntent?.implicitIntent ?? "",
+      shoppingGoal: foundation.conversationalIntent?.shoppingGoal ?? "",
+      conversationalUserContext: foundation.conversationalIntent?.userContext ?? "",
+      conversationalExpertiseLevel: foundation.conversationalIntent?.expertiseLevel ?? "UNKNOWN",
+      conversationalUrgencyLevel: foundation.conversationalIntent?.urgencyLevel ?? "UNKNOWN",
+      conversationalBudgetSensitivity: foundation.conversationalIntent?.budgetSensitivity ?? "UNKNOWN",
+      conversationalQualitySensitivity: foundation.conversationalIntent?.qualitySensitivity ?? "UNKNOWN",
+      conversationalBrandFlexibility: foundation.conversationalIntent?.brandFlexibility ?? "FLEXIBLE",
+      conversationalRiskTolerance: foundation.conversationalIntent?.riskTolerance ?? "UNKNOWN",
+      preferenceSignalCount: foundation.conversationalIntent?.preferenceSignals.length ?? 0,
+      conversationalConfidence: foundation.conversationalIntent?.conversationalConfidence ?? 0,
+      conversationalEvidenceChain: foundation.conversationalIntent
+        ? buildConversationalIntentEvidenceChain(foundation.conversationalIntent)
+        : [],
+      hasConversationalIntent: hasConversationalIntentSignal(foundation.conversationalIntent),
     };
   }
 
@@ -697,6 +724,20 @@ export function buildExtendedTruthEvidenceSources(
     explainabilityConfidence: 0,
     explainableEvidenceChain: [],
     hasExplainableAI: false,
+    explicitIntent: "",
+    implicitIntent: "",
+    shoppingGoal: "",
+    conversationalUserContext: "",
+    conversationalExpertiseLevel: "UNKNOWN",
+    conversationalUrgencyLevel: "UNKNOWN",
+    conversationalBudgetSensitivity: "UNKNOWN",
+    conversationalQualitySensitivity: "UNKNOWN",
+    conversationalBrandFlexibility: "FLEXIBLE",
+    conversationalRiskTolerance: "UNKNOWN",
+    preferenceSignalCount: 0,
+    conversationalConfidence: 0,
+    conversationalEvidenceChain: [],
+    hasConversationalIntent: false,
   };
 }
 
