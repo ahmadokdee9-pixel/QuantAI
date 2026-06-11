@@ -21,6 +21,7 @@ import {
   type TrueValueIntelligence,
 } from "@/lib/intelligence/trueValueEngine";
 import { attachTruthFoundationToDecision } from "@/lib/truth/truthEvidenceBuilder";
+import { enrichDecisionWithRankingRecord } from "@/lib/truth/rankingDecisionRecord";
 import {
   sanitizeUniversalDecision,
   validateTraySafety,
@@ -78,6 +79,18 @@ export function buildProductionReadinessDecisionMap(
     productsByLink,
     marketMemory
   );
+
+  const attachTruthFoundationAndRankingRecord = (decision: UniversalProductDecision): UniversalProductDecision => {
+    const ctx = productsByLink.get(decision.link);
+    if (!ctx) return decision;
+    const withFoundation = attachTruthFoundationToDecision(decision, {
+      product: ctx.product,
+      searchQuery: ctx.searchQuery,
+      marketMemory,
+      prefetch: truthPrefetchByLink?.get(decision.link) ?? null,
+    });
+    return enrichDecisionWithRankingRecord(withFoundation, { productTitle: ctx.product.title });
+  };
 
   const rankedLinks = [...base.trayContext.intelligenceRankOrder];
   const categoryValueCache = new Map<string, ReturnType<typeof buildCategoryValueIntelligence>>();
@@ -207,16 +220,7 @@ export function buildProductionReadinessDecisionMap(
     const tier = balancedTiers.get(link) ?? intel?.buyOpportunityCore?.tier ?? "COMPARE";
 
     if (!intel?.buyOpportunityCore || !intel.commerceDecisionCore || !enrichment) {
-      const ctx = productsByLink.get(link);
-      const withFoundation = ctx
-        ? attachTruthFoundationToDecision(decision, {
-            product: ctx.product,
-            searchQuery: ctx.searchQuery,
-            marketMemory,
-            prefetch: truthPrefetchByLink?.get(link) ?? null,
-          })
-        : decision;
-      result.set(link, sanitizeUniversalDecision(withFoundation));
+      result.set(link, sanitizeUniversalDecision(attachTruthFoundationAndRankingRecord(decision)));
       continue;
     }
 
@@ -282,17 +286,7 @@ export function buildProductionReadinessDecisionMap(
       },
     };
 
-    const ctx = productsByLink.get(link);
-    const withFoundation = ctx
-      ? attachTruthFoundationToDecision(updated, {
-          product: ctx.product,
-          searchQuery: ctx.searchQuery,
-          marketMemory,
-          prefetch: truthPrefetchByLink?.get(link) ?? null,
-        })
-      : updated;
-
-    result.set(link, sanitizeUniversalDecision(withFoundation));
+    result.set(link, sanitizeUniversalDecision(attachTruthFoundationAndRankingRecord(updated)));
   }
 
   const safety = validateTraySafety(result);

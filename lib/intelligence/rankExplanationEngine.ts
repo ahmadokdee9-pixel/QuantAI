@@ -6,6 +6,7 @@
 import type { GlobalCategoryIntelligence } from "@/lib/intelligence/globalCategoryIntelligenceEngine";
 import type { SearchRankEntry } from "@/lib/intelligence/searchRankingEngine";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
+import type { RankingDecisionRecord } from "@/lib/truth/rankingDecisionRecord";
 
 export type RankExplanation = {
   version: 1;
@@ -25,17 +26,36 @@ export function buildRankExplanation(args: {
   categoryIntel: GlobalCategoryIntelligence;
   beatsItTitle?: string | null;
   isGlobalWinner: boolean;
+  rankingDecisionRecord?: RankingDecisionRecord | null;
 }): RankExplanation {
-  const { productTitle, searchRank, verdict, categoryIntel, beatsItTitle, isGlobalWinner } = args;
+  const {
+    productTitle,
+    searchRank,
+    verdict,
+    categoryIntel,
+    beatsItTitle,
+    isGlobalWinner,
+    rankingDecisionRecord,
+  } = args;
   const shortTitle = productTitle.split(" ").slice(0, 5).join(" ");
 
-  const whyThisRank = isGlobalWinner
-    ? `${searchRank.rankHeadline} — strongest mix of price, trust, ${categoryIntel.categoryLabel.toLowerCase()} fit, and discount truth.`
-    : `${searchRank.rankHeadline} — ranked by category fit (${categoryIntel.categoryFitScore}/100), opportunity, and seller trust.`;
+  const truthWhy = rankingDecisionRecord?.whyRanked?.trim();
+  const layerHint =
+    rankingDecisionRecord && rankingDecisionRecord.influencedLayers.length > 0
+      ? ` Layers: ${rankingDecisionRecord.influencedLayers.slice(0, 3).join(", ")}.`
+      : "";
+
+  const whyThisRank = truthWhy
+    ? `${searchRank.rankHeadline} — ${truthWhy}${layerHint}`
+    : isGlobalWinner
+      ? `${searchRank.rankHeadline} — strongest mix of price, trust, ${categoryIntel.categoryLabel.toLowerCase()} fit, and discount truth.`
+      : `${searchRank.rankHeadline} — ranked by category fit (${categoryIntel.categoryFitScore}/100), opportunity, and seller trust.`;
 
   const whyNotHigher =
     searchRank.rank === 1
-      ? "Top rank — no stronger checkout path in this search universe."
+      ? rankingDecisionRecord
+        ? "Top rank — truth layers support this position; no stronger checkout path in this search universe."
+        : "Top rank — no stronger checkout path in this search universe."
       : beatsItTitle
         ? `#${searchRank.rank - 1} ${beatsItTitle.split(" ").slice(0, 4).join(" ")} scores higher on combined opportunity and trust.`
         : "Higher-ranked options combine stronger price advantage, trust, or category fit.";
@@ -47,11 +67,12 @@ export function buildRankExplanation(args: {
       : "Top-ranked alternatives beat this on price-trust-value balance.";
 
   const whyStillUseful =
-    searchRank.label === "Budget Choice"
+    rankingDecisionRecord?.evidenceChain[0] ??
+    (searchRank.label === "Budget Choice"
       ? `Useful budget path for ${categoryIntel.categoryLabel.toLowerCase()} — verify quality and returns.`
       : searchRank.label === "Premium Choice"
         ? `Premium ${categoryIntel.categoryLabel.toLowerCase()} option — quality-led if budget allows.`
-        : `${shortTitle} remains useful for ${categoryIntel.categoryReasoning.split("—")[0]?.trim() ?? "this search"}.`;
+        : `${shortTitle} remains useful for ${categoryIntel.categoryReasoning.split("—")[0]?.trim() ?? "this search"}.`);
 
   const buyerAction =
     verdict === "BUY READY"

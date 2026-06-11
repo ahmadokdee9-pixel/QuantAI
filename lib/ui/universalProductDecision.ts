@@ -149,6 +149,8 @@ export type UniversalProductIntelligenceSnapshot = UniversalProductIntelligenceS
   };
   /** Phase 1D.5 — truth foundation snapshot for confidence gates. */
   truthFoundation?: import("@/lib/truth/truthFoundationTypes").TruthFoundationSnapshot;
+  /** Phase 3C — auditable ranking attribution from Truth layers 2C–2K. */
+  rankingDecisionRecord?: import("@/lib/truth/rankingDecisionRecord").RankingDecisionRecord;
 };
 
 export type UniversalProductDecision = {

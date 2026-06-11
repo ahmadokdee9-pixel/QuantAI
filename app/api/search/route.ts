@@ -102,6 +102,11 @@ import {
   prefetchTruthFoundationBatch,
   serializeTruthFoundationPrefetch,
 } from "@/lib/truth/truthFoundationLoader";
+import { buildTruthFoundationSnapshot } from "@/lib/truth/truthEvidenceBuilder";
+import {
+  buildRankingDecisionRecord,
+  serializeTruthRankingByLink,
+} from "@/lib/truth/rankingDecisionRecord";
 import {
   circuitSnapshot,
   getGuestStaleTray,
@@ -2133,6 +2138,22 @@ async function handleSearch(
     );
     const truthFoundationPrefetch = serializeTruthFoundationPrefetch(truthFoundationPrefetchMap);
 
+    const truthRankingRecords = new Map<string, import("@/lib/truth/rankingDecisionRecord").RankingDecisionRecord>();
+    for (const product of products.slice(0, 36)) {
+      const prefetch = truthFoundationPrefetchMap.get(product.link) ?? null;
+      const foundation = buildTruthFoundationSnapshot({
+        product,
+        listingUrl: product.link,
+        searchQuery: query,
+        prefetch,
+      });
+      truthRankingRecords.set(
+        product.link,
+        buildRankingDecisionRecord({ link: product.link, foundation })
+      );
+    }
+    const truthRankingByLink = serializeTruthRankingByLink(truthRankingRecords);
+
     const data: SearchDataPayload = {
       products,
       dealClusters,
@@ -2200,6 +2221,7 @@ async function handleSearch(
         dealIntelligence: dealIntelligence.meta,
         commerceFusion: commerceFusion.meta,
         truthFoundationPrefetch,
+        truthRankingByLink,
         identityDebug: debugMeta.identityDebug,
         liveDiscovery,
         liveDiscoveryStatus: liveDiscovery.status,

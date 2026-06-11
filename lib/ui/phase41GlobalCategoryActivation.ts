@@ -274,6 +274,7 @@ export function buildGlobalCategoryDecisionMap(
           categoryIntel: rows.categoryIntel,
           beatsItTitle: beatsTitleByLink.get(link),
           isGlobalWinner: intel.globalWinner?.isWinner ?? link === winnerLink,
+          rankingDecisionRecord: intel.rankingDecisionRecord,
         })
       : undefined;
 
