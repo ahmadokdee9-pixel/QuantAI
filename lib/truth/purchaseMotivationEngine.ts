@@ -49,7 +49,7 @@ export type PurchaseMotivationSnapshot = {
   motivationEvidenceChain: string[];
 };
 
-export type PurchaseMotivationInput = Omit<TruthFoundationSnapshot, "purchaseMotivation">;
+export type PurchaseMotivationInput = Omit<TruthFoundationSnapshot, "purchaseMotivation" | "purchaseConstraints">;
 
 const MOTIVATION_ORDER: PurchaseMotivation[] = [
   "productivity",

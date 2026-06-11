@@ -20,7 +20,7 @@ export type ExplainableAISnapshot = {
   explainabilityConfidence: number;
 };
 
-export type ExplainableAIInput = Omit<TruthFoundationSnapshot, "explainableAI" | "conversationalIntent" | "tastePreference" | "userDecisionIntelligence" | "purchaseMotivation">;
+export type ExplainableAIInput = Omit<TruthFoundationSnapshot, "explainableAI" | "conversationalIntent" | "tastePreference" | "userDecisionIntelligence" | "purchaseMotivation" | "purchaseConstraints">;
 
 function clampScore(value: number): number {
   if (!Number.isFinite(value)) return 0;

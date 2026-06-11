@@ -32,9 +32,12 @@ const surface = readFileSync(join(process.cwd(), "components/search/ProductResul
 assert.ok(!surface.includes("commerceReasoningLayer"), "no UI commerce reasoning import");
 pass("no_ui_redesign");
 
-const now = new Date("2026-06-11T12:00:00.000Z");
+const now = new Date();
 function daysAgo(days) {
   return new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
+}
+function hoursAgo(hours) {
+  return new Date(now.getTime() - hours * 60 * 60 * 1000).toISOString();
 }
 
 const SKU = "bm:commercereasoning";
@@ -73,14 +76,14 @@ const foundation = buildTruthFoundationSnapshot({
       id: "obs-strong",
       listing_url: product.link,
       sku_id: SKU,
-      observed_at: daysAgo(1),
+      observed_at: hoursAgo(6),
       availability: "in_stock",
       availability_text: "In stock",
       current_price: 228,
       shipping_price: null,
       source: "cron_refresh",
       freshness_score: 100,
-      created_at: daysAgo(1),
+      created_at: hoursAgo(6),
     },
     priceObservations: strongObservations,
     availabilityDataSource: "db",

@@ -19,6 +19,7 @@ import type { ConversationalIntentSnapshot } from "@/lib/truth/conversationalInt
 import type { TastePreferenceSnapshot } from "@/lib/truth/tastePreferenceEngine";
 import type { UserDecisionSnapshot } from "@/lib/truth/userDecisionIntelligenceEngine";
 import type { PurchaseMotivationSnapshot } from "@/lib/truth/purchaseMotivationEngine";
+import type { PurchaseConstraintsSnapshot } from "@/lib/truth/purchaseConstraintsEngine";
 import type { DecisionEngineSnapshot } from "@/lib/truth/decisionIntelligenceLayer";
 import type { TrustEngineSnapshot } from "@/lib/truth/unifiedTrustEngine";
 import type { CommerceIntelligenceSnapshot } from "@/lib/truth/universalCommerceIntelligence";
@@ -75,6 +76,7 @@ export type TruthFoundationSnapshot = {
   tastePreference: TastePreferenceSnapshot;
   userDecisionIntelligence: UserDecisionSnapshot;
   purchaseMotivation: PurchaseMotivationSnapshot;
+  purchaseConstraints: PurchaseConstraintsSnapshot;
   debugTrace?: TruthDebugTrace | null;
 };
 
@@ -266,6 +268,27 @@ export type ExtendedTruthEvidenceSources = {
   innovationMotivationScore: number;
   purchaseMotivationEvidenceChain: string[];
   hasPurchaseMotivation: boolean;
+  primaryConstraint: string;
+  constraintConfidence: number;
+  constraintSignalCount: number;
+  hardRequirementCount: number;
+  budgetConstraintScore: number;
+  performanceConstraintScore: number;
+  portabilityConstraintScore: number;
+  batteryConstraintScore: number;
+  screenConstraintScore: number;
+  cameraConstraintScore: number;
+  storageConstraintScore: number;
+  compatibilityConstraintScore: number;
+  deliveryConstraintScore: number;
+  travelConstraintScore: number;
+  gamingConstraintScore: number;
+  workConstraintScore: number;
+  educationConstraintScore: number;
+  weightConstraintScore: number;
+  brandConstraintScore: number;
+  purchaseConstraintsEvidenceChain: string[];
+  hasPurchaseConstraints: boolean;
 };
 
 export type { AvailabilityState } from "@/lib/truth/availabilityStateModel";
@@ -301,3 +324,8 @@ export type {
   PurchaseMotivation,
   PurchaseMotivationScores,
 } from "@/lib/truth/purchaseMotivationEngine";
+export type {
+  PurchaseConstraintsSnapshot,
+  PurchaseConstraint,
+  PurchaseConstraintScores,
+} from "@/lib/truth/purchaseConstraintsEngine";

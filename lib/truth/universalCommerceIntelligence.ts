@@ -26,7 +26,7 @@ export type CommerceIntelligenceSnapshot = {
 
 export type CommerceIntelligenceInput = Omit<
   TruthFoundationSnapshot,
-  "commerceIntelligence" | "commerceReasoning" | "evidenceReasoningGraph" | "trustEngine" | "decisionEngine" | "intentEngine" | "intentRetrieval" | "productMatch" | "productReasoning" | "recommendationIntelligence" | "explainableAI" | "conversationalIntent" | "tastePreference" | "userDecisionIntelligence" | "purchaseMotivation"
+  "commerceIntelligence" | "commerceReasoning" | "evidenceReasoningGraph" | "trustEngine" | "decisionEngine" | "intentEngine" | "intentRetrieval" | "productMatch" | "productReasoning" | "recommendationIntelligence" | "explainableAI" | "conversationalIntent" | "tastePreference" | "userDecisionIntelligence" | "purchaseMotivation" | "purchaseConstraints"
 >;
 
 export const WEAK_COMMERCE_CONFIDENCE_THRESHOLD = 52;

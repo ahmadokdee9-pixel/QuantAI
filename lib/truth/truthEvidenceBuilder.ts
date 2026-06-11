@@ -86,6 +86,11 @@ import {
   buildPurchaseMotivationEvidenceChain,
   hasPurchaseMotivationSignal,
 } from "@/lib/truth/purchaseMotivationEngine";
+import {
+  buildPurchaseConstraintsEngine,
+  buildPurchaseConstraintsEvidenceChain,
+  hasPurchaseConstraintsSignal,
+} from "@/lib/truth/purchaseConstraintsEngine";
 import { buildTruthDebugTrace } from "@/lib/truth/truthDebug";
 import type {
   ExtendedTruthEvidenceSources,
@@ -190,7 +195,8 @@ export function buildTruthFoundationSnapshot(args: {
     args.existing.conversationalIntent &&
     args.existing.tastePreference &&
     args.existing.userDecisionIntelligence &&
-    args.existing.purchaseMotivation
+    args.existing.purchaseMotivation &&
+    args.existing.purchaseConstraints
   ) {
     return args.existing;
   }
@@ -388,10 +394,18 @@ export function buildTruthFoundationSnapshot(args: {
     ),
   };
 
-  return {
+  const withPurchaseMotivation = {
     ...withUserDecisionIntelligence,
     purchaseMotivation: buildPurchaseMotivationEngine(
       withUserDecisionIntelligence,
+      args.searchQuery ?? ""
+    ),
+  };
+
+  return {
+    ...withPurchaseMotivation,
+    purchaseConstraints: buildPurchaseConstraintsEngine(
+      withPurchaseMotivation,
       args.searchQuery ?? ""
     ),
   };
@@ -681,6 +695,29 @@ export function buildExtendedTruthEvidenceSources(
         ? buildPurchaseMotivationEvidenceChain(foundation.purchaseMotivation)
         : [],
       hasPurchaseMotivation: hasPurchaseMotivationSignal(foundation.purchaseMotivation),
+      primaryConstraint: foundation.purchaseConstraints?.primaryConstraint ?? "budget",
+      constraintConfidence: foundation.purchaseConstraints?.constraintConfidence ?? 0,
+      constraintSignalCount: foundation.purchaseConstraints?.constraintSignals.length ?? 0,
+      hardRequirementCount: foundation.purchaseConstraints?.hardRequirements.length ?? 0,
+      budgetConstraintScore: foundation.purchaseConstraints?.constraintScores.budget ?? 0,
+      performanceConstraintScore: foundation.purchaseConstraints?.constraintScores.performance ?? 0,
+      portabilityConstraintScore: foundation.purchaseConstraints?.constraintScores.portability ?? 0,
+      batteryConstraintScore: foundation.purchaseConstraints?.constraintScores.battery ?? 0,
+      screenConstraintScore: foundation.purchaseConstraints?.constraintScores.screen ?? 0,
+      cameraConstraintScore: foundation.purchaseConstraints?.constraintScores.camera ?? 0,
+      storageConstraintScore: foundation.purchaseConstraints?.constraintScores.storage ?? 0,
+      compatibilityConstraintScore: foundation.purchaseConstraints?.constraintScores.compatibility ?? 0,
+      deliveryConstraintScore: foundation.purchaseConstraints?.constraintScores.delivery ?? 0,
+      travelConstraintScore: foundation.purchaseConstraints?.constraintScores.travel ?? 0,
+      gamingConstraintScore: foundation.purchaseConstraints?.constraintScores.gaming ?? 0,
+      workConstraintScore: foundation.purchaseConstraints?.constraintScores.work ?? 0,
+      educationConstraintScore: foundation.purchaseConstraints?.constraintScores.education ?? 0,
+      weightConstraintScore: foundation.purchaseConstraints?.constraintScores.weight ?? 0,
+      brandConstraintScore: foundation.purchaseConstraints?.constraintScores.brand ?? 0,
+      purchaseConstraintsEvidenceChain: foundation.purchaseConstraints
+        ? buildPurchaseConstraintsEvidenceChain(foundation.purchaseConstraints)
+        : [],
+      hasPurchaseConstraints: hasPurchaseConstraintsSignal(foundation.purchaseConstraints),
     };
   }
 
@@ -881,6 +918,27 @@ export function buildExtendedTruthEvidenceSources(
     innovationMotivationScore: 0,
     purchaseMotivationEvidenceChain: [],
     hasPurchaseMotivation: false,
+    primaryConstraint: "budget",
+    constraintConfidence: 0,
+    constraintSignalCount: 0,
+    hardRequirementCount: 0,
+    budgetConstraintScore: 0,
+    performanceConstraintScore: 0,
+    portabilityConstraintScore: 0,
+    batteryConstraintScore: 0,
+    screenConstraintScore: 0,
+    cameraConstraintScore: 0,
+    storageConstraintScore: 0,
+    compatibilityConstraintScore: 0,
+    deliveryConstraintScore: 0,
+    travelConstraintScore: 0,
+    gamingConstraintScore: 0,
+    workConstraintScore: 0,
+    educationConstraintScore: 0,
+    weightConstraintScore: 0,
+    brandConstraintScore: 0,
+    purchaseConstraintsEvidenceChain: [],
+    hasPurchaseConstraints: false,
   };
 }
 
