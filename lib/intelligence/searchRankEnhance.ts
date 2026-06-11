@@ -8,28 +8,23 @@ import {
 import { queryListingRelevance01 } from "@/lib/intelligence/queryRelevance";
 import { adaptiveListingScoreDelta } from "@/lib/intelligence/adaptiveRanking";
 import { extractHumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
-import {
-  intentCompositeLift,
-  parseCommerceSearchIntents,
-  type CommerceSearchIntents,
-} from "@/lib/intelligence/searchIntentV2";
+import { intentCompositeLift, type CommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
 import type { ProductCategorySlug } from "@/lib/intelligence/types";
 import { getMarketplaceSellerRiskTier } from "@/lib/retailTrust";
 import { relationshipGraphRankAdjustment, alternativeSeekingRankAdjustment } from "@/lib/intelligence/alternativeRanking";
 import { tasteCompositeLift, tasteProductAlignment01 } from "@/lib/commerce-os";
 import { normalizeQiListingIdentity } from "@/lib/intelligence/normalizeIntelligenceSignals";
-import { buildIntentIntelligenceEngine } from "@/lib/truth/intentIntelligenceEngine";
 import {
   buildIntentAwareRetrieval,
   intentRetrievalRankNudge,
 } from "@/lib/truth/intentAwareRetrievalEngine";
+import {
+  resolveUnifiedSearchIntent,
+  type PurchaseIntent,
+} from "@/lib/truth/unifiedIntentPipeline";
 
-export type PurchaseIntent =
-  | "neutral"
-  | "budget"
-  | "premium"
-  | "value"
-  | "fast";
+export type { PurchaseIntent };
+export { purchaseIntentFromQuery } from "@/lib/truth/unifiedIntentPipeline";
 
 function normalizeTitle(title: string): string {
   return title
@@ -143,52 +138,6 @@ function anchorInflationPenalty(p: QuantProduct): number {
   return 0;
 }
 
-export function purchaseIntentFromQuery(q: string): PurchaseIntent {
-  const intents = parseCommerceSearchIntents(q);
-  const s = q.toLowerCase();
-  if (
-    intents.deliveryCare ||
-    /\b(fast\s+shipping|overnight|next\s+day|two.day|2.day|quick\s+delivery|arrive\s+fast)\b/.test(s)
-  ) {
-    return "fast";
-  }
-  if (
-    intents.budget ||
-    intents.dealHunter ||
-    intents.realDiscountOnly ||
-    /\b(cheap|budget|affordable|lowest|under\s+(\$|€|£|eur|gbp|usd)|save\s+money|discount|clearance|bargain)\b/.test(
-      s
-    )
-  ) {
-    return "budget";
-  }
-  if (
-    intents.premium ||
-    intents.luxury ||
-    intents.aestheticPremium ||
-    intents.quietLuxury ||
-    /\b(premium|luxury|flagship|best\s+quality|pro\s+model|top\s+tier|high.end)\b/.test(s)
-  ) {
-    return "premium";
-  }
-  if (
-    /\b(best\s+value|bang\s+for|worth\s+it|value\s+pick|price.to.quality)\b/.test(s) ||
-    intents.productivity ||
-    intents.gaming ||
-    intents.explicitBestValue ||
-    intents.longTermValue ||
-    intents.comfortSeeking ||
-    intents.schoolUse ||
-    intents.giftUse ||
-    intents.alternativeSeeking ||
-    intents.comparisonIntent ||
-    intents.qualitySeeking
-  ) {
-    return "value";
-  }
-  return "neutral";
-}
-
 function intentCompositeDelta(
   p: QuantProduct,
   list: QuantProduct[],
@@ -249,10 +198,11 @@ function intentCompositeDelta(
  */
 export function sortByCompositeRankEnhanced(list: QuantProduct[], query: string): QuantProduct[] {
   if (list.length === 0) return list;
-  const intents = parseCommerceSearchIntents(query);
-  const humanSearch = query.trim() ? extractHumanSearchIntent(query) : null;
-  const intentEngine = query.trim() ? buildIntentIntelligenceEngine(query) : null;
-  const intent = purchaseIntentFromQuery(query);
+  const unified = resolveUnifiedSearchIntent(query);
+  const intents = unified.commerceIntents;
+  const humanSearch = unified.query ? extractHumanSearchIntent(unified.query) : null;
+  const intentEngine = unified.intentEngine;
+  const intent = unified.purchaseIntent;
   const prices = list.map((x) => x.price).filter((n) => n > 0).sort((a, b) => a - b);
   const medianPrice = prices[Math.floor(prices.length / 2)] ?? 0;
 
