@@ -24,7 +24,7 @@ assert.ok(!surface.includes("unifiedIntentPipeline"), "no UI unified intent impo
 pass("no_ui_redesign");
 
 const rankEnhance = readFileSync(join(process.cwd(), "lib/intelligence/searchRankEnhance.ts"), "utf8");
-assert.ok(rankEnhance.includes("resolveUnifiedSearchIntent"), "searchRankEnhance uses unified intent");
+assert.ok(rankEnhance.includes("sortProductsByTrustDrivenRank"), "searchRankEnhance uses trust-driven rank");
 assert.ok(!rankEnhance.includes("parseCommerceSearchIntents(query)"), "no duplicate commerce parse in rank enhance");
 assert.ok(!rankEnhance.includes("buildIntentIntelligenceEngine(query)"), "no duplicate 2A build in rank enhance");
 pass("search_rank_enhance_uses_unified_intent");

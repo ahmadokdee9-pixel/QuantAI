@@ -36,6 +36,7 @@ import {
 import type { ProductTrayMeta } from "@/lib/ui/productDifferentiationEngine";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { overlayCoherentWithUniversal, type UniversalProductDecision } from "@/lib/ui/universalProductDecision";
+import { resolveTruthRankDelta } from "@/lib/truth/trustDrivenCompositeRank";
 
 function clipLine(text: string, max = 220): string {
   const trimmed = text.trim().replace(/\s+/g, " ");
@@ -145,6 +146,7 @@ export function buildCommerceRankingDecisionMap(
     trustScore: number;
     verdict: UniversalProductDecision["verdict"];
     price: number;
+    truthRankDelta?: number;
   }> = [];
 
   for (const [link, decision] of base.decisions) {
@@ -191,6 +193,10 @@ export function buildCommerceRankingDecisionMap(
       trustScore: intel.merchantTrustIntelligence.trustScore,
       verdict: decision.verdict,
       price: row.product.price,
+      truthRankDelta: resolveTruthRankDelta({
+        product: row.product,
+        searchQuery: row.searchQuery,
+      }),
     });
   }
 

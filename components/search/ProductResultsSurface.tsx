@@ -173,9 +173,14 @@ export default function ProductResultsSurface({
     return () => window.clearTimeout(id);
   }, [sortedProducts, searchQuery, resultsKey]);
 
+  const truthPrefetchByLink = useMemo(
+    () => parseTruthFoundationPrefetch(searchMeta?.truthFoundationPrefetch),
+    [searchMeta?.truthFoundationPrefetch]
+  );
+
   const compositeRanked = useMemo(
-    () => sortByCompositeRankEnhanced(sortedProducts, searchQuery),
-    [sortedProducts, searchQuery]
+    () => sortByCompositeRankEnhanced(sortedProducts, searchQuery, { truthPrefetchByLink }),
+    [sortedProducts, searchQuery, truthPrefetchByLink]
   );
   const rankByLink = useMemo(() => {
     const m = new Map<string, number>();
@@ -312,10 +317,6 @@ export default function ProductResultsSurface({
         ])
       ),
     [sortedProducts, searchQuery]
-  );
-  const truthPrefetchByLink = useMemo(
-    () => parseTruthFoundationPrefetch(searchMeta?.truthFoundationPrefetch),
-    [searchMeta?.truthFoundationPrefetch]
   );
   const commerceCore = useMemo(
     () =>

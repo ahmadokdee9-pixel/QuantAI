@@ -46,6 +46,7 @@ export function rankSearchResults(args: {
     trustScore: number;
     verdict: PrimaryVerdict;
     price: number;
+    truthRankDelta?: number;
   }>;
 }): SearchRankEntry[] {
   const { winner, rows } = args;
@@ -62,6 +63,8 @@ export function rankSearchResults(args: {
       if (row.link === winner.winnerLink) rankScore += 25;
       if (row.verdict === "BUY READY") rankScore += 6;
       if (row.verdict === "AVOID") rankScore -= 20;
+      const truthDelta = row.truthRankDelta ?? 0;
+      if (Number.isFinite(truthDelta)) rankScore += truthDelta;
       return { ...row, rankScore: clamp(Math.round(rankScore), 0, 100) };
     })
     .sort((a, b) => b.rankScore - a.rankScore);

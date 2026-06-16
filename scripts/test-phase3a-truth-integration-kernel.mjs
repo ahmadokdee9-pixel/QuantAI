@@ -19,8 +19,8 @@ assert.ok(!surface.includes("truthIntegrationKernel"), "no UI truth kernel impor
 pass("no_ui_redesign");
 
 const rankEnhance = readFileSync(join(process.cwd(), "lib/intelligence/searchRankEnhance.ts"), "utf8");
-assert.ok(!rankEnhance.includes("truthIntegrationKernel"), "kernel not wired into ranking yet");
-pass("no_ranking_redesign_yet");
+assert.ok(rankEnhance.includes("sortProductsByTrustDrivenRank"), "kernel wired into ranking");
+pass("ranking_uses_trust_driven_scorer");
 
 const gamingLaptop = {
   id: 1,

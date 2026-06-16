@@ -27,8 +27,8 @@ assert.ok(!surface.includes("rankingDecisionRecord"), "no UI decision record imp
 pass("no_ui_redesign");
 
 const rankEnhance = readFileSync(join(process.cwd(), "lib/intelligence/searchRankEnhance.ts"), "utf8");
-assert.ok(!rankEnhance.includes("truthIntegrationKernel"), "no ranking delta wiring yet");
-pass("no_ranking_order_change");
+assert.ok(rankEnhance.includes("sortProductsByTrustDrivenRank"), "ranking uses trust-driven scorer");
+pass("ranking_uses_trust_driven_scorer");
 
 const phase45 = readFileSync(join(process.cwd(), "lib/ui/phase45ProductionReadinessActivation.ts"), "utf8");
 assert.ok(phase45.includes("enrichDecisionWithRankingRecord"), "phase45 attaches decision records");
@@ -72,7 +72,7 @@ assert.equal(record.link, gamingLaptop.link);
 assert.equal(record.baseScore, 72);
 assert.ok(Number.isFinite(record.finalRankScore));
 assert.ok(Number.isFinite(record.truthDelta));
-assert.equal(record.finalRankScore, Math.min(100, Math.max(0, Math.round(record.baseScore + record.truthDelta))));
+assert.equal(record.finalRankScore, Math.round((record.baseScore + record.truthDelta) * 10) / 10);
 assert.equal(record.layers.length, 9);
 assert.ok(record.whyRanked.length > 0);
 assert.ok(Array.isArray(record.influencedLayers));

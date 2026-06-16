@@ -11,7 +11,9 @@ import {
   type TruthRankLayerContribution,
   type TruthRankLayerId,
 } from "@/lib/truth/truthIntegrationKernel";
-import type { TruthFoundationSnapshot } from "@/lib/truth/truthFoundationTypes";
+import { computeTrustDrivenRankScore } from "@/lib/truth/trustDrivenCompositeRank";
+import type { TruthFoundationPrefetchEntry, TruthFoundationSnapshot } from "@/lib/truth/truthFoundationTypes";
+import type { QuantProduct } from "@/lib/shoppingScore";
 
 export type RankingCompositeBreakdown = {
   relevance: number;
@@ -166,9 +168,13 @@ export function buildRankingDecisionRecord(args: {
   link: string;
   foundation: TruthFoundationSnapshot;
   baseScore?: number;
+  finalRankScore?: number;
 }): RankingDecisionRecord {
   const bundle = computeTruthRankContributions(args.foundation);
-  const baseScore = resolveBaseScore(args.foundation, args.baseScore);
+  const baseScore =
+    typeof args.baseScore === "number" && Number.isFinite(args.baseScore)
+      ? Math.round(args.baseScore * 10) / 10
+      : resolveBaseScore(args.foundation, args.baseScore);
   const truthDelta = bundle.truthRankDelta;
   const compositeBreakdown = buildCompositeBreakdown(args.foundation);
   const influencedLayers = buildInfluencedLayers(bundle.layers);
@@ -179,11 +185,15 @@ export function buildRankingDecisionRecord(args: {
     influencedLayers,
     baseScore,
   });
+  const finalRankScore =
+    typeof args.finalRankScore === "number" && Number.isFinite(args.finalRankScore)
+      ? Math.round(args.finalRankScore * 10) / 10
+      : Math.round((baseScore + truthDelta) * 10) / 10;
 
   return {
     version: 1,
     link: args.link,
-    finalRankScore: clampScore(baseScore + truthDelta),
+    finalRankScore,
     baseScore,
     truthDelta,
     compositeBreakdown,
@@ -220,18 +230,34 @@ export function parseTruthRankingByLink(raw: unknown): Map<string, RankingDecisi
 /** Attach decision record and enrich existing rank explanation fields (no ranking order change). */
 export function enrichDecisionWithRankingRecord(
   decision: UniversalProductDecision,
-  options?: { productTitle?: string }
+  options?: {
+    productTitle?: string;
+    product?: QuantProduct;
+    list?: QuantProduct[];
+    searchQuery?: string;
+    prefetch?: TruthFoundationPrefetchEntry | null;
+  }
 ): UniversalProductDecision {
   const intel = decision.productIntelligence;
   const foundation = intel?.truthFoundation;
   if (!intel || !foundation) return decision;
 
-  const baseScore = intel.searchRank?.rankScore;
-  const rankingDecisionRecord = buildRankingDecisionRecord({
-    link: decision.link,
-    foundation,
-    baseScore,
-  });
+  let rankingDecisionRecord: RankingDecisionRecord;
+  if (options?.product && options.list && options.searchQuery) {
+    const trustDriven = computeTrustDrivenRankScore({
+      product: options.product,
+      list: options.list,
+      query: options.searchQuery,
+      prefetch: options.prefetch ?? null,
+    });
+    rankingDecisionRecord = trustDriven.record;
+  } else {
+    rankingDecisionRecord = buildRankingDecisionRecord({
+      link: decision.link,
+      foundation,
+      baseScore: intel.searchRank?.rankScore,
+    });
+  }
 
   let rankExplanation = intel.rankExplanation;
   if (intel.searchRank && intel.globalCategoryIntelligence) {

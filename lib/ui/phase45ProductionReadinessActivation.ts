@@ -23,6 +23,10 @@ import {
 import { attachTruthFoundationToDecision } from "@/lib/truth/truthEvidenceBuilder";
 import { enrichDecisionWithRankingRecord } from "@/lib/truth/rankingDecisionRecord";
 import {
+  sortProductsByTrustDrivenRank,
+  trustDrivenRankOrder,
+} from "@/lib/truth/trustDrivenCompositeRank";
+import {
   sanitizeUniversalDecision,
   validateTraySafety,
 } from "@/lib/intelligence/productionSafetyEngine";
@@ -80,6 +84,9 @@ export function buildProductionReadinessDecisionMap(
     marketMemory
   );
 
+  const trayProducts = [...productsByLink.values()].map((row) => row.product);
+  const traySearchQuery = productsByLink.values().next().value?.searchQuery ?? "";
+
   const attachTruthFoundationAndRankingRecord = (decision: UniversalProductDecision): UniversalProductDecision => {
     const ctx = productsByLink.get(decision.link);
     if (!ctx) return decision;
@@ -89,7 +96,13 @@ export function buildProductionReadinessDecisionMap(
       marketMemory,
       prefetch: truthPrefetchByLink?.get(decision.link) ?? null,
     });
-    return enrichDecisionWithRankingRecord(withFoundation, { productTitle: ctx.product.title });
+    return enrichDecisionWithRankingRecord(withFoundation, {
+      productTitle: ctx.product.title,
+      product: ctx.product,
+      list: trayProducts,
+      searchQuery: ctx.searchQuery,
+      prefetch: truthPrefetchByLink?.get(decision.link) ?? null,
+    });
   };
 
   const rankedLinks = [...base.trayContext.intelligenceRankOrder];
@@ -292,6 +305,11 @@ export function buildProductionReadinessDecisionMap(
   const safety = validateTraySafety(result);
   const distribution = buySignalDistributionSummary(balancedTiers);
 
+  const { scoresByLink: trustScoresByLink } = sortProductsByTrustDrivenRank(trayProducts, traySearchQuery, {
+    truthPrefetchByLink,
+  });
+  const intelligenceRankOrder = trustDrivenRankOrder(rankedLinks, trustScoresByLink);
+
   return {
     decisions: result,
     trayContext: {
@@ -302,6 +320,7 @@ export function buildProductionReadinessDecisionMap(
       opportunityDistribution: distribution,
       buyOpportunityDistribution: distribution,
       decisionCalibrationDistribution: distribution,
+      intelligenceRankOrder,
     },
   };
 }

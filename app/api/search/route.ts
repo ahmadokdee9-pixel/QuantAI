@@ -102,11 +102,8 @@ import {
   prefetchTruthFoundationBatch,
   serializeTruthFoundationPrefetch,
 } from "@/lib/truth/truthFoundationLoader";
-import { buildTruthFoundationSnapshot } from "@/lib/truth/truthEvidenceBuilder";
-import {
-  buildRankingDecisionRecord,
-  serializeTruthRankingByLink,
-} from "@/lib/truth/rankingDecisionRecord";
+import { serializeTruthRankingByLink } from "@/lib/truth/rankingDecisionRecord";
+import { computeTrustDrivenRankScore } from "@/lib/truth/trustDrivenCompositeRank";
 import {
   circuitSnapshot,
   getGuestStaleTray,
@@ -2139,18 +2136,16 @@ async function handleSearch(
     const truthFoundationPrefetch = serializeTruthFoundationPrefetch(truthFoundationPrefetchMap);
 
     const truthRankingRecords = new Map<string, import("@/lib/truth/rankingDecisionRecord").RankingDecisionRecord>();
-    for (const product of products.slice(0, 36)) {
+    const traySlice = products.slice(0, 36);
+    for (const product of traySlice) {
       const prefetch = truthFoundationPrefetchMap.get(product.link) ?? null;
-      const foundation = buildTruthFoundationSnapshot({
+      const trustDriven = computeTrustDrivenRankScore({
         product,
-        listingUrl: product.link,
-        searchQuery: query,
+        list: traySlice,
+        query,
         prefetch,
       });
-      truthRankingRecords.set(
-        product.link,
-        buildRankingDecisionRecord({ link: product.link, foundation })
-      );
+      truthRankingRecords.set(product.link, trustDriven.record);
     }
     const truthRankingByLink = serializeTruthRankingByLink(truthRankingRecords);
 
