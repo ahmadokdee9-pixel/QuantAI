@@ -29,7 +29,7 @@ import {
   type RankingDecisionRecord,
 } from "@/lib/truth/rankingDecisionRecord";
 import { buildTruthFoundationSnapshot } from "@/lib/truth/truthEvidenceBuilder";
-import type { TruthFoundationPrefetchEntry } from "@/lib/truth/truthFoundationTypes";
+import type { TruthFoundationPrefetchEntry, TruthFoundationSnapshot } from "@/lib/truth/truthFoundationTypes";
 import {
   resolveUnifiedSearchIntent,
   type PurchaseIntent,
@@ -46,7 +46,37 @@ export type TrustDrivenRankResult = {
 export type TrustDrivenRankOptions = {
   truthPrefetchByLink?: Map<string, TruthFoundationPrefetchEntry> | null;
   unified?: UnifiedSearchIntent;
+  /** Batch memoization — same inputs return same snapshot within one sort. */
+  foundationCache?: Map<string, TruthFoundationSnapshot>;
 };
+
+function foundationCacheKey(
+  product: QuantProduct,
+  query: string,
+  prefetch?: TruthFoundationPrefetchEntry | null
+): string {
+  return `${product.link}::${query}::${prefetch?.canonicalSkuId ?? "inline"}`;
+}
+
+function resolveTruthFoundationSnapshot(args: {
+  product: QuantProduct;
+  searchQuery: string;
+  prefetch?: TruthFoundationPrefetchEntry | null;
+  foundationCache?: Map<string, TruthFoundationSnapshot>;
+}): TruthFoundationSnapshot {
+  const key = foundationCacheKey(args.product, args.searchQuery, args.prefetch);
+  const cached = args.foundationCache?.get(key);
+  if (cached) return cached;
+
+  const foundation = buildTruthFoundationSnapshot({
+    product: args.product,
+    listingUrl: args.product.link,
+    searchQuery: args.searchQuery,
+    prefetch: args.prefetch ?? null,
+  });
+  args.foundationCache?.set(key, foundation);
+  return foundation;
+}
 
 function anchorInflationPenalty(p: QuantProduct): number {
   if (p.oldPrice == null || p.oldPrice <= p.price || p.price <= 0) return 0;
@@ -203,12 +233,13 @@ export function resolveTruthRankDelta(args: {
   product: QuantProduct;
   searchQuery: string;
   prefetch?: TruthFoundationPrefetchEntry | null;
+  foundationCache?: Map<string, TruthFoundationSnapshot>;
 }): number {
-  const foundation = buildTruthFoundationSnapshot({
+  const foundation = resolveTruthFoundationSnapshot({
     product: args.product,
-    listingUrl: args.product.link,
     searchQuery: args.searchQuery,
     prefetch: args.prefetch ?? null,
+    foundationCache: args.foundationCache,
   });
   return computeTruthRankContributions(foundation).truthRankDelta;
 }
@@ -220,6 +251,7 @@ export function computeTrustDrivenRankScore(args: {
   query: string;
   prefetch?: TruthFoundationPrefetchEntry | null;
   unified?: UnifiedSearchIntent;
+  foundationCache?: Map<string, TruthFoundationSnapshot>;
 }): TrustDrivenRankResult {
   const legacyBase = computeLegacyCompositeBase({
     product: args.product,
@@ -227,11 +259,11 @@ export function computeTrustDrivenRankScore(args: {
     query: args.query,
     unified: args.unified,
   });
-  const foundation = buildTruthFoundationSnapshot({
+  const foundation = resolveTruthFoundationSnapshot({
     product: args.product,
-    listingUrl: args.product.link,
     searchQuery: args.query,
     prefetch: args.prefetch ?? null,
+    foundationCache: args.foundationCache,
   });
   const truthDelta = computeTruthRankContributions(foundation).truthRankDelta;
   const finalScore = Math.round((legacyBase + truthDelta) * 10) / 10;
@@ -257,6 +289,7 @@ export function sortProductsByTrustDrivenRank(
 
   const unified = options?.unified ?? resolveUnifiedSearchIntent(query);
   const scoresByLink = new Map<string, TrustDrivenRankResult>();
+  const foundationCache = options?.foundationCache ?? new Map<string, TruthFoundationSnapshot>();
 
   for (const product of list) {
     scoresByLink.set(
@@ -267,6 +300,7 @@ export function sortProductsByTrustDrivenRank(
         query,
         prefetch: options?.truthPrefetchByLink?.get(product.link) ?? null,
         unified,
+        foundationCache,
       })
     );
   }

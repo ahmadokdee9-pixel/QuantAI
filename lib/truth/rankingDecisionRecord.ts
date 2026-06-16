@@ -11,7 +11,7 @@ import {
   type TruthRankLayerContribution,
   type TruthRankLayerId,
 } from "@/lib/truth/truthIntegrationKernel";
-import { computeTrustDrivenRankScore } from "@/lib/truth/trustDrivenCompositeRank";
+import { computeTrustDrivenRankScore, type TrustDrivenRankResult } from "@/lib/truth/trustDrivenCompositeRank";
 import type { TruthFoundationPrefetchEntry, TruthFoundationSnapshot } from "@/lib/truth/truthFoundationTypes";
 import type { QuantProduct } from "@/lib/shoppingScore";
 
@@ -236,6 +236,7 @@ export function enrichDecisionWithRankingRecord(
     list?: QuantProduct[];
     searchQuery?: string;
     prefetch?: TruthFoundationPrefetchEntry | null;
+    trustDrivenResult?: TrustDrivenRankResult;
   }
 ): UniversalProductDecision {
   const intel = decision.productIntelligence;
@@ -243,7 +244,9 @@ export function enrichDecisionWithRankingRecord(
   if (!intel || !foundation) return decision;
 
   let rankingDecisionRecord: RankingDecisionRecord;
-  if (options?.product && options.list && options.searchQuery) {
+  if (options?.trustDrivenResult) {
+    rankingDecisionRecord = options.trustDrivenResult.record;
+  } else if (options?.product && options.list && options.searchQuery) {
     const trustDriven = computeTrustDrivenRankScore({
       product: options.product,
       list: options.list,

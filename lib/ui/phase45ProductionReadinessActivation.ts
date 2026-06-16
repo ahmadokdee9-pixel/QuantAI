@@ -87,6 +87,10 @@ export function buildProductionReadinessDecisionMap(
   const trayProducts = [...productsByLink.values()].map((row) => row.product);
   const traySearchQuery = productsByLink.values().next().value?.searchQuery ?? "";
 
+  const { scoresByLink: trustScoresByLink } = sortProductsByTrustDrivenRank(trayProducts, traySearchQuery, {
+    truthPrefetchByLink,
+  });
+
   const attachTruthFoundationAndRankingRecord = (decision: UniversalProductDecision): UniversalProductDecision => {
     const ctx = productsByLink.get(decision.link);
     if (!ctx) return decision;
@@ -102,6 +106,7 @@ export function buildProductionReadinessDecisionMap(
       list: trayProducts,
       searchQuery: ctx.searchQuery,
       prefetch: truthPrefetchByLink?.get(decision.link) ?? null,
+      trustDrivenResult: trustScoresByLink.get(decision.link),
     });
   };
 
@@ -305,9 +310,6 @@ export function buildProductionReadinessDecisionMap(
   const safety = validateTraySafety(result);
   const distribution = buySignalDistributionSummary(balancedTiers);
 
-  const { scoresByLink: trustScoresByLink } = sortProductsByTrustDrivenRank(trayProducts, traySearchQuery, {
-    truthPrefetchByLink,
-  });
   const intelligenceRankOrder = trustDrivenRankOrder(rankedLinks, trustScoresByLink);
 
   return {
