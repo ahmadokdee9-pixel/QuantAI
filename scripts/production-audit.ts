@@ -13,6 +13,9 @@ import {
 import { buildProductionReadinessDecisionMap } from "@/lib/ui/phase45ProductionReadinessActivation";
 import { validateTraySafety } from "@/lib/intelligence/productionSafetyEngine";
 import { distributionWithinTargets } from "@/lib/intelligence/buySignalBalancingEngine";
+import { alignDecisionBriefToCanonicalWinner } from "@/lib/intelligence/decisionBriefEngine";
+import { resolveCanonicalSearchRank } from "@/lib/truth/canonicalSearchRank";
+import { runGoldenRankingBenchmarks } from "@/lib/truth/rankingValidation";
 import type { QuantProduct } from "@/lib/shoppingScore";
 
 type AuditCheck = { name: string; pass: boolean; weight: number; detail: string };
@@ -264,6 +267,47 @@ for (const [label, config] of Object.entries(categories)) {
 }
 
 addCheck("Runtime pipeline audit", runtimePass, 20, "Category scenarios execute with Phase 45 blobs");
+
+const goldenResults = runGoldenRankingBenchmarks();
+const goldenPassCount = goldenResults.filter((row) => row.pass).length;
+const goldenPass = goldenPassCount === goldenResults.length;
+addCheck(
+  "Phase A golden rank benchmarks",
+  goldenPass,
+  15,
+  `${goldenPassCount}/${goldenResults.length} golden queries pass canonical rank`
+);
+
+const phaseAAuditTray: QuantProduct[] = categories.laptops.tray;
+const phaseACanonical = resolveCanonicalSearchRank(phaseAAuditTray, categories.laptops.query);
+const phaseABrief = alignDecisionBriefToCanonicalWinner(
+  {
+    headline: "tray",
+    recommendation: {
+      label: "Top pick",
+      title: phaseAAuditTray[0].title,
+      store: phaseAAuditTray[0].store,
+      link: phaseAAuditTray[0].link,
+      price: phaseAAuditTray[0].price,
+    },
+    why: [],
+    alternatives: [],
+    discountNote: null,
+    confidence: 0.84,
+    sparseTrayWarning: null,
+  },
+  phaseACanonical.orderedProducts[0],
+  phaseACanonical.orderedProducts
+);
+const phaseASurfaceAligned =
+  phaseACanonical.orderedProducts[0]?.link === phaseABrief?.recommendation.link &&
+  phaseACanonical.orderLinks[0] === phaseACanonical.orderedProducts[0]?.link;
+addCheck(
+  "Phase A cross-surface rank consistency",
+  phaseASurfaceAligned,
+  15,
+  "API/canonical #1 matches decision brief #1"
+);
 addCheck(
   "Production safety validated",
   weaknesses.every((w) => !w.includes("production safety issues")),

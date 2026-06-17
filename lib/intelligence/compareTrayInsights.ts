@@ -1,70 +1,85 @@
 import { currencySymbolFromListing, formatListingPrice } from "@/lib/commerce/cues";
 import type { QuantProduct } from "@/lib/shoppingScore";
-import { getFinalComposite, getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
+import { getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
 
 export type CompareQuickLine = { id: string; title: string; body: string };
 
-/** Pre-verdict analyst snapshot — pure heuristics from pinned rows vs full tray. */
-export function buildCompareTrayInsights(products: QuantProduct[], list: QuantProduct[]): CompareQuickLine[] {
-  if (products.length < 2) return [];
-  const sym = currencySymbolFromListing(products[0]!);
-  const rows = products.map((p) => {
-    const qi = getFinalComposite(p, list);
-    const trust = getStoreTrustScore(p.store);
-    const stars = ratingValue(p.rating);
-    const rev = p.reviewsCount ?? 0;
-    const risk = p.qiCommerce?.retailerRiskScore ?? 40;
-    const vfm = p.qiCommerce?.valueForMoney ?? 50;
-    return { p, qi, trust, stars, rev, risk, vfm };
-  });
-  const byQi = [...rows].sort((a, b) => b.qi - a.qi);
-  const byTrust = [...rows].sort((a, b) => b.trust - a.trust);
-  const byPrice = [...rows].filter((r) => r.p.price > 0).sort((a, b) => a.p.price - b.p.price);
-  const byRisk = [...rows].sort((a, b) => b.risk - a.risk);
+/** Pre-verdict analyst snapshot — grid #1 is always the canonical compare leader. */
+export function buildCompareTrayInsights(
+  compareProducts: QuantProduct[],
+  trustOrderedProducts: QuantProduct[]
+): CompareQuickLine[] {
+  if (compareProducts.length < 2 || trustOrderedProducts.length === 0) return [];
 
+  const gridLeader = trustOrderedProducts[0]!;
+  const sym = currencySymbolFromListing(gridLeader);
   const lines: CompareQuickLine[] = [];
-  const lead = byQi[0]!;
+
   lines.push({
-    id: "composite",
-    title: "Composite leader",
-    body: `${lead.p.title.slice(0, 56)}${lead.p.title.length > 56 ? "…" : ""} · QI ${lead.qi} — strongest blended score in your compare set.`,
+    id: "grid-leader",
+    title: "Grid #1 — canonical leader",
+    body: `${gridLeader.title.slice(0, 56)}${gridLeader.title.length > 56 ? "…" : ""} · matches search grid rank #1 and canonical trust order.`,
   });
 
-  const safest = byTrust[0]!;
-  if (safest.p.link !== lead.p.link) {
+  const pinnedHasLeader = compareProducts.some((product) => product.link === gridLeader.link);
+  if (!pinnedHasLeader) {
     lines.push({
-      id: "trust",
-      title: "Safer checkout lane",
-      body: `${safest.p.title.slice(0, 48)}… · trust prior ${safest.trust}/100 — calmer if policy anxiety dominates.`,
+      id: "leader-not-pinned",
+      title: "Canonical leader not pinned",
+      body: `Grid #1 is not in your compare set — pin it to benchmark alternatives against the canonical leader.`,
     });
   }
 
-  if (byPrice[0]) {
-    const cheap = byPrice[0]!;
-    lines.push({
-      id: "price",
-      title: "Price floor in selection",
-      body: `${cheap.p.title.slice(0, 48)}… at ${formatListingPrice(cheap.p.price, sym)} — sanity-check SKU parity vs higher-QI rows.`,
-    });
+  const alternatives = compareProducts.filter((product) => product.link !== gridLeader.link);
+  if (alternatives.length > 0) {
+    const alt = alternatives.sort((a, b) => a.price - b.price)[0]!;
+    if (alt.price > 0 && gridLeader.price > 0 && alt.price < gridLeader.price) {
+      lines.push({
+        id: "price",
+        title: "Lower price in compare set",
+        body: `${alt.title.slice(0, 48)}… at ${formatListingPrice(alt.price, sym)} — verify SKU parity vs grid #1 before switching.`,
+      });
+    }
   }
 
-  const riskiest = byRisk[0]!;
-  if (riskiest.risk >= 58) {
+  const safestAlt = [...compareProducts]
+    .filter((product) => product.link !== gridLeader.link)
+    .sort((a, b) => getStoreTrustScore(b.store) - getStoreTrustScore(a.store))[0];
+  if (safestAlt) {
+    const trust = getStoreTrustScore(safestAlt.store);
+    if (trust > getStoreTrustScore(gridLeader.store) + 8) {
+      lines.push({
+        id: "trust",
+        title: "Higher-trust pinned alternative",
+        body: `${safestAlt.title.slice(0, 48)}… · trust prior ${trust}/100 — still secondary to grid #1 unless you override manually.`,
+      });
+    }
+  }
+
+  const riskiest = [...compareProducts].sort(
+    (a, b) => (b.qiCommerce?.retailerRiskScore ?? 40) - (a.qiCommerce?.retailerRiskScore ?? 40)
+  )[0];
+  if (riskiest && (riskiest.qiCommerce?.retailerRiskScore ?? 40) >= 58) {
     lines.push({
       id: "risk",
       title: "Risk spotlight",
-      body: `${riskiest.p.title.slice(0, 48)}… retailer-risk heuristic ${riskiest.risk}/100 — read seller and fulfilment language closely.`,
+      body: `${riskiest.title.slice(0, 48)}… retailer-risk heuristic ${riskiest.qiCommerce?.retailerRiskScore ?? 40}/100 — read seller terms closely.`,
     });
   }
 
-  const byVfm = [...rows].sort((a, b) => b.vfm - a.vfm);
-  const vfmLead = byVfm[0]!;
-  if (vfmLead.p.link !== lead.p.link && products.length >= 2) {
-    lines.push({
-      id: "vfm",
-      title: "Value-for-money lean",
-      body: `${vfmLead.p.title.slice(0, 48)}… scores higher on modeled value-for-money vs peers you pinned.`,
-    });
+  const byVfm = [...compareProducts].sort(
+    (a, b) => (b.qiCommerce?.valueForMoney ?? 50) - (a.qiCommerce?.valueForMoney ?? 50)
+  );
+  const vfmLead = byVfm[0];
+  if (vfmLead && vfmLead.link !== gridLeader.link && compareProducts.length >= 2) {
+    const stars = ratingValue(vfmLead.rating);
+    if (stars > 0) {
+      lines.push({
+        id: "vfm",
+        title: "Value signal in pinned set",
+        body: `${vfmLead.title.slice(0, 48)}… shows stronger modeled value-for-money vs other pinned rows (grid #1 remains canonical).`,
+      });
+    }
   }
 
   return lines.slice(0, 5);

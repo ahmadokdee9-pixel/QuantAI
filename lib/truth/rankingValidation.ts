@@ -11,6 +11,7 @@ import {
   trustDrivenRankOrder,
   type TrustDrivenRankResult,
 } from "@/lib/truth/trustDrivenCompositeRank";
+import { resolveCanonicalSearchRank } from "@/lib/truth/canonicalSearchRank";
 import { buildTruthFoundationSnapshot } from "@/lib/truth/truthEvidenceBuilder";
 
 export type GoldenRankingBenchmark = {
@@ -477,7 +478,11 @@ export type GoldenBenchmarkResult = {
 /** Run all golden benchmarks and return structured results. */
 export function runGoldenRankingBenchmarks(): GoldenBenchmarkResult[] {
   return GOLDEN_RANKING_BENCHMARKS.map((benchmark) => {
-    const { sorted, scoresByLink } = sortProductsByTrustDrivenRank(benchmark.products, benchmark.query);
+    const { orderedProducts, scoresByLink } = resolveCanonicalSearchRank(
+      benchmark.products,
+      benchmark.query
+    );
+    const sorted = orderedProducts;
     const top3 = sorted.slice(0, 3).map((product) => product.link);
     const productsByLink = new Map(benchmark.products.map((product) => [product.link, product]));
     const anomalies = detectRankingAnomalies({

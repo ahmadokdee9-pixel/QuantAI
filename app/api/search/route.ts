@@ -103,7 +103,10 @@ import {
   serializeTruthFoundationPrefetch,
 } from "@/lib/truth/truthFoundationLoader";
 import { serializeTruthRankingByLink } from "@/lib/truth/rankingDecisionRecord";
-import { computeTrustDrivenRankScore } from "@/lib/truth/trustDrivenCompositeRank";
+import { resolveCanonicalSearchRank } from "@/lib/truth/canonicalSearchRank";
+import { createTrayOrderLock } from "@/lib/truth/trayOrderLock";
+import { alignDecisionBriefToCanonicalWinner } from "@/lib/intelligence/decisionBriefEngine";
+import { filterRecommendationTray } from "@/lib/ui/listingOutlierFilter";
 import {
   circuitSnapshot,
   getGuestStaleTray,
@@ -1133,8 +1136,9 @@ async function handleSearch(
     }
 
     const intents = canonicalQuery.commerceIntents;
+    const trayOrderLock = createTrayOrderLock(products);
     let stageBefore = products.length;
-    products = applyPredictiveCommerceToTray(products, query, intents);
+    products = trayOrderLock.preserve(applyPredictiveCommerceToTray(products, query, intents));
     traceStage("predictive_ranking", stageBefore, products.length);
     const shopperPersona = detectShopperPersonas(query, intents);
     const prevCommerceMemory = safeParseCommerceSessionMemory(opts?.commerceMemory);
@@ -1147,10 +1151,10 @@ async function handleSearch(
       tasteTagIds
     );
     stageBefore = products.length;
-    products = applyPersonaRanking(products, shopperPersona, commerceSessionMemory);
+    products = trayOrderLock.preserve(applyPersonaRanking(products, shopperPersona, commerceSessionMemory));
     traceStage("persona_ranking", stageBefore, products.length);
     stageBefore = products.length;
-    products = applyMarketAwarenessRanking(products, query);
+    products = trayOrderLock.preserve(applyMarketAwarenessRanking(products, query));
     traceStage("market_awareness_ranking", stageBefore, products.length);
     const preIdentityGateProducts = products;
     products = applyHardIdentityGate(products, canonicalQuery);
@@ -1159,19 +1163,20 @@ async function handleSearch(
       products = recoverSafeIdentityBreadth(preIdentityGateProducts, canonicalQuery);
       traceStage("safe_identity_breadth_recovery", 0, products.length);
     }
+    trayOrderLock.reset(products);
     const preSemanticProducts = products;
     const preTasteTrayLinks =
       canonicalQuery.category === "watch" || canonicalQuery.category === "fragrance"
         ? products.slice(0, 12).map((p) => p.link || p.title)
         : [];
-    products = semanticRerankSearchResults(products, query, canonicalQuery);
+    products = trayOrderLock.preserve(semanticRerankSearchResults(products, query, canonicalQuery));
     traceStage("semantic_rerank", preSemanticProducts.length, products.length);
     const normPostSemantic = executeNormalizationStage({
       products,
       query,
       stage: "post_semantic",
     });
-    products = normPostSemantic.products;
+    products = trayOrderLock.preserve(normPostSemantic.products);
     normalizationMeta = normPostSemantic.meta;
     normalizationShadowPostSemantic = normPostSemantic.shadowTelemetry;
     traceStage(
@@ -1182,16 +1187,18 @@ async function handleSearch(
     if (products.length === 0 && preSemanticProducts.length > 0) {
       products = preSemanticProducts.map((p, i) => ({ ...p, qiRank: i }));
       traceStage("semantic_empty_guard", 0, products.length);
+      trayOrderLock.reset(products);
     }
     stageBefore = products.length;
-    products = buildCommerceQualityLayer(products, query, canonicalQuery);
+    products = trayOrderLock.preserve(buildCommerceQualityLayer(products, query, canonicalQuery));
     traceStage("final_commerce_quality_order", stageBefore, products.length);
     stageBefore = products.length;
-    products = buildBuyingDecisionLayer(products, query, canonicalQuery);
+    products = trayOrderLock.preserve(buildBuyingDecisionLayer(products, query, canonicalQuery));
     traceStage("buying_decision_order", stageBefore, products.length);
     stageBefore = products.length;
-    products = applyMerchantDiversitySafeguard(products);
+    products = trayOrderLock.preserve(applyMerchantDiversitySafeguard(products));
     traceStage("merchant_diversity_safeguard", stageBefore, products.length);
+    trayOrderLock.reset(products);
 
     const { topCategory } = memoryPatchFromSearch(query);
 
@@ -1356,7 +1363,7 @@ async function handleSearch(
         rankingStable: true,
       },
     });
-    products = controlledStackResult.products;
+    products = trayOrderLock.preserve(controlledStackResult.products);
     const {
       intentRuntime,
       intentOrchestration,
@@ -1402,7 +1409,7 @@ async function handleSearch(
       shadowPostSemantic: normalizationShadowPostSemantic,
       priorMeta: normalizationMeta,
     });
-    products = normalizationFinal.products;
+    products = trayOrderLock.preserve(normalizationFinal.products);
     normalizationMeta = normalizationFinal.meta;
     normalizationShadowPostControlled = normalizationFinal.shadowPostControlled;
     normalizationResponseMeta = normalizationFinal.responseMeta;
@@ -1592,7 +1599,7 @@ async function handleSearch(
       commerceOsResult: autonomousCommerceOsResult,
       latencyBudgetOk: searchLatencyMs < 12_000,
     });
-    products = controlledActivationResult.products;
+    products = trayOrderLock.preserve(controlledActivationResult.products);
     controlledActivationResponseMeta = controlledActivationMetaForSearch(
       controlledActivationResult
     );
@@ -1865,12 +1872,12 @@ async function handleSearch(
     }
 
     stageBefore = products.length;
-    products = applyMerchantDiversitySafeguard(products);
+    products = trayOrderLock.preserve(applyMerchantDiversitySafeguard(products));
     traceStage("merchant_diversity_final", stageBefore, products.length);
 
     stageBefore = products.length;
     const intelligenceUpgrade = applySearchIntelligenceUpgrade(products, query, canonicalQuery);
-    products = intelligenceUpgrade.products;
+    products = trayOrderLock.preserve(intelligenceUpgrade.products);
     traceStage("search_intelligence_upgrade", stageBefore, products.length);
 
     stageBefore = products.length;
@@ -1880,14 +1887,14 @@ async function handleSearch(
       intelligenceUpgrade.meta.extractedIntent,
       canonicalQuery
     );
-    products = phase92Integrity.products;
+    products = trayOrderLock.preserve(phase92Integrity.products);
     traceStage("phase92_tray_integrity", stageBefore, products.length);
 
     const phase93TrustDiscount = applyPhase93TrustDiscountHardening(products, query, {
       decisionBrief: intelligenceUpgrade.meta.decisionBrief,
       baseDiscount: intelligenceUpgrade.meta.discountIntelligence,
     });
-    products = phase93TrustDiscount.products;
+    products = trayOrderLock.preserve(phase93TrustDiscount.products);
     traceStage("phase93_trust_discount", products.length, products.length);
 
     const phase95CommerceMemory = applyPhase95CommerceMemory(products, query, {
@@ -1897,7 +1904,7 @@ async function handleSearch(
       intent: intelligenceUpgrade.meta.extractedIntent,
       decisionBrief: phase93TrustDiscount.decisionBrief,
     });
-    products = phase95CommerceMemory.products;
+    products = trayOrderLock.preserve(phase95CommerceMemory.products);
     traceStage("phase95_commerce_memory", products.length, products.length);
 
     const verdictIntelligence = applyVerdictIntelligence({
@@ -2073,10 +2080,10 @@ async function handleSearch(
       rankingExecution,
       products,
     });
-    products = controlledRanking.products;
     const executedRanking = controlledRanking.executedRanking;
+    products = trayOrderLock.preserve(controlledRanking.products);
 
-    const decisionBrief = translateQuantAIIntelligence({
+    let decisionBrief = translateQuantAIIntelligence({
       decisionBrief: activateQuantAIIntelligence({
         decisionBrief: decisionBriefBeforeActivation,
         verdictIntelligence: explainability.verdictIntelligence,
@@ -2126,8 +2133,10 @@ async function handleSearch(
       latencyBudget,
     });
 
+    const trayForCanonical = filterRecommendationTray(trayOrderLock.baseline());
+
     const truthFoundationPrefetchMap = await prefetchTruthFoundationBatch(
-      products.slice(0, 36).map((product) => ({
+      trayForCanonical.slice(0, 36).map((product) => ({
         product,
         listingUrl: product.link,
         searchQuery: query,
@@ -2135,17 +2144,19 @@ async function handleSearch(
     );
     const truthFoundationPrefetch = serializeTruthFoundationPrefetch(truthFoundationPrefetchMap);
 
-    const truthRankingRecords = new Map<string, import("@/lib/truth/rankingDecisionRecord").RankingDecisionRecord>();
-    const traySlice = products.slice(0, 36);
-    for (const product of traySlice) {
-      const prefetch = truthFoundationPrefetchMap.get(product.link) ?? null;
-      const trustDriven = computeTrustDrivenRankScore({
-        product,
-        list: traySlice,
-        query,
-        prefetch,
-      });
-      truthRankingRecords.set(product.link, trustDriven.record);
+    const canonicalRank = resolveCanonicalSearchRank(trayForCanonical, query, {
+      truthPrefetchByLink: truthFoundationPrefetchMap,
+    });
+    products = canonicalRank.orderedProducts;
+    decisionBrief = alignDecisionBriefToCanonicalWinner(decisionBrief, products[0], products);
+
+    const truthRankingRecords = new Map<
+      string,
+      import("@/lib/truth/rankingDecisionRecord").RankingDecisionRecord
+    >();
+    for (const link of canonicalRank.orderLinks) {
+      const record = canonicalRank.scoresByLink.get(link)?.record;
+      if (record) truthRankingRecords.set(link, record);
     }
     const truthRankingByLink = serializeTruthRankingByLink(truthRankingRecords);
 

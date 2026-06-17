@@ -32,10 +32,8 @@ import {
   defaultResultsFilters,
 } from "@/lib/resultsFilters";
 import {
-  applyRankedResultsDisplayBridge,
-  isExecutedRankingActive,
-} from "@/lib/ranking/rankedResultsDisplayBridge";
-import type { ExecutedRankingMeta } from "@/lib/ranking/controlledRankingExecution";
+  dedupeSearchTray,
+} from "@/lib/intelligence/searchRankEnhance";
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
 import type { SearchEntitlementsDTO } from "@/lib/subscription/entitlements";
 import type { QuantPlanTier } from "@/lib/subscription/plans";
@@ -45,10 +43,6 @@ import { extractHumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
 import { loadMarketMemory, recordTrayPriceSnapshots } from "@/lib/intelligence/marketMemory";
 import { parseCommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
 import { sortByVerifiedDealRank } from "@/lib/intelligence/discountRank";
-import {
-  dedupeSearchTray,
-  sortByCompositeRankEnhanced,
-} from "@/lib/intelligence/searchRankEnhance";
 import { filterRecommendationTray } from "@/lib/ui/listingOutlierFilter";
 import {
   getStoreTrustScore,
@@ -219,18 +213,11 @@ export default function Home() {
   }, [mobilePerf, loading, searchIntelligence, pulseIntelligence]);
 
   const sortedProductsMemo = useMemo(() => {
-    const filteredForSort = dedupeSearchTray(applyResultsFilters(products, filters));
-    const executedRanking = searchMeta?.executedRanking as ExecutedRankingMeta | undefined;
-
-    if (isExecutedRankingActive(executedRanking)) {
-      return filterRecommendationTray(
-        applyRankedResultsDisplayBridge({
-          products: filteredForSort,
-          executedRanking,
-        })
-      );
+    if (sort === "value" || !sort) {
+      return applyResultsFilters(products, filters);
     }
 
+    const filteredForSort = dedupeSearchTray(applyResultsFilters(products, filters));
     const sortedList = [...filteredForSort];
     let ranked: QuantProduct[];
     switch (sort) {
@@ -247,12 +234,11 @@ export default function Home() {
       case "deals":
         ranked = sortByVerifiedDealRank(sortedList, query);
         break;
-      case "value":
       default:
-        ranked = sortByCompositeRankEnhanced(sortedList, query);
+        ranked = filteredForSort;
     }
     return filterRecommendationTray(ranked);
-  }, [products, filters, sort, query, searchMeta]);
+  }, [products, filters, sort, query]);
 
   useEffect(() => {
     if (sortedProductsMemo.length === 0) return;

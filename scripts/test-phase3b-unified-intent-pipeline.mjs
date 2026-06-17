@@ -40,7 +40,7 @@ pass("canonical_2a_snapshot_preserved");
 
 assert.equal(unified.commerceIntents.gaming, true, "2A gaming useCase enriches commerce gaming flag");
 assert.equal(unified.commerceIntents.budget, true, "2A budget enriches commerce budget flag");
-assert.equal(unified.commerceIntents.cheapestTrusted, true, "2A budget enriches cheapestTrusted");
+assert.equal(unified.commerceIntents.cheapestTrusted, false, "2A budget cap alone does not enrich cheapestTrusted");
 pass("2a_enriches_commerce_intents");
 
 const baseCommerce = parseCommerceSearchIntents(gamingQuery);
@@ -48,7 +48,7 @@ assert.equal(baseCommerce.gaming, true, "searchIntentV2 already detects gaming f
 assert.equal(unified.commerceIntents.qualitySeeking, true, "2A best quality enriches qualitySeeking");
 pass("commerce_flags_merged_not_replaced");
 
-assert.equal(unified.purchaseIntent, "budget", "2A budget cap enriches budget purchase intent");
+assert.equal(unified.purchaseIntent, "value", "best + budget cap uses value purchase intent");
 assert.equal(purchaseIntentFromQuery(gamingQuery), unified.purchaseIntent);
 assert.equal(derivePurchaseIntent(gamingQuery, unified.commerceIntents), unified.purchaseIntent);
 pass("purchase_intent_derivation");

@@ -27,7 +27,6 @@ import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTyp
 import type { SearchIntelligenceLevel } from "@/lib/subscription/plans";
 import type { ResultsFiltersState } from "@/lib/resultsFilters";
 import { buildCompareExport, buildTraySummary, copyText } from "@/lib/share/intelligenceExport";
-import { sortByCompositeRankEnhanced } from "@/lib/intelligence/searchRankEnhance";
 import { parseCommerceSearchIntents } from "@/lib/intelligence/searchIntentV2";
 import { extractHumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
 import { computeMarketAwarenessForTray } from "@/lib/intelligence/marketAwareness";
@@ -44,7 +43,6 @@ import {
 import {
   buildProductionReadinessDecisionMap,
   buildProductionReadinessDisplayCoherenceByLink,
-  orderProductsBySearchRank,
 } from "@/lib/ui/phase45ProductionReadinessActivation";
 import { parseTruthFoundationPrefetch } from "@/lib/truth/truthFoundationLoader";
 import CompareIntelligencePanel from "./CompareIntelligencePanel";
@@ -178,15 +176,13 @@ export default function ProductResultsSurface({
     [searchMeta?.truthFoundationPrefetch]
   );
 
-  const compositeRanked = useMemo(
-    () => sortByCompositeRankEnhanced(sortedProducts, searchQuery, { truthPrefetchByLink }),
-    [sortedProducts, searchQuery, truthPrefetchByLink]
-  );
+  const trustOrderedProducts = sortedProducts;
+
   const rankByLink = useMemo(() => {
     const m = new Map<string, number>();
-    compositeRanked.forEach((p, i) => m.set(p.link, i));
+    trustOrderedProducts.forEach((p, i) => m.set(p.link, i));
     return m;
-  }, [compositeRanked]);
+  }, [trustOrderedProducts]);
 
   const humanSearchIntent = useMemo(
     () => (searchQuery.trim() ? extractHumanSearchIntent(searchQuery) : null),
@@ -318,6 +314,10 @@ export default function ProductResultsSurface({
       ),
     [sortedProducts, searchQuery]
   );
+  const canonicalOrderLinks = useMemo(
+    () => trustOrderedProducts.map((product) => product.link),
+    [trustOrderedProducts]
+  );
   const commerceCore = useMemo(
     () =>
       buildProductionReadinessDecisionMap(
@@ -325,21 +325,20 @@ export default function ProductResultsSurface({
         metaByLink,
         productsByLink,
         marketMemoryState,
-        truthPrefetchByLink
+        truthPrefetchByLink,
+        canonicalOrderLinks
       ),
-    [coherenceByLink, metaByLink, productsByLink, marketMemoryState, truthPrefetchByLink]
+    [
+      coherenceByLink,
+      metaByLink,
+      productsByLink,
+      marketMemoryState,
+      truthPrefetchByLink,
+      canonicalOrderLinks,
+    ]
   );
   const universalByLink = commerceCore.decisions;
   const phase45TrayContext = commerceCore.trayContext;
-  const intelligenceRankedProducts = useMemo(
-    () => orderProductsBySearchRank(sortedProducts, phase45TrayContext.intelligenceRankOrder),
-    [sortedProducts, phase45TrayContext.intelligenceRankOrder]
-  );
-  const intelligenceSearchRankByLink = useMemo(() => {
-    const m = new Map<string, number>();
-    phase45TrayContext.intelligenceRankOrder.forEach((link, index) => m.set(link, index));
-    return m;
-  }, [phase45TrayContext.intelligenceRankOrder]);
   const displayCoherenceByLink = useMemo(
     () => buildProductionReadinessDisplayCoherenceByLink(coherenceByLink, universalByLink, phase45TrayContext),
     [coherenceByLink, universalByLink, phase45TrayContext]
@@ -393,7 +392,7 @@ export default function ProductResultsSurface({
   const trayCtxRef = useRef({
     sortedProducts,
     searchQuery,
-    compositeRanked,
+    trustOrderedProducts,
     saveProduct,
     addToWatchlist,
   });
@@ -401,11 +400,11 @@ export default function ProductResultsSurface({
     trayCtxRef.current = {
       sortedProducts,
       searchQuery,
-      compositeRanked,
+      trustOrderedProducts,
       saveProduct,
       addToWatchlist,
     };
-  }, [sortedProducts, searchQuery, compositeRanked, saveProduct, addToWatchlist]);
+  }, [sortedProducts, searchQuery, trustOrderedProducts, saveProduct, addToWatchlist]);
 
   const trayHandlers = useMemo<CockpitQuickHandlers>(
     () => ({
@@ -423,16 +422,16 @@ export default function ProductResultsSurface({
         await copyText(buildTraySummary(q.trim() || "â€”", list));
       },
       saveLeadingPick: () => {
-        const top = trayCtxRef.current.compositeRanked[0];
+        const top = trayCtxRef.current.trustOrderedProducts[0];
         if (top) trayCtxRef.current.saveProduct(top);
       },
       watchLeadingPick: () => {
-        const top = trayCtxRef.current.compositeRanked[0];
+        const top = trayCtxRef.current.trustOrderedProducts[0];
         const add = trayCtxRef.current.addToWatchlist;
         if (top && add) add(top);
       },
       primeCompareLane: () => {
-        const ranked = trayCtxRef.current.compositeRanked;
+        const ranked = trayCtxRef.current.trustOrderedProducts;
         const top = ranked[0];
         const second = ranked[1];
         if (!top || !second) return;
@@ -692,7 +691,7 @@ export default function ProductResultsSurface({
         <CompareIntelligencePanel
           key={compareProducts.map((p) => p.link).join("|")}
           compareProducts={compareProducts}
-          sortedProducts={sortedProducts}
+          sortedProducts={trustOrderedProducts}
           intelligence={compareIntelligence}
           verdict={verdict}
           verdictLoading={verdictLoading}
@@ -738,8 +737,8 @@ export default function ProductResultsSurface({
           className={`qi-tray-atmosphere min-w-0 ${resultsGridClass} ${gridMax}`}
           data-tray-focus={trayFocusLink ? "true" : "false"}
         >
-          {intelligenceRankedProducts.map((p, index) => {
-            const rank = intelligenceSearchRankByLink.get(p.link) ?? rankByLink.get(p.link) ?? index;
+          {trustOrderedProducts.map((p, index) => {
+            const rank = rankByLink.get(p.link) ?? index;
             return (
               <div
                 key={`${p.id}-${p.link}`}
@@ -786,8 +785,8 @@ export default function ProductResultsSurface({
             className={`qi-tray-atmosphere min-w-0 ${resultsGridClass} ${gridMax}`}
             data-tray-focus={trayFocusLink ? "true" : "false"}
           >
-            {intelligenceRankedProducts.map((p, index) => {
-              const rank = intelligenceSearchRankByLink.get(p.link) ?? rankByLink.get(p.link) ?? index;
+            {trustOrderedProducts.map((p, index) => {
+              const rank = rankByLink.get(p.link) ?? index;
               return (
                 <div
                   key={`${p.id}-${p.link}`}

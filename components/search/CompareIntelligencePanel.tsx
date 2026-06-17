@@ -16,7 +16,7 @@ import { COMPARE_VERDICT_LABEL_DISPLAY } from "@/lib/intelligence/compareIntelli
 import type { CompareVerdictPayload } from "@/lib/intelligence/compareVerdict";
 import { buildCompareTrayInsights } from "@/lib/intelligence/compareTrayInsights";
 import { currencySymbolFromListing, formatListingPrice } from "@/lib/commerce/cues";
-import { getFinalComposite, getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
+import { getStoreTrustScore, ratingValue } from "@/lib/shoppingScore";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import InlineSystemNotice from "@/components/system/InlineSystemNotice";
 
@@ -216,7 +216,8 @@ export default function CompareIntelligencePanel({
 
                 <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {compareProducts.map((p, cIdx) => {
-                    const qi = getFinalComposite(p, sortedProducts);
+                    const trustRank =
+                      sortedProducts.findIndex((row) => row.link === p.link) + 1 || null;
                     const trustScore = getStoreTrustScore(p.store);
                     const sym = currencySymbolFromListing(p);
                     return (
@@ -243,8 +244,10 @@ export default function CompareIntelligencePanel({
                             </p>
                           </div>
                           <div className="qa-ui-terminal-panel rounded-xl px-2.5 py-2">
-                            <p className="cockpit-label text-[9px] text-slate-500">QI</p>
-                            <p className="qa-ui-compare-stat-value--accent mt-0.5 text-sm tabular-nums">{qi}</p>
+                            <p className="cockpit-label text-[9px] text-slate-500">Grid rank</p>
+                            <p className="qa-ui-compare-stat-value--accent mt-0.5 text-sm tabular-nums">
+                              {trustRank && trustRank > 0 ? `#${trustRank}` : "—"}
+                            </p>
                           </div>
                           <div className="qa-ui-terminal-panel rounded-xl px-2.5 py-2">
                             <p className="cockpit-label text-[9px] text-slate-500">Trust</p>

@@ -31,7 +31,6 @@ function enrichCommerceIntentsFrom2A(
 
   if (intent.budget != null) {
     enriched.budget = true;
-    enriched.cheapestTrusted = true;
   }
   if (intent.qualityLevel === "budget") {
     enriched.budget = true;
@@ -71,6 +70,23 @@ function enrichCommerceIntentsFrom2A(
 }
 
 /** Map merged commerce flags + query text to purchase posture (legacy rank behavior preserved). */
+function isConstraintAwareValueQuery(query: string, intents: CommerceSearchIntents): boolean {
+  const s = query.toLowerCase();
+  const seeksQuality =
+    /\b(best|top|recommended|flagship|quality)\b/.test(s) ||
+    intents.qualitySeeking ||
+    intents.gaming ||
+    intents.productivity ||
+    intents.explicitBestValue ||
+    intents.longTermValue ||
+    intents.comparisonIntent;
+  const hasBudgetCap =
+    intents.budget ||
+    /\bunder\s+(\$|€|£|eur|gbp|usd|\d)/.test(s) ||
+    /\b(€|\$|£)\s*\d/.test(s);
+  return seeksQuality && hasBudgetCap;
+}
+
 export function derivePurchaseIntent(query: string, intents: CommerceSearchIntents): PurchaseIntent {
   const s = query.toLowerCase();
   if (
@@ -79,13 +95,15 @@ export function derivePurchaseIntent(query: string, intents: CommerceSearchInten
   ) {
     return "fast";
   }
+  if (isConstraintAwareValueQuery(query, intents)) {
+    return "value";
+  }
   if (
     intents.budget ||
     intents.dealHunter ||
     intents.realDiscountOnly ||
-    /\b(cheap|budget|affordable|lowest|under\s+(\$|€|£|eur|gbp|usd)|save\s+money|discount|clearance|bargain)\b/.test(
-      s
-    )
+    /\b(cheap|budget|affordable|lowest|save\s+money|discount|clearance|bargain)\b/.test(s) ||
+    /\bunder\s+(\$|€|£|eur|gbp|usd)\b/.test(s)
   ) {
     return "budget";
   }

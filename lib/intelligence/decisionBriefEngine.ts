@@ -83,6 +83,37 @@ export type DecisionBriefDTO = {
   };
 };
 
+/** Phase A — align institutional brief winner with canonical trust rank #1. */
+export function alignDecisionBriefToCanonicalWinner(
+  brief: DecisionBriefDTO | null,
+  winner: QuantProduct | undefined,
+  orderedProducts: QuantProduct[]
+): DecisionBriefDTO | null {
+  if (!brief || !winner) return brief;
+
+  const alternatives = orderedProducts
+    .filter((product) => product.link !== winner.link)
+    .slice(0, 3)
+    .map((product, index) => ({
+      label: `Alternative ${index + 1}`,
+      title: product.title,
+      store: product.store,
+      link: product.link,
+    }));
+
+  return {
+    ...brief,
+    recommendation: {
+      label: brief.recommendation.label || "Best Overall",
+      title: winner.title,
+      store: winner.store,
+      link: winner.link,
+      price: winner.price > 0 ? winner.price : null,
+    },
+    alternatives: alternatives.length > 0 ? alternatives : brief.alternatives,
+  };
+}
+
 export function buildDecisionBrief(args: {
   query: string;
   products: QuantProduct[];

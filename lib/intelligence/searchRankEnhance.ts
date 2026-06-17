@@ -4,14 +4,18 @@ import {
   getStoreTrustScore,
 } from "@/lib/shoppingScore";
 import {
+  resolveCanonicalSearchRank,
+  type CanonicalSearchRankResult,
+} from "@/lib/truth/canonicalSearchRank";
+import {
   sortProductsByTrustDrivenRank,
   type TrustDrivenRankOptions,
 } from "@/lib/truth/trustDrivenCompositeRank";
 import type { PurchaseIntent } from "@/lib/truth/unifiedIntentPipeline";
 
-export type { PurchaseIntent };
+export type { PurchaseIntent, TrustDrivenRankOptions, CanonicalSearchRankResult };
 export { purchaseIntentFromQuery } from "@/lib/truth/unifiedIntentPipeline";
-export type { TrustDrivenRankOptions };
+export { resolveCanonicalSearchRank, sortProductsByTrustDrivenRank };
 
 function normalizeTitle(title: string): string {
   return title
@@ -116,14 +120,12 @@ export function dedupeSearchTray(list: QuantProduct[]): QuantProduct[] {
   return dedupeLowTrustNoiseAcrossStores(dedupeProductList(list));
 }
 
-/**
- * Trust-driven composite ordering — legacy base + bounded truthRankDelta (2C–2K).
- */
+/** Trust-driven composite ordering — canonical Phase A authority. */
 export function sortByCompositeRankEnhanced(
   list: QuantProduct[],
   query: string,
   options?: TrustDrivenRankOptions
 ): QuantProduct[] {
   if (list.length === 0) return list;
-  return sortProductsByTrustDrivenRank(list, query, options).sorted;
+  return resolveCanonicalSearchRank(list, query, options).orderedProducts;
 }

@@ -75,7 +75,8 @@ export function buildProductionReadinessDecisionMap(
   metaByLink: Map<string, ProductTrayMeta>,
   productsByLink: Map<string, { product: QuantProduct; searchQuery: string }>,
   marketMemory: MarketMemoryState | null = null,
-  truthPrefetchByLink: Map<string, import("@/lib/truth/truthFoundationTypes").TruthFoundationPrefetchEntry> | null = null
+  truthPrefetchByLink: Map<string, import("@/lib/truth/truthFoundationTypes").TruthFoundationPrefetchEntry> | null = null,
+  canonicalOrderLinks: string[] | null = null
 ): { decisions: Map<string, UniversalProductDecision>; trayContext: Phase45TrayContext } {
   const base = buildOpportunityDetectionDecisionMap(
     coherenceByLink,
@@ -310,7 +311,10 @@ export function buildProductionReadinessDecisionMap(
   const safety = validateTraySafety(result);
   const distribution = buySignalDistributionSummary(balancedTiers);
 
-  const intelligenceRankOrder = trustDrivenRankOrder(rankedLinks, trustScoresByLink);
+  const intelligenceRankOrder =
+    canonicalOrderLinks && canonicalOrderLinks.length > 0
+      ? canonicalOrderLinks.filter((link) => productsByLink.has(link))
+      : trustDrivenRankOrder(rankedLinks, trustScoresByLink);
 
   return {
     decisions: result,
