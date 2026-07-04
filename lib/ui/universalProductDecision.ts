@@ -153,9 +153,18 @@ export type UniversalProductIntelligenceSnapshot = UniversalProductIntelligenceS
   rankingDecisionRecord?: import("@/lib/truth/rankingDecisionRecord").RankingDecisionRecord;
 };
 
+export type ShopperRecommendationLabel =
+  | "STRONG BUY"
+  | "BUY"
+  | "BEST VALUE"
+  | "COMPARE"
+  | "AVOID";
+
 export type UniversalProductDecision = {
   link: string;
   verdict: PrimaryVerdict;
+  /** Shopper-facing recommendation band text — overrides legacy verdict collapse when set. */
+  recommendationLabel?: ShopperRecommendationLabel;
   confidence: number;
   confidenceReason: string;
   reasonLine: string;
@@ -213,7 +222,7 @@ export function overlayCoherentWithUniversal(
 }
 
 export type CardAuthorityView = {
-  verdict: PrimaryVerdict;
+  verdict: PrimaryVerdict | ShopperRecommendationLabel;
   confidence: number;
   reason: string;
   chips: ExposureChip[];
@@ -229,7 +238,7 @@ export function resolveCardAuthorityView(args: {
   const { universal, coherent, fallback } = args;
   if (universal) {
     return {
-      verdict: universal.verdict,
+      verdict: universal.recommendationLabel ?? universal.verdict,
       confidence: universal.confidence,
       reason: universal.reasonLine,
       chips: universal.displayChips,

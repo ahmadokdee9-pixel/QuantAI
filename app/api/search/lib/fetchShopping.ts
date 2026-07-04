@@ -108,6 +108,7 @@ function dedupeShoppingFeedOverlap(rows: QuantProduct[]): QuantProduct[] {
       }
       const rel = Math.abs(p.price - o.price) / Math.max(p.price, o.price);
       if (rel < 0.032) {
+        if (p.store.toLowerCase() !== o.store.toLowerCase()) continue;
         isDup = true;
         break;
       }

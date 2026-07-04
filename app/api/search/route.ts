@@ -73,6 +73,7 @@ import {
   createGuestPipelineCache,
   isProductionShadowStackDisabled,
   loadPipelineWithInflightDedupe,
+  racePipelineWithStalePrefer,
   searchFallbackQueryCap,
   searchPrimaryMinProducts,
 } from "@/lib/search/productionStabilization";
@@ -82,7 +83,7 @@ import { semanticRerankSearchResults } from "@/lib/search/semanticReranker";
 import { buildLatencyBudgetReport } from "@/lib/search/latencyBudget";
 import { PipelineTrace } from "@/lib/search/pipelineTrace";
 import { rebuildSearchTrayArtifacts, verifyTrayMetaCoherence } from "@/lib/search/searchTrayArtifacts";
-import { composeProductionMeta } from "@/lib/search/productionMetaComposer";
+import { composeProductionMeta, isSearchMetaLiteMode } from "@/lib/search/productionMetaComposer";
 import { applySearchIntelligenceUpgrade } from "@/lib/search/searchIntelligenceUpgrade";
 import { applyPhase92TrayIntegrity } from "@/lib/search/phase92TrayIntegrity";
 import { applyPhase93TrustDiscountHardening } from "@/lib/intelligence/phase93TrustDiscountHardening";
@@ -309,7 +310,10 @@ async function runSafeLiveCommerceDiscovery(
   }
 }
 
-async function runSearchPipeline(query: string): Promise<{
+async function runSearchPipeline(
+  query: string,
+  prebuiltCanonical?: CanonicalQueryContract
+): Promise<{
   products: QuantProduct[];
   dealClusters: DealClusterDTO[];
   searchIntelligence: SearchIntelligenceDTO | null;
@@ -318,7 +322,7 @@ async function runSearchPipeline(query: string): Promise<{
   canonicalQuery: CanonicalQueryContract;
 }> {
   applyBetaDiscoveryDefaults();
-  const canonicalQuery = buildQueryIntelligence(query).canonicalQuery;
+  const canonicalQuery = prebuiltCanonical ?? buildQueryIntelligence(query).canonicalQuery;
   const result = await fetchShoppingProductsWithFallback(query, canonicalQuery);
   if (!result.ok) {
     const status =
@@ -468,10 +472,15 @@ function searchDebugMeta(args: {
     operationalState = null,
     latencyBudget = null,
   } = args;
-  const identityDebug = canonicalQuery ? buildIdentityDebugSummary(products, canonicalQuery) : null;
-  const commerceQualityDebug = buildCommerceQualityDebug(products);
-  const buyingDecisionDebug = buildBuyingDecisionDebug(products);
-  const marketComparison = canonicalQuery ? buildMarketComparisonSummary(products, canonicalQuery) : null;
+  const identityDebug = canonicalQuery && !isSearchMetaLiteMode()
+    ? buildIdentityDebugSummary(products, canonicalQuery)
+    : null;
+  const commerceQualityDebug = isSearchMetaLiteMode() ? null : buildCommerceQualityDebug(products);
+  const buyingDecisionDebug = isSearchMetaLiteMode() ? null : buildBuyingDecisionDebug(products);
+  const marketComparison =
+    canonicalQuery && !isSearchMetaLiteMode()
+      ? buildMarketComparisonSummary(products, canonicalQuery)
+      : null;
   return {
     productCount: products.length,
     productsCount: products.length,
@@ -616,12 +625,164 @@ async function handleSearch(
       );
     }
 
+    applyBetaDiscoveryDefaults();
     const queryIntelligenceBundle = buildQueryIntelligence(query);
+    const requestCanonicalQuery = queryIntelligenceBundle.canonicalQuery;
+    const pipelineKey = normalizeSearchCacheKey(requestCanonicalQuery.normalizedQuery || query);
     const phase94QueryIntelligence = {
       meta: queryIntelligenceBundle.meta,
-      canonicalQuery: queryIntelligenceBundle.canonicalQuery,
+      canonicalQuery: requestCanonicalQuery,
     };
     const shoppingBrain = queryIntelligenceBundle.shoppingBrain;
+
+    const { userId, user } = await optionalClerkSearchUser();
+    setIntentCanarySessionKey(
+      resolveIntentCanarySessionKey({
+        userId,
+        requestId: requestIdentifier(opts?.headers),
+        query,
+      })
+    );
+    const tier = await resolveServerSubscriptionTier(userId, user);
+    const plan = planDefinition(tier);
+
+    let guestOperationalDegraded: Record<string, unknown> | null = null;
+
+    let preloadedGuestTray: SearchPipelineTray | null = null;
+    if (!userId) {
+      const guestId = requestIdentifier(opts?.headers);
+      const limited = await enforceGuestSearchLimits(guestId);
+      if (!limited.ok) {
+        try {
+          const cachedTray = await loadPipelineWithInflightDedupe(`guest:${pipelineKey}`, () =>
+            getCachedGuestSearchPipeline(pipelineKey)
+          );
+          if (cachedTray.products.length > 0) {
+            guestOperationalDegraded = {
+              degraded: true,
+              reason: `guest_rate_limit_${limited.code.toLowerCase()}_cached_tray`,
+              retryAfter: limited.retryAfter,
+            };
+            preloadedGuestTray = cachedTray;
+          }
+        } catch {
+          // no cached tray — fall through to rate-limit response
+        }
+        if (!guestOperationalDegraded) {
+          const staleTray = getGuestStaleTray(pipelineKey);
+          if (staleTray?.products.length) {
+            guestOperationalDegraded = {
+              degraded: true,
+              reason: `guest_rate_limit_${limited.code.toLowerCase()}_stale_tray`,
+              retryAfter: limited.retryAfter,
+              stale: true,
+            };
+            preloadedGuestTray = staleTray;
+          }
+        }
+        if (!guestOperationalDegraded) {
+          markRateLimited429({ servedDegraded: false, emptyOn429: true });
+          return jsonSearch(
+            {
+              success: false,
+              error: "RATE_LIMIT",
+              message: limited.message,
+              code: limited.code,
+              data: emptySearchData(
+                searchDebugMeta({
+                  products: [],
+                  canonicalQuery: requestCanonicalQuery,
+                  fallbackReason: "RATE_LIMIT",
+                  errorState: "RATE_LIMIT",
+                  operationalState: {
+                    degraded: true,
+                    reason: limited.code,
+                    retryAfter: limited.retryAfter,
+                    telemetry: reliabilityTelemetrySnapshot(),
+                  },
+                })
+              ),
+              retryAfter: limited.retryAfter,
+            },
+            {
+              status: 429,
+              headers: { "Retry-After": String(limited.retryAfter) },
+            }
+          );
+        }
+        markRateLimited429({ servedDegraded: true, emptyOn429: false });
+      }
+    }
+
+    if (userId) {
+      const usedToday = await countSearchesTodayUtc(userId);
+      if (usedToday !== null && usedToday >= plan.searchesPerDay) {
+        return fail(
+          429,
+          "RATE_LIMIT",
+          `Daily search limit reached (${plan.searchesPerDay}) for your plan. Upgrade for more.`,
+          {
+            code: "PLAN_SEARCH_LIMIT",
+            entitlements: entitlementsForTier(tier),
+          }
+        );
+      }
+
+      const limited = await enforceAuthSearchLimits(userId);
+      if (!limited.ok) {
+        return jsonSearch(
+          {
+            success: false,
+            error: "RATE_LIMIT",
+            message: limited.message,
+            code: limited.code,
+            data: emptySearchData(),
+            retryAfter: limited.retryAfter,
+          },
+          {
+            status: 429,
+            headers: { "Retry-After": String(limited.retryAfter) },
+          }
+        );
+      }
+    }
+
+    const pipelineCircuitKey = "search_pipeline";
+    let pendingPipelineTray: Promise<SearchPipelineTray> | null = null;
+    if (!preloadedGuestTray) {
+      const staleSeed = !userId ? getGuestStaleTray(pipelineKey) : null;
+      pendingPipelineTray = (async () => {
+        const liveLoader = async (): Promise<SearchPipelineTray> => {
+          if (isCircuitOpen(pipelineCircuitKey)) {
+            throw new Error(`${SEARCH_UPSTREAM_PREFIX}503:Circuit breaker open for search pipeline.`);
+          }
+          const isGuestPipeline = !userId;
+          const tray = await loadPipelineWithInflightDedupe(
+            `${isGuestPipeline ? "guest" : "auth"}:${pipelineKey}`,
+            () =>
+              isGuestPipeline
+                ? getCachedGuestSearchPipeline(pipelineKey)
+                : getCachedAuthSearchPipeline(pipelineKey)
+          );
+          markCircuitSuccess(pipelineCircuitKey);
+          if (isGuestPipeline) {
+            saveGuestStaleTray(pipelineKey, tray);
+          }
+          return tray;
+        };
+        const raced = await racePipelineWithStalePrefer(liveLoader, staleSeed);
+        if (raced.servedStale) {
+          guestOperationalDegraded = {
+            ...(guestOperationalDegraded ?? {}),
+            degraded: true,
+            reason: "stale_tray_preferred_over_slow_live",
+            stale: true,
+          };
+        }
+        return raced.tray;
+      })();
+    }
+
     const multiCategory = buildMultiCategoryIntelligence({
       query,
       shoppingBrain,
@@ -833,120 +994,6 @@ async function handleSearch(
       valueIntelligence,
     });
     const rankingEngine = buildDeterministicRanking(rankingSignals);
-    const requestCanonicalQuery = queryIntelligenceBundle.canonicalQuery;
-    const pipelineKey = normalizeSearchCacheKey(requestCanonicalQuery.normalizedQuery || query);
-
-    const { userId, user } = await optionalClerkSearchUser();
-    setIntentCanarySessionKey(
-      resolveIntentCanarySessionKey({
-        userId,
-        requestId: requestIdentifier(opts?.headers),
-        query,
-      })
-    );
-    const tier = await resolveServerSubscriptionTier(userId, user);
-    const plan = planDefinition(tier);
-
-    let guestOperationalDegraded: Record<string, unknown> | null = null;
-
-    let preloadedGuestTray: SearchPipelineTray | null = null;
-    if (!userId) {
-      const guestId = requestIdentifier(opts?.headers);
-      const limited = await enforceGuestSearchLimits(guestId);
-      if (!limited.ok) {
-        try {
-          const cachedTray = await loadPipelineWithInflightDedupe(`guest:${pipelineKey}`, () =>
-            getCachedGuestSearchPipeline(pipelineKey)
-          );
-          if (cachedTray.products.length > 0) {
-            guestOperationalDegraded = {
-              degraded: true,
-              reason: `guest_rate_limit_${limited.code.toLowerCase()}_cached_tray`,
-              retryAfter: limited.retryAfter,
-            };
-            preloadedGuestTray = cachedTray;
-          }
-        } catch {
-          // no cached tray — fall through to rate-limit response
-        }
-        if (!guestOperationalDegraded) {
-          const staleTray = getGuestStaleTray(pipelineKey);
-          if (staleTray?.products.length) {
-            guestOperationalDegraded = {
-              degraded: true,
-              reason: `guest_rate_limit_${limited.code.toLowerCase()}_stale_tray`,
-              retryAfter: limited.retryAfter,
-              stale: true,
-            };
-            preloadedGuestTray = staleTray;
-          }
-        }
-        if (!guestOperationalDegraded) {
-          markRateLimited429({ servedDegraded: false, emptyOn429: true });
-          return jsonSearch(
-            {
-              success: false,
-              error: "RATE_LIMIT",
-              message: limited.message,
-              code: limited.code,
-              data: emptySearchData(
-                searchDebugMeta({
-                  products: [],
-                  canonicalQuery: requestCanonicalQuery,
-                  fallbackReason: "RATE_LIMIT",
-                  errorState: "RATE_LIMIT",
-                  operationalState: {
-                    degraded: true,
-                    reason: limited.code,
-                    retryAfter: limited.retryAfter,
-                    telemetry: reliabilityTelemetrySnapshot(),
-                  },
-                })
-              ),
-              retryAfter: limited.retryAfter,
-            },
-            {
-              status: 429,
-              headers: { "Retry-After": String(limited.retryAfter) },
-            }
-          );
-        }
-        markRateLimited429({ servedDegraded: true, emptyOn429: false });
-      }
-    }
-
-    if (userId) {
-      const usedToday = await countSearchesTodayUtc(userId);
-      if (usedToday !== null && usedToday >= plan.searchesPerDay) {
-        return fail(
-          429,
-          "RATE_LIMIT",
-          `Daily search limit reached (${plan.searchesPerDay}) for your plan. Upgrade for more.`,
-          {
-            code: "PLAN_SEARCH_LIMIT",
-            entitlements: entitlementsForTier(tier),
-          }
-        );
-      }
-
-      const limited = await enforceAuthSearchLimits(userId);
-      if (!limited.ok) {
-        return jsonSearch(
-          {
-            success: false,
-            error: "RATE_LIMIT",
-            message: limited.message,
-            code: limited.code,
-            data: emptySearchData(),
-            retryAfter: limited.retryAfter,
-          },
-          {
-            status: 429,
-            headers: { "Retry-After": String(limited.retryAfter) },
-          }
-        );
-      }
-    }
 
     let products!: QuantProduct[];
     let dealClusters!: DealClusterDTO[];
@@ -979,42 +1026,35 @@ async function handleSearch(
     const traceStage = (stage: string, before: number, after: number) => {
       pipelineTrace.trace(stage, before, after);
     };
-    const circuitKey = "search_pipeline";
-    const loadPipelineTray = async () => {
-      const isGuestPipeline = !userId;
-      if (isCircuitOpen(circuitKey)) {
-        throw new Error(`${SEARCH_UPSTREAM_PREFIX}503:Circuit breaker open for search pipeline.`);
-      }
-      const tray = await loadPipelineWithInflightDedupe(
-        `${isGuestPipeline ? "guest" : "auth"}:${pipelineKey}`,
-        () =>
-          isGuestPipeline
-            ? getCachedGuestSearchPipeline(pipelineKey)
-            : getCachedAuthSearchPipeline(pipelineKey)
-      );
+    const circuitKey = pipelineCircuitKey;
+    const assignPipelineTray = (tray: SearchPipelineTray) => {
       products = tray.products;
       dealClusters = tray.dealClusters;
       searchIntelligence = tray.searchIntelligence;
       commerceMeta = tray.commerceMeta;
       liveDiscovery = tray.liveDiscovery;
-      markCircuitSuccess(circuitKey);
-      if (isGuestPipeline) {
-        saveGuestStaleTray(pipelineKey, tray);
+    };
+    const loadPipelineTray = async () => {
+      if (preloadedGuestTray) {
+        assignPipelineTray(preloadedGuestTray);
+        traceStage("rate_limit_preloaded_recovery", 0, products.length);
+        return;
       }
+      const tray = pendingPipelineTray
+        ? await pendingPipelineTray
+        : await loadPipelineWithInflightDedupe(
+            `${!userId ? "guest" : "auth"}:${pipelineKey}`,
+            () =>
+              !userId
+                ? getCachedGuestSearchPipeline(pipelineKey)
+                : getCachedAuthSearchPipeline(pipelineKey)
+          );
+      assignPipelineTray(tray);
       traceStage("pipeline_enrichment_and_ai", liveDiscovery.fusedRows, products.length);
     };
 
     try {
-      if (preloadedGuestTray) {
-        products = preloadedGuestTray.products;
-        dealClusters = preloadedGuestTray.dealClusters;
-        searchIntelligence = preloadedGuestTray.searchIntelligence;
-        commerceMeta = preloadedGuestTray.commerceMeta;
-        liveDiscovery = preloadedGuestTray.liveDiscovery;
-        traceStage("rate_limit_preloaded_recovery", 0, products.length);
-      } else {
-        await withTimeout("search_pipeline", searchRequestTimeoutMs(), loadPipelineTray);
-      }
+      await withTimeout("search_pipeline", searchRequestTimeoutMs(), loadPipelineTray);
     } catch (e) {
       markCircuitFailure(circuitKey);
       const msg = e instanceof Error ? e.message : "";
@@ -1088,22 +1128,43 @@ async function handleSearch(
           typeof e === "object" &&
           "code" in e &&
           (e as { code?: string }).code === "SEARCH_PIPELINE_TIMEOUT";
-        if (timeoutErr && !userId) {
-          const staleTray = getGuestStaleTray(pipelineKey);
-          if (staleTray?.products.length) {
-            products = staleTray.products;
-            dealClusters = staleTray.dealClusters;
-            searchIntelligence = staleTray.searchIntelligence;
-            commerceMeta = staleTray.commerceMeta;
-            liveDiscovery = staleTray.liveDiscovery;
-            guestOperationalDegraded = {
-              degraded: true,
-              reason: "pipeline_timeout_stale_tray",
-              stale: true,
-              timeoutMs: searchRequestTimeoutMs(),
-            };
-            traceStage("pipeline_timeout_stale_recovery", 0, products.length);
-          } else {
+        if (timeoutErr) {
+          let recoveredTimeout = false;
+          try {
+            const recoveryScope = userId ? "auth" : "guest";
+            const cachedTray = await loadPipelineWithInflightDedupe(`${recoveryScope}:${pipelineKey}`, () =>
+              userId
+                ? getCachedAuthSearchPipeline(pipelineKey)
+                : getCachedGuestSearchPipeline(pipelineKey)
+            );
+            if (cachedTray.products.length > 0) {
+              assignPipelineTray(cachedTray);
+              guestOperationalDegraded = {
+                degraded: true,
+                reason: "pipeline_timeout_cached_tray",
+                timeoutMs: searchRequestTimeoutMs(),
+              };
+              traceStage("pipeline_timeout_cached_recovery", 0, products.length);
+              recoveredTimeout = true;
+            }
+          } catch {
+            recoveredTimeout = false;
+          }
+          if (!recoveredTimeout && !userId) {
+            const staleTray = getGuestStaleTray(pipelineKey);
+            if (staleTray?.products.length) {
+              assignPipelineTray(staleTray);
+              guestOperationalDegraded = {
+                degraded: true,
+                reason: "pipeline_timeout_stale_tray",
+                stale: true,
+                timeoutMs: searchRequestTimeoutMs(),
+              };
+              traceStage("pipeline_timeout_stale_recovery", 0, products.length);
+              recoveredTimeout = true;
+            }
+          }
+          if (!recoveredTimeout) {
             return fail(504, "SEARCH_TIMEOUT", "Search timed out and no fallback tray was available.", {
               data: emptySearchData(
                 searchDebugMeta({
@@ -1212,27 +1273,33 @@ async function handleSearch(
       canonicalQuery,
       products,
     });
-    const tasteWatchCanary = buildWatchTasteCanaryMeta({
-      query,
-      canonicalQuery,
-      products,
-      preOrderLinks: canonicalQuery.category === "watch" ? preTasteTrayLinks : [],
-    });
-    const tasteFragranceCanary = buildFragranceTasteCanaryMeta({
-      query,
-      canonicalQuery,
-      products,
-      preOrderLinks: canonicalQuery.category === "fragrance" ? preTasteTrayLinks : [],
-    });
-    const tasteFurnitureCanary = buildFurnitureTasteCanaryMeta({
-      query,
-      canonicalQuery,
-      products,
-      preOrderLinks:
-        canonicalQuery.category === "furniture" || canonicalQuery.category === "desk_setup"
-          ? preTasteTrayLinks
-          : [],
-    });
+    const tasteWatchCanary =
+      canonicalQuery.category === "watch"
+        ? buildWatchTasteCanaryMeta({
+            query,
+            canonicalQuery,
+            products,
+            preOrderLinks: preTasteTrayLinks,
+          })
+        : { version: "watch-taste-canary-v1" as const, active: false, skippedReason: "category_skip" };
+    const tasteFragranceCanary =
+      canonicalQuery.category === "fragrance"
+        ? buildFragranceTasteCanaryMeta({
+            query,
+            canonicalQuery,
+            products,
+            preOrderLinks: preTasteTrayLinks,
+          })
+        : { version: "fragrance-taste-canary-v1" as const, active: false, skippedReason: "category_skip" };
+    const tasteFurnitureCanary =
+      canonicalQuery.category === "furniture" || canonicalQuery.category === "desk_setup"
+        ? buildFurnitureTasteCanaryMeta({
+            query,
+            canonicalQuery,
+            products,
+            preOrderLinks: preTasteTrayLinks,
+          })
+        : { version: "furniture-taste-canary-v1" as const, active: false, skippedReason: "category_skip" };
     const unifiedTaste = isUnifiedTasteMetaEnabled()
       ? buildUnifiedTasteMeta({
           query,
@@ -1255,20 +1322,24 @@ async function handleSearch(
           latencyMs: 0,
           skippedReason: "unified_meta_disabled",
         };
-    const tasteUnifiedCanary = buildUnifiedTasteCanaryMeta({
-      query,
-      canonicalQuery,
-      products,
-      tasteGrammarShadow,
-      preOrderLinks: preTasteTrayLinks,
-    });
-    const unifiedTasteCanary = buildUnifiedLiveSoakCanaryMeta({
-      query,
-      canonicalQuery,
-      products,
-      tasteGrammarShadow,
-      preOrderLinks: preTasteTrayLinks,
-    });
+    const tasteUnifiedCanary = isUnifiedTasteMetaEnabled()
+      ? buildUnifiedTasteCanaryMeta({
+          query,
+          canonicalQuery,
+          products,
+          tasteGrammarShadow,
+          preOrderLinks: preTasteTrayLinks,
+        })
+      : { version: "unified-taste-canary-v1" as const, active: false, skippedReason: "unified_meta_disabled" };
+    const unifiedTasteCanary = isUnifiedTasteMetaEnabled()
+      ? buildUnifiedLiveSoakCanaryMeta({
+          query,
+          canonicalQuery,
+          products,
+          tasteGrammarShadow,
+          preOrderLinks: preTasteTrayLinks,
+        })
+      : { version: "unified-live-soak-canary-v1" as const, active: false, skippedReason: "unified_meta_disabled" };
     const intentIntelligence = isIntentIntelligenceMetaEnabled()
       ? computeIntentIntelligence({ query, canonicalQuery })
       : {
@@ -2113,6 +2184,16 @@ async function handleSearch(
     const bundleSuggestions = buildBundleSuggestions(products.slice(0, 36), query, shopperPersona);
     const trayMetaCoherence = verifyTrayMetaCoherence(products, dealClusters);
 
+    const trayForCanonical = filterRecommendationTray(trayOrderLock.baseline());
+
+    const truthFoundationPrefetchPromise = prefetchTruthFoundationBatch(
+      trayForCanonical.slice(0, 36).map((product) => ({
+        product,
+        listingUrl: product.link,
+        searchQuery: query,
+      }))
+    );
+
     const fallbackReason = guestOperationalDegraded
       ? String(guestOperationalDegraded.reason ?? "operational_degraded")
       : liveDiscovery.status === "enabled"
@@ -2133,15 +2214,7 @@ async function handleSearch(
       latencyBudget,
     });
 
-    const trayForCanonical = filterRecommendationTray(trayOrderLock.baseline());
-
-    const truthFoundationPrefetchMap = await prefetchTruthFoundationBatch(
-      trayForCanonical.slice(0, 36).map((product) => ({
-        product,
-        listingUrl: product.link,
-        searchQuery: query,
-      }))
-    );
+    const truthFoundationPrefetchMap = await truthFoundationPrefetchPromise;
     const truthFoundationPrefetch = serializeTruthFoundationPrefetch(truthFoundationPrefetchMap);
 
     const canonicalRank = resolveCanonicalSearchRank(trayForCanonical, query, {

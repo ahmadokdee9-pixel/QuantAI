@@ -103,6 +103,7 @@ function dedupeLowTrustNoiseAcrossStores(list: QuantProduct[]): QuantProduct[] {
     const head = sorted[0];
     for (let i = 1; i < sorted.length; i++) {
       const b = sorted[i];
+      if (normalizeStore(head.store) !== normalizeStore(b.store)) continue;
       const ta = getStoreTrustScore(head.store);
       const tb = getStoreTrustScore(b.store);
       if (ta >= 55 || tb >= 55) continue;

@@ -7,7 +7,8 @@ export type CompareQuickLine = { id: string; title: string; body: string };
 /** Pre-verdict analyst snapshot — grid #1 is always the canonical compare leader. */
 export function buildCompareTrayInsights(
   compareProducts: QuantProduct[],
-  trustOrderedProducts: QuantProduct[]
+  trustOrderedProducts: QuantProduct[],
+  options?: { leaderRecommendationLabel?: string | null }
 ): CompareQuickLine[] {
   if (compareProducts.length < 2 || trustOrderedProducts.length === 0) return [];
 
@@ -18,7 +19,7 @@ export function buildCompareTrayInsights(
   lines.push({
     id: "grid-leader",
     title: "Grid #1 — canonical leader",
-    body: `${gridLeader.title.slice(0, 56)}${gridLeader.title.length > 56 ? "…" : ""} · matches search grid rank #1 and canonical trust order.`,
+    body: `${gridLeader.title.slice(0, 56)}${gridLeader.title.length > 56 ? "…" : ""} · ${options?.leaderRecommendationLabel ? `recommendation ${options.leaderRecommendationLabel} · ` : ""}matches search grid rank #1 and canonical trust order.`,
   });
 
   const pinnedHasLeader = compareProducts.some((product) => product.link === gridLeader.link);

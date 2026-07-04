@@ -23,6 +23,7 @@ import InlineSystemNotice from "@/components/system/InlineSystemNotice";
 type Props = {
   compareProducts: QuantProduct[];
   sortedProducts: QuantProduct[];
+  leaderRecommendationLabel?: string | null;
   intelligence: CompareIntelligenceSnapshot;
   verdict: CompareVerdictPayload | null;
   verdictLoading: boolean;
@@ -50,6 +51,7 @@ function signalTone(s: CompareSmartSignal["severity"]): string {
 export default function CompareIntelligencePanel({
   compareProducts,
   sortedProducts,
+  leaderRecommendationLabel = null,
   intelligence,
   verdict,
   verdictLoading,
@@ -70,8 +72,11 @@ export default function CompareIntelligencePanel({
     : { type: "spring" as const, stiffness: 400, damping: 36 };
 
   const trayInsightLines = useMemo(
-    () => buildCompareTrayInsights(compareProducts, sortedProducts),
-    [compareProducts, sortedProducts]
+    () =>
+      buildCompareTrayInsights(compareProducts, sortedProducts, {
+        leaderRecommendationLabel,
+      }),
+    [compareProducts, sortedProducts, leaderRecommendationLabel]
   );
 
   const primaryBadge = intelligence.verdictBadges.find((b) => b.id === intelligence.primaryVerdictId);

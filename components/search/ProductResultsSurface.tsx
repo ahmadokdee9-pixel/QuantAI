@@ -32,6 +32,7 @@ import { extractHumanSearchIntent } from "@/lib/intelligence/searchIntentBrain";
 import { computeMarketAwarenessForTray } from "@/lib/intelligence/marketAwareness";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
+import { syncCalibratedBriefRecommendationLabel } from "@/lib/ui/canonicalDecisionCalibration";
 import type { Phase93TrustDiscountMeta } from "@/lib/intelligence/phase93TrustDiscountHardening";
 import type { VerdictSurfaceContext } from "@/lib/ui/verdictSurfaceOptimization";
 import type { MarketContextInput } from "@/lib/ui/marketContextActivation";
@@ -339,6 +340,15 @@ export default function ProductResultsSurface({
   );
   const universalByLink = commerceCore.decisions;
   const phase45TrayContext = commerceCore.trayContext;
+  const calibratedDecisionBrief = useMemo(() => {
+    const leaderLink = canonicalOrderLinks[0];
+    const leader = leaderLink ? universalByLink.get(leaderLink) : null;
+    return syncCalibratedBriefRecommendationLabel(decisionBrief, leader);
+  }, [decisionBrief, canonicalOrderLinks, universalByLink]);
+  const leaderRecommendationLabel = useMemo(() => {
+    const leaderLink = canonicalOrderLinks[0];
+    return leaderLink ? universalByLink.get(leaderLink)?.recommendationLabel ?? null : null;
+  }, [canonicalOrderLinks, universalByLink]);
   const displayCoherenceByLink = useMemo(
     () => buildProductionReadinessDisplayCoherenceByLink(coherenceByLink, universalByLink, phase45TrayContext),
     [coherenceByLink, universalByLink, phase45TrayContext]
@@ -692,6 +702,7 @@ export default function ProductResultsSurface({
           key={compareProducts.map((p) => p.link).join("|")}
           compareProducts={compareProducts}
           sortedProducts={trustOrderedProducts}
+          leaderRecommendationLabel={leaderRecommendationLabel}
           intelligence={compareIntelligence}
           verdict={verdict}
           verdictLoading={verdictLoading}
@@ -726,7 +737,7 @@ export default function ProductResultsSurface({
         onClose={() => setDetailProduct(null)}
         onSave={saveProduct}
         saved={detailProduct != null && savedLinks.has(detailProduct.link)}
-        decisionBrief={detailCoherence?.decisionBrief ?? decisionBrief}
+        decisionBrief={detailCoherence?.decisionBrief ?? calibratedDecisionBrief}
         marketContext={detailCoherence?.marketContext ?? marketContext}
         coherentDecision={detailCoherence}
         commerceCoverage={detailCommerceCoverage}
@@ -763,7 +774,7 @@ export default function ProductResultsSurface({
                   humanSearchIntent={humanSearchIntent}
                   marketMemoryState={marketMemoryState}
                   searchQuery={searchQuery}
-                  decisionBrief={decisionBrief}
+                  decisionBrief={calibratedDecisionBrief}
                   verdictSurface={verdictSurface}
                   marketContext={marketContext}
                   coherentDecision={displayCoherenceByLink.get(p.link) ?? null}
@@ -811,7 +822,7 @@ export default function ProductResultsSurface({
                     humanSearchIntent={humanSearchIntent}
                     marketMemoryState={marketMemoryState}
                     searchQuery={searchQuery}
-                    decisionBrief={decisionBrief}
+                    decisionBrief={calibratedDecisionBrief}
                     verdictSurface={verdictSurface}
                     marketContext={marketContext}
                     coherentDecision={displayCoherenceByLink.get(p.link) ?? null}

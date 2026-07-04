@@ -26,6 +26,7 @@ import {
 } from "@/lib/ui/universalProductDecision";
 import { formatListingPrice } from "@/lib/commerce/cues";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
+import { toPrimaryVerdict } from "@/lib/ui/decisionLanguage";
 import {
   buildBriefPreviewTags,
   buildExpandedSignalLines,
@@ -131,6 +132,7 @@ export default function IntelligenceCardBody({
     fallback: { verdict: verdictLabel, confidence: alignmentScore, reason: reasonLine },
   });
   const resolvedVerdict = authority.verdict;
+  const pipelineVerdict = toPrimaryVerdict(resolvedVerdict);
   const resolvedReason = authority.reason;
   const resolvedAlignment = authority.confidence;
   const scopedBrief = coherentDecision?.decisionBrief ?? decisionBrief;
@@ -141,8 +143,8 @@ export default function IntelligenceCardBody({
   const showAssetImage = image.showImage && image.src && !imageErr;
 
   const intelArgs = useMemo(
-    () => cardIntelArgs(p, list, trust, deal, resolvedVerdict, resolvedAlignment),
-    [p, list, trust, deal, resolvedVerdict, resolvedAlignment],
+    () => cardIntelArgs(p, list, trust, deal, pipelineVerdict, resolvedAlignment),
+    [p, list, trust, deal, pipelineVerdict, resolvedAlignment],
   );
 
   const briefTags = buildBriefPreviewTags({
@@ -155,13 +157,13 @@ export default function IntelligenceCardBody({
     rank,
   }).filter((t) => t.active);
   const activatedBrief = useMemo(
-    () => resolveActivatedBriefPresentation(scopedBrief, resolvedVerdict),
-    [scopedBrief, resolvedVerdict]
+    () => resolveActivatedBriefPresentation(scopedBrief, pipelineVerdict),
+    [scopedBrief, pipelineVerdict]
   );
   const optimizedSurface = useMemo(() => {
     if (coherentDecision) return coherentDecision.optimizedSurface;
     return optimizeVerdictSurface({
-      verdict: resolvedVerdict,
+      verdict: pipelineVerdict,
       fallbackReason: resolvedReason,
       decisionBrief: scopedBrief,
       verdictIntelligence: verdictSurface?.verdictIntelligence ?? null,
@@ -170,7 +172,7 @@ export default function IntelligenceCardBody({
       intentConfidence: verdictSurface?.intentConfidence ?? null,
       valueIntelligence: verdictSurface?.valueIntelligence ?? null,
     });
-  }, [coherentDecision, resolvedVerdict, resolvedReason, scopedBrief, verdictSurface]);
+  }, [coherentDecision, pipelineVerdict, resolvedReason, scopedBrief, verdictSurface]);
   const displayReasonLine = resolvedReason || optimizedSurface.verdictReason;
   const activatedMarket = useMemo(() => {
     if (coherentDecision) return coherentDecision.activatedMarket;

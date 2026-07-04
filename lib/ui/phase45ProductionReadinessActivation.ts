@@ -30,6 +30,7 @@ import {
   sanitizeUniversalDecision,
   validateTraySafety,
 } from "@/lib/intelligence/productionSafetyEngine";
+import { applyTrayCanonicalDecisionCalibration } from "@/lib/ui/canonicalDecisionCalibration";
 import { tierToPriorityLabel } from "@/lib/intelligence/commerceDecisionCoreEngine";
 import type { CoherentProductDecision } from "@/lib/ui/decisionCoherenceActivation";
 import { enrichDecisionBriefWithProductionReadiness } from "@/lib/ui/productionReadinessBriefEnrichment";
@@ -308,16 +309,18 @@ export function buildProductionReadinessDecisionMap(
     result.set(link, sanitizeUniversalDecision(attachTruthFoundationAndRankingRecord(updated)));
   }
 
-  const safety = validateTraySafety(result);
-  const distribution = buySignalDistributionSummary(balancedTiers);
-
   const intelligenceRankOrder =
     canonicalOrderLinks && canonicalOrderLinks.length > 0
       ? canonicalOrderLinks.filter((link) => productsByLink.has(link))
       : trustDrivenRankOrder(rankedLinks, trustScoresByLink);
 
+  const calibratedResult = applyTrayCanonicalDecisionCalibration(result, intelligenceRankOrder);
+
+  const safety = validateTraySafety(calibratedResult);
+  const distribution = buySignalDistributionSummary(balancedTiers);
+
   return {
-    decisions: result,
+    decisions: calibratedResult,
     trayContext: {
       ...base.trayContext,
       productionReadinessApplied: true,

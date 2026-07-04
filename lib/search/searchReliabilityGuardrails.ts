@@ -80,7 +80,7 @@ function envInt(name: string, fallback: number): number {
 
 const FAILURE_THRESHOLD = envInt("SEARCH_CIRCUIT_BREAKER_FAILURE_THRESHOLD", 3);
 const OPEN_MS = envInt("SEARCH_CIRCUIT_BREAKER_OPEN_MS", 30_000);
-const REQUEST_TIMEOUT_MS = envInt("SEARCH_REQUEST_TIMEOUT_MS", 15_000);
+const REQUEST_TIMEOUT_MS = envInt("SEARCH_REQUEST_TIMEOUT_MS", 10_000);
 
 export function searchRequestTimeoutMs(): number {
   return REQUEST_TIMEOUT_MS;

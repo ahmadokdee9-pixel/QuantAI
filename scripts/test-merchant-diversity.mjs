@@ -13,6 +13,7 @@ import {
   applyTop3DiversityProtection,
   countNearDuplicateTitlesInTop,
 } from "../lib/search/top3DiversityIntegrity.ts";
+import { dedupeSearchTray } from "../lib/intelligence/searchRankEnhance.ts";
 
 function p(title, store, qiComposite, link = "https://example.com/x") {
   return { id: 1, title, store, price: 10, displayPrice: "€10", rating: 4, link, image: "", reviewsCount: 1, shipping: null, availability: null, oldPrice: null, priceTrend: "stable", extensions: [], qiComposite };
@@ -82,6 +83,17 @@ assert.deepEqual(
   sameRef.map((x) => x.title),
   alreadyOk.map((x) => x.title),
   "no reorder when already diverse"
+);
+
+const crossMerchantSameOffer = [
+  p("MacBook Pro 14 M3 512GB", "Apple", 90, "https://shop/apple/1"),
+  p("MacBook Pro 14 M3 512GB", "Amazon.com", 89, "https://shop/amazon/1"),
+  p("MacBook Pro 14 M3 512GB", "Bol.com", 88, "https://shop/bol/1"),
+];
+assert.equal(
+  dedupeSearchTray(crossMerchantSameOffer).length,
+  3,
+  "cross-merchant offers with similar titles must not collapse"
 );
 
 console.log("merchant-diversity: ok");

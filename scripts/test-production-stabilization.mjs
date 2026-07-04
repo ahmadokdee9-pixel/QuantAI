@@ -21,7 +21,7 @@ function isBetaStabilizationEnabled(env) {
 function applyBetaDiscoveryDefaults(env) {
   if (!isBetaStabilizationEnabled(env)) return;
   if (!env.MAX_DISCOVERY_QUERIES) env.MAX_DISCOVERY_QUERIES = "2";
-  if (!env.DISCOVERY_TIMEOUT_MS) env.DISCOVERY_TIMEOUT_MS = "4500";
+  if (!env.DISCOVERY_TIMEOUT_MS) env.DISCOVERY_TIMEOUT_MS = "3000";
   if (!env.QUANTAI_SEARCH_HEURISTIC_COMMERCE_AI) env.QUANTAI_SEARCH_HEURISTIC_COMMERCE_AI = "true";
 }
 
@@ -95,8 +95,10 @@ assert.ok(route.includes("executeControlledRanking"), "phase 13.4 controlled ran
 assert.ok(route.includes("executedRanking"), "phase 13.4 executedRanking meta exposed");
 
 const homePage = readFileSync(join(process.cwd(), "app", "page.tsx"), "utf8");
-assert.ok(homePage.includes("applyRankedResultsDisplayBridge"), "phase 13.5 ranked results display bridge wired");
-assert.ok(homePage.includes("executedRanking"), "phase 13.5 consumes executedRanking meta");
+const resultsSurface = readFileSync(join(process.cwd(), "components", "search", "ProductResultsSurface.tsx"), "utf8");
+assert.ok(homePage.includes('sort === "value"'), "Phase A default value sort preserves server order");
+assert.ok(resultsSurface.includes("trustOrderedProducts"), "client single canonical order memo wired");
+assert.ok(!homePage.includes("applyRankedResultsDisplayBridge"), "legacy display bridge not reintroduced on page");
 
 assert.ok(route.includes("activateQuantAIIntelligence"), "phase 13.6 intelligence activation wired");
 

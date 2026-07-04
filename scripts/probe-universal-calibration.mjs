@@ -1,0 +1,166 @@
+#!/usr/bin/env node
+/**
+ * Universal calibration probe — distribution report across categories.
+ */
+import {
+  activateProductDecisionCoherence,
+  buildTrayCoherenceContext,
+} from "../lib/ui/decisionCoherenceActivation.ts";
+import { buildProductionReadinessDecisionMap } from "../lib/ui/phase45ProductionReadinessActivation.ts";
+import { resolveCanonicalSearchRank } from "../lib/truth/canonicalSearchRank.ts";
+import { summarizeCalibrationLabels } from "../lib/ui/canonicalDecisionCalibration.ts";
+
+const listingBase = {
+  extensions: [],
+  availability: "In stock",
+  shipping: "Free delivery",
+  image: "https://images.example.com/p.jpg",
+  rating: 4.6,
+  reviewsCount: 400,
+  priceTrend: "stable",
+};
+
+function listing(id, title, store, price, tag) {
+  return {
+    ...listingBase,
+    id,
+    link: `https://shop.example/${tag}/${id}`,
+    title,
+    store,
+    price,
+    displayPrice: `€${price}`,
+    oldPrice: price + 120,
+  };
+}
+
+const scenarios = {
+  macbook: {
+    query: "macbook pro",
+    tray: [
+      listing(1, "MacBook Pro 14 M3 Pro 512GB", "Apple", 1999, "mbp"),
+      listing(2, "MacBook Air M2 16GB 512GB", "Apple", 1199, "mba"),
+      listing(3, "MacBook Pro 16 M3 Max 1TB", "Apple", 2999, "mbp16"),
+      listing(4, "Dell XPS 13 Ultrabook", "Dell", 999, "xps"),
+    ],
+  },
+  iphone: {
+    query: "iphone 15 pro",
+    tray: [
+      listing(1, "iPhone 15 Pro 256GB", "Apple", 1099, "ip15p"),
+      listing(2, "iPhone 15 128GB", "Apple", 799, "ip15"),
+      listing(3, "iPhone 14 Pro 256GB", "Apple", 899, "ip14p"),
+      listing(4, "Samsung Galaxy S24 Ultra", "Samsung", 1199, "sam"),
+    ],
+  },
+  sofa: {
+    query: "corner sofa",
+    tray: [
+      listing(1, "Premium Corner Sofa Grey", "IKEA", 800, "sofa1"),
+      listing(2, "Family Sectional Sofa", "Wayfair", 970, "sofa2"),
+      listing(3, "Luxury Leather Corner Sofa", "Made.com", 1299, "sofa3"),
+      listing(4, "Budget Fabric Sofa", "Bol.com", 449, "sofa4"),
+      listing(5, "Scandinavian Corner Sofa", "Amazon", 999, "sofa5"),
+    ],
+  },
+  tv: {
+    query: "OLED TV 55 inch",
+    tray: [
+      listing(1, "LG OLED C3 55 inch 4K Smart TV", "LG", 1299, "oled1"),
+      listing(2, "Samsung S90C 55 inch OLED TV", "Samsung", 1399, "oled2"),
+      listing(3, "Sony Bravia XR A80L 55 OLED", "Sony", 1499, "oled3"),
+      listing(4, "Budget LED TV 55 inch", "TCL", 449, "led"),
+    ],
+  },
+};
+
+function runScenario(query, tray) {
+  const trayCtx = buildTrayCoherenceContext({
+    searchMeta: {
+      verdictIntelligence: {
+        version: "phase10-v1",
+        verdict: "BUY READY",
+        confidence: 0.86,
+        rationale: "Probe.",
+        strengths: [],
+        warnings: [],
+        factorTrace: {},
+      },
+      phase93TrustDiscount: {
+        version: "phase93-v1",
+        trayAssessments: tray.map((product) => ({
+          link: product.link,
+          trustScore: 88,
+          discountAuthenticity: "verified",
+          retailerIntegrity: "high",
+          priceRealism: "fair",
+          compositeTrust: 0.88,
+        })),
+      },
+    },
+    decisionBrief: null,
+  });
+
+  const coherenceMap = new Map(
+    tray.map((product, rank) => [
+      product.link,
+      activateProductDecisionCoherence({ product, list: tray, rank, tray: trayCtx, searchQuery: query }),
+    ])
+  );
+  const metaByLink = new Map(
+    tray.map((product, rank) => [
+      product.link,
+      {
+        price: product.price,
+        rank,
+        rating: product.rating,
+        reviewsCount: product.reviewsCount ?? 0,
+        store: product.store,
+      },
+    ])
+  );
+  const productsByLink = new Map(tray.map((product) => [product.link, { product, searchQuery: query }]));
+  const canonical = resolveCanonicalSearchRank(tray, query);
+  const { decisions } = buildProductionReadinessDecisionMap(
+    coherenceMap,
+    metaByLink,
+    productsByLink,
+    null,
+    null,
+    canonical.orderLinks
+  );
+  return { decisions, orderLinks: canonical.orderLinks };
+}
+
+console.log("=== Universal calibration distribution probe ===\n");
+
+for (const [name, config] of Object.entries(scenarios)) {
+  const { decisions, orderLinks } = runScenario(config.query, config.tray);
+  const { counts, confidences } = summarizeCalibrationLabels(decisions, orderLinks);
+  const leader = decisions.get(orderLinks[0]);
+  const second = decisions.get(orderLinks[1]);
+  const leaderRec = leader?.productIntelligence?.rankingDecisionRecord;
+  const secondRec = second?.productIntelligence?.rankingDecisionRecord;
+  const gap = (leaderRec?.finalRankScore ?? 0) - (secondRec?.finalRankScore ?? 0);
+
+  console.log(`--- ${name.toUpperCase()} ("${config.query}") ---`);
+  console.log("  labels:", {
+    AVOID: counts.AVOID,
+    COMPARE: counts.COMPARE,
+    BUY: counts.BUY,
+    STRONG_BUY: counts["STRONG BUY"],
+    BEST_VALUE: counts["BEST VALUE"],
+  });
+  console.log(
+    "  confidence:",
+    confidences.length
+      ? `${Math.min(...confidences)}–${Math.max(...confidences)}% (avg ${Math.round(confidences.reduce((a, b) => a + b, 0) / confidences.length)})`
+      : "n/a"
+  );
+  console.log(
+    "  grid #1:",
+    leader?.recommendationLabel,
+    `@ ${leader?.confidence}%`,
+    `(gap ${gap.toFixed(1)}, truthΔ ${leaderRec?.truthDelta ?? 0}, match ${leader?.productIntelligence?.truthFoundation?.productMatch?.overallMatchScore ?? "?"}, trust ${leaderRec?.compositeBreakdown.trust ?? "?"})`
+  );
+  console.log("");
+}
