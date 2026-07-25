@@ -1,0 +1,37 @@
+Copyright (c) 2024–2026 QuantAI / smartbuy project owners.
+
+All Rights Reserved.
+
+PROPRIETARY SOFTWARE LICENSE (ACQUISITION / TRANSFER DRAFT)
+
+This repository and its proprietary source code, documentation authored for
+QuantAI, and related materials are proprietary to the current copyright
+holder(s) identified by the seller in the acquisition agreement.
+
+1. GRANT
+   No license to use, copy, modify, distribute, sublicense, or sell this
+   software is granted to the public by this file alone. Rights transfer only
+   under a written acquisition agreement between seller and buyer.
+
+2. THIRD-PARTY COMPONENTS
+   This product incorporates and depends on third-party open-source packages
+   and commercial SaaS services. Those components remain subject to their own
+   licenses and terms. See docs/IP_AND_OWNERSHIP.md.
+
+3. TRADEMARKS / BRANDING
+   "QuantAI" and related branding may be subject to separate trademark claims.
+   Trademark transfer is not implied by transfer of this repository alone.
+
+4. NO WARRANTY
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT — except as expressly
+   stated in a signed acquisition agreement.
+
+SELLER/COUNSEL CONFIRMATION REQUIRED:
+- Confirm legal copyright holder name(s) and jurisdiction for Section header.
+- Confirm whether trademark "QuantAI" is registered and transferable.
+- Confirm contributor / contractor IP assignment status before closing.
+- Replace this draft with counsel-approved acquisition license language if required.
+
+Package name in npm metadata: "smartbuy" (private). Product name in product/docs: QuantAI.
