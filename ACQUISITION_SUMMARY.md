@@ -104,4 +104,8 @@ External latency; cold first search; no owned inventory; dormant layers must not
 
 ## Diligence entry point
 
-Start: `docs/FINAL_DATA_ROOM_INDEX.md` → README → Architecture one-pager → Live capability map → Known limitations → Demo script.
+**Start:** [`docs/FINAL_BUYER_DATA_ROOM.md`](docs/FINAL_BUYER_DATA_ROOM.md)  
+Canonical exec summary: [`docs/ACQUISITION_EXECUTIVE_SUMMARY.md`](docs/ACQUISITION_EXECUTIVE_SUMMARY.md)  
+Supporting index: `docs/FINAL_DATA_ROOM_INDEX.md` → README → Architecture one-pager → Live capability map → Known limitations → Risk register → Demo script.
+
+*(This root file remains a supporting executive overview; prefer `docs/ACQUISITION_EXECUTIVE_SUMMARY.md` going forward.)*

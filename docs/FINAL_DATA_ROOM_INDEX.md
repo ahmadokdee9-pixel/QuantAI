@@ -1,7 +1,7 @@
 # QuantAI — Final Data Room Index
 
-**Authoritative acquisition package map (Sprint 3).**  
-Prefer this index for buyer zip / shared diligence folders.  
+**Structured 01–10 map (Sprint 3).**  
+**Buyer narrative entry point:** [`FINAL_BUYER_DATA_ROOM.md`](./FINAL_BUYER_DATA_ROOM.md)  
 Brand: **QuantAI** · Package: `smartbuy`.
 
 ---
@@ -10,7 +10,9 @@ Brand: **QuantAI** · Package: `smartbuy`.
 
 | Document | Path |
 |----------|------|
-| Acquisition executive summary | [`../ACQUISITION_SUMMARY.md`](../ACQUISITION_SUMMARY.md) |
+| **Buyer data room (start here)** | [`FINAL_BUYER_DATA_ROOM.md`](./FINAL_BUYER_DATA_ROOM.md) |
+| Acquisition executive summary | [`ACQUISITION_EXECUTIVE_SUMMARY.md`](./ACQUISITION_EXECUTIVE_SUMMARY.md) |
+| Root exec summary (supporting) | [`../ACQUISITION_SUMMARY.md`](../ACQUISITION_SUMMARY.md) |
 | Product README | [`../README.md`](../README.md) |
 | Readiness audit (skeptical baseline) | [`../QUANTAI_ACQUISITION_READINESS_AUDIT.md`](../QUANTAI_ACQUISITION_READINESS_AUDIT.md) |
 | Naming (QuantAI vs smartbuy) | [`NAMING_NOTE.md`](./NAMING_NOTE.md) |
@@ -24,6 +26,7 @@ Brand: **QuantAI** · Package: `smartbuy`.
 | Architecture one-pager | [`BUYER_ARCHITECTURE_ONE_PAGER.md`](./BUYER_ARCHITECTURE_ONE_PAGER.md) |
 | Live vs dormant capability map | [`LIVE_CAPABILITY_MAP.md`](./LIVE_CAPABILITY_MAP.md) |
 | Technical moat memo | [`TECHNICAL_MOAT.md`](./TECHNICAL_MOAT.md) |
+| Technical asset inventory | [`TECHNICAL_ASSET_INVENTORY.md`](./TECHNICAL_ASSET_INVENTORY.md) |
 
 ---
 
@@ -89,6 +92,7 @@ Also: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) (subset) · Docu
 | Document | Path |
 |----------|------|
 | Known limitations disclosure | [`KNOWN_LIMITATIONS.md`](./KNOWN_LIMITATIONS.md) |
+| Buyer risk register | [`BUYER_RISK_REGISTER.md`](./BUYER_RISK_REGISTER.md) |
 
 ---
 

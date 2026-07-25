@@ -99,16 +99,19 @@ Buyer env guide: [`docs/ENVIRONMENT.md`](docs/ENVIRONMENT.md)
 
 ---
 
-## Acquisition / due diligence
+## Acquisition / Technical Due Diligence
 
-Start here: [`docs/BUYER_DATA_ROOM.md`](docs/BUYER_DATA_ROOM.md)
+For buyer due diligence, start here:  
+[`docs/FINAL_BUYER_DATA_ROOM.md`](docs/FINAL_BUYER_DATA_ROOM.md)
 
 | Doc | Purpose |
 |-----|---------|
+| [`docs/ACQUISITION_EXECUTIVE_SUMMARY.md`](docs/ACQUISITION_EXECUTIVE_SUMMARY.md) | ~2-page executive summary |
 | [`LICENSE`](LICENSE) | Proprietary / transfer draft |
 | [`docs/IP_AND_OWNERSHIP.md`](docs/IP_AND_OWNERSHIP.md) | What is owned vs third-party |
 | [`docs/ACQUISITION_HANDOVER.md`](docs/ACQUISITION_HANDOVER.md) | Master handover |
 | [`docs/ACCESS_AND_SECRETS_HANDOVER.md`](docs/ACCESS_AND_SECRETS_HANDOVER.md) | Credentials inventory |
+| [`docs/BUYER_RISK_REGISTER.md`](docs/BUYER_RISK_REGISTER.md) | Material risks |
 | [`docs/GOLDEN_DEMO_QUERIES.md`](docs/GOLDEN_DEMO_QUERIES.md) | Buyer demo query pack |
 | [`docs/DEMO_LATENCY_PROOF.md`](docs/DEMO_LATENCY_PROOF.md) | Latency / stale-prefer evidence |
 

@@ -3,7 +3,9 @@
 **Start here for technical due diligence.**  
 Product brand: **QuantAI** · Repository/npm name: `smartbuy`.
 
-**Primary index (Sprint 3):** use [`FINAL_DATA_ROOM_INDEX.md`](./FINAL_DATA_ROOM_INDEX.md) for the structured 01–10 data room. This file remains a quick orientation map.
+**Primary buyer entry (current):** [`FINAL_BUYER_DATA_ROOM.md`](./FINAL_BUYER_DATA_ROOM.md).  
+**Structured 01–10 map:** [`FINAL_DATA_ROOM_INDEX.md`](./FINAL_DATA_ROOM_INDEX.md).  
+This file remains a quick orientation map from Sprint 2.
 
 Estimated path: 10 minutes to orientation → deep links as needed.
 
