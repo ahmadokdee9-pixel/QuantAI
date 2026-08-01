@@ -5,12 +5,13 @@ import { usePathname } from "next/navigation";
 import {
   Activity,
   BarChart3,
+  BellRing,
   Bookmark,
   GitCompare,
+  History,
   LayoutDashboard,
   Radar,
   Search,
-  Settings,
   Sparkles,
   Zap,
 } from "lucide-react";
@@ -20,6 +21,8 @@ const NAV = [
   { href: "/#pricing", label: "Clearance Architecture", icon: Sparkles },
   { href: "/how-it-works", label: "Intelligence Infrastructure", icon: Radar },
   { href: "/saved", label: "Signal Operations", icon: Bookmark },
+  { href: "/decisions", label: "Decision Timeline", icon: History },
+  { href: "/watchlist", label: "Watched Decisions", icon: BellRing },
   { href: "/#quantai-trust", label: "Governance Layer", icon: Activity },
   { href: "/dashboard", label: "Persistence Layer", icon: BarChart3 },
 ] as const;

@@ -344,7 +344,7 @@ export function buildRetailerIntelligence(input: RetailerIntelligenceInput): Ret
   const returnPolicyConfidence = computeReturnPolicyConfidence(store, marketplaceRisk);
   const retailerConfidenceDim = computeRetailerConfidenceDimension(assessment, input);
 
-  let retailerScore = computeRetailerScore({
+  const retailerScore = computeRetailerScore({
     retailerTrust,
     retailerReputation,
     retailerConsistency,

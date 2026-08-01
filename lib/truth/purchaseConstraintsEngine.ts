@@ -83,7 +83,7 @@ function queryEnvelope(rawQuery: string, normalizedQuery: string): string {
   return `${rawQuery} ${normalizedQuery}`.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
-function useCaseBoost(useCase: string | null | undefined, target: string, amount: number): number {
+function scoreUseCaseMatch(useCase: string | null | undefined, target: string, amount: number): number {
   if (!useCase) return 0;
   return useCase === target ? amount : 0;
 }
@@ -116,7 +116,7 @@ function scorePortability(input: PurchaseConstraintsInput, envelope: string): nu
   return clampScore(
     input.tastePreference.portabilityPreference * 0.4 +
       (/\b(portable|portability|compact|thin|slim|محمول|خفيف)/i.test(envelope) ? 45 : 0) +
-      useCaseBoost(input.intentEngine.intent.useCase, "travel", 15)
+      scoreUseCaseMatch(input.intentEngine.intent.useCase, "travel", 15)
   );
 }
 
@@ -138,7 +138,7 @@ function scoreCamera(input: PurchaseConstraintsInput, envelope: string): number 
   if (/\b(camera|photo|photography|megapixel|night\s+mode|selfie|كاميرا|تصوير|ليلي)/i.test(envelope)) {
     return clampScore(88);
   }
-  return clampScore(useCaseBoost(input.intentEngine.intent.useCase, "photography", 40));
+  return clampScore(scoreUseCaseMatch(input.intentEngine.intent.useCase, "photography", 40));
 }
 
 function scoreStorage(input: PurchaseConstraintsInput, envelope: string): number {
@@ -179,7 +179,7 @@ function scoreTravel(input: PurchaseConstraintsInput, envelope: string): number 
     return clampScore(85);
   }
   return clampScore(
-    useCaseBoost(input.intentEngine.intent.useCase, "travel", 45) +
+    scoreUseCaseMatch(input.intentEngine.intent.useCase, "travel", 45) +
       input.tastePreference.portabilityPreference * 0.15
   );
 }
@@ -189,7 +189,7 @@ function scoreGaming(input: PurchaseConstraintsInput, envelope: string): number 
     return clampScore(90);
   }
   return clampScore(
-    useCaseBoost(input.intentEngine.intent.useCase, "gaming", 45) +
+    scoreUseCaseMatch(input.intentEngine.intent.useCase, "gaming", 45) +
       (input.intentEngine.intent.category === "gaming" ? 20 : 0)
   );
 }
@@ -200,7 +200,7 @@ function scoreWork(input: PurchaseConstraintsInput, envelope: string): number {
     return clampScore(85);
   }
   return clampScore(
-    useCaseBoost(input.intentEngine.intent.useCase, "productivity", 35) +
+    scoreUseCaseMatch(input.intentEngine.intent.useCase, "productivity", 35) +
       (input.intentEngine.intent.qualityLevel === "professional" ? 20 : 0)
   );
 }
@@ -209,7 +209,7 @@ function scoreEducation(input: PurchaseConstraintsInput, envelope: string): numb
   if (/\b(education|student|university|school|college|campus|للجامعة|للمدرسة|طالب|دراسة)/i.test(envelope)) {
     return clampScore(88);
   }
-  return clampScore(useCaseBoost(input.intentEngine.intent.useCase, "student", 45));
+  return clampScore(scoreUseCaseMatch(input.intentEngine.intent.useCase, "student", 45));
 }
 
 function scoreWeight(input: PurchaseConstraintsInput, envelope: string): number {

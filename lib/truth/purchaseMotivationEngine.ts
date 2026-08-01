@@ -82,7 +82,7 @@ function queryEnvelope(rawQuery: string, normalizedQuery: string): string {
   return `${rawQuery} ${normalizedQuery}`.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
-function useCaseBoost(useCase: string | null | undefined, target: string, amount: number): number {
+function scoreUseCaseMatch(useCase: string | null | undefined, target: string, amount: number): number {
   if (!useCase) return 0;
   if (useCase === target) return amount;
   if (target === "productivity" && (useCase === "productivity" || useCase === "student")) return amount * 0.5;
@@ -94,7 +94,7 @@ function useCaseBoost(useCase: string | null | undefined, target: string, amount
 function scoreProductivity(input: PurchaseMotivationInput, envelope: string): number {
   const intent = input.intentEngine.intent;
   return clampScore(
-    useCaseBoost(intent.useCase, "productivity", 40) +
+    scoreUseCaseMatch(intent.useCase, "productivity", 40) +
       (/\b(productivity|productive|office|programming|developer|multitask|للبرمجة|برمجة|إنتاجية)/i.test(envelope)
         ? 35
         : 0) +
@@ -133,7 +133,7 @@ function scoreGaming(input: PurchaseMotivationInput, envelope: string): number {
     return clampScore(88);
   }
   return clampScore(
-    useCaseBoost(input.intentEngine.intent.useCase, "gaming", 45) +
+    scoreUseCaseMatch(input.intentEngine.intent.useCase, "gaming", 45) +
       (input.intentEngine.intent.category === "gaming" ? 25 : 0) +
       input.tastePreference.performancePreference * 0.2
   );
@@ -141,9 +141,9 @@ function scoreGaming(input: PurchaseMotivationInput, envelope: string): number {
 
 function scoreCreativity(input: PurchaseMotivationInput, envelope: string): number {
   return clampScore(
-    useCaseBoost(input.intentEngine.intent.useCase, "creativity", 40) +
-      useCaseBoost(input.intentEngine.intent.useCase, "video editing", 45) +
-      useCaseBoost(input.intentEngine.intent.useCase, "photography", 25) +
+    scoreUseCaseMatch(input.intentEngine.intent.useCase, "creativity", 40) +
+      scoreUseCaseMatch(input.intentEngine.intent.useCase, "video editing", 45) +
+      scoreUseCaseMatch(input.intentEngine.intent.useCase, "photography", 25) +
       (/\b(creat|creator|content|design|art|edit|stream|montage|إبداع|مونتاج|تصميم)/i.test(envelope) ? 35 : 0)
   );
 }
@@ -161,7 +161,7 @@ function scoreEducation(input: PurchaseMotivationInput, envelope: string): numbe
   if (/\b(education|student|university|school|college|للجامعة|للمدرسة|دراسة|طالب)/i.test(envelope)) {
     return clampScore(85);
   }
-  return clampScore(useCaseBoost(input.intentEngine.intent.useCase, "student", 45));
+  return clampScore(scoreUseCaseMatch(input.intentEngine.intent.useCase, "student", 45));
 }
 
 function scoreTravel(input: PurchaseMotivationInput, envelope: string): number {
@@ -169,7 +169,7 @@ function scoreTravel(input: PurchaseMotivationInput, envelope: string): number {
     return clampScore(85);
   }
   return clampScore(
-    useCaseBoost(input.intentEngine.intent.useCase, "travel", 45) +
+    scoreUseCaseMatch(input.intentEngine.intent.useCase, "travel", 45) +
       input.tastePreference.portabilityPreference * 0.25
   );
 }
@@ -178,14 +178,14 @@ function scoreFitness(input: PurchaseMotivationInput, envelope: string): number 
   if (/\b(fitness|gym|workout|exercise|running|health|sport|رياضة|للرياضة|تمارين)/i.test(envelope)) {
     return clampScore(85);
   }
-  return clampScore(useCaseBoost(input.intentEngine.intent.useCase, "fitness", 45));
+  return clampScore(scoreUseCaseMatch(input.intentEngine.intent.useCase, "fitness", 45));
 }
 
 function scoreGifting(input: PurchaseMotivationInput, envelope: string): number {
   if (/\b(gift|present|birthday|anniversary|for\s+my|for\s+her|for\s+him|هدية|إهداء|عيد\s*ميلاد)/i.test(envelope)) {
     return clampScore(88);
   }
-  return clampScore(useCaseBoost(input.intentEngine.intent.useCase, "gift", 45));
+  return clampScore(scoreUseCaseMatch(input.intentEngine.intent.useCase, "gift", 45));
 }
 
 function scoreReplacement(input: PurchaseMotivationInput, envelope: string): number {

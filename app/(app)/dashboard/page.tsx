@@ -18,6 +18,8 @@ import { defaultCopilotSession } from "@/lib/copilot/sessionTypes";
 import type { CopilotSessionPayload } from "@/lib/copilot/sessionTypes";
 import { buildWatchlistEvolutionSignals } from "@/lib/intelligence/watchlistDealSignals";
 import { buildSessionDigest } from "@/lib/liveSignals/sessionDigest";
+import DecisionUpdatesPanel from "@/components/decisionMemory/DecisionUpdatesPanel";
+import { useAuth } from "@clerk/nextjs";
 
 type HistoryRow = { id?: string; query: string; result_count?: number; created_at?: string };
 type WatchRow = {
@@ -38,6 +40,7 @@ type SavedRow = {
 };
 
 export default function DashboardPage() {
+  const { isSignedIn } = useAuth();
   const [loading, setLoading] = useState(true);
   const [tier, setTier] = useState<QuantPlanTier>("free");
   const [entitlements, setEntitlements] = useState<SearchEntitlementsDTO | null>(null);
@@ -169,6 +172,8 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
+    // Initial dashboard hydrate from intelligence APIs (async setState in fetch callbacks).
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- mount fetch bootstrap
     void loadDashboard();
   }, [loadDashboard]);
 
@@ -210,6 +215,18 @@ export default function DashboardPage() {
   return (
     <>
       <EntitlementBanner />
+
+      <section className="qa-ref-ws-panel mb-4">
+        <DecisionUpdatesPanel signedIn={Boolean(isSignedIn)} />
+        <div className="mt-3 flex flex-wrap gap-3 text-xs">
+          <Link href="/decisions" className="font-semibold text-[#334155] hover:underline">
+            Decision timeline
+          </Link>
+          <Link href="/watchlist" className="font-semibold text-[#334155] hover:underline">
+            Watched decisions
+          </Link>
+        </div>
+      </section>
 
       <section className="qa-ref-ws-panel">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">

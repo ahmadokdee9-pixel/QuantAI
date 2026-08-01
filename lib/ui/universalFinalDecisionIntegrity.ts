@@ -402,7 +402,7 @@ export function enforceTrayCompareIntegrity(
   if (n === 0) return decisions;
 
   const maxCompare = trayAlternativePressure >= 55 ? Math.floor(n * 0.4) : Math.floor(n * 0.25);
-  let compareRows = rows.filter(([, row]) => row.verdict === "COMPARE");
+  const compareRows = rows.filter(([, row]) => row.verdict === "COMPARE");
   if (compareRows.length <= maxCompare) return decisions;
 
   compareRows.sort((a, b) => a[1].confidence - b[1].confidence);

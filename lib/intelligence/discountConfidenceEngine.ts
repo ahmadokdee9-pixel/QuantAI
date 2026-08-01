@@ -56,7 +56,7 @@ export function computeDiscountConfidence(args: {
   else if (priceHistory?.historicalHigh && priceHistory.historicalHigh > product.price) historicalEvidence = 74;
   else if (product.oldPrice && product.oldPrice > product.price) historicalEvidence = 66;
 
-  let merchantConsistency = clamp(Math.round(merchantTrustScore * 0.55 + (verified ? 20 : 0)), 0, 100);
+  const merchantConsistency = clamp(Math.round(merchantTrustScore * 0.55 + (verified ? 20 : 0)), 0, 100);
 
   let priceAnomalyScore = 70;
   if (fake) priceAnomalyScore = 15;

@@ -101,7 +101,10 @@ export default function GlobalCommerceIntelligenceNetwork() {
   }, [reduceMotion]);
 
   useEffect(() => {
-    if (reduceMotion) setProcessing(false);
+    if (!reduceMotion) return;
+    // Sync decorative processing state to reduced-motion preference.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a11y preference sync
+    setProcessing(false);
   }, [reduceMotion]);
 
   return (

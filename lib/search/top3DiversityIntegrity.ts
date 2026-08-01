@@ -73,7 +73,7 @@ function demoteNearDuplicateTitles(products: QuantProduct[], topN = 3): {
   const used = new Set<number>();
   const head: QuantProduct[] = [];
   const titleSeen = new Set<string>();
-  let removed = 0;
+  const removed = 0;
 
   if (out[0]) {
     head.push(out[0]);

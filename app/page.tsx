@@ -23,6 +23,16 @@ import { useCopilotSession } from "../components/copilot/CopilotContext";
 import { calculateAIScore } from "./api/search/lib/aiScoring";
 import ProductResultsSurface from "../components/search/ProductResultsSurface";
 import HeroSearchCommand from "../components/search/HeroSearchCommand";
+import DomainDecisionIndicator from "../components/search/DomainDecisionIndicator";
+import UniversalDecisionCard from "../components/search/UniversalDecisionCard";
+import DecisionUpdatesPanel from "@/components/decisionMemory/DecisionUpdatesPanel";
+import {
+  buildDecisionWriteFromUniversal,
+  persistDecisionEpisode,
+  persistDecisionWatch,
+} from "@/lib/decisionMemory/recordClient";
+import { classifyDecisionDomain } from "@/lib/universalDecision/router";
+import type { DecisionDomain, UniversalDecision } from "@/lib/universalDecision/types";
 import EnterpriseFooter from "../components/layout/EnterpriseFooter";
 import TrustRibbon from "@/components/trust/TrustRibbon";
 import { INSTITUTIONAL, resolveInstitutionalState } from "../lib/ui/systemStateLanguage";
@@ -70,7 +80,6 @@ import { appendLocalRecentSearch, readLocalSignals, recordInterestTag } from "@/
 import { HERO_INPUT_PLACEHOLDERS, HERO_SEARCH_PROMPTS } from "@/lib/search/heroPrompts";
 import { clientThrottleMessage, createClientSearchThrottle } from "@/lib/search/clientSearchThrottle";
 import { useMobilePerf } from "@/lib/hooks/useMobilePerf";
-import { useReducedMotion, motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 
 /** Deterministic SSR + first client paint â€” no localStorage; must match hydration. */
@@ -93,7 +102,6 @@ function mergeHeroTrayHints(): string[] {
 export default function Home() {
   const { isSignedIn } = useUser();
   const mobilePerf = useMobilePerf();
-  const reduceHeroMotion = useReducedMotion();
   const { registerPrimarySearch, pulseIntelligence } = useCockpit();
   const [query, setQuery] = useState("");
   const [products, setProducts] = useState<QuantProduct[]>([]);
@@ -117,6 +125,13 @@ export default function Home() {
   const [subscriptionTier, setSubscriptionTier] = useState<QuantPlanTier | null>(null);
   const [searchEntitlements, setSearchEntitlements] = useState<SearchEntitlementsDTO | null>(null);
   const [compareTrayLinks, setCompareTrayLinks] = useState<string[]>([]);
+  const [forcedDomain, setForcedDomain] = useState<DecisionDomain | null>(null);
+  const [detectedDomain, setDetectedDomain] = useState<DecisionDomain | null>(null);
+  const [domainConfidence, setDomainConfidence] = useState<number | null>(null);
+  const [domainClarify, setDomainClarify] = useState<string | null>(null);
+  const [universalDecision, setUniversalDecision] = useState<UniversalDecision | null>(null);
+  const [watchingUniversal, setWatchingUniversal] = useState(false);
+  const enabledDomains: DecisionDomain[] = ["product", "flight", "hotel", "subscription"];
   const [heroHintOptions, setHeroHintOptions] = useState<string[]>(() => [...SSR_HERO_HINT_SEED]);
   const bootedSearchFromUrl = useRef(false);
   const searchAbortRef = useRef<AbortController | null>(null);
@@ -307,7 +322,10 @@ export default function Home() {
 
   const activeFilterCount = countActiveFilters(filters);
 
-  async function search(overrideQuery?: string, opts?: { bypassClientThrottle?: boolean }) {
+  async function search(
+    overrideQuery?: string,
+    opts?: { bypassClientThrottle?: boolean; forcedDomain?: DecisionDomain | null }
+  ) {
     const q = (overrideQuery ?? query).trim();
     if (!q) return;
 
@@ -327,6 +345,12 @@ export default function Home() {
       setQuery(overrideQuery);
     }
 
+    const domainForce =
+      opts?.forcedDomain !== undefined ? opts.forcedDomain : forcedDomain;
+    if (opts?.forcedDomain !== undefined) {
+      setForcedDomain(opts.forcedDomain);
+    }
+
     searchAbortRef.current?.abort();
     const ac = new AbortController();
     searchAbortRef.current = ac;
@@ -337,6 +361,9 @@ export default function Home() {
     setLoading(true);
     setSearchError(null);
     setActionNotice(null);
+    setUniversalDecision(null);
+    setWatchingUniversal(false);
+    setDomainClarify(null);
 
     if (submitPulseTimerRef.current != null) {
       window.clearTimeout(submitPulseTimerRef.current);
@@ -351,6 +378,91 @@ export default function Home() {
     await new Promise<void>((resolve) => {
       requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
     });
+
+    const classification = classifyDecisionDomain(q, { forcedDomain: domainForce });
+    setDetectedDomain(classification.domain);
+    setDomainConfidence(classification.confidence);
+
+    if (classification.needsClarification && !domainForce) {
+      setDomainClarify(classification.clarifyingQuestion);
+      setProducts([]);
+      setDealClusters([]);
+      setSearchIntelligence(null);
+      setSearchMeta(null);
+      setLoading(false);
+      searchInflightQueryRef.current = "";
+      return;
+    }
+
+    // Non-product domains → universal decision API (real providers only).
+    if (classification.domain !== "product") {
+      try {
+        const res = await fetch("/api/decision/run", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            "X-Requested-With": "quantai-web",
+          },
+          credentials: "same-origin",
+          signal: ac.signal,
+          body: JSON.stringify({
+            query: q,
+            forcedDomain: domainForce || classification.domain,
+          }),
+        });
+        const parsed = await readApiJson<{
+          success?: boolean;
+          decision?: UniversalDecision | null;
+          routedToProductPipeline?: boolean;
+          classification?: { clarifyingQuestion?: string | null; needsClarification?: boolean };
+        }>(res);
+        if (searchAbortRef.current !== ac) return;
+
+        const payload = parsed.data || {};
+
+        if (payload.routedToProductPipeline) {
+          // Fall through to product search below.
+        } else if (payload.classification?.needsClarification) {
+          setDomainClarify(payload.classification.clarifyingQuestion || classification.clarifyingQuestion);
+          setProducts([]);
+          setLoading(false);
+          searchInflightQueryRef.current = "";
+          return;
+        } else if (payload.decision) {
+          setUniversalDecision(payload.decision);
+          setProducts([]);
+          setDealClusters([]);
+          setSearchIntelligence(null);
+          setSearchMeta({ domain: classification.domain, universal: true });
+          setSearchError(null);
+          appendLocalRecentSearch(q);
+          setHeroHintOptions(mergeHeroTrayHints());
+          const write = buildDecisionWriteFromUniversal(payload.decision);
+          if (write) {
+            void persistDecisionEpisode(write, { signedIn: Boolean(isSignedIn) });
+          }
+          trackEvent(QuantAnalyticsEvents.SEARCH_SUCCESS, {
+            resultCount: payload.decision.candidates?.length ?? 0,
+            domain: classification.domain,
+          });
+          setLoading(false);
+          searchInflightQueryRef.current = "";
+          return;
+        } else if (!res.ok) {
+          setSearchError(apiErrorText(parsed, "Decision provider unavailable."));
+          setLoading(false);
+          searchInflightQueryRef.current = "";
+          return;
+        }
+      } catch (e) {
+        if ((e as Error)?.name === "AbortError") return;
+        setSearchError("Decision run failed. Try again.");
+        setLoading(false);
+        searchInflightQueryRef.current = "";
+        return;
+      }
+    }
 
     try {
       const commerceMemory = readCommerceSessionMemoryFromBrowser();
@@ -687,7 +799,7 @@ export default function Home() {
         return;
       }
       setActionNotice({
-        message: "Price monitoring channel activated for this listing.",
+        message: "Decision watched — tracking in Watchlist and Decision timeline.",
         tone: "success",
       });
       trackEvent(QuantAnalyticsEvents.WATCHLIST_ADD, { link: product.link });
@@ -767,7 +879,10 @@ export default function Home() {
                   </div>
                   <HeroSearchCommand
                     query={query}
-                    onQueryChange={setQuery}
+                    onQueryChange={(v) => {
+                      setQuery(v);
+                      if (forcedDomain) setForcedDomain(null);
+                    }}
                     onSubmit={() => void search()}
                     onSubmitPreset={(preset) => void search(preset)}
                     loading={loading}
@@ -776,6 +891,17 @@ export default function Home() {
                     hintOptions={heroHintOptions}
                     registerInput={registerPrimarySearch}
                     mobilePerf={mobilePerf}
+                  />
+
+                  <DomainDecisionIndicator
+                    domain={detectedDomain}
+                    confidence={domainConfidence}
+                    enabledDomains={enabledDomains}
+                    clarifyingQuestion={domainClarify}
+                    onCorrectDomain={(d) => void search(undefined, { forcedDomain: d, bypassClientThrottle: true })}
+                    onConfirmClarification={(d) =>
+                      void search(undefined, { forcedDomain: d, bypassClientThrottle: true })
+                    }
                   />
 
                   {loading ? (
@@ -880,9 +1006,33 @@ export default function Home() {
           </section>
         )}
 
+        {!loading && (products.length > 0 || universalDecision) ? (
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 mb-4">
+            <DecisionUpdatesPanel signedIn={Boolean(isSignedIn)} compact />
+          </div>
+        ) : null}
+
+        {!loading && universalDecision ? (
+          <div className="qa-universal-decision-anchor qa-instant-decision-anchor">
+            <UniversalDecisionCard
+              decision={universalDecision}
+              watching={watchingUniversal}
+              onWatch={() => {
+                const write = buildDecisionWriteFromUniversal(universalDecision);
+                if (!write) return;
+                setWatchingUniversal(true);
+                void persistDecisionWatch(write.productLink, {
+                  signedIn: Boolean(isSignedIn),
+                  episode: { ...write, watched: true },
+                });
+              }}
+            />
+          </div>
+        ) : null}
+
         {(loading ||
           products.length > 0 ||
-          (searchError != null && !loading)) && (
+          (searchError != null && !loading && !universalDecision)) && (
           <ProductResultsSurface
             products={products}
             sortedProducts={sortedProducts}

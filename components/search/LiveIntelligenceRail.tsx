@@ -64,7 +64,9 @@ export default function LiveIntelligenceRail({
   }, [live, reduceMotion, stageIndex]);
 
   useEffect(() => {
-    if (stageIndex !== undefined) setActiveStage(stageIndex);
+    if (stageIndex === undefined) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- controlled stage prop sync
+    setActiveStage(stageIndex);
   }, [stageIndex]);
 
   return (

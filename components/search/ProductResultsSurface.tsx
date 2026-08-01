@@ -3,8 +3,14 @@
 /** QUANTAI_PHASE_26_2_STABLE_FROZEN — single verdict + reasoning pipeline wiring. */
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Loader2 } from "lucide-react";
+import {
+  buildDecisionWriteFromLeader,
+  persistDecisionEpisode,
+  persistDecisionWatch,
+} from "@/lib/decisionMemory/recordClient";
 import InstitutionalFilteredPanel from "@/components/system/InstitutionalFilteredPanel";
 import InstitutionalStatePanel from "@/components/system/InstitutionalStatePanel";
 import { resolveInstitutionalState } from "@/lib/ui/systemStateLanguage";
@@ -142,10 +148,12 @@ export default function ProductResultsSurface({
   searchMeta = null,
 }: Props) {
   const { registerQuickHandlers } = useCockpit();
+  const { isSignedIn } = useAuth();
   const reduceMotion = useReducedMotion();
   const mobilePerf = useMobilePerf();
   const anchorRef = useRef<HTMLDivElement>(null);
   const prevLoading = useRef(false);
+  const lastPersistedDecisionKey = useRef<string>("");
   const [detailProduct, setDetailProduct] = useState<QuantProduct | null>(null);
   const [compareLinks, setCompareLinks] = useState<string[]>([]);
   const [filterPanelOpen, setFilterPanelOpen] = useState(false);
@@ -369,10 +377,60 @@ export default function ProductResultsSurface({
         next.add(product.link);
         return next;
       });
+      const universal = universalByLink.get(product.link) ?? decisionLeaderUniversal;
+      const episode =
+        universal != null
+          ? buildDecisionWriteFromLeader({
+              product,
+              universal,
+              searchQuery,
+              brief: calibratedDecisionBrief,
+            })
+          : null;
+      void persistDecisionWatch(product.link, {
+        signedIn: Boolean(isSignedIn),
+        episode,
+      });
       addToWatchlist?.(product);
     },
-    [addToWatchlist]
+    [
+      addToWatchlist,
+      universalByLink,
+      decisionLeaderUniversal,
+      searchQuery,
+      calibratedDecisionBrief,
+      isSignedIn,
+    ]
   );
+
+  // Persist Instant Decision episodes into Decision Memory (does not modify Instant Decision UI).
+  useEffect(() => {
+    if (!decisionLeader || !decisionLeaderUniversal || loading) return;
+    const key = [
+      resultsKey,
+      decisionLeader.link,
+      decisionLeaderUniversal.recommendationLabel ?? decisionLeaderUniversal.verdict,
+      Math.round(decisionLeaderUniversal.confidence),
+      Math.round(decisionLeader.price || 0),
+    ].join("|");
+    if (lastPersistedDecisionKey.current === key) return;
+    lastPersistedDecisionKey.current = key;
+    const input = buildDecisionWriteFromLeader({
+      product: decisionLeader,
+      universal: decisionLeaderUniversal,
+      searchQuery,
+      brief: calibratedDecisionBrief,
+    });
+    void persistDecisionEpisode(input, { signedIn: Boolean(isSignedIn) });
+  }, [
+    decisionLeader,
+    decisionLeaderUniversal,
+    calibratedDecisionBrief,
+    searchQuery,
+    resultsKey,
+    loading,
+    isSignedIn,
+  ]);
 
   const handlePrimeCompare = useCallback((links: string[]) => {
     setVerdict(null);

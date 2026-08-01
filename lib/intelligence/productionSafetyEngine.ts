@@ -60,7 +60,7 @@ export function validateProductionDecision(args: {
   confidence: number;
 }): ProductionSafetyResult {
   const issues: string[] = [];
-  let tier = sanitizeTier(args.tier);
+  const tier = sanitizeTier(args.tier);
   let confidence = clampScore(args.confidence, 65, 45, 98);
   let verdict = sanitizeVerdict(args.verdict, tier);
 

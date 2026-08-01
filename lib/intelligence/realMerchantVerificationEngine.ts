@@ -60,7 +60,7 @@ export function verifyMerchant(args: {
   const reviewReliability = base.reviewQualityScore;
   const transparency = clamp(Math.round((deliveryReliability + returnPolicy) / 2), 0, 100);
 
-  let merchantTrustScore = clamp(
+  const merchantTrustScore = clamp(
     Math.round(
       base.compositeCheckoutScore * 0.35 +
         deliveryReliability * 0.12 +
