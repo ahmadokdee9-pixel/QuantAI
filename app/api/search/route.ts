@@ -84,6 +84,15 @@ import { buildLatencyBudgetReport } from "@/lib/search/latencyBudget";
 import { PipelineTrace } from "@/lib/search/pipelineTrace";
 import { rebuildSearchTrayArtifacts, verifyTrayMetaCoherence } from "@/lib/search/searchTrayArtifacts";
 import { composeProductionMeta, isSearchMetaLiteMode } from "@/lib/search/productionMetaComposer";
+import {
+  buildCanonicalResponseCacheKey,
+  buildFeatureFlagDigest,
+  getCanonicalCachedSearchBodyDetailed,
+  hashOpaqueContext,
+  isCanonicalResponseCacheEnabled,
+  setCanonicalCachedSearchBody,
+  stampCanonicalCacheHitDiagnostics,
+} from "@/lib/search/canonicalResponseCache";
 import { applySearchIntelligenceUpgrade } from "@/lib/search/searchIntelligenceUpgrade";
 import { applyPhase92TrayIntegrity } from "@/lib/search/phase92TrayIntegrity";
 import { applyPhase93TrustDiscountHardening } from "@/lib/intelligence/phase93TrustDiscountHardening";
@@ -744,6 +753,58 @@ async function handleSearch(
             headers: { "Retry-After": String(limited.retryAfter) },
           }
         );
+      }
+    }
+
+    /** Shadow P0: full canonical response cache (flag DEFAULT OFF). HIT skips recompute only. */
+    let pendingCanonicalResponseCacheKey: string | null = null;
+    if (isCanonicalResponseCacheEnabled() && !guestOperationalDegraded) {
+      try {
+        const cacheKey = buildCanonicalResponseCacheKey({
+          normalizedQuery: requestCanonicalQuery.normalizedQuery || pipelineKey,
+          authScope: userId ? "auth" : "guest",
+          userFingerprint: userId ? hashOpaqueContext(userId) : null,
+          tier: String(tier),
+          marketCountry: requestCanonicalQuery.market?.country ?? null,
+          marketCurrency: requestCanonicalQuery.market?.currency ?? null,
+          language: requestCanonicalQuery.language ?? null,
+          sortMode: "value",
+          sessionFingerprint: opts?.commerceMemory
+            ? hashOpaqueContext(opts.commerceMemory)
+            : null,
+          featureFlagDigest: buildFeatureFlagDigest(),
+          intelligenceVersion: 13,
+          pipelineCacheTag: TASTE_GRAMMAR_PIPELINE_CACHE_KEY,
+        });
+        const lookupStarted = Date.now();
+        const cachedDetailed = await getCanonicalCachedSearchBodyDetailed(cacheKey);
+        const lookupMs = Date.now() - lookupStarted;
+        const cachedBody = cachedDetailed?.body ?? null;
+        if (cachedBody && cachedBody.success === true && cachedBody.data) {
+          const ageMs = Math.max(0, Date.now() - (cachedDetailed?.storedAtMs ?? Date.now()));
+          const stamped = stampCanonicalCacheHitDiagnostics(cachedBody, {
+            lookupMs,
+            ageMs,
+            keyDigest: cacheKey,
+            backend: cachedDetailed?.backend,
+          });
+          const stampedData = (stamped.data ??= {}) as Record<string, unknown>;
+          if (!stampedData.meta || typeof stampedData.meta !== "object") {
+            stampedData.meta = {};
+          }
+          const stampedMeta = stampedData.meta as Record<string, unknown>;
+          stampedMeta.searchLatencyMs = Date.now() - searchStarted;
+          return jsonSearch(stamped, {
+            headers: {
+              "Cache-Control": "private, s-maxage=90, stale-while-revalidate=180",
+              Vary: "Cookie",
+              "X-QuantAI-Canonical-Cache": "HIT",
+            },
+          });
+        }
+        pendingCanonicalResponseCacheKey = cacheKey;
+      } catch {
+        pendingCanonicalResponseCacheKey = null;
       }
     }
 
@@ -2484,15 +2545,23 @@ async function handleSearch(
         : {}),
     });
 
-    return jsonSearch(
-      { success: true, data },
-      {
-        headers: {
-          "Cache-Control": "private, s-maxage=90, stale-while-revalidate=180",
-          Vary: "Cookie",
-        },
+    const successBody: Record<string, unknown> = { success: true, data };
+    if (pendingCanonicalResponseCacheKey) {
+      try {
+        await setCanonicalCachedSearchBody(pendingCanonicalResponseCacheKey, successBody);
+      } catch {
+        // Cache write failures must never break the canonical response.
       }
-    );
+    }
+    return jsonSearch(successBody, {
+      headers: {
+        "Cache-Control": "private, s-maxage=90, stale-while-revalidate=180",
+        Vary: "Cookie",
+        ...(pendingCanonicalResponseCacheKey
+          ? { "X-QuantAI-Canonical-Cache": "MISS" }
+          : {}),
+      },
+    });
   } catch (e) {
     return fail(
       500,

@@ -7,7 +7,6 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import InstitutionalFilteredPanel from "@/components/system/InstitutionalFilteredPanel";
 import InstitutionalStatePanel from "@/components/system/InstitutionalStatePanel";
-import InlineSystemNotice from "@/components/system/InlineSystemNotice";
 import { resolveInstitutionalState } from "@/lib/ui/systemStateLanguage";
 import { QuantAnalyticsEvents } from "@/lib/analytics/events";
 import { trackEvent } from "@/lib/analytics/track";
@@ -47,9 +46,9 @@ import {
 } from "@/lib/ui/phase45ProductionReadinessActivation";
 import { parseTruthFoundationPrefetch } from "@/lib/truth/truthFoundationLoader";
 import CompareIntelligencePanel from "./CompareIntelligencePanel";
+import InstantDecisionCard from "./InstantDecisionCard";
 import IntelligenceCommandCenter from "./IntelligenceCommandCenter";
 import LiveIntelligenceRail from "./LiveIntelligenceRail";
-import MarketSummaryBlock from "./MarketSummaryBlock";
 import ProductIntelligenceDrawer from "./ProductIntelligenceDrawer";
 import ProductResultCard from "./ProductResultCard";
 import ResultsToolbar from "./ResultsToolbar";
@@ -58,7 +57,6 @@ import { useMobilePerf } from "@/lib/hooks/useMobilePerf";
 import { relatedTrayQueries } from "@/lib/search/relatedTrayQueries";
 import { buildUnifiedMarketGroup } from "@/lib/intelligence/unifiedMarketMatching";
 import { buildCommerceCoverageTray } from "@/lib/ui/commerceCoverageActivation";
-import { INTEL_TERMS } from "@/lib/ui/intelligenceTerminology";
 import {
   loadMarketMemory,
   recordTrayPriceSnapshots,
@@ -134,7 +132,6 @@ export default function ProductResultsSurface({
   resultsKey,
   searchError,
   addToWatchlist,
-  dealClusters = [],
   searchIntelligence = null,
   intelligenceLevel = "full",
   searchQuery = "",
@@ -158,7 +155,8 @@ export default function ProductResultsSurface({
   const [verdictSource, setVerdictSource] = useState<string | null>(null);
   const [compareExportFlash, setCompareExportFlash] = useState(false);
   const [marketMemoryTick, setMarketMemoryTick] = useState(0);
-  const [trayFocusLink, setTrayFocusLink] = useState<string | null>(null);
+  const [trayFocusLink] = useState<string | null>(null);
+  const [watchedDecisionLinks, setWatchedDecisionLinks] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     onCompareTrayChange?.(compareLinks);
@@ -349,11 +347,48 @@ export default function ProductResultsSurface({
     const leaderLink = canonicalOrderLinks[0];
     return leaderLink ? universalByLink.get(leaderLink)?.recommendationLabel ?? null : null;
   }, [canonicalOrderLinks, universalByLink]);
+  const decisionLeader = useMemo(() => {
+    const leaderLink = canonicalOrderLinks[0];
+    if (!leaderLink) return trustOrderedProducts[0] ?? null;
+    return (
+      productsByLink.get(leaderLink)?.product ??
+      trustOrderedProducts.find((product) => product.link === leaderLink) ??
+      trustOrderedProducts[0] ??
+      null
+    );
+  }, [canonicalOrderLinks, productsByLink, trustOrderedProducts]);
+  const decisionLeaderUniversal = useMemo(() => {
+    const leaderLink = canonicalOrderLinks[0];
+    return leaderLink ? universalByLink.get(leaderLink) ?? null : null;
+  }, [canonicalOrderLinks, universalByLink]);
+
+  const handleWatchDecision = useCallback(
+    (product: QuantProduct) => {
+      setWatchedDecisionLinks((prev) => {
+        const next = new Set(prev);
+        next.add(product.link);
+        return next;
+      });
+      addToWatchlist?.(product);
+    },
+    [addToWatchlist]
+  );
+
+  const handlePrimeCompare = useCallback((links: string[]) => {
+    setVerdict(null);
+    setVerdictError(null);
+    setVerdictSource(null);
+    setCompareLinks(links.slice(0, 3));
+    window.requestAnimationFrame(() =>
+      document
+        .getElementById("quantai-compare-lab")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" })
+    );
+  }, []);
   const displayCoherenceByLink = useMemo(
     () => buildProductionReadinessDisplayCoherenceByLink(coherenceByLink, universalByLink, phase45TrayContext),
     [coherenceByLink, universalByLink, phase45TrayContext]
   );
-  const phase271Tray = null;
   const detailCoherence = detailProduct
     ? displayCoherenceByLink.get(detailProduct.link) ?? null
     : null;
@@ -376,10 +411,6 @@ export default function ProductResultsSurface({
       : "qa-ui-results-grid";
   const gridMax =
     sortedProducts.length === 2 ? "max-w-4xl mx-auto" : sortedProducts.length === 3 ? "max-w-6xl mx-auto" : "";
-
-  const transition = reduceMotion
-    ? { duration: 0 }
-    : { type: "spring" as const, stiffness: 300, damping: 36 };
 
   useEffect(() => {
     if (reduceMotion || mobilePerf) return;
@@ -640,6 +671,20 @@ export default function ProductResultsSurface({
         marketComparison={marketComparison ?? null}
       />
 
+      <div className="qa-instant-decision-anchor mx-auto max-w-7xl px-4 sm:px-6">
+        <InstantDecisionCard
+          leader={decisionLeader}
+          tray={trustOrderedProducts}
+          universal={decisionLeaderUniversal}
+          universalByLink={universalByLink}
+          decisionBrief={calibratedDecisionBrief}
+          addToWatchlist={addToWatchlist ? handleWatchDecision : undefined}
+          onPrimeCompare={handlePrimeCompare}
+          onOpenProduct={setDetailProduct}
+          watching={decisionLeader ? watchedDecisionLinks.has(decisionLeader.link) : false}
+        />
+      </div>
+
       <SellerCoverageStrip products={sortedProducts} />
 
       <ResultsToolbar
@@ -666,8 +711,10 @@ export default function ProductResultsSurface({
       ) : null}
 
       <div className="qa-ref-results-grid-head">
-        <p className="qa-ref-kicker">{INTEL_TERMS.intelligenceResults}</p>
-        <p className="qa-ref-results-grid-head__count">{sortedProducts.length} intelligence assets in tray</p>
+        <p className="qa-ref-kicker">Evidence tray</p>
+        <p className="qa-ref-results-grid-head__count">
+          {sortedProducts.length} options supporting the decision above
+        </p>
       </div>
 
       <div className={compactTray ? "mb-3 mt-3" : "mb-4 mt-4"}>
@@ -741,6 +788,12 @@ export default function ProductResultsSurface({
         marketContext={detailCoherence?.marketContext ?? marketContext}
         coherentDecision={detailCoherence}
         commerceCoverage={detailCommerceCoverage}
+        universalProductDecision={
+          detailProduct ? universalByLink.get(detailProduct.link) ?? null : null
+        }
+        universalByLink={universalByLink}
+        addToWatchlist={addToWatchlist ? handleWatchDecision : undefined}
+        watching={detailProduct ? watchedDecisionLinks.has(detailProduct.link) : false}
       />
 
       {mobilePerf ? (
@@ -835,16 +888,6 @@ export default function ProductResultsSurface({
           </motion.div>
         </AnimatePresence>
       )}
-
-      <MarketSummaryBlock
-        products={sortedProducts}
-        searchIntelligence={searchIntelligence}
-        marketComparison={marketComparison ?? null}
-        marketCoverage={phase45TrayContext.marketCoverage}
-        searchDominanceSummary={phase45TrayContext.searchDominanceSummary}
-        marketSummaryV2={phase45TrayContext.marketSummaryV2}
-        phase271Tray={phase271Tray}
-      />
 
       {searchIntelligence && (
         <motion.div

@@ -59,6 +59,13 @@ See [`DEMO_LATENCY_PROOF.md`](./DEMO_LATENCY_PROOF.md) for timeout defaults, sta
 
 **Absence of a live endpoint measurement is a diligence gap**, not a product failure. Seller/buyer must capture artifacts before listing claims about “sub‑N‑second search.”
 
+### D. Step 6 live production measurement (attached)
+
+See [`PRODUCTION_DEMO_EVIDENCE.md`](./PRODUCTION_DEMO_EVIDENCE.md) and raw JSON  
+[`architecture-audit/beta-launch/step6-production-evidence.json`](./architecture-audit/beta-launch/step6-production-evidence.json).
+
+Against `https://quant-ai-app.vercel.app` (30 successful samples): warm P50 **7860 ms**, warm P95 **8351 ms**, cold P95 **18212 ms**.
+
 ---
 
 ## Exact commands (seller / buyer)

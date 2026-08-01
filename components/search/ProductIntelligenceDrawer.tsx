@@ -30,6 +30,8 @@ import {
   type QuantProduct,
 } from "@/lib/shoppingScore";
 import { intelligenceDecisionLabel } from "@/lib/ui/intelligencePresentation";
+import type { UniversalProductDecision } from "@/lib/ui/universalProductDecision";
+import InstantDecisionCard from "./InstantDecisionCard";
 
 type Props = {
   product: QuantProduct | null;
@@ -42,6 +44,10 @@ type Props = {
   marketContext?: MarketContextInput | null;
   coherentDecision?: CoherentProductDecision | null;
   commerceCoverage?: ActivatedCommerceCoverage | null;
+  universalProductDecision?: UniversalProductDecision | null;
+  universalByLink?: Map<string, UniversalProductDecision>;
+  addToWatchlist?: (p: QuantProduct) => void;
+  watching?: boolean;
 };
 
 function SignalBar({ value }: { value: number }) {
@@ -103,6 +109,10 @@ export default function ProductIntelligenceDrawer({
   marketContext = null,
   coherentDecision = null,
   commerceCoverage = null,
+  universalProductDecision = null,
+  universalByLink,
+  addToWatchlist,
+  watching = false,
 }: Props) {
   const reduceMotion = useReducedMotion();
   const titleId = useId();
@@ -226,6 +236,21 @@ export default function ProductIntelligenceDrawer({
             </header>
 
             <div className="qa-ui-drawer-body qa-cine-drawer-body relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-4 py-4 sm:px-5 sm:py-5">
+              {universalProductDecision ? (
+                <div className="mb-4">
+                  <InstantDecisionCard
+                    leader={p}
+                    tray={list}
+                    universal={universalProductDecision}
+                    universalByLink={universalByLink ?? new Map([[p.link, universalProductDecision]])}
+                    decisionBrief={coherentDecision?.decisionBrief ?? decisionBrief}
+                    addToWatchlist={addToWatchlist}
+                    onOpenProduct={undefined}
+                    watching={watching}
+                    compact
+                  />
+                </div>
+              ) : null}
               <DrawerBody
                 p={p}
                 list={list}

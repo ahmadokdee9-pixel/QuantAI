@@ -14,7 +14,7 @@
 | L8 | **In-memory rate limit / circuit / stale on serverless** | Weaker consistency across instances without Upstash | **Medium** | Enable Upstash; document fallbacks | Configure Upstash for production |
 | L9 | **No proprietary product inventory** | Moat is decision layer, not catalog | **Medium (strategic)** | Honest positioning in README / moat memo | Do not value as data marketplace |
 | L10 | **Stripe may be unset** | Billing demo incomplete | **Low** for search-only diligence | Optional for CORE DEMO | Add live Stripe if monetization is in thesis |
-| L11 | **Live production P50/P95 not always attached** | Latency claims unverified | **Medium** | Probe commands in PERFORMANCE_EVIDENCE.md | Run and attach probe artifact before SLA claims |
+| L11 | **Live production latency is slow vs consumer search** | Warm P95 ~8.4s observed (WEAK); cold outliers ~18s | **Medium–High** | Warm demos; disclose WEAK class; cost/provider tuning post-close | Attach/share `PRODUCTION_DEMO_EVIDENCE.md`; set buyer expectations |
 | L12 | **LICENSE / IP counsel confirmation pending** | Closing risk | **High (legal)** | Draft LICENSE + IP_AND_OWNERSHIP.md | Counsel sign-off |
 | L13 | **Package name `smartbuy` vs brand QuantAI** | Diligence confusion | **Low** | NAMING_NOTE.md | Keep alias or rename later carefully |
 | L14 | **Search route monolith (~2.5k lines)** | Maintainability concern | **Medium** | Freeze behavior; post-close refactor program only | Do not rewrite pre-sale |

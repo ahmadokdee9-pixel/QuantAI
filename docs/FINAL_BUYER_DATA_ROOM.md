@@ -169,18 +169,24 @@ Commerce inventory is obtained through **external discovery providers** and merc
 
 ## 8. Performance
 
-Evidence: [`DEMO_LATENCY_PROOF.md`](./DEMO_LATENCY_PROOF.md) · [`PERFORMANCE_EVIDENCE.md`](./PERFORMANCE_EVIDENCE.md)
+Evidence: [`PRODUCTION_DEMO_EVIDENCE.md`](./PRODUCTION_DEMO_EVIDENCE.md) · [`DEMO_LATENCY_PROOF.md`](./DEMO_LATENCY_PROOF.md) · [`PERFORMANCE_EVIDENCE.md`](./PERFORMANCE_EVIDENCE.md)
 
 ### Local / simulated measurements
 
 - Offline stale-prefer race correctness (`scripts/benchmark-search-speed-path.mjs`)
 - Phase 4 ranking kernel p50/p95 in **millisecond** bands (offline; not end-to-end search)
 
-### Live production measurements
+### Live production measurements (Step 6 evidence)
 
-**Live production P50/P95 not yet independently evidenced in this repository.**
+Against **https://quant-ai-app.vercel.app** (30 successful `/api/search` wall-clock samples):
 
-Capture with: `SEARCH_BASE_URL=… BETA_PROBE_WARM=true npm run test:beta-latency-probe`
+| Band | P50 | P95 | Max |
+|------|----:|----:|----:|
+| Cold (n=10) | 8060 ms | 18212 ms | 18212 ms |
+| Warm (n=20) | 7860 ms | 8351 ms | 8407 ms |
+| Overall (n=30) | 7962 ms | 17951 ms | 18212 ms |
+
+Buyer-perceived class (warm P95): **WEAK** (>8s). Upstream/provider latency dominates.
 
 ---
 
@@ -318,8 +324,9 @@ Material items:
 5. [`TECHNICAL_MOAT.md`](./TECHNICAL_MOAT.md)  
 6. [`LIVE_CAPABILITY_MAP.md`](./LIVE_CAPABILITY_MAP.md)  
 7. [`TECHNICAL_ASSET_INVENTORY.md`](./TECHNICAL_ASSET_INVENTORY.md)  
-8. [`PERFORMANCE_EVIDENCE.md`](./PERFORMANCE_EVIDENCE.md)  
-9. [`KNOWN_LIMITATIONS.md`](./KNOWN_LIMITATIONS.md)  
-10. [`BUYER_RISK_REGISTER.md`](./BUYER_RISK_REGISTER.md)  
-11. [`ACCESS_AND_SECRETS_HANDOVER.md`](./ACCESS_AND_SECRETS_HANDOVER.md)  
-12. [`ACQUISITION_HANDOVER.md`](./ACQUISITION_HANDOVER.md)
+8. [`PRODUCTION_DEMO_EVIDENCE.md`](./PRODUCTION_DEMO_EVIDENCE.md)  
+9. [`PERFORMANCE_EVIDENCE.md`](./PERFORMANCE_EVIDENCE.md)  
+10. [`KNOWN_LIMITATIONS.md`](./KNOWN_LIMITATIONS.md)  
+11. [`BUYER_RISK_REGISTER.md`](./BUYER_RISK_REGISTER.md)  
+12. [`ACCESS_AND_SECRETS_HANDOVER.md`](./ACCESS_AND_SECRETS_HANDOVER.md)  
+13. [`ACQUISITION_HANDOVER.md`](./ACQUISITION_HANDOVER.md)

@@ -111,9 +111,10 @@ For buyer due diligence, start here:
 | [`docs/IP_AND_OWNERSHIP.md`](docs/IP_AND_OWNERSHIP.md) | What is owned vs third-party |
 | [`docs/ACQUISITION_HANDOVER.md`](docs/ACQUISITION_HANDOVER.md) | Master handover |
 | [`docs/ACCESS_AND_SECRETS_HANDOVER.md`](docs/ACCESS_AND_SECRETS_HANDOVER.md) | Credentials inventory |
+| [`docs/PRODUCTION_DEMO_EVIDENCE.md`](docs/PRODUCTION_DEMO_EVIDENCE.md) | Live demo URL + measured P50/P95 |
 | [`docs/BUYER_RISK_REGISTER.md`](docs/BUYER_RISK_REGISTER.md) | Material risks |
 | [`docs/GOLDEN_DEMO_QUERIES.md`](docs/GOLDEN_DEMO_QUERIES.md) | Buyer demo query pack |
-| [`docs/DEMO_LATENCY_PROOF.md`](docs/DEMO_LATENCY_PROOF.md) | Latency / stale-prefer evidence |
+| [`docs/DEMO_LATENCY_PROOF.md`](docs/DEMO_LATENCY_PROOF.md) | Latency / stale-prefer mechanisms |
 
 ---
 

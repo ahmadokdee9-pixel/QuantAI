@@ -1,0 +1,149 @@
+{
+  "generatedAt": "2026-07-27T22:42:26.508Z",
+  "flagDefaultOff": true,
+  "ttlSeconds": 180,
+  "volatileAllowlist": [
+    "data.meta.searchLatencyMs",
+    "data.meta.latencyBudget",
+    "data.meta.stageSuppression",
+    "data.meta.reliability",
+    "data.meta.canonicalResponseCache",
+    "data.meta.searchDebug",
+    "data.meta.pipelineTrace"
+  ],
+  "isolation": [
+    {
+      "name": "flag_default_off",
+      "pass": true,
+      "detail": "OFF when unset"
+    },
+    {
+      "name": "query_isolation",
+      "pass": true,
+      "detail": "ok"
+    },
+    {
+      "name": "guest_auth_isolation",
+      "pass": true,
+      "detail": "ok"
+    },
+    {
+      "name": "market_isolation",
+      "pass": true,
+      "detail": "ok"
+    },
+    {
+      "name": "session_isolation",
+      "pass": true,
+      "detail": "ok"
+    },
+    {
+      "name": "sort_isolation",
+      "pass": true,
+      "detail": "ok"
+    },
+    {
+      "name": "ttl_expiry_miss",
+      "pass": true,
+      "detail": "ok"
+    },
+    {
+      "name": "malformed_set_rejected",
+      "pass": true,
+      "detail": "ok"
+    },
+    {
+      "name": "unavailable_miss",
+      "pass": true,
+      "detail": "ok"
+    }
+  ],
+  "equivalence": [
+    {
+      "name": "corpus_laptop",
+      "pass": true,
+      "detail": "A≡B≡C",
+      "diffCount": 0,
+      "sampleDiffs": []
+    },
+    {
+      "name": "corpus_phone",
+      "pass": true,
+      "detail": "A≡B≡C",
+      "diffCount": 0,
+      "sampleDiffs": []
+    },
+    {
+      "name": "corpus_tv",
+      "pass": true,
+      "detail": "A≡B≡C",
+      "diffCount": 0,
+      "sampleDiffs": []
+    },
+    {
+      "name": "corpus_furniture",
+      "pass": true,
+      "detail": "A≡B≡C",
+      "diffCount": 0,
+      "sampleDiffs": []
+    },
+    {
+      "name": "corpus_audio",
+      "pass": true,
+      "detail": "A≡B≡C",
+      "diffCount": 0,
+      "sampleDiffs": []
+    },
+    {
+      "name": "corpus_footwear",
+      "pass": true,
+      "detail": "A≡B≡C",
+      "diffCount": 0,
+      "sampleDiffs": []
+    },
+    {
+      "name": "corpus_sparse",
+      "pass": true,
+      "detail": "A≡B≡C",
+      "diffCount": 0,
+      "sampleDiffs": []
+    }
+  ],
+  "latency": {
+    "note": "Module-level store/get over ~24-product canonical body (compute excluded). Live wall-clock optional via SEARCH_BASE_URL.",
+    "missStore": {
+      "n": 40,
+      "p50": 0,
+      "p95": 1,
+      "max": 1,
+      "min": 0,
+      "average": 0
+    },
+    "hitGet": {
+      "n": 40,
+      "p50": 0,
+      "p95": 0,
+      "max": 1,
+      "min": 0,
+      "average": 0
+    },
+    "cacheLookup": {
+      "n": 40,
+      "p50": 0,
+      "p95": 0,
+      "max": 1,
+      "min": 0,
+      "average": 0
+    }
+  },
+  "live": null,
+  "failures": [],
+  "summary": {
+    "corpusSize": 7,
+    "totalEquivalenceComparisons": 21,
+    "semanticMismatches": 0,
+    "isolationPass": true,
+    "equivalencePass": true,
+    "flagDefaultOff": true
+  }
+}

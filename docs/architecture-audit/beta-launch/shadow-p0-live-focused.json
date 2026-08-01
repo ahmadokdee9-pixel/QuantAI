@@ -1,0 +1,96 @@
+{
+  "generatedAt": "2026-07-27T22:05:00.035Z",
+  "base": "http://127.0.0.1:3011",
+  "rows": [
+    {
+      "q": "iPhone 15 Pro 256GB",
+      "missHeader": "MISS",
+      "hitHeader": "HIT",
+      "missMs": 7317,
+      "hitMs": 46,
+      "hit2Ms": 46,
+      "missN": 21,
+      "hitN": 21,
+      "equal": true,
+      "diffs": []
+    },
+    {
+      "q": "corner sofa",
+      "missHeader": "MISS",
+      "hitHeader": null,
+      "missMs": 10679,
+      "hitMs": 7211,
+      "hit2Ms": 7211,
+      "missN": 21,
+      "hitN": 21,
+      "equal": false,
+      "diffs": [
+        {
+          "path": "data.meta.fallbackReason",
+          "reason": "type object vs string"
+        },
+        {
+          "path": "data.meta.operationalState",
+          "reason": "value mismatch"
+        },
+        {
+          "path": "data.meta.trayExplanation",
+          "reason": "value mismatch"
+        }
+      ]
+    },
+    {
+      "q": "Sony WH-1000XM5",
+      "missHeader": null,
+      "hitHeader": null,
+      "missMs": 7076,
+      "hitMs": 7061,
+      "hit2Ms": 7061,
+      "missN": 1,
+      "hitN": 1,
+      "equal": true,
+      "diffs": []
+    },
+    {
+      "q": "OLED TV 55 inch",
+      "missHeader": null,
+      "hitHeader": null,
+      "missMs": 7145,
+      "hitMs": 7116,
+      "hit2Ms": 7116,
+      "missN": 9,
+      "hitN": 9,
+      "equal": false,
+      "diffs": [
+        {
+          "path": "data.meta.fallbackReason",
+          "reason": "value mismatch"
+        },
+        {
+          "path": "data.meta.operationalState.reason",
+          "reason": "value mismatch"
+        }
+      ]
+    }
+  ],
+  "missStats": {
+    "n": 4,
+    "p50": 7145,
+    "p95": 10679,
+    "max": 10679,
+    "min": 7076,
+    "average": 8054
+  },
+  "hitStatsTrueOnly": {
+    "n": 2,
+    "p50": 46,
+    "p95": 46,
+    "max": 46,
+    "min": 46,
+    "average": 46
+  },
+  "trueHitCount": 1,
+  "eqFail": 2,
+  "allTrueHitsEqual": true,
+  "trueHitsEqualCount": 1
+}

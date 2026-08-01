@@ -1,0 +1,129 @@
+{
+  "generatedAt": "2026-07-27T22:43:15.950Z",
+  "base": "http://127.0.0.1:3013",
+  "sequential": [
+    {
+      "q": "MacBook Pro 14",
+      "missMs": 229,
+      "hitMs": 150,
+      "missH": "HIT",
+      "hitH": "HIT",
+      "backend": "file",
+      "equal": true,
+      "n": 27
+    },
+    {
+      "q": "iPhone 15 Pro 256GB",
+      "missMs": 8336,
+      "hitMs": 95,
+      "missH": "MISS",
+      "hitH": "HIT",
+      "backend": "file",
+      "equal": true,
+      "n": 21
+    },
+    {
+      "q": "OLED TV 55 inch",
+      "missMs": 8382,
+      "hitMs": 104,
+      "missH": "MISS",
+      "hitH": "HIT",
+      "backend": "file",
+      "equal": true,
+      "n": 24
+    },
+    {
+      "q": "corner sofa",
+      "missMs": 8246,
+      "hitMs": 89,
+      "missH": "MISS",
+      "hitH": "HIT",
+      "backend": "file",
+      "equal": true,
+      "n": 21
+    },
+    {
+      "q": "Sony WH-1000XM5",
+      "missMs": 25,
+      "hitMs": 23,
+      "missH": "HIT",
+      "hitH": "HIT",
+      "backend": "file",
+      "equal": true,
+      "n": 1
+    },
+    {
+      "q": "Adidas Samba",
+      "missMs": 8283,
+      "hitMs": 74,
+      "missH": "MISS",
+      "hitH": "HIT",
+      "backend": "file",
+      "equal": true,
+      "n": 25
+    },
+    {
+      "q": "Dyson V15",
+      "missMs": 10778,
+      "hitMs": 84,
+      "missH": "MISS",
+      "hitH": "HIT",
+      "backend": "file",
+      "equal": true,
+      "n": 18
+    },
+    {
+      "q": "Kindle Paperwhite",
+      "missMs": 10643,
+      "hitMs": 24,
+      "missH": "MISS",
+      "hitH": "HIT",
+      "backend": "file",
+      "equal": true,
+      "n": 2
+    }
+  ],
+  "concurrent": {
+    "n": 4,
+    "hits": 4,
+    "ratio": 1,
+    "headers": [
+      "HIT",
+      "HIT",
+      "HIT",
+      "HIT"
+    ],
+    "latencies": [
+      104,
+      188,
+      270,
+      356
+    ],
+    "allHit": true,
+    "backends": [
+      "file",
+      "file",
+      "file",
+      "file"
+    ]
+  },
+  "missStats": {
+    "n": 8,
+    "p50": 8283,
+    "p95": 10778,
+    "max": 10778,
+    "min": 25,
+    "average": 6865
+  },
+  "hitStats": {
+    "n": 8,
+    "p50": 84,
+    "p95": 150,
+    "max": 150,
+    "min": 23,
+    "average": 80
+  },
+  "trueHitCount": 8,
+  "eqPass": true,
+  "errors": []
+}

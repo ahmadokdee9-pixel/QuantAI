@@ -1,0 +1,610 @@
+{
+  "generatedAt": "2026-07-27T22:18:46.904Z",
+  "step": 10,
+  "flagDefaultOff": true,
+  "ttlSeconds": 60,
+  "module": {
+    "isolation": [
+      {
+        "name": "query_isolation",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "guest_auth_isolation",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "auth_user_isolation",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "no_cross_user_leakage",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "market_currency_isolation",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "persona_session_isolation",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "feature_flag_isolation",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "ttl_expiry_fallback_miss",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "malformed_set_fails_safe",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "malformed_undefined_fails_safe",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "cache_unavailable_miss",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "stale_pipeline_tag_isolation",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "name": "concurrent_different_no_leak",
+        "pass": true,
+        "detail": ""
+      }
+    ],
+    "equivalence": [
+      {
+        "name": "corpus_laptop_MacBook Pro 14",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_laptop-variant_MacBook Air M2",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_laptop-budget_gaming laptop under 1500",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_phone_iPhone 15 Pro 256GB",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_phone-variant_iPhone 15",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_phone-android_Samsung Galaxy S24",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_tv_OLED TV 55 inch",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_tv-variant_LG C4 OLED 65",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_tv-broad_4K smart TV",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_furniture_corner sofa",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_furniture-brand_IKEA Kivik sofa",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_furniture-office_office desk chair",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_audio_Sony WH-1000XM5",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_audio-earbuds_AirPods Pro 2",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_audio-variant_Bose QuietComfort",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_footwear_Adidas Samba",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_footwear-nike_Nike Air Force 1",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_appliance_Dyson V15",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_appliance-coffee_Nespresso Vertuo",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_ebook_Kindle Paperwhite",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_toys_LEGO Star Wars set",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_sports_yoga mat non slip",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_sparse_rare-sparse-widget-xyz-9",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_empty_zzzz-empty-unlikely-sku-",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      },
+      {
+        "name": "corpus_repeat-identical_MacBook Pro 14",
+        "pass": true,
+        "detail": "A≡B≡C",
+        "diffCount": 0,
+        "sampleDiffs": []
+      }
+    ],
+    "concurrent": [
+      {
+        "name": "concurrent_identical_reads",
+        "pass": true,
+        "n": 20
+      },
+      {
+        "name": "concurrent_different_keys",
+        "pass": true,
+        "n": 4
+      }
+    ],
+    "failures": [],
+    "latency": {
+      "missStore": {
+        "n": 80,
+        "p50": 0,
+        "p95": 1,
+        "max": 1,
+        "min": 0,
+        "average": 0
+      },
+      "hitGet": {
+        "n": 80,
+        "p50": 0,
+        "p95": 0,
+        "max": 1,
+        "min": 0,
+        "average": 0
+      }
+    },
+    "summary": {
+      "corpusSize": 25,
+      "comparisons": 75,
+      "semanticMismatches": 0,
+      "dimensions": {
+        "productIdentity": true,
+        "productOrdering": true,
+        "scores": true,
+        "merchantDiversity": true,
+        "buyingDecision": true,
+        "buyerVisible": true
+      },
+      "isolationPass": true,
+      "equivalencePass": true,
+      "concurrentPass": true,
+      "failures": []
+    }
+  },
+  "live": {
+    "base": "http://127.0.0.1:3012",
+    "corpusSize": 16,
+    "rows": [
+      {
+        "q": "MacBook Pro 14",
+        "category": "laptop",
+        "missMs": 8542,
+        "hit1Ms": 104,
+        "hit2Ms": 71,
+        "missHeader": "MISS",
+        "hit1Header": "HIT",
+        "hit2Header": "HIT",
+        "missN": 27,
+        "hitN": 27,
+        "trueHit": true,
+        "sliceEqual": true,
+        "fullEqual": true
+      },
+      {
+        "q": "MacBook Air M2",
+        "category": "laptop-variant",
+        "missMs": 7135,
+        "hit1Ms": 26,
+        "hit2Ms": 52,
+        "missHeader": "MISS",
+        "hit1Header": "HIT",
+        "hit2Header": "HIT",
+        "missN": 5,
+        "hitN": 5,
+        "trueHit": true,
+        "sliceEqual": true,
+        "fullEqual": true
+      },
+      {
+        "q": "gaming laptop under 1500",
+        "category": "laptop-budget",
+        "missMs": 7394,
+        "hit1Ms": 313,
+        "hit2Ms": 288,
+        "missHeader": "MISS",
+        "hit1Header": "HIT",
+        "hit2Header": "HIT",
+        "missN": 5,
+        "hitN": 5,
+        "trueHit": true,
+        "sliceEqual": true,
+        "fullEqual": true
+      },
+      {
+        "q": "iPhone 15 Pro 256GB",
+        "category": "phone",
+        "missMs": 7262,
+        "hit1Ms": 48,
+        "hit2Ms": 45,
+        "missHeader": "MISS",
+        "hit1Header": "HIT",
+        "hit2Header": "HIT",
+        "missN": 21,
+        "hitN": 21,
+        "trueHit": true,
+        "sliceEqual": true,
+        "fullEqual": true
+      },
+      {
+        "q": "iPhone 15",
+        "category": "phone-variant",
+        "missMs": 11670,
+        "hit1Ms": 53,
+        "hit2Ms": 44,
+        "missHeader": "MISS",
+        "hit1Header": "HIT",
+        "hit2Header": "HIT",
+        "missN": 21,
+        "hitN": 21,
+        "trueHit": true,
+        "sliceEqual": true,
+        "fullEqual": true
+      },
+      {
+        "q": "Samsung Galaxy S24",
+        "category": "phone-android",
+        "missMs": 10818,
+        "hit1Ms": 196,
+        "hit2Ms": 215,
+        "missHeader": "MISS",
+        "hit1Header": "HIT",
+        "hit2Header": "HIT",
+        "missN": 6,
+        "hitN": 6,
+        "trueHit": true,
+        "sliceEqual": true,
+        "fullEqual": true
+      },
+      {
+        "q": "OLED TV 55 inch",
+        "category": "tv",
+        "missMs": 7700,
+        "hit1Ms": 30,
+        "hit2Ms": 29,
+        "missHeader": "MISS",
+        "hit1Header": "HIT",
+        "hit2Header": "HIT",
+        "missN": 9,
+        "hitN": 9,
+        "trueHit": true,
+        "sliceEqual": true,
+        "fullEqual": true
+      },
+      {
+        "q": "LG C4 OLED 65",
+        "category": "tv-variant",
+        "missMs": 3530,
+        "hit1Ms": 13,
+        "hit2Ms": 12,
+        "missHeader": "MISS",
+        "hit1Header": "HIT",
+        "hit2Header": "HIT",
+        "missN": 0,
+        "hitN": 0,
+        "trueHit": true,
+        "sliceEqual": true,
+        "fullEqual": true
+      },
+      {
+        "q": "4K smart TV",
+        "category": "tv-broad",
+        "missMs": 11074,
+        "hit1Ms": 12,
+        "hit2Ms": 14,
+        "missHeader": "MISS",
+        "hit1Header": "HIT",
+        "hit2Header": "HIT",
+        "missN": 1,
+        "hitN": 1,
+        "trueHit": true,
+        "sliceEqual": true,
+        "fullEqual": true
+      },
+      {
+        "q": "corner sofa",
+        "category": "furniture",
+        "missMs": 7855,
+        "hit1Ms": 424,
+        "hit2Ms": 459,
+        "missHeader": "MISS",
+        "hit1Header": "HIT",
+        "hit2Header": "HIT",
+        "missN": 21,
+        "hitN": 21,
+        "trueHit": true,
+        "sliceEqual": true,
+        "fullEqual": true
+      },
+      {
+        "q": "IKEA Kivik sofa",
+        "category": "furniture-brand",
+        "missMs": 3540,
+        "hit1Ms": 11,
+        "hit2Ms": 11,
+        "missHeader": "MISS",
+        "hit1Header": "HIT",
+        "hit2Header": "HIT",
+        "missN": 0,
+        "hitN": 0,
+        "trueHit": true,
+        "sliceEqual": true,
+        "fullEqual": true
+      },
+      {
+        "q": "office desk chair",
+        "category": "furniture-office",
+        "missMs": 10842,
+        "hit1Ms": 158,
+        "hit2Ms": 146,
+        "missHeader": "MISS",
+        "hit1Header": "HIT",
+        "hit2Header": "HIT",
+        "missN": 3,
+        "hitN": 3,
+        "trueHit": true,
+        "sliceEqual": true,
+        "fullEqual": true
+      },
+      {
+        "q": "Sony WH-1000XM5",
+        "category": "audio",
+        "missMs": 7104,
+        "hit1Ms": 11,
+        "hit2Ms": 12,
+        "missHeader": "MISS",
+        "hit1Header": "HIT",
+        "hit2Header": "HIT",
+        "missN": 1,
+        "hitN": 1,
+        "trueHit": true,
+        "sliceEqual": true,
+        "fullEqual": true
+      },
+      {
+        "q": "AirPods Pro 2",
+        "category": "audio-earbuds",
+        "missMs": 11185,
+        "hit1Ms": 18,
+        "hit2Ms": 17,
+        "missHeader": "MISS",
+        "hit1Header": "HIT",
+        "hit2Header": "HIT",
+        "missN": 1,
+        "hitN": 1,
+        "trueHit": true,
+        "sliceEqual": true,
+        "fullEqual": true
+      },
+      {
+        "q": "Bose QuietComfort",
+        "category": "audio-variant",
+        "missMs": 11056,
+        "hit1Ms": 707,
+        "hit2Ms": 398,
+        "missHeader": "MISS",
+        "hit1Header": "HIT",
+        "hit2Header": "HIT",
+        "missN": 11,
+        "hitN": 11,
+        "trueHit": true,
+        "sliceEqual": true,
+        "fullEqual": true
+      },
+      {
+        "q": "Adidas Samba",
+        "category": "footwear",
+        "missMs": 7308,
+        "hit1Ms": 51,
+        "hit2Ms": 54,
+        "missHeader": "MISS",
+        "hit1Header": "HIT",
+        "hit2Header": "HIT",
+        "missN": 25,
+        "hitN": 25,
+        "trueHit": true,
+        "sliceEqual": true,
+        "fullEqual": true
+      }
+    ],
+    "missStats": {
+      "n": 16,
+      "p50": 7700,
+      "p95": 11670,
+      "max": 11670,
+      "min": 3530,
+      "average": 8376
+    },
+    "hitStatsTrueOnly": {
+      "n": 32,
+      "p50": 48,
+      "p95": 459,
+      "max": 707,
+      "min": 11,
+      "average": 126
+    },
+    "hitStatsNonHitSeconds": {
+      "n": 0,
+      "p50": null,
+      "p95": null,
+      "max": null,
+      "min": null,
+      "average": null
+    },
+    "trueHitCount": 16,
+    "trueHitEqualCount": 16,
+    "sliceFailOnTrueHit": 0,
+    "nonHitSecondRequests": 0,
+    "concurrentLive": {
+      "attempted": true,
+      "wallMs": 11110,
+      "allHit": false,
+      "headers": [
+        "MISS",
+        "MISS",
+        "MISS",
+        "MISS"
+      ],
+      "latencies": [
+        8592,
+        9341,
+        10227,
+        10982
+      ]
+    },
+    "outliers": {
+      "missMaxRow": {
+        "q": "iPhone 15",
+        "category": "phone-variant",
+        "missMs": 11670,
+        "hit1Ms": 53,
+        "hit2Ms": 44,
+        "missHeader": "MISS",
+        "hit1Header": "HIT",
+        "hit2Header": "HIT",
+        "missN": 21,
+        "hitN": 21,
+        "trueHit": true,
+        "sliceEqual": true,
+        "fullEqual": true
+      },
+      "slowNonHit": []
+    }
+  },
+  "gatesNote": "See Step 10 shell validation log"
+}

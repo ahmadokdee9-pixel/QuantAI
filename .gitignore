@@ -23,6 +23,9 @@
 # validation artifacts (local deploy history)
 .validation/
 
+# local shared CRC file backend (shadow proof)
+.cache/
+
 # misc
 .DS_Store
 *.pem
