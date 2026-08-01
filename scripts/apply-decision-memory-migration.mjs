@@ -12,6 +12,7 @@ const MIG_DIR = resolve(import.meta.dirname, "../supabase/migrations");
 const TARGET = [
   "20260801120000_decision_memory.sql",
   "20260801130000_decision_memory_universal_domain.sql",
+  "20260801140000_living_decisions.sql",
 ];
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()?.replace(/\/$/, "");

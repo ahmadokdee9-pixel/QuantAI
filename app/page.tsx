@@ -28,11 +28,13 @@ import UniversalDecisionCard from "../components/search/UniversalDecisionCard";
 import DecisionUpdatesPanel from "@/components/decisionMemory/DecisionUpdatesPanel";
 import {
   buildDecisionWriteFromUniversal,
+  loadLivingDecisionThread,
   persistDecisionEpisode,
   persistDecisionWatch,
 } from "@/lib/decisionMemory/recordClient";
 import { classifyDecisionDomain } from "@/lib/universalDecision/router";
 import type { DecisionDomain, UniversalDecision } from "@/lib/universalDecision/types";
+import type { LivingDecisionThread } from "@/lib/livingDecision/types";
 import EnterpriseFooter from "../components/layout/EnterpriseFooter";
 import TrustRibbon from "@/components/trust/TrustRibbon";
 import { INSTITUTIONAL, resolveInstitutionalState } from "../lib/ui/systemStateLanguage";
@@ -131,6 +133,9 @@ export default function Home() {
   const [domainClarify, setDomainClarify] = useState<string | null>(null);
   const [universalDecision, setUniversalDecision] = useState<UniversalDecision | null>(null);
   const [watchingUniversal, setWatchingUniversal] = useState(false);
+  const [universalLivingThread, setUniversalLivingThread] = useState<LivingDecisionThread | null>(
+    null
+  );
   const enabledDomains: DecisionDomain[] = ["product", "flight", "hotel", "subscription"];
   const [heroHintOptions, setHeroHintOptions] = useState<string[]>(() => [...SSR_HERO_HINT_SEED]);
   const bootedSearchFromUrl = useRef(false);
@@ -363,6 +368,7 @@ export default function Home() {
     setActionNotice(null);
     setUniversalDecision(null);
     setWatchingUniversal(false);
+    setUniversalLivingThread(null);
     setDomainClarify(null);
 
     if (submitPulseTimerRef.current != null) {
@@ -440,7 +446,15 @@ export default function Home() {
           setHeroHintOptions(mergeHeroTrayHints());
           const write = buildDecisionWriteFromUniversal(payload.decision);
           if (write) {
-            void persistDecisionEpisode(write, { signedIn: Boolean(isSignedIn) });
+            void (async () => {
+              await persistDecisionEpisode(write, { signedIn: Boolean(isSignedIn) });
+              const thread = await loadLivingDecisionThread({
+                productLink: write.productLink,
+                decisionId: write.decisionId,
+                signedIn: Boolean(isSignedIn),
+              });
+              setUniversalLivingThread(thread);
+            })();
           }
           trackEvent(QuantAnalyticsEvents.SEARCH_SUCCESS, {
             resultCount: payload.decision.candidates?.length ?? 0,
@@ -1017,6 +1031,7 @@ export default function Home() {
             <UniversalDecisionCard
               decision={universalDecision}
               watching={watchingUniversal}
+              livingThread={universalLivingThread}
               onWatch={() => {
                 const write = buildDecisionWriteFromUniversal(universalDecision);
                 if (!write) return;

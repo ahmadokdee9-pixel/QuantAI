@@ -3,21 +3,35 @@
  */
 
 import {
+  listLocalEpisodesForLink,
   markLocalDecisionWatched,
   recordLocalDecisionMemory,
 } from "@/lib/decisionMemory/clientMemory";
 import type { DecisionAction, DecisionMemoryWriteInput } from "@/lib/decisionMemory/types";
 import { resolveExecutiveAction } from "@/lib/ui/instantDecisionModel";
 import type { UniversalProductDecision } from "@/lib/ui/universalProductDecision";
-import type { QuantProduct } from "@/lib/shoppingScore";
+import { ratingValue, type QuantProduct } from "@/lib/shoppingScore";
 import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
 import type { UniversalDecision } from "@/lib/universalDecision/types";
+import { buildLivingDecisionThread } from "@/lib/livingDecision/timeline";
+import type { LivingDecisionThread } from "@/lib/livingDecision/types";
+import { resolveThreadKey } from "@/lib/livingDecision/identity";
+
+function stockFromAvailability(availability: string | null | undefined): string | null {
+  const a = (availability || "").toLowerCase();
+  if (!a) return null;
+  if (/(out of stock|sold out|unavailable)/.test(a)) return "out_of_stock";
+  if (/(in stock|available|ships)/.test(a)) return "in_stock";
+  if (/limited|low stock/.test(a)) return "limited";
+  return a.slice(0, 48);
+}
 
 export function buildDecisionWriteFromLeader(args: {
   product: QuantProduct;
   universal: UniversalProductDecision;
   searchQuery?: string;
   brief?: DecisionBriefDTO | null;
+  betterAlternativeTitle?: string | null;
 }): DecisionMemoryWriteInput {
   const { product, universal, searchQuery = "", brief = null } = args;
   const { action } = resolveExecutiveAction(universal, brief?.recommendation?.label);
@@ -32,6 +46,27 @@ export function buildDecisionWriteFromLeader(args: {
     .filter(Boolean)
     .filter((line, index, arr) => arr.indexOf(line) === index)
     .slice(0, 6);
+
+  const memoryIdentity = resolveThreadKey({
+    memoryIdentity: `product:${product.link}`,
+    productLink: product.link,
+    domain: "product",
+  });
+
+  const evidence = [
+    product.price > 0
+      ? { id: "price", label: "Price", value: `€${Math.round(product.price)}`, kind: "fact" }
+      : null,
+    product.store
+      ? { id: "merchant", label: "Merchant", value: product.store, kind: "fact" }
+      : null,
+    ratingValue(product.rating) > 0
+      ? { id: "rating", label: "Rating", value: String(ratingValue(product.rating)), kind: "fact" }
+      : null,
+    product.availability
+      ? { id: "availability", label: "Availability", value: product.availability, kind: "fact" }
+      : null,
+  ].filter(Boolean);
 
   return {
     searchQuery: searchQuery.trim() || null,
@@ -50,6 +85,14 @@ export function buildDecisionWriteFromLeader(args: {
     reasons,
     availability: product.availability,
     watched: false,
+    domain: "product",
+    memoryIdentity,
+    evidence,
+    sourceFreshnessAt: new Date().toISOString(),
+    rating: ratingValue(product.rating) > 0 ? ratingValue(product.rating) : null,
+    provider: product.store || null,
+    stockState: stockFromAvailability(product.availability),
+    betterAlternativeTitle: args.betterAlternativeTitle ?? null,
   };
 }
 
@@ -61,6 +104,7 @@ export function buildDecisionWriteFromUniversal(
   if (!leader && !decision.memoryIdentity) return null;
   const link = leader?.link || decision.memoryIdentity;
   if (!link) return null;
+  const alt = decision.alternatives[0]?.title || null;
   return {
     searchQuery: decision.query,
     productId: leader?.id ?? decision.memoryIdentity,
@@ -80,6 +124,13 @@ export function buildDecisionWriteFromUniversal(
     contextualVerb: decision.contextualVerb,
     evidence: decision.evidence,
     sourceFreshnessAt: decision.sourceFreshness.fetchedAt,
+    rating:
+      leader?.raw && typeof (leader.raw as { rating?: unknown }).rating === "number"
+        ? Number((leader.raw as { rating: number }).rating)
+        : null,
+    provider: decision.sourceFreshness.provider || leader?.merchant || null,
+    stockState: stockFromAvailability(leader?.availability),
+    betterAlternativeTitle: alt,
   };
 }
 
@@ -87,10 +138,10 @@ export function buildDecisionWriteFromUniversal(
 export async function persistDecisionEpisode(
   input: DecisionMemoryWriteInput,
   opts?: { signedIn?: boolean }
-): Promise<void> {
+): Promise<DecisionMemoryWriteInput> {
   recordLocalDecisionMemory(input);
 
-  if (!opts?.signedIn) return;
+  if (!opts?.signedIn) return input;
 
   try {
     await fetch("/api/intelligence/decision-memory", {
@@ -102,6 +153,7 @@ export async function persistDecisionEpisode(
   } catch {
     // Local persistence already succeeded; server sync is best-effort.
   }
+  return input;
 }
 
 /** Mark a decision as watched (local + server). */
@@ -127,4 +179,35 @@ export async function persistDecisionWatch(
   } catch {
     // Best-effort server sync.
   }
+}
+
+/** Load living decision thread for Instant Decision History (local + optional server). */
+export async function loadLivingDecisionThread(args: {
+  productLink: string;
+  signedIn?: boolean;
+  decisionId?: string | null;
+}): Promise<LivingDecisionThread | null> {
+  const key = (args.decisionId || args.productLink || "").trim();
+  if (!key) return null;
+
+  if (args.signedIn) {
+    try {
+      const res = await fetch(
+        `/api/intelligence/decision-memory?history=1&link=${encodeURIComponent(key)}&living=1`,
+        { credentials: "same-origin" }
+      );
+      if (res.ok) {
+        const json = (await res.json()) as {
+          thread?: LivingDecisionThread | null;
+          episodes?: unknown[];
+        };
+        if (json.thread) return json.thread;
+      }
+    } catch {
+      // fall through to local
+    }
+  }
+
+  const local = listLocalEpisodesForLink(args.productLink);
+  return buildLivingDecisionThread(local);
 }

@@ -10,6 +10,14 @@ import {
   scoreHistoryForLink,
 } from "@/lib/decisionMemory/clientMemory";
 import type { DecisionMemoryEpisode } from "@/lib/decisionMemory/types";
+import WhatsChangedBadges from "@/components/decisionMemory/WhatsChangedBadges";
+import DecisionHistorySection from "@/components/decisionMemory/DecisionHistorySection";
+import { buildLivingDecisionThread } from "@/lib/livingDecision/timeline";
+import {
+  listLocalEpisodesForDecisionId,
+  listLocalEpisodesForLink,
+} from "@/lib/decisionMemory/clientMemory";
+import type { LivingDecisionThread } from "@/lib/livingDecision/types";
 
 type Props = {
   mode: "timeline" | "watchlist";
@@ -52,6 +60,7 @@ export default function DecisionTimelineList({ mode, signedIn = false }: Props) 
   const [history, setHistory] = useState<
     Array<{ confidence: number; createdAt: string; decision: string }>
   >([]);
+  const [livingThread, setLivingThread] = useState<LivingDecisionThread | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,26 +92,36 @@ export default function DecisionTimelineList({ mode, signedIn = false }: Props) 
     };
   }, [mode, signedIn]);
 
-  async function openHistory(link: string) {
+  async function openHistory(link: string, decisionId?: string | null) {
     if (expandedLink === link) {
       setExpandedLink(null);
       setHistory([]);
+      setLivingThread(null);
       return;
     }
     setExpandedLink(link);
+    const key = decisionId || link;
     if (signedIn) {
       const res = await fetch(
-        `/api/intelligence/decision-memory?history=1&link=${encodeURIComponent(link)}`,
+        `/api/intelligence/decision-memory?history=1&living=1&link=${encodeURIComponent(key)}`,
         { credentials: "same-origin" }
       );
       const parsed = await readApiJson<{
         history?: Array<{ confidence: number; createdAt: string; decision: string }>;
+        thread?: LivingDecisionThread | null;
       }>(res);
-      if (!isApiFailure(parsed) && Array.isArray(parsed.data?.history) && parsed.data.history.length) {
-        setHistory(parsed.data.history);
-        return;
+      if (!isApiFailure(parsed) && parsed.data) {
+        if (parsed.data.thread) setLivingThread(parsed.data.thread);
+        if (Array.isArray(parsed.data.history) && parsed.data.history.length) {
+          setHistory(parsed.data.history);
+          return;
+        }
       }
     }
+    const localEps = decisionId
+      ? listLocalEpisodesForDecisionId(decisionId)
+      : listLocalEpisodesForLink(link);
+    setLivingThread(buildLivingDecisionThread(localEps));
     setHistory(scoreHistoryForLink(link));
   }
 
@@ -158,6 +177,16 @@ export default function DecisionTimelineList({ mode, signedIn = false }: Props) 
                   <span className="text-[11px] uppercase tracking-wide text-slate-500">
                     {item.status || "Recorded"}
                   </span>
+                  {item.decisionId ? (
+                    <span className="text-[10px] uppercase tracking-wide text-slate-500">
+                      ID {item.decisionId.slice(0, 8)}
+                    </span>
+                  ) : null}
+                  {item.domain ? (
+                    <span className="text-[10px] uppercase tracking-wide text-slate-500">
+                      {item.domain}
+                    </span>
+                  ) : null}
                 </div>
                 <h3 className="mt-2 text-sm font-semibold text-white line-clamp-2">
                   {item.productTitle || "Untitled product"}
@@ -227,15 +256,8 @@ export default function DecisionTimelineList({ mode, signedIn = false }: Props) 
             </dl>
 
             {item.changes?.length ? (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {item.changes.map((change) => (
-                  <span
-                    key={`${item.id}-${change.label}`}
-                    className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-200"
-                  >
-                    {change.label}
-                  </span>
-                ))}
+              <div className="mt-3">
+                <WhatsChangedBadges changes={item.changes} />
               </div>
             ) : null}
 
@@ -251,12 +273,12 @@ export default function DecisionTimelineList({ mode, signedIn = false }: Props) 
               <div className="mt-3 border-t border-white/[0.06] pt-3">
                 <button
                   type="button"
-                  onClick={() => void openHistory(item.productLink)}
+                  onClick={() => void openHistory(item.productLink, item.decisionId)}
                   className="text-xs font-semibold text-cyan-200 hover:text-white"
                 >
                   {expandedLink === item.productLink
-                    ? "Hide score history"
-                    : "Decision score history"}
+                    ? "Hide living timeline"
+                    : "Open living timeline"}
                 </button>
                 {item.scoreTrend ? (
                   <p className="mt-1 text-xs text-slate-400">
@@ -267,20 +289,25 @@ export default function DecisionTimelineList({ mode, signedIn = false }: Props) 
                       : null}
                   </p>
                 ) : null}
-                {expandedLink === item.productLink && history.length > 0 ? (
-                  <ol className="mt-2 grid gap-1">
-                    {history.map((point) => (
-                      <li
-                        key={`${point.createdAt}-${point.confidence}`}
-                        className="flex items-center justify-between rounded-lg bg-black/25 px-2 py-1.5 text-[11px] text-slate-300"
-                      >
-                        <span>
-                          {point.decision} · {point.confidence}%
-                        </span>
-                        <span className="text-slate-500">{formatDate(point.createdAt)}</span>
-                      </li>
-                    ))}
-                  </ol>
+                {expandedLink === item.productLink ? (
+                  <div className="mt-2">
+                    {livingThread ? <DecisionHistorySection thread={livingThread} /> : null}
+                    {history.length > 0 ? (
+                      <ol className="mt-2 grid gap-1">
+                        {history.map((point) => (
+                          <li
+                            key={`${point.createdAt}-${point.confidence}`}
+                            className="flex items-center justify-between rounded-lg bg-black/25 px-2 py-1.5 text-[11px] text-slate-300"
+                          >
+                            <span>
+                              {point.decision} · {point.confidence}%
+                            </span>
+                            <span className="text-slate-500">{formatDate(point.createdAt)}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
             )}

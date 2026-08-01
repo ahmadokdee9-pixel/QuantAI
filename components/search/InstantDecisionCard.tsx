@@ -18,6 +18,9 @@ import {
   type InstantDecisionViewModel,
 } from "@/lib/ui/instantDecisionModel";
 import type { UniversalProductDecision } from "@/lib/ui/universalProductDecision";
+import type { LivingDecisionThread } from "@/lib/livingDecision/types";
+import DecisionHistorySection from "@/components/decisionMemory/DecisionHistorySection";
+import WhatsChangedBadges from "@/components/decisionMemory/WhatsChangedBadges";
 
 type Props = {
   leader: QuantProduct | null;
@@ -31,6 +34,8 @@ type Props = {
   watching?: boolean;
   /** Compact layout for intelligence drawer. */
   compact?: boolean;
+  /** Living Decision thread — real history only (no mocks). */
+  livingThread?: LivingDecisionThread | null;
 };
 
 const ACTIONS: ExecutiveDecisionAction[] = ["BUY", "WAIT", "COMPARE", "AVOID"];
@@ -72,6 +77,7 @@ export default function InstantDecisionCard({
   onOpenProduct,
   watching = false,
   compact = false,
+  livingThread = null,
 }: Props) {
   const reduceMotion = useReducedMotion();
   const [transparencyOpen, setTransparencyOpen] = useState(false);
@@ -114,6 +120,9 @@ export default function InstantDecisionCard({
       <header className="qa-instant-decision__header">
         <p className="qa-ref-exec-brief__kicker">Instant Decision</p>
         <p className="qa-instant-decision__question">What should I do?</p>
+        {livingThread?.recentChanges?.length ? (
+          <WhatsChangedBadges changes={livingThread.recentChanges} />
+        ) : null}
       </header>
 
       <div className={`qa-ref-exec-brief__verdict qa-ref-exec-brief__verdict--${modifier}`}>
@@ -264,6 +273,8 @@ export default function InstantDecisionCard({
           ))}
         </div>
       </section>
+
+      <DecisionHistorySection thread={livingThread} compact={compact} />
 
       <div className="qa-instant-decision__actions">
         {model.action === "BUY" || model.action === "COMPARE" ? (

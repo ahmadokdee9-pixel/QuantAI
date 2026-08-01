@@ -8,9 +8,11 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import {
   buildDecisionWriteFromLeader,
+  loadLivingDecisionThread,
   persistDecisionEpisode,
   persistDecisionWatch,
 } from "@/lib/decisionMemory/recordClient";
+import type { LivingDecisionThread } from "@/lib/livingDecision/types";
 import InstitutionalFilteredPanel from "@/components/system/InstitutionalFilteredPanel";
 import InstitutionalStatePanel from "@/components/system/InstitutionalStatePanel";
 import { resolveInstitutionalState } from "@/lib/ui/systemStateLanguage";
@@ -165,6 +167,7 @@ export default function ProductResultsSurface({
   const [marketMemoryTick, setMarketMemoryTick] = useState(0);
   const [trayFocusLink] = useState<string | null>(null);
   const [watchedDecisionLinks, setWatchedDecisionLinks] = useState<Set<string>>(() => new Set());
+  const [livingThread, setLivingThread] = useState<LivingDecisionThread | null>(null);
 
   useEffect(() => {
     onCompareTrayChange?.(compareLinks);
@@ -403,7 +406,7 @@ export default function ProductResultsSurface({
     ]
   );
 
-  // Persist Instant Decision episodes into Decision Memory (does not modify Instant Decision UI).
+  // Persist Instant Decision episodes into Living Decision Memory.
   useEffect(() => {
     if (!decisionLeader || !decisionLeaderUniversal || loading) return;
     const key = [
@@ -415,13 +418,30 @@ export default function ProductResultsSurface({
     ].join("|");
     if (lastPersistedDecisionKey.current === key) return;
     lastPersistedDecisionKey.current = key;
+
+    const altCandidate = trustOrderedProducts.find(
+      (p) =>
+        p.link !== decisionLeader.link &&
+        typeof p.qiComposite === "number" &&
+        typeof decisionLeader.qiComposite === "number" &&
+        p.qiComposite > decisionLeader.qiComposite + 4
+    );
+
     const input = buildDecisionWriteFromLeader({
       product: decisionLeader,
       universal: decisionLeaderUniversal,
       searchQuery,
       brief: calibratedDecisionBrief,
+      betterAlternativeTitle: altCandidate?.title ?? null,
     });
-    void persistDecisionEpisode(input, { signedIn: Boolean(isSignedIn) });
+    void (async () => {
+      await persistDecisionEpisode(input, { signedIn: Boolean(isSignedIn) });
+      const thread = await loadLivingDecisionThread({
+        productLink: decisionLeader.link,
+        signedIn: Boolean(isSignedIn),
+      });
+      setLivingThread(thread);
+    })();
   }, [
     decisionLeader,
     decisionLeaderUniversal,
@@ -430,6 +450,7 @@ export default function ProductResultsSurface({
     resultsKey,
     loading,
     isSignedIn,
+    trustOrderedProducts,
   ]);
 
   const handlePrimeCompare = useCallback((links: string[]) => {
@@ -740,6 +761,7 @@ export default function ProductResultsSurface({
           onPrimeCompare={handlePrimeCompare}
           onOpenProduct={setDetailProduct}
           watching={decisionLeader ? watchedDecisionLinks.has(decisionLeader.link) : false}
+          livingThread={livingThread}
         />
       </div>
 

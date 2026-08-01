@@ -12,7 +12,10 @@ export type DecisionChangeKind =
   | "better_alternative"
   | "policy_changed"
   | "fare_changed"
-  | "subscription_price_changed";
+  | "subscription_price_changed"
+  | "rating_changed"
+  | "stock_changed"
+  | "provider_changed";
 
 export type DecisionChange = {
   kind: DecisionChangeKind;
@@ -23,6 +26,8 @@ export type DecisionChange = {
 
 export type DecisionMemoryEpisode = {
   id: string;
+  /** Permanent Living Decision ID — stable across episodes. */
+  decisionId?: string | null;
   searchQuery: string | null;
   productId: string | null;
   productLink: string;
@@ -43,12 +48,15 @@ export type DecisionMemoryEpisode = {
   contextualVerb?: ContextualVerb | string | null;
   evidence?: unknown[];
   sourceFreshnessAt?: string | null;
+  rating?: number | null;
+  provider?: string | null;
+  stockState?: string | null;
   /** Latest known price for this product link (from newer episodes). */
   currentPrice?: number | null;
   /** Latest known decision for this product link. */
   currentDecision?: DecisionAction | null;
   currentConfidence?: number | null;
-  status?: "Watching" | "Updated" | "Recorded" | "Active";
+  status?: "Watching" | "Updated" | "Recorded" | "Active" | "Living";
   scoreTrend?: "Improving" | "Stable" | "Declining" | null;
   previousConfidence?: number | null;
 };
@@ -72,10 +80,18 @@ export type DecisionMemoryWriteInput = {
   contextualVerb?: ContextualVerb | string | null;
   evidence?: unknown[];
   sourceFreshnessAt?: string | null;
+  decisionId?: string | null;
+  rating?: number | null;
+  provider?: string | null;
+  stockState?: string | null;
+  betterAlternativeTitle?: string | null;
+  /** Precomputed changes from the Living update engine (optional). */
+  changes?: DecisionChange[];
 };
 
 export type DecisionUpdateItem = {
   id: string;
+  decisionId?: string | null;
   productLink: string;
   productTitle: string | null;
   merchant: string | null;
@@ -89,6 +105,7 @@ export type DecisionUpdateItem = {
   currentPrice: number | null;
   createdAt: string;
   watched: boolean;
+  domain?: DecisionDomain;
 };
 
 export const DECISION_MEMORY_STORAGE_KEY = "quantai-decision-memory-v1";

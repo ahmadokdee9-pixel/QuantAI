@@ -4,13 +4,16 @@ import type {
   DecisionMemoryWriteInput,
 } from "@/lib/decisionMemory/types";
 
-// DecisionChange kind used for domain-aware price labels.
-
 type ComparableEpisode = {
   decision: DecisionAction | string;
   confidence: number | null;
   price: number | null;
   availability: string | null;
+  rating?: number | null;
+  stockState?: string | null;
+  merchant?: string | null;
+  provider?: string | null;
+  domain?: string | null;
 };
 
 function num(n: number | null | undefined): number | null {
@@ -22,7 +25,11 @@ function roundMoney(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-/** Diff two decision episodes for the same product. */
+function str(v: string | null | undefined): string {
+  return (v || "").trim();
+}
+
+/** Diff two decision episodes for the same living decision thread. */
 export function detectDecisionChanges(
   previous: ComparableEpisode | null | undefined,
   current: DecisionMemoryWriteInput | ComparableEpisode
@@ -36,7 +43,7 @@ export function detectDecisionChanges(
   if (prevDecision && nextDecision && prevDecision !== nextDecision) {
     changes.push({
       kind: "decision_changed",
-      label: `${prevDecision} became ${nextDecision}`,
+      label: `Recommendation changed to ${nextDecision}`,
       previous: prevDecision,
       current: nextDecision,
     });
@@ -83,14 +90,71 @@ export function detectDecisionChanges(
     });
   }
 
-  const prevAvail = (previous.availability || "").trim();
-  const nextAvail = (current.availability || "").trim();
+  const prevAvail = str(previous.availability);
+  const nextAvail = str(
+    "availability" in current ? current.availability : null
+  );
   if (prevAvail && nextAvail && prevAvail.toLowerCase() !== nextAvail.toLowerCase()) {
     changes.push({
       kind: "availability_changed",
       label: `Availability changed (${prevAvail} → ${nextAvail})`,
       previous: prevAvail,
       current: nextAvail,
+    });
+  }
+
+  const prevRating = num(previous.rating);
+  const nextRating = num("rating" in current ? current.rating : null);
+  if (
+    prevRating != null &&
+    nextRating != null &&
+    Math.round(prevRating * 10) !== Math.round(nextRating * 10)
+  ) {
+    changes.push({
+      kind: "rating_changed",
+      label:
+        nextRating > prevRating
+          ? `Rating improved (${prevRating.toFixed(1)} → ${nextRating.toFixed(1)})`
+          : `Rating declined (${prevRating.toFixed(1)} → ${nextRating.toFixed(1)})`,
+      previous: Number(prevRating.toFixed(1)),
+      current: Number(nextRating.toFixed(1)),
+    });
+  }
+
+  const prevStock = str(previous.stockState);
+  const nextStock = str("stockState" in current ? current.stockState : null);
+  if (prevStock && nextStock && prevStock.toLowerCase() !== nextStock.toLowerCase()) {
+    changes.push({
+      kind: "stock_changed",
+      label: `Stock changed (${prevStock} → ${nextStock})`,
+      previous: prevStock,
+      current: nextStock,
+    });
+  }
+
+  const prevProvider = str(previous.provider || previous.merchant);
+  const nextProvider = str(
+    ("provider" in current ? current.provider : null) ||
+      ("merchant" in current ? current.merchant : null)
+  );
+  if (prevProvider && nextProvider && prevProvider.toLowerCase() !== nextProvider.toLowerCase()) {
+    changes.push({
+      kind: "provider_changed",
+      label: `Provider changed (${prevProvider} → ${nextProvider})`,
+      previous: prevProvider,
+      current: nextProvider,
+    });
+  }
+
+  const betterAlt =
+    "betterAlternativeTitle" in current && typeof current.betterAlternativeTitle === "string"
+      ? current.betterAlternativeTitle.trim()
+      : "";
+  if (betterAlt) {
+    changes.push({
+      kind: "better_alternative",
+      label: `Better alternative discovered: ${betterAlt}`,
+      current: betterAlt,
     });
   }
 
@@ -113,4 +177,31 @@ export function confidenceTrend(
 export function summarizeUpdate(changes: DecisionChange[]): string {
   if (changes.length === 0) return "Decision rechecked — no material change";
   return changes.map((c) => c.label).join(" · ");
+}
+
+export function changeBadgeLabel(kind: DecisionChange["kind"] | "recorded"): string {
+  switch (kind) {
+    case "price_changed":
+    case "fare_changed":
+    case "subscription_price_changed":
+      return "Price";
+    case "confidence_changed":
+      return "Confidence";
+    case "decision_changed":
+      return "Recommendation";
+    case "availability_changed":
+      return "Availability";
+    case "rating_changed":
+      return "Rating";
+    case "stock_changed":
+      return "Stock";
+    case "provider_changed":
+      return "Provider";
+    case "better_alternative":
+      return "Alternative";
+    case "policy_changed":
+      return "Policy";
+    default:
+      return "Update";
+  }
 }

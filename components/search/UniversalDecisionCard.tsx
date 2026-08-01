@@ -11,12 +11,16 @@ import { Bell, Check, ChevronDown, ExternalLink, Shield } from "lucide-react";
 import type { UniversalDecision } from "@/lib/universalDecision/types";
 import { actionCommitmentLabel } from "@/lib/universalDecision/actions";
 import DomainEvidenceModules from "@/components/search/DomainEvidenceModules";
+import type { LivingDecisionThread } from "@/lib/livingDecision/types";
+import DecisionHistorySection from "@/components/decisionMemory/DecisionHistorySection";
+import WhatsChangedBadges from "@/components/decisionMemory/WhatsChangedBadges";
 
 type Props = {
   decision: UniversalDecision;
   watching?: boolean;
   onWatch?: () => void;
   compact?: boolean;
+  livingThread?: LivingDecisionThread | null;
 };
 
 const ACTIONS = ["BUY", "WAIT", "COMPARE", "AVOID"] as const;
@@ -32,6 +36,7 @@ export default function UniversalDecisionCard({
   watching = false,
   onWatch,
   compact = false,
+  livingThread = null,
 }: Props) {
   const reduceMotion = useReducedMotion();
   const [transparencyOpen, setTransparencyOpen] = useState(false);
@@ -59,6 +64,9 @@ export default function UniversalDecisionCard({
       <header className="qa-instant-decision__header">
         <p className="qa-ref-exec-brief__kicker">Instant Decision</p>
         <p className="qa-instant-decision__question">What should I do?</p>
+        {livingThread?.recentChanges?.length ? (
+          <WhatsChangedBadges changes={livingThread.recentChanges} />
+        ) : null}
       </header>
 
       <div className={`qa-ref-exec-brief__verdict qa-ref-exec-brief__verdict--${modifier}`}>
@@ -174,6 +182,8 @@ export default function UniversalDecisionCard({
         freshness={decision.sourceFreshness}
         insufficientEvidence={decision.insufficientEvidence}
       />
+
+      <DecisionHistorySection thread={livingThread} compact={compact} />
 
       <div className="qa-instant-decision__actions">
         {leader?.link ? (

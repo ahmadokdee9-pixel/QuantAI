@@ -3,10 +3,12 @@ import { jsonErr, jsonOk } from "@/lib/api/jsonResponse";
 import {
   insertDecisionMemoryEpisode,
   listDecisionMemoryForUser,
+  listEpisodesForLivingDecision,
   markDecisionWatched,
   scoreHistoryForUserLink,
 } from "@/lib/decisionMemory/server";
 import type { DecisionAction, DecisionMemoryWriteInput } from "@/lib/decisionMemory/types";
+import { buildLivingDecisionThread } from "@/lib/livingDecision/timeline";
 import { supabaseAdminConfigured } from "@/lib/supabaseAdmin";
 
 function parseAction(value: unknown): DecisionAction | null {
@@ -26,6 +28,24 @@ export async function GET(req: Request) {
   const history = searchParams.get("history") === "1";
 
   if (history && link) {
+    const living = searchParams.get("living") === "1";
+    if (living) {
+      const episodes = await listEpisodesForLivingDecision(userId, link);
+      const thread = buildLivingDecisionThread(episodes);
+      return jsonOk({
+        thread,
+        episodes,
+        history: episodes
+          .filter((ep) => ep.confidence != null)
+          .map((ep) => ({
+            confidence: Math.round(Number(ep.confidence)),
+            createdAt: ep.createdAt,
+            decision: ep.decision,
+            decisionId: ep.decisionId,
+          })),
+        configured: supabaseAdminConfigured,
+      });
+    }
     const series = await scoreHistoryForUserLink(userId, link);
     return jsonOk({ history: series, configured: supabaseAdminConfigured });
   }

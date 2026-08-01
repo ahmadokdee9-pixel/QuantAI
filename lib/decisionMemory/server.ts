@@ -8,6 +8,8 @@ import type {
 } from "@/lib/decisionMemory/types";
 import { isBenignStorageSchemaError } from "@/lib/supabase/benignStorageError";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { resolveLivingDecisionId, resolveThreadKey } from "@/lib/livingDecision/identity";
+import { prepareLivingDecisionUpdate } from "@/lib/livingDecision/updateEngine";
 
 type DbRow = {
   id: string;
@@ -32,13 +34,20 @@ type DbRow = {
   contextual_verb?: string | null;
   evidence?: unknown;
   source_freshness_at?: string | null;
+  decision_id?: string | null;
+  rating?: number | null;
+  provider?: string | null;
+  stock_state?: string | null;
 };
 
 const MEMORY_SELECT_BASE =
   "id, user_id, search_query, product_id, product_link, product_title, merchant, image, decision, confidence, price, score, reasons, availability, watched, changes, created_at";
 
-const MEMORY_SELECT =
+const MEMORY_SELECT_UNIVERSAL =
   `${MEMORY_SELECT_BASE}, domain, memory_identity, contextual_verb, evidence, source_freshness_at`;
+
+const MEMORY_SELECT =
+  `${MEMORY_SELECT_UNIVERSAL}, decision_id, rating, provider, stock_state`;
 
 function isMissingColumnError(message: string | undefined): boolean {
   const m = (message || "").toLowerCase();
@@ -61,9 +70,21 @@ function asAction(value: string): DecisionAction {
   return "COMPARE";
 }
 
+function threadKey(ep: DecisionMemoryEpisode): string {
+  return (
+    ep.decisionId ||
+    resolveThreadKey({
+      memoryIdentity: ep.memoryIdentity,
+      productLink: ep.productLink,
+      domain: ep.domain,
+    })
+  );
+}
+
 export function mapDecisionRow(row: DbRow): DecisionMemoryEpisode {
   return {
     id: row.id,
+    decisionId: row.decision_id ?? null,
     searchQuery: row.search_query,
     productId: row.product_id,
     productLink: row.product_link,
@@ -84,45 +105,45 @@ export function mapDecisionRow(row: DbRow): DecisionMemoryEpisode {
     contextualVerb: row.contextual_verb ?? null,
     evidence: Array.isArray(row.evidence) ? row.evidence : [],
     sourceFreshnessAt: row.source_freshness_at ?? null,
+    rating: row.rating == null ? null : Number(row.rating),
+    provider: row.provider ?? row.merchant ?? null,
+    stockState: row.stock_state ?? null,
   };
 }
 
 function enrich(episodes: DecisionMemoryEpisode[]): DecisionMemoryEpisode[] {
-  const latestByLink = new Map<string, DecisionMemoryEpisode>();
+  const latestByThread = new Map<string, DecisionMemoryEpisode>();
   for (const ep of episodes) {
-    if (!latestByLink.has(ep.productLink)) latestByLink.set(ep.productLink, ep);
+    const key = threadKey(ep);
+    if (!latestByThread.has(key)) latestByThread.set(key, ep);
   }
 
   return episodes.map((ep) => {
-    const latest = latestByLink.get(ep.productLink);
-    const prior = episodes.find(
-      (row) =>
-        row.productLink === ep.productLink &&
-        row.id !== ep.id &&
-        row.createdAt < ep.createdAt
-    );
+    const key = threadKey(ep);
+    const latest = latestByThread.get(key);
     const hist = episodes
-      .filter((row) => row.productLink === ep.productLink)
+      .filter((row) => threadKey(row) === key)
       .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-    const prevConf = hist.length > 1 ? hist[1]?.confidence ?? null : prior?.confidence ?? null;
+    const prevConf = hist.length > 1 ? hist[1]?.confidence ?? null : null;
     const currConf = hist[0]?.confidence ?? ep.confidence;
     return {
       ...ep,
+      decisionId: ep.decisionId || key,
       currentPrice: latest?.price ?? ep.price,
       currentDecision: latest?.decision ?? ep.decision,
       currentConfidence: latest?.confidence ?? ep.confidence,
       previousConfidence: prevConf,
       scoreTrend: confidenceTrend(prevConf, currConf),
-      status: ep.watched ? "Watching" : ep.changes.length > 0 ? "Updated" : "Recorded",
+      status: ep.watched ? "Watching" : ep.changes.length > 0 ? "Living" : "Recorded",
     };
   });
 }
 
-export async function listDecisionMemoryForUser(
+async function selectMemory(
   userId: string,
-  opts?: { watchedOnly?: boolean; limit?: number }
-): Promise<{ items: DecisionMemoryEpisode[]; configured: boolean; error?: string }> {
-  if (!supabaseAdmin) return { items: [], configured: false };
+  opts?: { watchedOnly?: boolean; limit?: number; link?: string; decisionId?: string }
+) {
+  if (!supabaseAdmin) return { data: [] as DbRow[], error: null as { message: string } | null };
 
   let query = supabaseAdmin
     .from("decision_memory")
@@ -132,6 +153,8 @@ export async function listDecisionMemoryForUser(
     .limit(opts?.limit ?? 200);
 
   if (opts?.watchedOnly) query = query.eq("watched", true);
+  if (opts?.link) query = query.eq("product_link", opts.link);
+  if (opts?.decisionId) query = query.eq("decision_id", opts.decisionId);
 
   let data: DbRow[] | null = null;
   let error: { message: string } | null = null;
@@ -140,19 +163,45 @@ export async function listDecisionMemoryForUser(
     data = (first.data as DbRow[] | null) ?? null;
     error = first.error;
   }
+
   if (error && isMissingColumnError(error.message)) {
-    const fallback = supabaseAdmin
+    let fallback = supabaseAdmin
+      .from("decision_memory")
+      .select(MEMORY_SELECT_UNIVERSAL)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(opts?.limit ?? 200);
+    if (opts?.watchedOnly) fallback = fallback.eq("watched", true);
+    if (opts?.link) fallback = fallback.eq("product_link", opts.link);
+    const retried = await fallback;
+    data = (retried.data as DbRow[] | null) ?? null;
+    error = retried.error;
+  }
+
+  if (error && isMissingColumnError(error.message)) {
+    let fallback = supabaseAdmin
       .from("decision_memory")
       .select(MEMORY_SELECT_BASE)
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(opts?.limit ?? 200);
-    const retried = opts?.watchedOnly
-      ? await fallback.eq("watched", true)
-      : await fallback;
+    if (opts?.watchedOnly) fallback = fallback.eq("watched", true);
+    if (opts?.link) fallback = fallback.eq("product_link", opts.link);
+    const retried = await fallback;
     data = (retried.data as DbRow[] | null) ?? null;
     error = retried.error;
   }
+
+  return { data: data ?? [], error };
+}
+
+export async function listDecisionMemoryForUser(
+  userId: string,
+  opts?: { watchedOnly?: boolean; limit?: number }
+): Promise<{ items: DecisionMemoryEpisode[]; configured: boolean; error?: string }> {
+  if (!supabaseAdmin) return { items: [], configured: false };
+
+  const { data, error } = await selectMemory(userId, opts);
   if (error) {
     if (isBenignStorageSchemaError(error.message)) {
       return { items: [], configured: true };
@@ -164,8 +213,29 @@ export async function listDecisionMemoryForUser(
     };
   }
 
-  const mapped = (data as DbRow[] | null)?.map(mapDecisionRow) ?? [];
-  return { items: enrich(mapped), configured: true };
+  return { items: enrich(data.map(mapDecisionRow)), configured: true };
+}
+
+export async function listEpisodesForLivingDecision(
+  userId: string,
+  decisionIdOrLink: string
+): Promise<DecisionMemoryEpisode[]> {
+  if (!supabaseAdmin) return [];
+  const key = decisionIdOrLink.trim();
+  if (!key) return [];
+
+  const byId = await selectMemory(userId, { decisionId: key, limit: 80 });
+  if (!byId.error && byId.data.length) {
+    return enrich(byId.data.map(mapDecisionRow)).sort((a, b) =>
+      a.createdAt < b.createdAt ? -1 : 1
+    );
+  }
+
+  const byLink = await selectMemory(userId, { link: key, limit: 80 });
+  if (byLink.error || !byLink.data.length) return [];
+  return enrich(byLink.data.map(mapDecisionRow)).sort((a, b) =>
+    a.createdAt < b.createdAt ? -1 : 1
+  );
 }
 
 export async function insertDecisionMemoryEpisode(
@@ -176,48 +246,134 @@ export async function insertDecisionMemoryEpisode(
   const link = input.productLink.trim();
   if (!link) return { episode: null, error: "Product link required" };
 
-  const { data: priorRows, error: priorError } = await supabaseAdmin
-    .from("decision_memory")
-    .select(MEMORY_SELECT)
-    .eq("user_id", userId)
-    .eq("product_link", link)
-    .order("created_at", { ascending: false })
-    .limit(1);
+  const memoryIdentity = resolveThreadKey({
+    memoryIdentity: input.memoryIdentity,
+    productLink: link,
+    domain: input.domain,
+  });
 
-  if (priorError && !isBenignStorageSchemaError(priorError.message)) {
-    return { episode: null, error: priorError.message };
+  let previous: DecisionMemoryEpisode | null = null;
+  {
+    const byLink = await supabaseAdmin
+      .from("decision_memory")
+      .select(MEMORY_SELECT)
+      .eq("user_id", userId)
+      .eq("product_link", link)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if (!byLink.error && byLink.data?.[0]) {
+      previous = mapDecisionRow(byLink.data[0] as DbRow);
+    } else if (byLink.error && isMissingColumnError(byLink.error.message)) {
+      const fallback = await supabaseAdmin
+        .from("decision_memory")
+        .select(MEMORY_SELECT_BASE)
+        .eq("user_id", userId)
+        .eq("product_link", link)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (fallback.data?.[0]) previous = mapDecisionRow(fallback.data[0] as DbRow);
+    }
+
+    if (!previous && memoryIdentity && memoryIdentity !== link) {
+      const byIdentity = await supabaseAdmin
+        .from("decision_memory")
+        .select(MEMORY_SELECT)
+        .eq("user_id", userId)
+        .eq("memory_identity", memoryIdentity)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (!byIdentity.error && byIdentity.data?.[0]) {
+        previous = mapDecisionRow(byIdentity.data[0] as DbRow);
+      }
+    }
   }
 
-  const previous = priorRows?.[0] ? mapDecisionRow(priorRows[0] as DbRow) : null;
+  const prepared = prepareLivingDecisionUpdate({
+    input: {
+      domain: input.domain || "product",
+      memoryIdentity,
+      productLink: link,
+      productTitle: input.productTitle,
+      merchant: input.merchant,
+      provider: input.provider ?? input.merchant,
+      image: input.image,
+      decision: input.decision,
+      confidence: input.confidence,
+      price: input.price,
+      rating: input.rating,
+      score: input.score,
+      reasons: input.reasons,
+      availability: input.availability,
+      stockState: input.stockState,
+      evidence: input.evidence,
+      sourceFreshnessAt: input.sourceFreshnessAt,
+      searchQuery: input.searchQuery,
+      watched: input.watched,
+      betterAlternativeTitle: input.betterAlternativeTitle,
+    },
+    previous: previous
+      ? {
+          decisionId: previous.decisionId,
+          decision: previous.decision,
+          confidence: previous.confidence,
+          price: previous.price,
+          availability: previous.availability,
+          rating: previous.rating,
+          stockState: previous.stockState,
+          merchant: previous.merchant,
+          provider: previous.provider,
+          domain: previous.domain,
+        }
+      : null,
+    userScope: userId,
+  });
+
   if (previous) {
     const ageMs = Date.now() - new Date(previous.createdAt).getTime();
     if (
       ageMs < 5 * 60 * 1000 &&
-      previous.decision === input.decision &&
-      Math.round(previous.confidence ?? -1) === Math.round(input.confidence ?? -2) &&
-      Math.round(previous.price ?? -1) === Math.round(input.price ?? -2)
+      previous.decision === prepared.write.decision &&
+      Math.round(previous.confidence ?? -1) === Math.round(prepared.write.confidence ?? -2) &&
+      Math.round(previous.price ?? -1) === Math.round(prepared.write.price ?? -2) &&
+      prepared.changes.length === 0
     ) {
       return { episode: previous, duplicate: true };
     }
   }
 
-  const changes = detectDecisionChanges(previous, input);
-  const watched = Boolean(input.watched) || Boolean(previous?.watched);
+  const changes =
+    Array.isArray(input.changes) && input.changes.length
+      ? input.changes
+      : prepared.changes.length
+        ? prepared.changes
+        : detectDecisionChanges(previous, prepared.write);
+
+  const watched = Boolean(prepared.write.watched) || Boolean(previous?.watched);
+  const decisionId =
+    prepared.decisionId ||
+    resolveLivingDecisionId({
+      existingDecisionId: previous?.decisionId,
+      userScope: userId,
+      memoryIdentity,
+      productLink: link,
+      domain: input.domain,
+    });
 
   const baseRow = {
     user_id: userId,
-    search_query: input.searchQuery ?? null,
-    product_id: input.productId ?? null,
+    search_query: prepared.write.searchQuery ?? null,
+    product_id: prepared.write.productId ?? null,
     product_link: link,
-    product_title: input.productTitle ?? null,
-    merchant: input.merchant ?? null,
-    image: input.image ?? null,
-    decision: input.decision,
-    confidence: input.confidence ?? null,
-    price: input.price ?? null,
-    score: input.score ?? null,
-    reasons: Array.isArray(input.reasons) ? input.reasons.slice(0, 8) : [],
-    availability: input.availability ?? null,
+    product_title: prepared.write.productTitle ?? null,
+    merchant: prepared.write.merchant ?? null,
+    image: prepared.write.image ?? null,
+    decision: prepared.write.decision,
+    confidence: prepared.write.confidence ?? null,
+    price: prepared.write.price ?? null,
+    score: prepared.write.score ?? null,
+    reasons: Array.isArray(prepared.write.reasons) ? prepared.write.reasons.slice(0, 8) : [],
+    availability: prepared.write.availability ?? null,
     watched,
     changes,
   };
@@ -229,16 +385,41 @@ export async function insertDecisionMemoryEpisode(
       .from("decision_memory")
       .insert({
         ...baseRow,
-        domain: input.domain ?? "product",
-        memory_identity: input.memoryIdentity ?? link,
+        domain: prepared.write.domain ?? "product",
+        memory_identity: memoryIdentity,
         contextual_verb: input.contextualVerb ?? null,
-        evidence: Array.isArray(input.evidence) ? input.evidence.slice(0, 16) : [],
-        source_freshness_at: input.sourceFreshnessAt ?? null,
+        evidence: Array.isArray(prepared.write.evidence)
+          ? prepared.write.evidence.slice(0, 16)
+          : [],
+        source_freshness_at: prepared.write.sourceFreshnessAt ?? null,
+        decision_id: decisionId,
+        rating: prepared.write.rating ?? null,
+        provider: prepared.write.provider ?? null,
+        stock_state: prepared.write.stockState ?? null,
       })
       .select(MEMORY_SELECT)
       .single();
     data = (first.data as DbRow | null) ?? null;
     error = first.error;
+  }
+
+  if (error && isMissingColumnError(error.message)) {
+    const mid = await supabaseAdmin
+      .from("decision_memory")
+      .insert({
+        ...baseRow,
+        domain: prepared.write.domain ?? "product",
+        memory_identity: memoryIdentity,
+        contextual_verb: input.contextualVerb ?? null,
+        evidence: Array.isArray(prepared.write.evidence)
+          ? prepared.write.evidence.slice(0, 16)
+          : [],
+        source_freshness_at: prepared.write.sourceFreshnessAt ?? null,
+      })
+      .select(MEMORY_SELECT_UNIVERSAL)
+      .single();
+    data = (mid.data as DbRow | null) ?? null;
+    error = mid.error;
   }
 
   if (error && isMissingColumnError(error.message)) {
@@ -258,14 +439,13 @@ export async function insertDecisionMemoryEpisode(
     return { episode: null, error: error.message };
   }
 
-  // Keep score trail via price_snapshots when price present
-  if (typeof input.price === "number" && input.price > 0) {
+  if (typeof prepared.write.price === "number" && prepared.write.price > 0) {
     await supabaseAdmin.from("price_snapshots").insert({
       user_id: userId,
       product_link: link,
-      store: input.merchant ?? null,
-      title: input.productTitle ?? null,
-      price: input.price,
+      store: prepared.write.merchant ?? null,
+      title: prepared.write.productTitle ?? null,
+      price: prepared.write.price,
       currency: "EUR",
       source: "decision_memory",
     });
@@ -282,16 +462,31 @@ export async function markDecisionWatched(
   const link = productLink.trim();
   if (!link) return { ok: false, error: "Product link required" };
 
-  const { error } = await supabaseAdmin
+  const byLink = await supabaseAdmin
     .from("decision_memory")
     .update({ watched: true })
     .eq("user_id", userId)
     .eq("product_link", link);
 
-  if (error) {
-    if (isBenignStorageSchemaError(error.message)) return { ok: false, error: "SCHEMA_MISSING" };
-    return { ok: false, error: error.message };
+  if (byLink.error) {
+    if (isBenignStorageSchemaError(byLink.error.message)) {
+      return { ok: false, error: "SCHEMA_MISSING" };
+    }
+    return { ok: false, error: byLink.error.message };
   }
+
+  // Also mark identity / decision-id matches when columns exist (best-effort).
+  await supabaseAdmin
+    .from("decision_memory")
+    .update({ watched: true })
+    .eq("user_id", userId)
+    .eq("memory_identity", link);
+  await supabaseAdmin
+    .from("decision_memory")
+    .update({ watched: true })
+    .eq("user_id", userId)
+    .eq("decision_id", link);
+
   return { ok: true };
 }
 
@@ -311,44 +506,31 @@ export async function listDecisionUpdatesForUser(
     (visit?.last_visit_at as string | null) ||
     null;
 
-  let query = supabaseAdmin
-    .from("decision_memory")
-    .select(MEMORY_SELECT)
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(80);
-
-  if (since) query = query.gt("created_at", since);
-
-  const { data, error } = await query;
-  if (error) {
-    if (isBenignStorageSchemaError(error.message)) return { items: [], configured: true };
-    return { items: [], configured: true, error: error.message };
+  const recent = await selectMemory(userId, { limit: 80 });
+  if (recent.error) {
+    if (isBenignStorageSchemaError(recent.error.message)) return { items: [], configured: true };
+    return { items: [], configured: true, error: recent.error.message };
   }
 
-  const rows = ((data as DbRow[]) ?? []).map(mapDecisionRow);
+  const rows = recent.data
+    .map(mapDecisionRow)
+    .filter((ep) => !since || ep.createdAt > since);
 
-  // Load a wider window so we can resolve previous episode per link without N+1 queries.
-  const { data: contextRows } = await supabaseAdmin
-    .from("decision_memory")
-    .select(MEMORY_SELECT)
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(240);
-  const context = ((contextRows as DbRow[]) ?? []).map(mapDecisionRow);
+  const context = (await selectMemory(userId, { limit: 240 })).data.map(mapDecisionRow);
 
   const items: DecisionUpdateItem[] = [];
   for (const ep of rows) {
     if (!ep.changes.length) continue;
     const previous = context.find(
       (row) =>
-        row.productLink === ep.productLink &&
+        threadKey(row) === threadKey(ep) &&
         row.id !== ep.id &&
         row.createdAt < ep.createdAt
     );
 
     items.push({
       id: ep.id,
+      decisionId: ep.decisionId,
       productLink: ep.productLink,
       productTitle: ep.productTitle,
       merchant: ep.merchant,
@@ -362,6 +544,7 @@ export async function listDecisionUpdatesForUser(
       currentPrice: ep.price,
       createdAt: ep.createdAt,
       watched: ep.watched,
+      domain: ep.domain,
     });
   }
 
@@ -379,22 +562,15 @@ export async function listDecisionUpdatesForUser(
 export async function scoreHistoryForUserLink(
   userId: string,
   productLink: string
-): Promise<Array<{ confidence: number; createdAt: string; decision: string }>> {
+): Promise<Array<{ confidence: number; createdAt: string; decision: string; decisionId?: string | null }>> {
   if (!supabaseAdmin) return [];
-  const { data, error } = await supabaseAdmin
-    .from("decision_memory")
-    .select("confidence, created_at, decision")
-    .eq("user_id", userId)
-    .eq("product_link", productLink)
-    .not("confidence", "is", null)
-    .order("created_at", { ascending: true })
-    .limit(40);
-  if (error || !data) return [];
-  return data
-    .filter((row) => row.confidence != null)
-    .map((row) => ({
-      confidence: Math.round(Number(row.confidence)),
-      createdAt: String(row.created_at),
-      decision: String(row.decision),
+  const episodes = await listEpisodesForLivingDecision(userId, productLink);
+  return episodes
+    .filter((ep) => ep.confidence != null)
+    .map((ep) => ({
+      confidence: Math.round(Number(ep.confidence)),
+      createdAt: ep.createdAt,
+      decision: ep.decision,
+      decisionId: ep.decisionId,
     }));
 }
