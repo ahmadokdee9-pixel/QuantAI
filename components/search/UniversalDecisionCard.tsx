@@ -5,15 +5,17 @@
  * without modifying InstantDecisionCard. Used for non-product domains.
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Bell, Check, ChevronDown, ExternalLink, Shield } from "lucide-react";
+import { buildUniversalAnalystBrief } from "@/lib/decisionAnalyst";
 import type { UniversalDecision } from "@/lib/universalDecision/types";
 import { actionCommitmentLabel } from "@/lib/universalDecision/actions";
 import DomainEvidenceModules from "@/components/search/DomainEvidenceModules";
 import type { LivingDecisionThread } from "@/lib/livingDecision/types";
 import DecisionHistorySection from "@/components/decisionMemory/DecisionHistorySection";
 import WhatsChangedBadges from "@/components/decisionMemory/WhatsChangedBadges";
+import DecisionAnalystPanels from "@/components/search/DecisionAnalystPanels";
 
 type Props = {
   decision: UniversalDecision;
@@ -43,6 +45,15 @@ export default function UniversalDecisionCard({
   const [watchFlash, setWatchFlash] = useState(false);
   const modifier = verdictModifier(decision.action);
   const leader = decision.leader;
+
+  const analyst = useMemo(() => {
+    if (livingThread) {
+      return buildUniversalAnalystBrief({ decision, livingThread });
+    }
+    return decision.analyst ?? buildUniversalAnalystBrief({ decision });
+  }, [decision, livingThread]);
+
+  const executiveSummary = analyst.executiveDecisionSummary || decision.executiveSummary;
 
   function handleWatch() {
     if (!onWatch) return;
@@ -99,7 +110,7 @@ export default function UniversalDecisionCard({
         ) : null}
       </div>
 
-      <p className="qa-instant-decision__summary">{decision.executiveSummary}</p>
+      <p className="qa-instant-decision__summary">{executiveSummary}</p>
 
       {leader ? (
         <div className="qa-instant-decision__product">
@@ -183,6 +194,8 @@ export default function UniversalDecisionCard({
         insufficientEvidence={decision.insufficientEvidence}
       />
 
+      <DecisionAnalystPanels analyst={analyst} compact={compact} />
+
       <DecisionHistorySection thread={livingThread} compact={compact} />
 
       <div className="qa-instant-decision__actions">
@@ -248,7 +261,7 @@ export default function UniversalDecisionCard({
                 inference are labeled; confidence is capped by verified facts, not text volume.
               </p>
               <ul className="qa-instant-decision__systems">
-                {decision.trust.notes.map((n) => (
+                {[...decision.trust.notes, ...analyst.evidenceSystems].map((n) => (
                   <li key={n}>{n}</li>
                 ))}
               </ul>

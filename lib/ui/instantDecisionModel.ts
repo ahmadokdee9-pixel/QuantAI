@@ -3,7 +3,10 @@
  * No mock data. Degrades gracefully when optional signals are absent.
  */
 
+import { buildProductAnalystBrief } from "@/lib/decisionAnalyst";
+import type { AnalystDecisionBrief } from "@/lib/decisionAnalyst/types";
 import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
+import type { LivingDecisionThread } from "@/lib/livingDecision/types";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getStoreTrustScore } from "@/lib/shoppingScore";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
@@ -49,6 +52,8 @@ export type InstantDecisionViewModel = {
     points: string[];
   };
   timeline: DecisionTimelineSlot[];
+  /** World-class analyst layer — scores, signals, Past/Now/Next. */
+  analyst: AnalystDecisionBrief;
   product: {
     title: string;
     store: string;
@@ -506,31 +511,55 @@ export function buildInstantDecisionViewModel(args: {
   universal: UniversalProductDecision | null | undefined;
   brief: DecisionBriefDTO | null | undefined;
   universalByLink?: Map<string, UniversalProductDecision>;
+  livingThread?: LivingDecisionThread | null;
 }): InstantDecisionViewModel | null {
-  const { leader, tray, universal, brief = null, universalByLink = new Map() } = args;
+  const {
+    leader,
+    tray,
+    universal,
+    brief = null,
+    universalByLink = new Map(),
+    livingThread = null,
+  } = args;
   if (!leader || !universal) return null;
 
   const { action, actionDetail } = resolveExecutiveAction(universal, brief?.recommendation?.label);
   const confidence = clampPct(universal.confidence);
   const waitIntelligence = buildWaitIntelligence(action, universal, brief);
+  const topReasons = buildTopReasons(universal, brief);
+  const risks = buildRisks(universal, brief, action);
   const { signals, systems } = buildTransparency(universal, leader);
 
-  return {
+  const analyst = buildProductAnalystBrief({
     action,
-    actionDetail,
     confidence,
-    executiveSummary: buildExecutiveSummary({
+    universal,
+    brief,
+    livingThread,
+    reasons: topReasons,
+    risks,
+  });
+
+  const executiveSummary = analyst.executiveDecisionSummary ||
+    buildExecutiveSummary({
       action,
       actionDetail,
       product: leader,
       universal,
       brief,
-    }),
-    topReasons: buildTopReasons(universal, brief),
-    risks: buildRisks(universal, brief, action),
+    });
+
+  return {
+    action,
+    actionDetail,
+    confidence,
+    executiveSummary,
+    topReasons,
+    risks,
     betterAlternatives: buildAlternatives(leader, tray, brief, universalByLink),
     waitIntelligence,
     timeline: buildTimeline(action, confidence, waitIntelligence),
+    analyst,
     product: {
       title: leader.title,
       store: leader.store,
@@ -538,8 +567,50 @@ export function buildInstantDecisionViewModel(args: {
       price: leader.price > 0 ? leader.price : null,
       image: leader.image || "",
     },
-    transparency: signals,
-    systemsInvolved: systems,
+    transparency: [
+      ...signals,
+      {
+        label: "Opportunity",
+        value:
+          analyst.opportunity.score != null
+            ? `${analyst.opportunity.score}/100 — ${analyst.opportunity.label}`
+            : analyst.opportunity.label,
+        score: analyst.opportunity.score ?? undefined,
+      },
+      {
+        label: "Risk",
+        value:
+          analyst.risk.score != null
+            ? `${analyst.risk.score}/100 — ${analyst.risk.label}`
+            : analyst.risk.label,
+        score: analyst.risk.score ?? undefined,
+      },
+      {
+        label: "Regret (buy today)",
+        value:
+          analyst.regret.score != null
+            ? `${analyst.regret.score}/100 — ${analyst.regret.label}`
+            : analyst.regret.label,
+        score: analyst.regret.score ?? undefined,
+      },
+      {
+        label: "Waiting value",
+        value:
+          analyst.waiting.score != null
+            ? `${analyst.waiting.score}/100 — ${analyst.waiting.label}`
+            : analyst.waiting.label,
+        score: analyst.waiting.score ?? undefined,
+      },
+      {
+        label: "Stability",
+        value:
+          analyst.recommendationStability.score != null
+            ? `${analyst.recommendationStability.score}/100 — ${analyst.recommendationStability.label}`
+            : analyst.recommendationStability.label,
+        score: analyst.recommendationStability.score ?? undefined,
+      },
+    ].slice(0, 12),
+    systemsInvolved: uniqueLines([...systems, ...analyst.evidenceSystems], 10),
   };
 }
 

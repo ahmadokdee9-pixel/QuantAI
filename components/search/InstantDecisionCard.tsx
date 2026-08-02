@@ -21,6 +21,7 @@ import type { UniversalProductDecision } from "@/lib/ui/universalProductDecision
 import type { LivingDecisionThread } from "@/lib/livingDecision/types";
 import DecisionHistorySection from "@/components/decisionMemory/DecisionHistorySection";
 import WhatsChangedBadges from "@/components/decisionMemory/WhatsChangedBadges";
+import DecisionAnalystPanels from "@/components/search/DecisionAnalystPanels";
 
 type Props = {
   leader: QuantProduct | null;
@@ -91,8 +92,9 @@ export default function InstantDecisionCard({
         universal,
         brief: decisionBrief,
         universalByLink,
+        livingThread,
       }),
-    [leader, tray, universal, decisionBrief, universalByLink]
+    [leader, tray, universal, decisionBrief, universalByLink, livingThread]
   );
 
   if (!model || !leader) return null;
@@ -273,6 +275,8 @@ export default function InstantDecisionCard({
           ))}
         </div>
       </section>
+
+      <DecisionAnalystPanels analyst={model.analyst} compact={compact} />
 
       <DecisionHistorySection thread={livingThread} compact={compact} />
 

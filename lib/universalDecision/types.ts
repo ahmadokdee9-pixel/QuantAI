@@ -115,6 +115,8 @@ export type UniversalDecision = {
   providerStatus: "live" | "unavailable" | "flagged_off" | "partial";
   query: string;
   generatedAt: string;
+  /** Analyst Decision Brief — optional; attached by Decision Analyst layer. */
+  analyst?: import("@/lib/decisionAnalyst/types").AnalystDecisionBrief;
 };
 
 export type DomainClassification = {

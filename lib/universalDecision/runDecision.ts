@@ -1,3 +1,4 @@
+import { withAnalystBrief } from "@/lib/decisionAnalyst";
 import { getAdapter } from "@/lib/universalDecision/registry";
 import { classifyDecisionDomain } from "@/lib/universalDecision/router";
 import { isDomainFeatureEnabled } from "@/lib/universalDecision/flags";
@@ -85,10 +86,12 @@ export async function runUniversalDecision(
     signal: input.signal,
   });
 
+  const decision = result.decision ? withAnalystBrief(result.decision) : null;
+
   return {
     classification,
-    result,
-    decision: result.decision,
+    result: decision && result.decision ? { ...result, decision } : result,
+    decision,
     routedToProductPipeline: false,
   };
 }
