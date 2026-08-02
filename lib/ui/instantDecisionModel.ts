@@ -540,7 +540,9 @@ export function buildInstantDecisionViewModel(args: {
     risks,
   });
 
-  const executiveSummary = analyst.executiveDecisionSummary ||
+  const executiveSummary =
+    analyst.thesis?.coreThesis ||
+    analyst.executiveDecisionSummary ||
     buildExecutiveSummary({
       action,
       actionDetail,
@@ -548,6 +550,14 @@ export function buildInstantDecisionViewModel(args: {
       universal,
       brief,
     });
+
+  // Prefer thesis confidence explanation in transparency when present.
+  if (analyst.thesis?.confidenceExplanation) {
+    signals.unshift({
+      label: "Confidence explanation",
+      value: analyst.thesis.confidenceExplanation,
+    });
+  }
 
   return {
     action,

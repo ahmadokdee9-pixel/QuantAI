@@ -37,6 +37,7 @@ function ScoreRow({
 }
 
 export default function DecisionAnalystPanels({ analyst, compact = false }: Props) {
+  const thesis = analyst.thesis;
   const scores = [
     { title: "Opportunity", s: analyst.opportunity },
     { title: "Risk", s: analyst.risk },
@@ -48,6 +49,73 @@ export default function DecisionAnalystPanels({ analyst, compact = false }: Prop
 
   return (
     <>
+      {thesis ? (
+        <section className="qa-instant-decision__block qa-instant-decision__block--full">
+          <h3 className="qa-instant-decision__block-title">Decision thesis</h3>
+          <p className="qa-instant-decision__wait-headline">{thesis.coreThesis}</p>
+          <p className="qa-instant-decision__horizon-note mt-2">{thesis.confidenceExplanation}</p>
+          <p className="qa-instant-decision__horizon-note mt-2">
+            <span className="text-slate-400">Counter-thesis:</span> {thesis.counterThesis}
+          </p>
+          <p className="qa-instant-decision__horizon-note mt-2">
+            <span className="text-slate-400">Next expected event:</span> {thesis.nextExpectedEvent}
+          </p>
+
+          {!compact ? (
+            <div className="qa-instant-decision__grid mt-3">
+              <div>
+                <h4 className="qa-instant-decision__block-title">Supporting evidence</h4>
+                <ul className="qa-instant-decision__list">
+                  {thesis.supportingEvidence.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="qa-instant-decision__block-title">Missing evidence</h4>
+                <ul className="qa-instant-decision__list qa-instant-decision__list--risk">
+                  {thesis.missingEvidence.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="qa-instant-decision__block-title">Confirmation signals</h4>
+                <ul className="qa-instant-decision__list">
+                  {thesis.confirmationSignals.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="qa-instant-decision__block-title">Invalidation signals</h4>
+                <ul className="qa-instant-decision__list qa-instant-decision__list--risk">
+                  {thesis.invalidationSignals.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="qa-instant-decision__block-title">Critical assumptions</h4>
+                <ul className="qa-instant-decision__list">
+                  {thesis.criticalAssumptions.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="qa-instant-decision__block-title">Failure scenarios</h4>
+                <ul className="qa-instant-decision__list qa-instant-decision__list--risk">
+                  {thesis.failureScenarios.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
       <section className="qa-instant-decision__block qa-instant-decision__block--full">
         <h3 className="qa-instant-decision__block-title">Analyst scores</h3>
         <dl className="qa-instant-decision__signals">

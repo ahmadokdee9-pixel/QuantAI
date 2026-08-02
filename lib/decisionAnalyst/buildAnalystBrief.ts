@@ -4,6 +4,7 @@
  */
 
 import { confidenceTrend } from "@/lib/decisionMemory/changeDetection";
+import { withDecisionThesis } from "@/lib/decisionThesis";
 import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
 import type { LivingDecisionThread } from "@/lib/livingDecision/types";
 import type {
@@ -936,7 +937,7 @@ export function buildProductAnalystBrief(args: {
     priceMove: expectedPriceMovement.magnitudeLabel,
   });
 
-  return {
+  const base: AnalystDecisionBrief = {
     version: 1,
     executiveDecisionSummary,
     whyRecommendation: why,
@@ -979,6 +980,14 @@ export function buildProductAnalystBrief(args: {
     signals,
     evidenceSystems: unique(systems, 8),
   };
+
+  return withDecisionThesis(base, {
+    action,
+    confidence,
+    livingThread,
+    confidenceReason: universal.confidenceReason,
+    existingThesis: universal.decisionThesis,
+  });
 }
 
 /** Universal (flight/hotel/subscription) path. */
@@ -1284,7 +1293,7 @@ export function buildUniversalAnalystBrief(args: {
     priceMove: expectedPriceMovement.magnitudeLabel,
   });
 
-  return {
+  const base: AnalystDecisionBrief = {
     version: 1,
     executiveDecisionSummary,
     whyRecommendation: why,
@@ -1324,6 +1333,14 @@ export function buildUniversalAnalystBrief(args: {
     signals,
     evidenceSystems: systems,
   };
+
+  return withDecisionThesis(base, {
+    action,
+    confidence,
+    livingThread,
+    confidenceReason: decision.trust.notes[0] || null,
+    existingThesis: decision.executiveSummary,
+  });
 }
 
 /** Attach analyst brief onto a UniversalDecision (server or client). */
@@ -1332,9 +1349,13 @@ export function withAnalystBrief(
   livingThread?: LivingDecisionThread | null
 ): UniversalDecision & { analyst: AnalystDecisionBrief } {
   const analyst = buildUniversalAnalystBrief({ decision, livingThread });
+  const summary =
+    analyst.thesis?.coreThesis ||
+    analyst.executiveDecisionSummary ||
+    decision.executiveSummary;
   return {
     ...decision,
-    executiveSummary: analyst.executiveDecisionSummary,
+    executiveSummary: summary,
     analyst,
   };
 }

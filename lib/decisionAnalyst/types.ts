@@ -74,4 +74,6 @@ export type AnalystDecisionBrief = {
   signals: DecisionSignal[];
   /** Systems / engines that contributed evidence (for transparency). */
   evidenceSystems: string[];
+  /** Decision Thesis Engine — structured analyst thesis (optional until attached). */
+  thesis?: import("@/lib/decisionThesis/types").DecisionThesis;
 };
