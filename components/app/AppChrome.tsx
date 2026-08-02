@@ -12,6 +12,7 @@ import {
   BellRing,
   Radio,
   Sparkles,
+  Target,
 } from "lucide-react";
 import AmbientBackdrop from "@/components/cockpit/AmbientBackdrop";
 import EnterpriseFooter from "@/components/layout/EnterpriseFooter";
@@ -19,6 +20,7 @@ import EnterpriseFooter from "@/components/layout/EnterpriseFooter";
 const nav = [
   { href: "/", label: "Home", icon: Home },
   { href: "/dashboard", label: "Workspace", icon: LayoutDashboard },
+  { href: "/agent", label: "Agent", icon: Target },
   { href: "/feed", label: "Feed", icon: Radio },
   { href: "/decisions", label: "Decisions", icon: History },
   { href: "/watchlist", label: "Watchlist", icon: BellRing },

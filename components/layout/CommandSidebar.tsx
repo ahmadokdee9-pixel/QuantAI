@@ -14,6 +14,7 @@ import {
   Radio,
   Search,
   Sparkles,
+  Target,
   Zap,
 } from "lucide-react";
 
@@ -22,6 +23,7 @@ const NAV = [
   { href: "/#pricing", label: "Clearance Architecture", icon: Sparkles },
   { href: "/how-it-works", label: "Intelligence Infrastructure", icon: Radar },
   { href: "/saved", label: "Signal Operations", icon: Bookmark },
+  { href: "/agent", label: "Decision Agent", icon: Target },
   { href: "/feed", label: "Decision Feed", icon: Radio },
   { href: "/decisions", label: "Decision Timeline", icon: History },
   { href: "/watchlist", label: "Watched Decisions", icon: BellRing },
