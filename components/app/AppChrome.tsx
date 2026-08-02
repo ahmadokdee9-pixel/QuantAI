@@ -3,13 +3,23 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
-import { LayoutDashboard, Bookmark, CreditCard, Home, History, BellRing, Sparkles } from "lucide-react";
+import {
+  LayoutDashboard,
+  Bookmark,
+  CreditCard,
+  Home,
+  History,
+  BellRing,
+  Radio,
+  Sparkles,
+} from "lucide-react";
 import AmbientBackdrop from "@/components/cockpit/AmbientBackdrop";
 import EnterpriseFooter from "@/components/layout/EnterpriseFooter";
 
 const nav = [
   { href: "/", label: "Home", icon: Home },
   { href: "/dashboard", label: "Workspace", icon: LayoutDashboard },
+  { href: "/feed", label: "Feed", icon: Radio },
   { href: "/decisions", label: "Decisions", icon: History },
   { href: "/watchlist", label: "Watchlist", icon: BellRing },
   { href: "/saved", label: "Memory shelf", icon: Bookmark },

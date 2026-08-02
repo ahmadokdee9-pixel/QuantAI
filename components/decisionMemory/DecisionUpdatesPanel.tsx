@@ -116,8 +116,11 @@ export default function DecisionUpdatesPanel({ signedIn = false, compact = false
         ))}
       </ul>
       <div className="mt-3 flex flex-wrap gap-3 text-xs">
-        <Link href="/decisions" className="font-semibold text-cyan-200 hover:text-white">
-          Open decision timeline
+        <Link href="/feed" className="font-semibold text-cyan-200 hover:text-white">
+          Open Decision Feed
+        </Link>
+        <Link href="/decisions" className="font-semibold text-slate-300 hover:text-white">
+          Decision timeline
         </Link>
         <Link href="/watchlist" className="font-semibold text-slate-300 hover:text-white">
           Watched decisions

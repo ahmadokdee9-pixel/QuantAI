@@ -21,7 +21,10 @@ export default function DecisionsTimelinePage() {
       </p>
 
       <div className="mt-4 flex flex-wrap gap-3 text-xs">
-        <Link href="/watchlist" className="font-semibold text-cyan-200 hover:text-white">
+        <Link href="/feed" className="font-semibold text-cyan-200 hover:text-white">
+          Decision Feed
+        </Link>
+        <Link href="/watchlist" className="font-semibold text-slate-300 hover:text-white">
           Watched decisions
         </Link>
         <Link href="/" className="font-semibold text-slate-300 hover:text-white">
