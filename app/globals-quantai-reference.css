@@ -1,6 +1,6 @@
 /**
  * QuantAI Reference Design System
- * Palette: #F6F6F8 bg · #FFFFFF surface · #17181D text · institutional indigo/slate accents
+ * Palette: #F6F6F8 bg � #FFFFFF surface � #17181D text � institutional indigo/slate accents
  */
 .qa-ref-os {
   --qa-ref-bg: #f6f6f8;
@@ -22,7 +22,7 @@
   min-height: 100vh;
 }
 
-/* ── Layout ── */
+/* ?? Layout ?? */
 .qa-ref-shell {
   flex: 1;
   min-width: 0;
@@ -52,7 +52,7 @@
   margin: 0 auto 1.5rem;
 }
 
-/* ── Sidebar ── */
+/* ?? Sidebar ?? */
 .qa-ref-sidebar {
   width: 260px;
   flex-shrink: 0;
@@ -195,7 +195,7 @@
   color: var(--qa-ref-violet);
 }
 
-/* ── Top bar ── */
+/* ?? Top bar ?? */
 .qa-ref-topbar {
   position: sticky;
   top: 0;
@@ -290,7 +290,7 @@
   color: var(--qa-ref-text);
 }
 
-/* ── Typography ── */
+/* ?? Typography ?? */
 .qa-ref-kicker {
   font-size: 10px;
   font-weight: 700;
@@ -350,7 +350,7 @@
   color: var(--qa-ref-violet);
 }
 
-/* ── Hero ── */
+/* ?? Hero ?? */
 .qa-ref-hero {
   position: relative;
   padding: 1.5rem 0 1rem;
@@ -450,7 +450,7 @@
   opacity: 0.7;
 }
 
-/* ── Metrics ── */
+/* ?? Metrics ?? */
 .qa-ref-metrics {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -531,7 +531,7 @@
   background: linear-gradient(90deg, transparent, var(--qa-ref-pink), transparent);
 }
 
-/* ── Neural command ── */
+/* ?? Neural command ?? */
 .qa-ref-command-wrap {
   margin-top: 1.25rem;
 }
@@ -634,7 +634,7 @@
   color: var(--qa-ref-muted);
 }
 
-/* ── Cards ── */
+/* ?? Cards ?? */
 .qa-ref-card {
   background: var(--qa-ref-surface);
   border: 1px solid var(--qa-ref-border);
@@ -651,7 +651,7 @@
   margin-bottom: 1rem;
 }
 
-/* ── Galaxy ── */
+/* ?? Galaxy ?? */
 .qa-ref-galaxy {
   background: linear-gradient(165deg, #1a1d26 0%, #12141c 100%);
   border-radius: var(--qa-ref-radius);
@@ -798,7 +798,7 @@
   100% { transform: scale(2.2); opacity: 0; }
 }
 
-/* ── Retailer lane ── */
+/* ?? Retailer lane ?? */
 .qa-ref-retailer-lane {
   background: var(--qa-ref-surface);
   border: 1px solid var(--qa-ref-border);
@@ -854,7 +854,7 @@
   box-shadow: var(--qa-ref-shadow);
 }
 
-/* ── Product cards ── */
+/* ?? Product cards ?? */
 .qa-ref-os .qa-ref-product-card {
   border-radius: var(--qa-ref-radius) !important;
   border: 1px solid var(--qa-ref-border) !important;
@@ -951,7 +951,7 @@
   color: var(--qa-ref-muted) !important;
 }
 
-/* ── Signal rail ── */
+/* ?? Signal rail ?? */
 .qa-ref-os .qa-ref-signal-rail {
   display: flex;
   align-items: center;
@@ -1006,7 +1006,7 @@
   box-shadow: 0 0 8px #34d399;
 }
 
-/* ── Access tiers ── */
+/* ?? Access tiers ?? */
 .qa-ref-access-grid {
   display: grid;
   gap: 1rem;
@@ -1067,7 +1067,7 @@
   color: var(--qa-ref-violet) !important;
 }
 
-/* ── Footer ── */
+/* ?? Footer ?? */
 .qa-ref-footer {
   margin-top: 2rem;
   padding: 2rem 0;
@@ -1157,7 +1157,7 @@
   color: var(--qa-ref-violet);
 }
 
-/* ── Results tray overrides ── */
+/* ?? Results tray overrides ?? */
 .qa-ref-os .qa-ui-intelligence-tray,
 .qa-ref-os .qa-ui-analyst-tray {
   background: transparent !important;
@@ -1173,7 +1173,7 @@
   max-height: none !important;
 }
 
-/* ── Marketing / governance ── */
+/* ?? Marketing / governance ?? */
 .qa-ref-marketing__panel {
   text-align: center;
 }
@@ -1196,7 +1196,7 @@
   }
 }
 
-/* ═══ PHASE 5: ARCHITECTURAL POLISH — density, continuity, depth ═══ */
+/* ??? PHASE 5: ARCHITECTURAL POLISH ? density, continuity, depth ??? */
 
 .qa-ref-os--phase5 .qa-ref-workspace {
   padding-bottom: 1.25rem;
@@ -1239,7 +1239,7 @@
   margin-top: 0.65rem;
 }
 
-/* Section bridges — orbital continuity */
+/* Section bridges ? orbital continuity */
 .qa-ref-bridge {
   height: 1px;
   margin: 0.45rem 0;
@@ -1386,7 +1386,7 @@
   border-radius: 50%;
 }
 
-/* Cluster analysis — hero-aligned module */
+/* Cluster analysis ? hero-aligned module */
 .qa-ref-cluster__shell {
   border-radius: var(--qa-ref-radius);
   border: 1px solid var(--qa-ref-border);
@@ -1570,7 +1570,7 @@
   margin-bottom: 0.65rem !important;
 }
 
-/* ═══ PHASE 6: DECISION INTELLIGENCE — vocabulary, hierarchy, density ═══ */
+/* ??? PHASE 6: DECISION INTELLIGENCE ? vocabulary, hierarchy, density ??? */
 
 .qa-ref-os--phase6 .qa-ref-decision-first {
   padding: 0.65rem 0.85rem 0.55rem;
@@ -1786,7 +1786,7 @@
   font-size: 14px;
 }
 
-/* ═══ PHASE 7: DECISION FLOW — rhythm, winner strip, flow lines ═══ */
+/* ??? PHASE 7: DECISION FLOW ? rhythm, winner strip, flow lines ??? */
 
 .qa-ref-os--phase7 {
   --qa-space-1: 8px;
@@ -2078,7 +2078,7 @@
   display: none !important;
 }
 
-/* ═══ PHASE 7 REFINEMENT: decision hierarchy + institutional restraint ═══ */
+/* ??? PHASE 7 REFINEMENT: decision hierarchy + institutional restraint ??? */
 
 .qa-ref-os--phase7 .qa-ref-decision-first {
   border-bottom: none;
@@ -2219,7 +2219,7 @@
   padding: 0;
 }
 
-/* ── Decision system rebuild (phase: decision-system) ── */
+/* ?? Decision system rebuild (phase: decision-system) ?? */
 .qa-ref-os--decision-system {
   --qa-section-gap: 44px;
   --qa-card-gap: 20px;
@@ -2598,7 +2598,7 @@
   padding: 0;
 }
 
-/* ── Refinement pass: compressed rhythm + intelligence blocks ── */
+/* ?? Refinement pass: compressed rhythm + intelligence blocks ?? */
 .qa-ref-os--decision-system {
   --qa-section-gap: 32px;
   --qa-card-gap: 18px;
@@ -2893,7 +2893,7 @@
 }
 
 .qa-ref-premium-unlocks__list li::before {
-  content: "·";
+  content: "�";
   margin-right: 8px;
   color: var(--qa-ref-violet);
 }
@@ -3017,7 +3017,7 @@
   max-width: 22rem;
 }
 
-/* ── Intelligence density pass (premium OS, not marketplace) ── */
+/* ?? Intelligence density pass (premium OS, not marketplace) ?? */
 .qa-ref-os--decision-system {
   --qa-section-gap: 40px;
   --qa-card-gap: 20px;
@@ -3123,7 +3123,7 @@
   line-height: 1.3;
 }
 
-/* ── Commerce coverage infrastructure panel ── */
+/* ?? Commerce coverage infrastructure panel ?? */
 .qa-ref-coverage {
   border-radius: calc(20px * var(--qa-intel-system-scale, 1.12));
   border: 1px solid rgba(15, 23, 42, 0.08);
@@ -3414,7 +3414,7 @@
   animation: qa-ref-coverage-pulse 3s ease-in-out infinite;
 }
 
-/* Scan tray — supporting layer, not climax */
+/* Scan tray ? supporting layer, not climax */
 .qa-ref-coverage--scan-tray {
   margin-bottom: 10px;
   padding: clamp(0.65rem, 1.5vw, 0.85rem) clamp(0.75rem, 1.8vw, 1rem);
@@ -3917,7 +3917,7 @@
   color: #454a55;
 }
 
-/* ── Intelligence authority pass ── */
+/* ?? Intelligence authority pass ?? */
 .qa-ref-os--intel-authority .qa-ref-hero {
   padding: 2.25rem 0 1.5rem;
   background: linear-gradient(180deg, rgba(42, 38, 104, 0.04) 0%, transparent 72%);
@@ -4051,7 +4051,7 @@
   font-size: 1.55rem;
 }
 
-/* ── Visual intelligence upgrade — command center + intel cards ── */
+/* ?? Visual intelligence upgrade ? command center + intel cards ?? */
 .qa-ref-command-center {
   margin-bottom: 18px;
   display: flex;
@@ -4536,7 +4536,7 @@
   cursor: not-allowed;
 }
 
-/* Market summary — recommendation first */
+/* Market summary ? recommendation first */
 .qa-ref-market-summary--primary {
   display: flex;
   flex-direction: column;
@@ -4708,7 +4708,7 @@
   margin-top: 0;
 }
 
-/* Intelligence layers pricing — product card DNA (intel-v1) */
+/* Intelligence layers pricing ? product card DNA (intel-v1) */
 .qa-ref-os--intel-v1 {
   --qa-ref-tier-min-h: 520px;
   --qa-ref-tier-featured-min-h: 560px;
@@ -5127,7 +5127,7 @@
   color: #020617;
 }
 
-/* Intelligence layers heading — institutional access architecture */
+/* Intelligence layers heading ? institutional access architecture */
 .qa-ref-os--intel-v1 .qa-ref-section--pricing .qa-ref-section-intro--intel-layers {
   max-width: 42rem;
   margin: 0 auto clamp(3.25rem, 5.5vw, 4.25rem);
@@ -5185,7 +5185,7 @@
 }
 
 .qa-ref-os--intel-v1 .qa-ref-section--pricing .qa-ref-intel-layers__capabilities span:not(:last-child)::after {
-  content: "•";
+  content: "?";
   margin: 0 clamp(0.5rem, 1.3vw, 0.75rem);
   font-weight: 400;
   color: rgba(42, 38, 104, 0.2);
@@ -5213,7 +5213,7 @@
   }
 }
 
-/* ── Global Commerce Intelligence Network (pipeline) ── */
+/* ?? Global Commerce Intelligence Network (pipeline) ?? */
 .qa-ref-os .qa-ref-section--gcin {
   padding-top: 0.5rem;
 }
@@ -6829,7 +6829,7 @@
   }
 }
 
-/* ── Intelligence Experience Upgrade V1 ── */
+/* ?? Intelligence Experience Upgrade V1 ?? */
 .qa-ref-os--intel-v1 .qa-ref-display,
 .qa-ref-os--intel-v1 .qa-ref-h2,
 .qa-ref-os--intel-v1 .qa-ref-h3 {
@@ -6837,7 +6837,7 @@
   letter-spacing: -0.035em;
 }
 
-/* ── Hero flagship polish — intel-v1 ── */
+/* ?? Hero flagship polish ? intel-v1 ?? */
 .qa-ref-os--intel-v1 .qa-ref-hero {
   padding: 2.55rem 0 2.05rem;
   background: #ffffff;
@@ -7030,7 +7030,7 @@
   padding-inline: clamp(1.25rem, 2.8vw, 2rem);
 }
 
-/* Hero — unified intelligence surface */
+/* Hero ? unified intelligence surface */
 .qa-ref-os--intel-v1 .qa-ref-hero--canvas,
 .qa-ref-os--intel-v1 .qa-ref-hero.qa-ref-hero--canvas {
   margin-inline: clamp(-2rem, -3vw, -2.75rem);
@@ -7157,7 +7157,7 @@
   width: 100%;
 }
 
-/* System intelligence nodes — hero operating layer */
+/* System intelligence nodes ? hero operating layer */
 .qa-ref-metrics--nodes {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -7380,6 +7380,11 @@
   align-items: center;
   gap: 0.45rem;
   margin-bottom: 1.15rem;
+  flex-wrap: wrap;
+}
+
+.qa-ref-hero__console-head .qa-living-presence--console {
+  flex: 1 1 12rem;
 }
 
 .qa-ref-hero__console-pulse {
@@ -7753,7 +7758,7 @@
   font-weight: 500;
 }
 
-/* Hero layout — primary column + intelligence preview */
+/* Hero layout ? primary column + intelligence preview */
 .qa-ref-hero__layout {
   position: relative;
   z-index: 1;
@@ -8139,7 +8144,7 @@
   }
 }
 
-/* Hero ambient — intelligence field */
+/* Hero ambient ? intelligence field */
 .qa-ref-hero-atmo__infra {
   position: absolute;
   inset: 0;
@@ -8243,7 +8248,7 @@
   }
 }
 
-/* ── Live intelligence flow (compact animated pipeline) ── */
+/* ?? Live intelligence flow (compact animated pipeline) ?? */
 .qa-ref-live-flow {
   margin-bottom: 12px;
   padding: 0.35rem 0 0.5rem;
@@ -8463,7 +8468,7 @@
   }
 }
 
-/* ── Executive decision brief (verdict climax) ── */
+/* ?? Executive decision brief (verdict climax) ?? */
 .qa-ref-exec-brief {
   margin-bottom: 16px;
   padding: clamp(1.1rem, 2vw, 1.35rem);
@@ -8682,7 +8687,7 @@
   background: linear-gradient(90deg, transparent, rgba(139, 105, 20, 0.45), transparent);
 }
 
-/* Climax variant — strongest visual destination in scan journey */
+/* Climax variant ? strongest visual destination in scan journey */
 .qa-ref-exec-brief--climax {
   margin-top: clamp(1.75rem, 4vw, 2.5rem);
   margin-bottom: clamp(1.25rem, 3vw, 1.75rem);
@@ -8881,7 +8886,7 @@
   opacity: 0.92;
 }
 
-/* Intelligence card — hero asset */
+/* Intelligence card ? hero asset */
 .qa-ref-intel-card__hero {
   border-bottom: 1px solid rgba(23, 24, 29, 0.06);
 }
@@ -9060,7 +9065,7 @@
   }
 }
 
-/* ── Final Visual Refinement Pass ── */
+/* ?? Final Visual Refinement Pass ?? */
 .qa-ref-os--intel-v1 .qa-ref-shell {
   background:
     radial-gradient(ellipse 90% 50% at 50% -10%, rgba(123, 97, 255, 0.06), transparent 55%),
@@ -9100,7 +9105,7 @@
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), transparent 28%);
 }
 
-/* Hero depth — animated grid + markers */
+/* Hero depth ? animated grid + markers */
 .qa-ref-hero-atmo__depth {
   position: absolute;
   inset: 0;
@@ -9147,7 +9152,7 @@
   to { background-position: 120% 0; }
 }
 
-/* Market status — network activity */
+/* Market status ? network activity */
 .qa-ref-command-center__status {
   position: relative;
   overflow: hidden;
@@ -9199,7 +9204,7 @@
   background: radial-gradient(circle at 85% 15%, rgba(123, 97, 255, 0.12), transparent 42%);
 }
 
-/* Intelligence asset — compact reference (supports analysis, never dominates) */
+/* Intelligence asset ? compact reference (supports analysis, never dominates) */
 .qa-ref-intel-card__asset {
   padding: 10px 12px 0;
 }
@@ -9295,7 +9300,7 @@
   color: #5a6070;
 }
 
-/* Verdict band — dominant intelligence signal */
+/* Verdict band ? dominant intelligence signal */
 .qa-ref-intel-card__verdict-band {
   margin: 10px 12px 0;
   padding: 12px 14px;
@@ -9425,7 +9430,7 @@
   background: linear-gradient(90deg, var(--qa-ref-violet), #a78bfa);
 }
 
-/* Intelligence summary — top reasons only */
+/* Intelligence summary ? top reasons only */
 .qa-ref-intel-card__summary {
   margin: 10px 12px 0;
   padding: 10px 12px;
@@ -9543,7 +9548,7 @@
   to { background-position: -200% 0; }
 }
 
-/* Legacy media/executive aliases — kept minimal for compatibility */
+/* Legacy media/executive aliases ? kept minimal for compatibility */
 .qa-ref-intel-card__media-frame {
   height: clamp(180px, 24vw, 220px);
 }
@@ -9563,7 +9568,7 @@
   }
 }
 
-/* ── Card grid lockdown — mathematically uniform tray ── */
+/* ?? Card grid lockdown ? mathematically uniform tray ?? */
 .qa-ref-os--intel-v1 {
   --qa-intel-system-scale: 1.12;
   --qa-intel-tray-width-scale: calc(1.08 * var(--qa-intel-system-scale));
@@ -10366,7 +10371,7 @@
   color: var(--qa-ref-ink);
 }
 
-/* ── Institutional intelligence notice + OS footer (intel-v1) ── */
+/* ?? Institutional intelligence notice + OS footer (intel-v1) ?? */
 .qa-ref-os--intel-v1 .qa-ref-section--intel-notice {
   margin-top: clamp(2.25rem, 4.5vw, 3.25rem);
   padding: 0;
@@ -10637,7 +10642,7 @@
   }
 }
 
-/* ── Workspace institutional DNA (intel-v1) ── */
+/* ?? Workspace institutional DNA (intel-v1) ?? */
 .qa-ref-os--intel-v1 .qa-page-canvas {
   background: #f6f6f8;
   color: #17181d;
@@ -11234,7 +11239,7 @@
   margin-top: clamp(0.5rem, 1.5vw, 1rem);
 }
 
-/* Legacy cockpit surfaces inside workspace — map to institutional DNA */
+/* Legacy cockpit surfaces inside workspace ? map to institutional DNA */
 .qa-ref-workspace-intel .cockpit-glass-panel,
 .qa-ref-workspace-intel .qa-premium-surface {
   padding: clamp(1.45rem, 2.8vw, 2rem);
@@ -11357,7 +11362,7 @@
   color: #5c4a12 !important;
 }
 
-/* Governance / legal documents — typography only */
+/* Governance / legal documents ? typography only */
 .qa-ref-legal-page {
   max-width: 52rem;
   margin: 0 auto;
@@ -12059,7 +12064,7 @@
   }
 }
 
-/* Living Decisions � history + what's-changed (reuse Instant Decision language) */
+/* Living Decisions ? history + what's-changed (reuse Instant Decision language) */
 .qa-living-badges {
   margin-top: 0.55rem;
   display: grid;
@@ -12224,7 +12229,7 @@
   overflow: auto;
 }
 
-/* Decision Feed � reuse Instant Decision / living badge language */
+/* Decision Feed ? reuse Instant Decision / living badge language */
 .qa-feed-filters {
   display: flex;
   flex-wrap: wrap;
@@ -12402,5 +12407,200 @@
   }
   .qa-feed-card__arrow {
     display: none;
+  }
+}
+
+/* ?? Living Intelligence Presence (real engine signals only) ?? */
+.qa-living-presence {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.qa-living-presence--nodes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 100%;
+}
+
+.qa-living-presence__ticker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 1.25rem;
+  padding: 0 0.15rem;
+}
+
+.qa-living-presence--console {
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+  margin-left: 0.35rem;
+}
+
+.qa-living-presence--console .qa-living-presence__kicker {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(165, 243, 252, 0.72);
+  white-space: nowrap;
+}
+
+.qa-living-presence--console .qa-living-presence__line {
+  font-size: 11.5px;
+  color: rgba(226, 232, 240, 0.88);
+  min-width: 0;
+}
+
+.qa-living-presence--strip {
+  margin: 0.35rem 0 0.75rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(34, 211, 238, 0.16);
+  background: rgba(6, 182, 212, 0.06);
+  width: fit-content;
+  max-width: 100%;
+}
+
+.qa-living-presence--decision {
+  margin: 0.45rem 0 0;
+  min-height: 1.1rem;
+}
+
+.qa-living-presence__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(34, 211, 238, 0.95);
+  box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.45);
+  flex-shrink: 0;
+  animation: qa-living-presence-pulse 2.2s ease-out infinite;
+}
+
+.qa-living-presence__line {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+}
+
+.qa-living-presence__line--live {
+  color: rgba(165, 243, 252, 0.92);
+}
+
+.qa-living-presence__line--calm {
+  color: rgba(203, 213, 225, 0.9);
+}
+
+.qa-living-presence__line--alert {
+  color: rgba(253, 186, 116, 0.95);
+}
+
+.qa-living-presence__line--idle {
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.qa-living-presence__node--pulse .qa-ref-sys-node__value {
+  animation: qa-living-presence-value 1.6s ease-in-out infinite;
+}
+
+.qa-instant-decision__confidence-track .qa-ui-confidence-fill,
+.qa-instant-decision__confidence-track > span {
+  transition: width 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.qa-instant-decision {
+  transition: border-color 0.35s ease, box-shadow 0.45s ease, transform 0.35s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .qa-instant-decision:hover {
+    transform: translateY(-1px);
+  }
+
+  .qa-ref-sys-node {
+    transition: border-color 0.28s ease, background-color 0.28s ease, transform 0.28s ease;
+  }
+
+  .qa-ref-sys-node:hover {
+    transform: translateY(-1px);
+  }
+}
+
+.qa-living-skeleton {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.75rem 0 1rem;
+}
+
+.qa-living-skeleton__row {
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(148, 163, 184, 0.08) 0%,
+    rgba(165, 243, 252, 0.16) 45%,
+    rgba(148, 163, 184, 0.08) 100%
+  );
+  background-size: 200% 100%;
+  animation: qa-living-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.qa-living-skeleton__row--short {
+  width: 62%;
+}
+
+@keyframes qa-living-presence-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.45);
+    opacity: 1;
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(34, 211, 238, 0);
+    opacity: 0.85;
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes qa-living-presence-value {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.72;
+  }
+}
+
+@keyframes qa-living-skeleton-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qa-living-presence__dot,
+  .qa-living-presence__node--pulse .qa-ref-sys-node__value,
+  .qa-living-skeleton__row {
+    animation: none !important;
+  }
+
+  .qa-instant-decision__confidence-track .qa-ui-confidence-fill,
+  .qa-instant-decision__confidence-track > span {
+    transition: none !important;
+  }
+
+  .qa-instant-decision:hover,
+  .qa-ref-sys-node:hover {
+    transform: none !important;
   }
 }

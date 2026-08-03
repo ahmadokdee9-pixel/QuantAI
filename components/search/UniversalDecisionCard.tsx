@@ -16,6 +16,7 @@ import type { LivingDecisionThread } from "@/lib/livingDecision/types";
 import DecisionHistorySection from "@/components/decisionMemory/DecisionHistorySection";
 import WhatsChangedBadges from "@/components/decisionMemory/WhatsChangedBadges";
 import DecisionAnalystPanels from "@/components/search/DecisionAnalystPanels";
+import EnginePresenceLine from "@/components/search/EnginePresenceLine";
 import { thesisContinuityHeadline } from "@/lib/decisionThesis/snapshot";
 
 type Props = {
@@ -79,6 +80,11 @@ export default function UniversalDecisionCard({
         {livingThread?.recentChanges?.length ? (
           <WhatsChangedBadges changes={livingThread.recentChanges} />
         ) : null}
+        <EnginePresenceLine
+          livingThread={livingThread}
+          freshness={decision.sourceFreshness}
+          confidence={decision.confidence}
+        />
       </header>
 
       <div className={`qa-ref-exec-brief__verdict qa-ref-exec-brief__verdict--${modifier}`}>

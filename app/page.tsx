@@ -10,7 +10,7 @@ import DeferredBelowFold from "../components/home/DeferredBelowFold";
 import HeroAmbientField from "../components/home/HeroAmbientField";
 import HeroIntelligenceCanvas from "../components/home/HeroIntelligenceCanvas";
 import CommandSidebar from "../components/layout/CommandSidebar";
-import IntelligenceMetricCards from "../components/home/IntelligenceMetricCards";
+import LivingIntelligencePresence from "../components/home/LivingIntelligencePresence";
 import GlobalCommerceIntelligenceNetwork from "../components/home/GlobalCommerceIntelligenceNetwork";
 import RetailerMarquee from "../components/home/RetailerMarquee";
 import SearchStreamRibbon from "../components/loading/SearchStreamRibbon";
@@ -133,6 +133,7 @@ export default function Home() {
   const [domainClarify, setDomainClarify] = useState<string | null>(null);
   const [universalDecision, setUniversalDecision] = useState<UniversalDecision | null>(null);
   const [watchingUniversal, setWatchingUniversal] = useState(false);
+  const [livingPresenceEpoch, setLivingPresenceEpoch] = useState(0);
   const [universalLivingThread, setUniversalLivingThread] = useState<LivingDecisionThread | null>(
     null
   );
@@ -454,6 +455,7 @@ export default function Home() {
                 signedIn: Boolean(isSignedIn),
               });
               setUniversalLivingThread(thread);
+              setLivingPresenceEpoch((n) => n + 1);
             })();
           }
           trackEvent(QuantAnalyticsEvents.SEARCH_SUCCESS, {
@@ -557,6 +559,7 @@ export default function Home() {
         appendLocalRecentSearch(q);
         void refreshSavedFromServer();
         setHeroHintOptions(mergeHeroTrayHints());
+        setLivingPresenceEpoch((n) => n + 1);
         trackEvent(QuantAnalyticsEvents.SEARCH_SUCCESS, { resultCount: trayProducts.length });
         return;
       }
@@ -871,13 +874,16 @@ export default function Home() {
               <header className="qa-ref-hero__row qa-ref-hero__row--exec">
                 <h1 className="qa-ref-hero__exec-title">Institutional Commerce Decision Engine</h1>
                 <p className="qa-ref-hero__exec-lead">
-                  Instant Decisions with living thesis continuity — what holds, what breaks, and what to
-                  watch next. Trust, pricing, and market signals before every commitment.
+                  A living intelligence engine — observing evidence, reasoning in Instant Decisions,
+                  remembering outcomes, and updating as the market moves.
                 </p>
               </header>
 
               <div className="qa-ref-hero__row qa-ref-hero__row--metrics">
-                <IntelligenceMetricCards variant="nodes" />
+                <LivingIntelligencePresence
+                  variant="nodes"
+                  refreshKey={`${products.length}-${universalDecision?.memoryIdentity ?? ""}-${livingPresenceEpoch}`}
+                />
               </div>
 
               <div className="qa-ref-hero__vein" aria-hidden>
@@ -889,7 +895,10 @@ export default function Home() {
                 <div className="qa-ref-hero__search-panel">
                   <div className="qa-ref-hero__console-head">
                     <span className="qa-ref-hero__console-pulse" aria-hidden />
-                    <p className="qa-ref-hero__console-kicker">Search intelligence console</p>
+                    <LivingIntelligencePresence
+                      variant="console"
+                      refreshKey={`${products.length}-${universalDecision?.memoryIdentity ?? ""}-${livingPresenceEpoch}`}
+                    />
                   </div>
                   <HeroSearchCommand
                     query={query}
@@ -1020,8 +1029,22 @@ export default function Home() {
           </section>
         )}
 
+        {loading ? (
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 mb-3">
+            <div className="qa-living-skeleton" aria-hidden>
+              <div className="qa-living-skeleton__row" />
+              <div className="qa-living-skeleton__row qa-living-skeleton__row--short" />
+            </div>
+            <LivingIntelligencePresence variant="strip" refreshKey={livingPresenceEpoch} />
+          </div>
+        ) : null}
+
         {!loading && (products.length > 0 || universalDecision) ? (
           <div className="mx-auto max-w-7xl px-4 sm:px-6 mb-4">
+            <LivingIntelligencePresence
+              variant="strip"
+              refreshKey={`${livingPresenceEpoch}-${universalDecision?.generatedAt ?? ""}`}
+            />
             <DecisionUpdatesPanel signedIn={Boolean(isSignedIn)} compact />
           </div>
         ) : null}

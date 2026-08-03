@@ -22,6 +22,7 @@ import type { LivingDecisionThread } from "@/lib/livingDecision/types";
 import DecisionHistorySection from "@/components/decisionMemory/DecisionHistorySection";
 import WhatsChangedBadges from "@/components/decisionMemory/WhatsChangedBadges";
 import DecisionAnalystPanels from "@/components/search/DecisionAnalystPanels";
+import EnginePresenceLine from "@/components/search/EnginePresenceLine";
 import { thesisContinuityHeadline } from "@/lib/decisionThesis/snapshot";
 
 type Props = {
@@ -126,6 +127,21 @@ export default function InstantDecisionCard({
         {livingThread?.recentChanges?.length ? (
           <WhatsChangedBadges changes={livingThread.recentChanges} />
         ) : null}
+        <EnginePresenceLine
+          livingThread={livingThread}
+          confidence={model.confidence}
+          previousConfidence={
+            livingThread?.events?.length
+              ? (() => {
+                  const confEvents = livingThread.events.filter(
+                    (e) => e.kind === "confidence_changed" && typeof e.previous === "number"
+                  );
+                  const last = confEvents[confEvents.length - 1];
+                  return typeof last?.previous === "number" ? last.previous : null;
+                })()
+              : null
+          }
+        />
       </header>
 
       <div className={`qa-ref-exec-brief__verdict qa-ref-exec-brief__verdict--${modifier}`}>
