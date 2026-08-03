@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Activity, Loader2 } from "lucide-react";
 import { isApiFailure } from "@/lib/api/apiResult";
@@ -11,11 +11,23 @@ import {
   touchLocalVisit,
 } from "@/lib/decisionMemory/clientMemory";
 import type { DecisionUpdateItem } from "@/lib/decisionMemory/types";
+import { thesisContinuityHeadline } from "@/lib/decisionThesis/snapshot";
 
 type Props = {
   signedIn?: boolean;
   compact?: boolean;
 };
+
+function continuityLine(items: DecisionUpdateItem[]): string | null {
+  for (const item of items) {
+    const line = thesisContinuityHeadline(item.changes);
+    if (line) {
+      const title = (item.productTitle || "Decision").trim().slice(0, 42);
+      return `${title}: ${line}`;
+    }
+  }
+  return null;
+}
 
 export default function DecisionUpdatesPanel({ signedIn = false, compact = false }: Props) {
   const [items, setItems] = useState<DecisionUpdateItem[]>([]);
@@ -53,6 +65,8 @@ export default function DecisionUpdatesPanel({ signedIn = false, compact = false
     };
   }, [signedIn]);
 
+  const thesisLine = useMemo(() => continuityLine(items), [items]);
+
   if (loading) {
     return (
       <div className="flex items-center gap-2 text-sm text-slate-400">
@@ -70,7 +84,8 @@ export default function DecisionUpdatesPanel({ signedIn = false, compact = false
           What changed since your last visit
         </p>
         <p className="mt-2 text-sm text-slate-400">
-          No decision changes yet. Run a search, open Instant Decision, and return later to see movement.
+          No decision changes yet. Run a search, open Instant Decision, and return later to see
+          whether the thesis still holds.
         </p>
       </section>
     );
@@ -89,6 +104,9 @@ export default function DecisionUpdatesPanel({ signedIn = false, compact = false
           <h2 className="mt-1 text-base font-semibold text-white">
             {items.length} decision update{items.length === 1 ? "" : "s"}
           </h2>
+          {thesisLine ? (
+            <p className="mt-1.5 text-xs leading-relaxed text-cyan-100/80">{thesisLine}</p>
+          ) : null}
         </div>
         <Activity className="size-4 text-cyan-200/80" aria-hidden />
       </div>

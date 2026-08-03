@@ -871,8 +871,8 @@ export default function Home() {
               <header className="qa-ref-hero__row qa-ref-hero__row--exec">
                 <h1 className="qa-ref-hero__exec-title">Institutional Commerce Decision Engine</h1>
                 <p className="qa-ref-hero__exec-lead">
-                  QuantAI transforms fragmented retail signals into institutional-grade buying intelligence.
-                  Analyze trust, pricing, inventory, and market signals before every purchase decision.
+                  Instant Decisions with living thesis continuity — what holds, what breaks, and what to
+                  watch next. Trust, pricing, and market signals before every commitment.
                 </p>
               </header>
 

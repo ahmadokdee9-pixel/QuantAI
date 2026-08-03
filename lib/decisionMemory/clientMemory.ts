@@ -205,6 +205,7 @@ export function recordLocalDecisionMemory(
           merchant: previous.merchant,
           provider: previous.provider,
           domain: previous.domain,
+          evidence: previous.evidence ?? null,
         }
       : null,
     userScope: "guest",

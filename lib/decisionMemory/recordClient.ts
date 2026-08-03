@@ -8,6 +8,9 @@ import {
   recordLocalDecisionMemory,
 } from "@/lib/decisionMemory/clientMemory";
 import type { DecisionAction, DecisionMemoryWriteInput } from "@/lib/decisionMemory/types";
+import type { AnalystDecisionBrief } from "@/lib/decisionAnalyst/types";
+import { buildThesisSnapshot, withThesisEvidence } from "@/lib/decisionThesis/snapshot";
+import type { DecisionThesis } from "@/lib/decisionThesis/types";
 import { resolveExecutiveAction } from "@/lib/ui/instantDecisionModel";
 import type { UniversalProductDecision } from "@/lib/ui/universalProductDecision";
 import { ratingValue, type QuantProduct } from "@/lib/shoppingScore";
@@ -32,6 +35,8 @@ export function buildDecisionWriteFromLeader(args: {
   searchQuery?: string;
   brief?: DecisionBriefDTO | null;
   betterAlternativeTitle?: string | null;
+  thesis?: DecisionThesis | null;
+  analyst?: AnalystDecisionBrief | null;
 }): DecisionMemoryWriteInput {
   const { product, universal, searchQuery = "", brief = null } = args;
   const { action } = resolveExecutiveAction(universal, brief?.recommendation?.label);
@@ -53,7 +58,7 @@ export function buildDecisionWriteFromLeader(args: {
     domain: "product",
   });
 
-  const evidence = [
+  const baseEvidence = [
     product.price > 0
       ? { id: "price", label: "Price", value: `€${Math.round(product.price)}`, kind: "fact" }
       : null,
@@ -67,6 +72,30 @@ export function buildDecisionWriteFromLeader(args: {
       ? { id: "availability", label: "Availability", value: product.availability, kind: "fact" }
       : null,
   ].filter(Boolean);
+
+  const thesisSnap =
+    args.thesis != null
+      ? buildThesisSnapshot({
+          action,
+          confidence: universal.confidence,
+          thesis: args.thesis,
+          analyst: args.analyst ?? null,
+        })
+      : null;
+  const evidence = withThesisEvidence(baseEvidence, thesisSnap);
+
+  const thesisReason = args.thesis?.coreThesis?.trim();
+  const nextEvent = args.thesis?.nextExpectedEvent?.trim();
+  const enrichedReasons = [
+    ...reasons,
+    thesisReason && !reasons.some((r) => r.includes(thesisReason.slice(0, 40)))
+      ? thesisReason
+      : null,
+    nextEvent ? `Next: ${nextEvent}` : null,
+  ]
+    .filter(Boolean)
+    .filter((line, index, arr) => arr.indexOf(line) === index)
+    .slice(0, 8) as string[];
 
   return {
     searchQuery: searchQuery.trim() || null,
@@ -82,7 +111,7 @@ export function buildDecisionWriteFromLeader(args: {
       typeof product.qiComposite === "number"
         ? product.qiComposite
         : universal.productIntelligence?.rankingDecisionRecord?.finalRankScore ?? null,
-    reasons,
+    reasons: enrichedReasons,
     availability: product.availability,
     watched: false,
     domain: "product",
@@ -105,6 +134,26 @@ export function buildDecisionWriteFromUniversal(
   const link = leader?.link || decision.memoryIdentity;
   if (!link) return null;
   const alt = decision.alternatives[0]?.title || null;
+  const thesis = decision.analyst?.thesis ?? null;
+  const thesisSnap =
+    thesis != null
+      ? buildThesisSnapshot({
+          action: decision.action,
+          confidence: decision.confidence,
+          thesis,
+          analyst: decision.analyst ?? null,
+        })
+      : null;
+  const evidence = withThesisEvidence(decision.evidence as unknown[], thesisSnap);
+  const reasons = [
+    ...decision.reasons.slice(0, 5),
+    thesis?.coreThesis || null,
+    thesis?.nextExpectedEvent ? `Next: ${thesis.nextExpectedEvent}` : null,
+  ]
+    .filter(Boolean)
+    .filter((line, index, arr) => arr.indexOf(line) === index)
+    .slice(0, 8) as string[];
+
   return {
     searchQuery: decision.query,
     productId: leader?.id ?? decision.memoryIdentity,
@@ -116,13 +165,13 @@ export function buildDecisionWriteFromUniversal(
     confidence: decision.confidence,
     price: leader?.price ?? null,
     score: leader?.score ?? null,
-    reasons: decision.reasons.slice(0, 6),
+    reasons,
     availability: leader?.availability ?? null,
     watched: false,
     domain: decision.domain,
     memoryIdentity: decision.memoryIdentity,
     contextualVerb: decision.contextualVerb,
-    evidence: decision.evidence,
+    evidence,
     sourceFreshnessAt: decision.sourceFreshness.fetchedAt,
     rating:
       leader?.raw && typeof (leader.raw as { rating?: unknown }).rating === "number"

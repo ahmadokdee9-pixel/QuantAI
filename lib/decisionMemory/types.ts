@@ -15,7 +15,10 @@ export type DecisionChangeKind =
   | "subscription_price_changed"
   | "rating_changed"
   | "stock_changed"
-  | "provider_changed";
+  | "provider_changed"
+  | "thesis_confirmed"
+  | "thesis_updated"
+  | "thesis_invalidated";
 
 export type DecisionChange = {
   kind: DecisionChangeKind;

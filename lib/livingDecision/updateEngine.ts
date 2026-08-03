@@ -19,6 +19,7 @@ export type PriorLivingSnapshot = {
   merchant?: string | null;
   provider?: string | null;
   domain?: string | null;
+  evidence?: unknown[] | null;
 };
 
 /** Run change detection + attach permanent decision id for any domain. */
@@ -84,6 +85,7 @@ export function prepareLivingDecisionUpdate(args: {
           merchant: previous.merchant ?? null,
           provider: previous.provider ?? null,
           domain: previous.domain ?? domain,
+          evidence: previous.evidence ?? null,
         }
       : null,
     writeBase

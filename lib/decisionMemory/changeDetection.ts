@@ -3,6 +3,10 @@ import type {
   DecisionChange,
   DecisionMemoryWriteInput,
 } from "@/lib/decisionMemory/types";
+import {
+  detectThesisContinuityChanges,
+  extractThesisSnapshot,
+} from "@/lib/decisionThesis/snapshot";
 
 type ComparableEpisode = {
   decision: DecisionAction | string;
@@ -14,6 +18,7 @@ type ComparableEpisode = {
   merchant?: string | null;
   provider?: string | null;
   domain?: string | null;
+  evidence?: unknown[] | null;
 };
 
 function num(n: number | null | undefined): number | null {
@@ -158,6 +163,17 @@ export function detectDecisionChanges(
     });
   }
 
+  const prevThesis = extractThesisSnapshot(previous.evidence);
+  const nextThesis = extractThesisSnapshot(
+    "evidence" in current ? current.evidence : null
+  );
+  const thesisChanges = detectThesisContinuityChanges(prevThesis, nextThesis);
+  for (const tc of thesisChanges) {
+    // thesis_confirmed only when other material movement happened (held through change).
+    if (tc.kind === "thesis_confirmed" && changes.length === 0) continue;
+    changes.push(tc);
+  }
+
   return changes;
 }
 
@@ -201,6 +217,12 @@ export function changeBadgeLabel(kind: DecisionChange["kind"] | "recorded"): str
       return "Alternative";
     case "policy_changed":
       return "Policy";
+    case "thesis_confirmed":
+      return "Thesis holds";
+    case "thesis_updated":
+      return "Thesis";
+    case "thesis_invalidated":
+      return "Thesis broke";
     default:
       return "Update";
   }

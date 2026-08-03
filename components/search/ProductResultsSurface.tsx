@@ -6,6 +6,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useAuth } from "@clerk/nextjs";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Loader2 } from "lucide-react";
+import { buildProductAnalystBrief } from "@/lib/decisionAnalyst";
 import {
   buildDecisionWriteFromLeader,
   loadLivingDecisionThread,
@@ -13,6 +14,7 @@ import {
   persistDecisionWatch,
 } from "@/lib/decisionMemory/recordClient";
 import type { LivingDecisionThread } from "@/lib/livingDecision/types";
+import { resolveExecutiveAction } from "@/lib/ui/instantDecisionModel";
 import InstitutionalFilteredPanel from "@/components/system/InstitutionalFilteredPanel";
 import InstitutionalStatePanel from "@/components/system/InstitutionalStatePanel";
 import { resolveInstitutionalState } from "@/lib/ui/systemStateLanguage";
@@ -427,12 +429,27 @@ export default function ProductResultsSurface({
         p.qiComposite > decisionLeader.qiComposite + 4
     );
 
+    const { action } = resolveExecutiveAction(
+      decisionLeaderUniversal,
+      calibratedDecisionBrief?.recommendation?.label
+    );
+    const analyst = buildProductAnalystBrief({
+      action,
+      confidence: Math.round(decisionLeaderUniversal.confidence),
+      universal: decisionLeaderUniversal,
+      brief: calibratedDecisionBrief,
+      livingThread: null,
+      reasons: [],
+      risks: [],
+    });
     const input = buildDecisionWriteFromLeader({
       product: decisionLeader,
       universal: decisionLeaderUniversal,
       searchQuery,
       brief: calibratedDecisionBrief,
       betterAlternativeTitle: altCandidate?.title ?? null,
+      thesis: analyst.thesis ?? null,
+      analyst,
     });
     void (async () => {
       await persistDecisionEpisode(input, { signedIn: Boolean(isSignedIn) });

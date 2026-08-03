@@ -9,6 +9,7 @@ const CRITICAL_KINDS = new Set<DecisionChangeKind>([
   "decision_changed",
   "stock_changed",
   "better_alternative",
+  "thesis_invalidated",
 ]);
 
 const IMPORTANT_KINDS = new Set<DecisionChangeKind>([
@@ -17,6 +18,8 @@ const IMPORTANT_KINDS = new Set<DecisionChangeKind>([
   "subscription_price_changed",
   "confidence_changed",
   "availability_changed",
+  "thesis_updated",
+  "thesis_confirmed",
 ]);
 
 function isUpgrade(prev: string | null | undefined, next: string | null | undefined): boolean {
@@ -79,6 +82,7 @@ export function classifyFeedPriority(args: {
   }
 
   if (kinds.has("better_alternative")) return "critical";
+  if (kinds.has("thesis_invalidated")) return "critical";
 
   for (const kind of kinds) {
     if (IMPORTANT_KINDS.has(kind)) return "important";
@@ -141,6 +145,9 @@ export function scoreFeedItem(args: {
 
   for (const change of args.changes) {
     if (change.kind === "decision_changed") score += 50;
+    if (change.kind === "thesis_invalidated") score += 55;
+    if (change.kind === "thesis_updated") score += 30;
+    if (change.kind === "thesis_confirmed") score += 20;
     if (change.kind === "better_alternative") score += 45;
     if (change.kind === "fare_changed" || change.kind === "subscription_price_changed") {
       score += 25;
@@ -156,12 +163,15 @@ export function primaryChangeKind(
   if (!changes.length) return "recorded";
   const order: DecisionChangeKind[] = [
     "decision_changed",
+    "thesis_invalidated",
     "better_alternative",
     "stock_changed",
+    "thesis_updated",
     "price_changed",
     "fare_changed",
     "subscription_price_changed",
     "confidence_changed",
+    "thesis_confirmed",
     "availability_changed",
     "rating_changed",
     "provider_changed",

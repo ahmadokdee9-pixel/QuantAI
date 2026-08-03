@@ -16,6 +16,7 @@ import type { LivingDecisionThread } from "@/lib/livingDecision/types";
 import DecisionHistorySection from "@/components/decisionMemory/DecisionHistorySection";
 import WhatsChangedBadges from "@/components/decisionMemory/WhatsChangedBadges";
 import DecisionAnalystPanels from "@/components/search/DecisionAnalystPanels";
+import { thesisContinuityHeadline } from "@/lib/decisionThesis/snapshot";
 
 type Props = {
   decision: UniversalDecision;
@@ -111,6 +112,24 @@ export default function UniversalDecisionCard({
       </div>
 
       <p className="qa-instant-decision__summary">{executiveSummary}</p>
+      {(() => {
+        const continuity = livingThread?.recentChanges?.length
+          ? thesisContinuityHeadline(livingThread.recentChanges)
+          : null;
+        if (continuity) {
+          return (
+            <p className="qa-instant-decision__horizon-note mt-2 text-cyan-100/85">{continuity}</p>
+          );
+        }
+        if (analyst.thesis?.nextExpectedEvent) {
+          return (
+            <p className="qa-instant-decision__horizon-note mt-2 text-slate-400">
+              Next: {analyst.thesis.nextExpectedEvent}
+            </p>
+          );
+        }
+        return null;
+      })()}
 
       {leader ? (
         <div className="qa-instant-decision__product">
