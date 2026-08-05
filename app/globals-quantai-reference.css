@@ -12850,6 +12850,56 @@
   padding-bottom: clamp(2.5rem, 5vw, 4rem);
 }
 
+.qa-instant-decision__horizon-note {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  letter-spacing: -0.005em;
+  color: rgba(51, 65, 85, 0.78);
+}
+
+.qa-instant-decision__horizon-note--live {
+  color: #1e2f6f;
+  font-weight: 600;
+}
+
+.qa-living-presence--decision {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.45rem 0 0;
+  max-width: 40rem;
+  padding: 0.28rem 0.55rem 0.28rem 0.4rem;
+  border-radius: 999px;
+  border: 1px solid rgba(42, 38, 104, 0.08);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.qa-living-presence--decision .qa-living-presence__line {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.qa-living-presence__dot--active {
+  animation: qa-living-presence-pulse 1.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.qa-ref-hero__row--exec {
+  padding-top: clamp(1.75rem, 3vw, 2.75rem);
+  padding-bottom: clamp(1.25rem, 2.2vw, 2rem);
+}
+
+.qa-decision-narrative__blocks {
+  gap: 0.8rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qa-living-presence__dot--active {
+    animation: none !important;
+  }
+}
+
 .qa-ref-section {
   margin-top: clamp(1.35rem, 2.5vw, 1.85rem);
 }

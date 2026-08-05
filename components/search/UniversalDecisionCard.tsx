@@ -142,6 +142,8 @@ export default function UniversalDecisionCard({
           livingThread={livingThread}
           freshness={decision.sourceFreshness}
           confidence={decision.confidence}
+          analyst={analyst}
+          consensus={consensus}
         />
       </header>
 
@@ -182,13 +184,13 @@ export default function UniversalDecisionCard({
           : null;
         if (continuity) {
           return (
-            <p className="qa-instant-decision__horizon-note mt-2 text-cyan-100/85">{continuity}</p>
+            <p className="qa-instant-decision__horizon-note qa-instant-decision__horizon-note--live mt-2">{continuity}</p>
           );
         }
         if (analyst.thesis?.nextExpectedEvent) {
           return (
-            <p className="qa-instant-decision__horizon-note mt-2 text-slate-400">
-              Next: {analyst.thesis.nextExpectedEvent}
+            <p className="qa-instant-decision__horizon-note mt-2">
+              Watching · {analyst.thesis.nextExpectedEvent}
             </p>
           );
         }

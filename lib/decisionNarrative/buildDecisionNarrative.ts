@@ -17,16 +17,17 @@ import type { LivingDecisionThread } from "@/lib/livingDecision/types";
 type ExecutiveAction = "BUY" | "WAIT" | "COMPARE" | "AVOID";
 
 const BLOCK_TITLES: Record<NarrativeBlockId, string> = {
-  situation: "Situation",
-  current_reality: "Current reality",
+  situation: "Why",
+  current_reality: "What changed",
   key_forces: "Key forces",
   main_opportunity: "Main opportunity",
   main_risk: "Main risk",
   why_waiting: "Why waiting could help",
   why_acting: "Why acting now could help",
-  confidence: "Confidence explanation",
-  what_would_change: "What would change this decision",
-  expected_next: "Expected next event",
+  confidence: "How certain",
+  what_would_change: "What would invalidate this",
+  expected_next: "Watch next",
+  missing_evidence: "Missing evidence",
 };
 
 function clean(line: string | null | undefined): string | null {
@@ -214,7 +215,13 @@ export function buildDecisionNarrative(args: {
     ...(analyst.invalidators || []).slice(0, 2),
     thesis?.failureScenarios?.[0] || null,
     consensus.enginesDisagree[0] || null,
-    consensus.missingEvidence[0] || null,
+  ]);
+
+  const missingEvidence = block("missing_evidence", [
+    ...(thesis?.missingEvidence || []).slice(0, 3),
+    ...(consensus.missingEvidence || []).slice(0, 2),
+    analyst.opportunity.score == null ? "Opportunity score not yet evidenced" : null,
+    !livingThread ? "No living continuity yet for this decision" : null,
   ]);
 
   const expectedNext = block("expected_next", [
@@ -229,14 +236,15 @@ export function buildDecisionNarrative(args: {
   const blocks = [
     situation,
     currentReality,
+    confidenceBlock,
+    expectedNext,
+    whatWouldChange,
+    missingEvidence,
     keyForces,
     mainOpportunity,
     mainRisk,
     whyWaiting,
     whyActing,
-    confidenceBlock,
-    whatWouldChange,
-    expectedNext,
   ].filter((b) => b.lines.length > 0);
 
   const lead =

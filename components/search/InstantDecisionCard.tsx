@@ -132,6 +132,8 @@ export default function InstantDecisionCard({
         <EnginePresenceLine
           livingThread={livingThread}
           confidence={model.confidence}
+          analyst={model.analyst}
+          consensus={model.consensus}
           previousConfidence={
             livingThread?.events?.length
               ? (() => {
@@ -198,15 +200,15 @@ export default function InstantDecisionCard({
             : null;
           if (continuity) {
             return (
-              <p className="qa-instant-decision__horizon-note mt-2 text-cyan-100/85">
+              <p className="qa-instant-decision__horizon-note qa-instant-decision__horizon-note--live mt-2">
                 {continuity}
               </p>
             );
           }
           if (model.analyst.thesis?.nextExpectedEvent) {
             return (
-              <p className="qa-instant-decision__horizon-note mt-2 text-slate-400">
-                Next: {model.analyst.thesis.nextExpectedEvent}
+              <p className="qa-instant-decision__horizon-note mt-2">
+                Watching · {model.analyst.thesis.nextExpectedEvent}
               </p>
             );
           }

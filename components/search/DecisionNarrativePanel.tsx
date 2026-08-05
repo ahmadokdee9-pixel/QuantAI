@@ -18,15 +18,27 @@ type Props = {
 const PREVIEW_IDS = new Set([
   "situation",
   "current_reality",
-  "main_opportunity",
-  "main_risk",
+  "confidence",
+  "expected_next",
+  "what_would_change",
+  "missing_evidence",
 ]);
 
 export default function DecisionNarrativePanel({ narrative, compact = false }: Props) {
   const reduceMotion = useReducedMotion();
   const [open, setOpen] = useState(false);
 
-  const preview = narrative.blocks.filter((b) => PREVIEW_IDS.has(b.id));
+  const previewOrder = [
+    "situation",
+    "current_reality",
+    "confidence",
+    "expected_next",
+    "what_would_change",
+    "missing_evidence",
+  ] as const;
+  const preview = previewOrder
+    .map((id) => narrative.blocks.find((b) => b.id === id))
+    .filter((b): b is NonNullable<typeof b> => Boolean(b));
   const rest = narrative.blocks.filter((b) => !PREVIEW_IDS.has(b.id));
 
   function renderBlock(

@@ -872,10 +872,10 @@ export default function Home() {
               <div className="qa-ref-hero__surface-depth" aria-hidden />
 
               <header className="qa-ref-hero__row qa-ref-hero__row--exec">
-                <h1 className="qa-ref-hero__exec-title">Decision Intelligence, refined</h1>
+                <h1 className="qa-ref-hero__exec-title">Living Decision Intelligence</h1>
                 <p className="qa-ref-hero__exec-lead">
-                  Calm reasoning over market evidence. Precision before commitment.
-                  Continuity as conditions change.
+                  Observing evidence. Reasoning quietly. Remembering outcomes.
+                  Updating as reality moves.
                 </p>
               </header>
 
@@ -945,7 +945,7 @@ export default function Home() {
 
                 {!isSignedIn && (
                   <div className="qa-ref-guest-banner qa-ref-hero__guest">
-                    <p>Guest mode — sign in to retain decision memory and deeper continuity.</p>
+                    <p>Quiet mode — sign in to keep memory across sessions.</p>
                     <SignInButton mode="modal" forceRedirectUrl="/dashboard">
                       <button type="button" className="qa-ref-btn qa-ref-btn--ghost">
                         Sign in
@@ -1115,10 +1115,10 @@ export default function Home() {
           >
             <div className="qa-ref-section-intro qa-ref-section-intro--intel-layers">
               <p className="qa-ref-kicker">Access</p>
-              <h2 className="qa-ref-h2">Clarity scales with commitment</h2>
+              <h2 className="qa-ref-h2">Deeper continuity when it matters</h2>
               <p className="qa-ref-lead qa-ref-lead--narrow">
-                Stronger continuity, deeper evidence, and clearer thresholds as decisions
-                become more consequential.
+                Stronger memory, clearer confirmation thresholds, and quieter confidence as
+                decisions grow more consequential.
               </p>
               <Link href="/pricing" className="qa-ref-link mt-4 inline-flex items-center gap-2">
                 View access levels

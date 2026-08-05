@@ -110,13 +110,13 @@ export default function GlobalCommerceIntelligenceNetwork() {
   return (
     <article className="qa-ref-gcin" aria-labelledby="qa-ref-gcin-title">
       <header className="qa-ref-gcin__intro">
-        <p className="qa-ref-kicker">How a decision is formed</p>
+        <p className="qa-ref-kicker">How judgment forms</p>
         <h2 id="qa-ref-gcin-title" className="qa-ref-h2 qa-ref-gcin__title">
-          Evidence in. Judgment out.
+          Observe. Reconcile. Commit.
         </h2>
         <p className="qa-ref-lead qa-ref-lead--narrow qa-ref-gcin__lead">
-          Market signals are validated independently, reconciled without noise, and resolved
-          into one clear commitment posture.
+          Independent signals are watched, reconciled without noise, and resolved into one
+          living commitment posture.
         </p>
       </header>
 

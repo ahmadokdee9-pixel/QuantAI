@@ -13,7 +13,8 @@ export type NarrativeBlockId =
   | "why_acting"
   | "confidence"
   | "what_would_change"
-  | "expected_next";
+  | "expected_next"
+  | "missing_evidence";
 
 export type NarrativeBlock = {
   id: NarrativeBlockId;

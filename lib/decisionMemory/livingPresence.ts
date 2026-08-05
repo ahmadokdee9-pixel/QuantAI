@@ -187,16 +187,16 @@ export function buildLocalLivingPresence(nowMs = Date.now()): LivingPresenceSnap
     if (ep.createdAt < recentCutoff) continue;
     for (const c of ep.changes || []) {
       if (c.kind === "thesis_confirmed") {
-        lines.push({ id: `confirm_${ep.id}`, text: "New confirmation", tone: "calm", at: ep.createdAt });
+        lines.push({ id: `confirm_${ep.id}`, text: "Confirmation arrived", tone: "calm", at: ep.createdAt });
       } else if (c.kind === "thesis_invalidated") {
-        lines.push({ id: `broke_${ep.id}`, text: "Evidence changed", tone: "alert", at: ep.createdAt });
+        lines.push({ id: `broke_${ep.id}`, text: "Prior thesis broke", tone: "alert", at: ep.createdAt });
       } else if (c.kind === "confidence_changed") {
         const prev = typeof c.previous === "number" ? c.previous : Number(c.previous);
         const curr = typeof c.current === "number" ? c.current : Number(c.current);
         if (Number.isFinite(prev) && Number.isFinite(curr) && curr > prev) {
           lines.push({
             id: `conf_up_${ep.id}`,
-            text: "Confidence increased",
+            text: "Confidence rising",
             tone: "live",
             at: ep.createdAt,
           });
@@ -208,7 +208,7 @@ export function buildLocalLivingPresence(nowMs = Date.now()): LivingPresenceSnap
       ) {
         lines.push({
           id: `ev_${ep.id}_${c.kind}`,
-          text: "Evidence changed",
+          text: "Evidence changed — reassessing",
           tone: "alert",
           at: ep.createdAt,
         });
@@ -225,7 +225,7 @@ export function buildLocalLivingPresence(nowMs = Date.now()): LivingPresenceSnap
     } else if (thesis?.nextExpectedEvent) {
       lines.push({
         id: `mon_${ep.id}`,
-        text: "Monitoring event",
+        text: "Monitoring next signal",
         tone: "calm",
         at: ep.createdAt,
       });
@@ -233,7 +233,7 @@ export function buildLocalLivingPresence(nowMs = Date.now()): LivingPresenceSnap
     if (thesis && ep.createdAt >= recentCutoff) {
       lines.push({
         id: `reason_${ep.id}`,
-        text: "Reasoning refreshed",
+        text: "Reasoning refreshed from evidence",
         tone: "live",
         at: ep.createdAt,
       });
@@ -251,7 +251,7 @@ export function buildLocalLivingPresence(nowMs = Date.now()): LivingPresenceSnap
   if (uniqueLines.length === 0) {
     uniqueLines.push({
       id: "idle",
-      text: "Engine ready — awaiting first Instant Decision",
+      text: "Quiet · awaiting first Instant Decision",
       tone: "idle",
     });
   }
@@ -260,7 +260,7 @@ export function buildLocalLivingPresence(nowMs = Date.now()): LivingPresenceSnap
   if (episodes.length > 0) {
     nodes.push({
       id: "outcomes",
-      label: "Historical outcomes",
+      label: "Remembered",
       value: String(episodes.length),
       meta: "Decision Memory",
       pulse: Boolean(age && (age === "just now" || age.includes("minute"))),
@@ -268,56 +268,61 @@ export function buildLocalLivingPresence(nowMs = Date.now()): LivingPresenceSnap
   } else {
     nodes.push({
       id: "outcomes",
-      label: "Historical outcomes",
+      label: "Remembered",
       value: "0",
-      meta: "Awaiting first decision",
+      meta: "No outcomes yet",
     });
   }
 
   nodes.push({
     id: "watching",
-    label: "Live signals",
+    label: "Observing",
     value: String(watched.length),
-    meta: watched.length > 0 ? "Watching" : "None watched yet",
+    meta: watched.length > 0 ? "Watched decisions" : "Nothing watched yet",
     pulse: watched.length > 0,
   });
 
   nodes.push({
     id: "updated",
-    label: "Engine write",
+    label: "Last update",
     value: age || "—",
-    meta: latestEngineAt ? "Last confidence / memory write" : "No engine writes yet",
+    meta: latestEngineAt ? "Latest memory write" : "No writes yet",
     pulse: Boolean(age && (age === "just now" || age.includes("minute"))),
   });
 
   nodes.push({
     id: "improved",
-    label: "Improved (24h)",
+    label: "Confidence shifts",
     value: String(improvedLast24h),
     meta:
       improvedLast24h > 0
-        ? "Confidence / thesis confirmations"
-        : "No improvements recorded today",
+        ? "Rising confidence / thesis confirmations (24h)"
+        : "No shifts recorded today",
     pulse: improvedLast24h > 0,
   });
 
   if (evidenceSourceCount > 0) {
-    // Replace fourth node meta richness — keep 4 nodes; swap improved meta already set.
-    // Add evidence into status kicker instead.
+    // Evidence richness stays in kicker — keep four nodes.
   }
 
   const activeMissions = missions.totals.activeMissions;
   const feedCritical = feed.counts?.critical ?? 0;
 
-  let statusKicker = "Intelligence Engine";
-  if (episodes.length === 0) statusKicker = "Engine idle · ready";
+  let statusKicker = "Quiet · standing by";
+  if (episodes.length === 0) statusKicker = "Quiet · awaiting evidence";
+  else if (feedCritical > 0) statusKicker = `Alert · ${feedCritical} critical feed signal${feedCritical === 1 ? "" : "s"}`;
   else if (watched.length > 0) statusKicker = `Observing · ${watched.length} watched`;
-  else if (updates.length > 0) statusKicker = `Memory active · ${updates.length} update${updates.length === 1 ? "" : "s"}`;
-  else if (age) statusKicker = `Engine live · wrote ${age}`;
-  else statusKicker = "Engine observing";
+  else if (latest?.decision === "WAIT") statusKicker = "Waiting for confirmation";
+  else if (updates.length > 0) statusKicker = `Remembering · ${updates.length} update${updates.length === 1 ? "" : "s"}`;
+  else if (age) statusKicker = `Live · wrote ${age}`;
+  else statusKicker = "Observing markets";
 
   if (activeMissions > 0) {
     statusKicker = `${statusKicker} · ${activeMissions} mission${activeMissions === 1 ? "" : "s"}`;
+  }
+
+  if (evidenceSourceCount > 0 && episodes.length > 0 && !statusKicker.includes("Alert")) {
+    statusKicker = `${statusKicker} · ${evidenceSourceCount} evidence source${evidenceSourceCount === 1 ? "" : "s"}`;
   }
 
   return {
