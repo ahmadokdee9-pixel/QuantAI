@@ -874,8 +874,7 @@ export default function Home() {
               <header className="qa-ref-hero__row qa-ref-hero__row--exec">
                 <h1 className="qa-ref-hero__exec-title">Living Decision Intelligence</h1>
                 <p className="qa-ref-hero__exec-lead">
-                  Observing evidence. Reasoning quietly. Remembering outcomes.
-                  Updating as reality moves.
+                  Observe. Reason. Remember. Update.
                 </p>
               </header>
 

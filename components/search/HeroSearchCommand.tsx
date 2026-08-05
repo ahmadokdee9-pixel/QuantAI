@@ -120,9 +120,16 @@ export default function HeroSearchCommand({
       runSubmit();
       return;
     }
-    if (e.key === "Escape" && suggestionsOpen) {
+    if (e.key === "Escape") {
+      if (suggestionsOpen) {
+        e.preventDefault();
+        setSuggestionsOpen(false);
+      }
+      return;
+    }
+    if (e.key === "ArrowDown" && !suggestionsOpen && suggestions.length > 0) {
       e.preventDefault();
-      setSuggestionsOpen(false);
+      setSuggestionsOpen(true);
     }
   };
 
@@ -131,9 +138,9 @@ export default function HeroSearchCommand({
   return (
     <motion.div
       className="qa-ref-neural-root"
-      initial={lite ? false : { opacity: 0, y: 14 }}
+      initial={lite ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: lite ? 0 : 0.65, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: lite ? 0 : 0.42, ease: [0.22, 1, 0.36, 1] }}
     >
       <motion.div className="qi-command-ambient-breath" aria-hidden />
       <motion.div
@@ -143,26 +150,26 @@ export default function HeroSearchCommand({
           lite
             ? undefined
             : {
-                opacity: active ? 0.95 : 0.55,
-                scale: active ? 1.02 : 1,
+                opacity: active ? 0.88 : 0.42,
+                scale: active ? 1.01 : 1,
               }
         }
-        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       />
       <div className="qi-command-floor" aria-hidden />
 
       <motion.div
         className={`qa-ref-neural-deck ${active ? "qa-ref-neural-deck--active" : ""} ${submitPulse ? "qa-ref-neural-deck--pulse" : ""}`}
         data-loading={loading ? "true" : "false"}
-        animate={lite ? undefined : { y: active ? -2 : 0 }}
-        transition={{ type: "spring", stiffness: 380, damping: 32 }}
+        animate={lite ? undefined : { y: active ? -1 : 0 }}
+        transition={{ type: "spring", stiffness: 320, damping: 36, mass: 0.9 }}
       >
         <motion.div className="qi-command-plinth" aria-hidden />
         <div className="qi-command-glass qi-command-glass--deep" aria-hidden />
         <motion.div
           className="qi-command-glass qi-command-glass--sheen"
           aria-hidden
-          animate={lite ? undefined : { opacity: active ? 1 : 0.65 }}
+          animate={lite ? undefined : { opacity: active ? 1 : 0.55 }}
         />
         <motion.div className="qi-command-shimmer" aria-hidden />
         <motion.div className="qi-command-rim" aria-hidden />
@@ -170,17 +177,20 @@ export default function HeroSearchCommand({
         <motion.div
           className="qi-command-scan"
           aria-hidden
-          animate={lite || !active ? { opacity: 0 } : { opacity: [0, 0.35, 0] }}
+          animate={lite || !loading ? { opacity: 0 } : { opacity: [0, 0.28, 0] }}
           transition={
             lite
               ? { duration: 0 }
-              : { duration: 2.8, repeat: Infinity, ease: "easeInOut" }
+              : { duration: 2.4, repeat: Infinity, ease: "easeInOut" }
           }
         />
 
-        <div className="relative z-[2] flex flex-col gap-3.5 p-4 sm:p-6">
-          <div className="qa-ref-neural-stages">
-            {["Intent", "Scan", "Synthesize", "Verdict"].map((stage) => (
+        <div className="relative z-[2] flex flex-col gap-3 p-4 sm:gap-3.5 sm:p-5">
+          <div className="qa-ref-neural-stages" aria-hidden={loading ? undefined : true}>
+            {(loading
+              ? ["Observing", "Scanning", "Reasoning", "Deciding"]
+              : ["Observe", "Scan", "Reason", "Decide"]
+            ).map((stage) => (
               <span key={stage} className="qa-ref-neural-stage">
                 {stage}
               </span>
@@ -190,21 +200,23 @@ export default function HeroSearchCommand({
             className={`qa-ref-neural-engine-note ${active ? "qa-ref-neural-engine-note--active" : ""}`}
             aria-live="polite"
           >
-            {active
-              ? "Parsing purchase intent · mapping retail graph · calibrating confidence"
-              : "Describe what you want to buy — QuantAI scans retailers, scores trust, and returns buy-ready intelligence."}
+            {loading
+              ? "Reading evidence · forming judgment"
+              : focused
+                ? "Ready when you are"
+                : "Describe the decision. QuantAI observes the market and returns a commitment posture."}
           </p>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-stretch sm:gap-3">
             <label className="sr-only" htmlFor={`${baseId}-q`}>
-              Search commerce intelligence
+              Search decision intelligence
             </label>
             <div
-              className={`qa-ref-neural-field relative flex min-h-[66px] flex-1 items-stretch overflow-hidden ${
+              className={`qa-ref-neural-field relative flex min-h-[58px] flex-1 items-stretch overflow-hidden sm:min-h-[62px] ${
                 focused ? "qa-ref-neural-field--focus" : ""
               }`}
             >
-              <span className="qa-ref-neural-prefix hidden items-center pl-4 sm:flex">
-                Market
+              <span className="qa-ref-neural-prefix hidden items-center pl-4 text-[11px] font-semibold tracking-[0.08em] uppercase text-slate-400 sm:flex">
+                Query
               </span>
               <input
                 ref={registerInput}
@@ -217,8 +229,11 @@ export default function HeroSearchCommand({
                 placeholder={placeholder}
                 enterKeyHint="search"
                 autoComplete="off"
+                spellCheck={false}
                 disabled={loading}
-                className="qa-ref-neural-input min-w-0 flex-1 bg-transparent px-4 py-4 text-[16px] font-semibold outline-none disabled:opacity-45 sm:px-5 sm:py-[1.05rem]"
+                aria-controls={suggestionsOpen ? suggestPanelId : undefined}
+                aria-autocomplete="list"
+                className="qa-ref-neural-input min-w-0 flex-1 bg-transparent px-4 py-3.5 text-[16px] font-semibold tracking-[-0.015em] outline-none disabled:opacity-45 sm:px-5 sm:py-4"
               />
               <span className="qi-command-cursor-beam" aria-hidden />
               <span className="qi-command-field-glow" aria-hidden />
@@ -227,21 +242,21 @@ export default function HeroSearchCommand({
             <button
               type="button"
               onClick={runSubmit}
-              disabled={loading}
-              className="qa-ref-neural-execute group relative flex min-h-[64px] w-full shrink-0 items-center justify-center gap-2 px-8 sm:min-w-[12.5rem] sm:w-auto"
+              disabled={loading || !query.trim()}
+              className="qa-ref-neural-execute group relative flex min-h-[56px] w-full shrink-0 items-center justify-center gap-2 px-7 sm:min-h-[62px] sm:min-w-[10.5rem] sm:w-auto"
             >
               <span className="qi-command-execute-shine" aria-hidden />
-              <span className="relative z-[1] flex items-center gap-2 text-[15px] font-semibold tracking-[-0.02em]">
+              <span className="relative z-[1] flex items-center gap-2 text-[14px] font-semibold tracking-[-0.02em]">
                 {loading ? (
                   <>
-                    <Loader2 className="size-4 animate-spin" aria-hidden />
-                    Synthesizing
+                    <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                    Reasoning
                   </>
                 ) : (
                   <>
-                    Run intelligence
+                    Decide
                     <ArrowRight
-                      className="size-4 opacity-80 transition group-hover:translate-x-0.5"
+                      className="size-3.5 opacity-80 transition group-hover:translate-x-0.5"
                       aria-hidden
                     />
                   </>
@@ -251,7 +266,7 @@ export default function HeroSearchCommand({
           </div>
 
           {history.length > 0 ? (
-            <div className="flex flex-wrap gap-2 border-t border-violet-100 pt-2.5">
+            <div className="qa-ref-neural-history flex flex-wrap gap-1.5 border-t border-slate-200/80 pt-2.5">
               {history.map((item) => (
                 <button
                   key={`h-${item}`}
@@ -260,7 +275,7 @@ export default function HeroSearchCommand({
                   title={item}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => pickPreset(item)}
-                  className="max-w-full truncate rounded-lg border border-violet-100 bg-white px-3 py-1.5 text-left text-[12px] font-medium text-slate-700 transition hover:border-violet-200 hover:bg-violet-50/70 hover:text-slate-900 disabled:opacity-40"
+                  className="qa-ref-neural-history__chip max-w-full truncate rounded-lg border border-slate-200/90 bg-white/90 px-2.5 py-1.5 text-left text-[12px] font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-40"
                 >
                   {item}
                 </button>
@@ -271,7 +286,7 @@ export default function HeroSearchCommand({
       </motion.div>
 
       {suggestions.length > 0 ? (
-        <div className="mt-5 px-1">
+        <div className="mt-4 px-1">
           <button
             id={toggleId}
             type="button"
@@ -279,10 +294,10 @@ export default function HeroSearchCommand({
             aria-expanded={suggestionsOpen}
             aria-controls={suggestPanelId}
             onClick={() => setSuggestionsOpen((o) => !o)}
-            className="text-[11px] font-medium tracking-[0.12em] uppercase text-slate-500/80 transition hover:text-slate-400/95 disabled:opacity-40"
+            className="text-[11px] font-medium tracking-[0.1em] uppercase text-slate-500/75 transition hover:text-slate-600 disabled:opacity-40"
           >
             <span className="inline-flex items-center gap-1.5">
-              {suggestionsOpen ? "Hide intelligence prompts" : "Intelligence prompts"}
+              {suggestionsOpen ? "Hide prompts" : "Prompts"}
               <ChevronDown
                 className={`size-3.5 transition-transform ${suggestionsOpen ? "rotate-180" : ""}`}
                 aria-hidden
@@ -295,7 +310,7 @@ export default function HeroSearchCommand({
               id={suggestPanelId}
               role="region"
               aria-labelledby={toggleId}
-              className="qi-command-suggest mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3"
+              className="qi-command-suggest mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-3"
             >
               {suggestions.map((item) => (
                 <button
@@ -305,7 +320,7 @@ export default function HeroSearchCommand({
                   title={item}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => pickPreset(item)}
-                  className="qa-ui-tray-adjacent-chip min-h-[2.85rem] disabled:opacity-40"
+                  className="qa-ui-tray-adjacent-chip min-h-[2.6rem] disabled:opacity-40"
                 >
                   <span className="line-clamp-2">{item}</span>
                 </button>

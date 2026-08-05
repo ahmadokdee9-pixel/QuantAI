@@ -23,7 +23,6 @@ import DecisionAnalystPanels from "@/components/search/DecisionAnalystPanels";
 import DecisionConsensusPanel from "@/components/search/DecisionConsensusPanel";
 import DecisionNarrativePanel from "@/components/search/DecisionNarrativePanel";
 import EnginePresenceLine from "@/components/search/EnginePresenceLine";
-import { thesisContinuityHeadline } from "@/lib/decisionThesis/snapshot";
 
 type Props = {
   decision: UniversalDecision;
@@ -177,24 +176,13 @@ export default function UniversalDecisionCard({
         ) : null}
       </div>
 
-      <p className="qa-instant-decision__summary">{executiveSummary}</p>
       {(() => {
-        const continuity = livingThread?.recentChanges?.length
-          ? thesisContinuityHeadline(livingThread.recentChanges)
-          : null;
-        if (continuity) {
-          return (
-            <p className="qa-instant-decision__horizon-note qa-instant-decision__horizon-note--live mt-2">{continuity}</p>
-          );
+        const lead = (narrative.lead || "").trim().toLowerCase().replace(/\.$/, "");
+        const summary = (executiveSummary || "").trim().toLowerCase().replace(/\.$/, "");
+        if (!summary || (lead && (summary === lead || lead.includes(summary) || summary.includes(lead)))) {
+          return null;
         }
-        if (analyst.thesis?.nextExpectedEvent) {
-          return (
-            <p className="qa-instant-decision__horizon-note mt-2">
-              Watching · {analyst.thesis.nextExpectedEvent}
-            </p>
-          );
-        }
-        return null;
+        return <p className="qa-instant-decision__summary">{executiveSummary}</p>;
       })()}
 
       {leader ? (

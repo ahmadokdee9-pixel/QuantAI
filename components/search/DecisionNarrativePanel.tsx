@@ -17,11 +17,9 @@ type Props = {
 
 const PREVIEW_IDS = new Set([
   "situation",
-  "current_reality",
   "confidence",
   "expected_next",
   "what_would_change",
-  "missing_evidence",
 ]);
 
 export default function DecisionNarrativePanel({ narrative, compact = false }: Props) {
@@ -30,11 +28,9 @@ export default function DecisionNarrativePanel({ narrative, compact = false }: P
 
   const previewOrder = [
     "situation",
-    "current_reality",
     "confidence",
     "expected_next",
     "what_would_change",
-    "missing_evidence",
   ] as const;
   const preview = previewOrder
     .map((id) => narrative.blocks.find((b) => b.id === id))
@@ -76,8 +72,10 @@ export default function DecisionNarrativePanel({ narrative, compact = false }: P
       aria-label="Decision narrative"
     >
       <header className="qa-decision-narrative__head">
-        <h3 className="qa-instant-decision__block-title">Decision narrative</h3>
-        <p className="qa-decision-narrative__lead">{narrative.lead}</p>
+        <h3 className="qa-instant-decision__block-title">Reasoning</h3>
+        {narrative.lead && !compact ? (
+          <p className="qa-decision-narrative__lead">{narrative.lead}</p>
+        ) : null}
       </header>
 
       <div className="qa-decision-narrative__blocks">
@@ -96,7 +94,7 @@ export default function DecisionNarrativePanel({ narrative, compact = false }: P
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
         >
-          {open ? "Collapse narrative" : "Read full narrative"}
+          {open ? "Less detail" : "More detail"}
           <ChevronDown
             className={`size-3.5 opacity-60 transition-transform ${open ? "rotate-180" : ""}`}
             strokeWidth={1.75}

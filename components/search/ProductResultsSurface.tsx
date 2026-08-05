@@ -104,23 +104,22 @@ type Props = {
 
 function ResultSkeleton() {
   return (
-    <div className="qa-ui-results-grid">
-      {Array.from({ length: 8 }).map((_, i) => (
+    <div className="qa-ui-results-grid qa-ui-results-grid--skeleton" aria-hidden>
+      {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={i}
-          style={i < 6 ? { animationDelay: `${i * 55}ms` } : undefined}
-          className="cockpit-glass-panel skeleton-cinematic overflow-hidden border-white/[0.07] p-5 motion-safe:animate-[fadeIn_0.45s_ease-out_both]"
+          style={i < 4 ? { animationDelay: `${i * 40}ms` } : undefined}
+          className="cockpit-glass-panel skeleton-cinematic overflow-hidden border-white/[0.07] p-4 motion-safe:animate-[fadeIn_0.35s_ease-out_both]"
         >
-          <div className="qa-skeleton-shimmer h-14 rounded-xl" />
-          <div className="qa-skeleton-shimmer mt-3 h-3 w-full rounded" />
+          <div className="qa-skeleton-shimmer h-12 rounded-xl" />
+          <div className="qa-skeleton-shimmer mt-3 h-2.5 w-full rounded" />
           <div className="grid grid-cols-3 gap-2 mt-3">
-            <div className="qa-skeleton-shimmer h-12 rounded-lg" />
-            <div className="qa-skeleton-shimmer h-12 rounded-lg" />
-            <div className="qa-skeleton-shimmer h-12 rounded-lg" />
+            <div className="qa-skeleton-shimmer h-10 rounded-lg" />
+            <div className="qa-skeleton-shimmer h-10 rounded-lg" />
+            <div className="qa-skeleton-shimmer h-10 rounded-lg" />
           </div>
-          <div className="qa-skeleton-shimmer mt-3 h-3 w-4/5 rounded" />
-          <div className="qa-skeleton-shimmer mt-2 h-3 w-2/3 rounded" />
-          <div className="qa-skeleton-shimmer mt-4 h-10 rounded-full" />
+          <div className="qa-skeleton-shimmer mt-3 h-2.5 w-3/5 rounded" />
+          <div className="qa-skeleton-shimmer mt-3 h-9 rounded-full" />
         </div>
       ))}
     </div>

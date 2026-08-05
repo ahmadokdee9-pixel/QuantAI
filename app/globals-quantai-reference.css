@@ -12900,6 +12900,78 @@
   }
 }
 
+/* Product polish — instrument feel, lower cognitive load */
+.qa-ref-neural-field--focus {
+  box-shadow: 0 0 0 3px rgba(47, 79, 220, 0.18);
+  border-color: rgba(47, 79, 220, 0.28);
+}
+
+.qa-ref-neural-deck[data-loading="true"] {
+  transition: opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.qa-ref-neural-execute:focus-visible,
+.qa-ref-neural-history__chip:focus-visible,
+.qa-ref-neural-field--focus:focus-within {
+  outline: none;
+}
+
+.qa-ref-neural-execute:focus-visible {
+  box-shadow: 0 0 0 3px rgba(47, 79, 220, 0.28);
+}
+
+.qa-ref-neural-history__chip:focus-visible {
+  box-shadow: 0 0 0 2px rgba(47, 79, 220, 0.24);
+}
+
+.qa-instant-decision__header {
+  margin-bottom: 0.7rem;
+}
+
+.qa-instant-decision__question {
+  font-size: clamp(1.25rem, 3vw, 1.65rem);
+  letter-spacing: -0.038em;
+}
+
+.qa-instant-decision__grid {
+  margin-top: 0.7rem;
+  gap: 0.65rem;
+}
+
+.qa-instant-decision__block {
+  padding: 0.7rem 0.75rem;
+}
+
+.qa-decision-narrative {
+  margin-top: 0.55rem;
+}
+
+.qa-decision-consensus {
+  margin-top: 0.45rem;
+}
+
+.qa-ui-results-grid--skeleton {
+  min-height: 18rem;
+  contain: layout paint;
+}
+
+.qa-ref-hero__exec-lead {
+  max-width: 28rem;
+  font-size: 15px;
+  line-height: 1.55;
+  letter-spacing: -0.014em;
+}
+
+.qa-ref-section--pricing .qa-ref-section-intro {
+  margin-bottom: 1.25rem;
+}
+
+.qa-ref-os--intel-v1 .qa-ref-hero--canvas .qa-ref-hero__search-panel .qa-ref-neural-engine-note {
+  max-width: 36rem;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+
 .qa-ref-section {
   margin-top: clamp(1.35rem, 2.5vw, 1.85rem);
 }

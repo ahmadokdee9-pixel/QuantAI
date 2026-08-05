@@ -25,7 +25,6 @@ import DecisionAnalystPanels from "@/components/search/DecisionAnalystPanels";
 import DecisionConsensusPanel from "@/components/search/DecisionConsensusPanel";
 import DecisionNarrativePanel from "@/components/search/DecisionNarrativePanel";
 import EnginePresenceLine from "@/components/search/EnginePresenceLine";
-import { thesisContinuityHeadline } from "@/lib/decisionThesis/snapshot";
 
 type Props = {
   leader: QuantProduct | null;
@@ -191,28 +190,17 @@ export default function InstantDecisionCard({
           ) : null}
         </div>
 
-        <p className="qa-ref-exec-brief__synthesis qa-instant-decision__summary">
-          {model.executiveSummary}
-        </p>
         {(() => {
-          const continuity = livingThread?.recentChanges?.length
-            ? thesisContinuityHeadline(livingThread.recentChanges)
-            : null;
-          if (continuity) {
-            return (
-              <p className="qa-instant-decision__horizon-note qa-instant-decision__horizon-note--live mt-2">
-                {continuity}
-              </p>
-            );
+          const lead = (model.narrative.lead || "").trim().toLowerCase().replace(/\.$/, "");
+          const summary = (model.executiveSummary || "").trim().toLowerCase().replace(/\.$/, "");
+          if (!summary || (lead && (summary === lead || lead.includes(summary) || summary.includes(lead)))) {
+            return null;
           }
-          if (model.analyst.thesis?.nextExpectedEvent) {
-            return (
-              <p className="qa-instant-decision__horizon-note mt-2">
-                Watching · {model.analyst.thesis.nextExpectedEvent}
-              </p>
-            );
-          }
-          return null;
+          return (
+            <p className="qa-ref-exec-brief__synthesis qa-instant-decision__summary">
+              {model.executiveSummary}
+            </p>
+          );
         })()}
 
         <div className="qa-instant-decision__product">
@@ -242,7 +230,7 @@ export default function InstantDecisionCard({
 
       <div className="qa-instant-decision__grid">
         <section className="qa-instant-decision__block">
-          <h3 className="qa-instant-decision__block-title">Top reasons</h3>
+          <h3 className="qa-instant-decision__block-title">Why</h3>
           <ul className="qa-instant-decision__list">
             {model.topReasons.map((reason) => (
               <li key={reason}>{reason}</li>
