@@ -7,9 +7,9 @@
 **Rule:** When this list is empty → **Public Beta READY**.  
 **Rule:** Execute by waves only. Verify production after every wave. Do not polish.
 
-**Status:** `NOT READY` — **12 blockers** (optimized from 14)  
-**Plan status:** Execution plan approved — **not started**  
-**Last updated:** 2026-08-05
+**Status:** `NOT READY` — **10 blockers** open  
+**Plan status:** Wave 1 DONE · Wave 2 LOCKED (await explicit approval)  
+**Last updated:** 2026-08-05 (Wave 1 verified — see `docs/wave1/WAVE1_VERIFICATION_REPORT.md`)
 
 ---
 
@@ -24,7 +24,7 @@
 | **Not removed** | PB-05 / PB-11 / PB-12 / PB-13 — still required for public trust/conversion; kept minimal scope |
 | **Net** | 14 → **12** blockers · ~3–5 eng-days saved vs parallel duplicate streams · calendar time cut via waves |
 
-**Highest unlockers:** **PB-02** (shared limits) + **PB-10** (observability) — do first.
+**Wave 1 complete:** PB-02 + PB-10 deleted forever. Next unlocker: **PB-01** (Wave 2 — locked).
 
 ---
 
@@ -43,9 +43,7 @@
 
 | ID | Priority | Dependencies | Effort | Risk | Unlock value | Parallel? | Owner |
 |----|----------|--------------|--------|------|--------------|-----------|-------|
-| **PB-02** | P0 | Upstash in Production | S–M (1–2d) | Low | Unlocks hard limits for PB-01, PB-08, multi-instance fairness | **Yes** w/ PB-10 | Infra |
-| **PB-10** | P0 | None | M (1–2d) | Low | Unlocks PB-04 SLO proof; cost/empty alerts; kill-switch ops | **Yes** w/ PB-02 | Infra |
-| **PB-01** | P0 | PB-02, PB-10 | M (1.5–2.5d) | Med | Unlocks safe public surface; shrinks PB-08; stops Serp burn | No (after W1) | Eng / Security |
+| **PB-01** | P0 | PB-02 ✓, PB-10 ✓ | M (1.5–2.5d) | Med | Unlocks safe public surface; shrinks PB-08; stops Serp burn | No · W2 LOCKED | Eng / Security |
 | **PB-07** | P1 | None (after W1 ideal) | M (1–2d) | Med | XSS/CSP baseline for public HTML/AI | **Yes** w/ PB-08, PB-11 | Security |
 | **PB-08** | P1 | PB-01, PB-02 | S (0.5–1d) | Med | Closes injection/outbound gaps without rebuild | **Yes** w/ PB-07, PB-11 | Security |
 | **PB-11** | P1 | Clerk protect | S (0.5d) | Low | Fixes guest→auth funnel; signup recovery | **Yes** w/ PB-07, PB-08 | Eng |
@@ -65,30 +63,25 @@
 
 Each wave is **independently deployable**. After each wave: production verify (below). Do not start the next wave until verify passes.
 
-### Wave 1 — Highest leverage
+### Wave 1 — Highest leverage — DONE (2026-08-05)
 
-**Deploy together:** PB-02 + PB-10  
-**Why first:** Maximum unlock per day; no dependency on later work.  
-**Parallel:** Yes (Infra can split).
-
-| ID | Priority | Deps | Effort | Risk | Unlock value | Parallel | Owner |
-|----|----------|------|--------|------|--------------|----------|-------|
-| PB-02 | P0 | Upstash Prod | S–M | Low | Cross-instance limits | Yes | Infra |
-| PB-10 | P0 | None | M | Low | Empty/error/cost visibility | Yes | Infra |
+**Completed:** PB-02 + PB-10 (removed from open blockers)  
+**Report:** `docs/wave1/WAVE1_VERIFICATION_REPORT.md`
 
 **Production verify (Wave 1)**
-- [ ] `UPSTASH_*` present in Vercel Production
-- [ ] Health (or equivalent) shows shared rate store configured — not in-memory-only
-- [ ] Empty-search rate, 5xx, and upstream cost/proxy signals visible within minutes
-- [ ] Smoke: `npm run` production smoke script green
-- [ ] Deploy marked READY on Vercel Production
+- [x] `UPSTASH_*` present in Vercel Production
+- [x] Health shows shared rate store configured — not in-memory-only
+- [x] Empty-search rate, 5xx, and upstream cost/proxy signals visible within minutes
+- [x] Smoke: production smoke script green
+- [x] Deploy marked READY on Vercel Production
 
 ---
 
-### Wave 2 — Infrastructure (economic envelope)
+### Wave 2 — Infrastructure (economic envelope) — LOCKED
 
-**Deploy:** PB-01 only  
-**Why here:** Needs shared limits + observability from Wave 1; is the cost-control backbone for public traffic.
+**Deploy:** PB-01 only · **LOCKED until explicit approval**  
+**Deps satisfied:** PB-02 (done) · PB-10 (done)  
+**Why here:** Cost-control backbone for public traffic.
 
 | ID | Priority | Deps | Effort | Risk | Unlock value | Parallel | Owner |
 |----|----------|------|--------|------|--------------|----------|-------|
@@ -172,38 +165,6 @@ Each wave is **independently deployable**. After each wave: production verify (b
 
 ## Open blockers (full register)
 
-### PB-02 — Shared production rate-limit store
-
-| Field | Value |
-|-------|--------|
-| **Severity** | P0 |
-| **Business impact** | In-memory limits fail across instances → abuse scales free |
-| **User impact** | Fair users starved |
-| **Effort** | S–M (1–2d) |
-| **Dependencies** | Upstash in Vercel Production |
-| **Owner** | Infra |
-| **Wave** | 1 |
-| **Verification** | UPSTASH in Prod; health shows shared store; no silent in-memory-only in Prod |
-| **Definition of Done** | Cross-instance limits live; Prod not silently local |
-
----
-
-### PB-10 — Production observability
-
-| Field | Value |
-|-------|--------|
-| **Severity** | P0 |
-| **Business impact** | Public beta blind = silent cost/reliability failure |
-| **User impact** | Prolonged outages |
-| **Effort** | M (1–2d) |
-| **Dependencies** | None |
-| **Owner** | Infra |
-| **Wave** | 1 |
-| **Verification** | Empty-search, 5xx, upstream cost signals visible; alert hooks defined |
-| **Definition of Done** | On-call sees empty/error/cost within minutes |
-
----
-
 ### PB-01 — Public economic envelope *(merged: lock decision/run + ceilings + kill switch)*
 
 | Field | Value |
@@ -212,7 +173,7 @@ Each wave is **independently deployable**. After each wave: production verify (b
 | **Business impact** | Unauth/paid upstream burn; public without cost control |
 | **User impact** | Outage under abuse; kill switch protects capacity |
 | **Effort** | M (1.5–2.5d) |
-| **Dependencies** | PB-02, PB-10 |
+| **Dependencies** | PB-02 ✓, PB-10 ✓ (Wave 1 done) |
 | **Owner** | Eng / Security |
 | **Wave** | 2 |
 | **Verification** | Unauth → 401/403; ceiling → 429; kill switch works; auth path 200 |
@@ -373,4 +334,4 @@ Each wave is **independently deployable**. After each wave: production verify (b
 5. Start next wave.  
 6. Open count = 0 → **PUBLIC BETA READY**.
 
-**Do not execute until Program Manager / owner says start Wave 1.**
+**Wave 2 remains locked until explicitly approved.**
