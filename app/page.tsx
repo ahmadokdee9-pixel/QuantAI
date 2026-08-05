@@ -32,6 +32,7 @@ import {
   persistDecisionEpisode,
   persistDecisionWatch,
 } from "@/lib/decisionMemory/recordClient";
+import { listLocalDecisionMemory } from "@/lib/decisionMemory/clientMemory";
 import { classifyDecisionDomain } from "@/lib/universalDecision/router";
 import type { DecisionDomain, UniversalDecision } from "@/lib/universalDecision/types";
 import type { LivingDecisionThread } from "@/lib/livingDecision/types";
@@ -89,7 +90,16 @@ const SSR_HERO_HINT_SEED: readonly string[] = HERO_SEARCH_PROMPTS;
 
 function mergeHeroTrayHints(): string[] {
   const recent = readLocalSignals().recentSearches.slice(0, 8);
-  const merged = [...recent, ...HERO_SEARCH_PROMPTS];
+  let memoryQueries: string[] = [];
+  try {
+    memoryQueries = listLocalDecisionMemory()
+      .slice(0, 6)
+      .map((ep) => (ep.searchQuery || ep.productTitle || "").trim())
+      .filter((t) => t.length >= 3);
+  } catch {
+    memoryQueries = [];
+  }
+  const merged = [...memoryQueries, ...recent, ...HERO_SEARCH_PROMPTS];
   const seen = new Set<string>();
   return merged.filter((x) => {
     const t = x.trim();
@@ -181,18 +191,23 @@ export default function Home() {
 
   useEffect(() => {
     const q = new URLSearchParams(window.location.search).get("q")?.trim();
-    if (q) startTransition(() => setQuery(q));
+    if (q) {
+      if (bootedSearchFromUrl.current) return;
+      bootedSearchFromUrl.current = true;
+      startTransition(() => setQuery(q));
+      void search(q, { bypassClientThrottle: true });
+      return;
+    }
+    // Return visit: prefill last remembered query — do not auto-run.
+    try {
+      const latest = listLocalDecisionMemory()[0];
+      const resume = (latest?.searchQuery || latest?.productTitle || "").trim();
+      if (resume.length >= 3) startTransition(() => setQuery(resume));
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bootstrap once on mount
   }, []);
-
-  useEffect(() => {
-    if (!isSignedIn || bootedSearchFromUrl.current) return;
-    const q = new URLSearchParams(window.location.search).get("q")?.trim();
-    if (!q) return;
-    bootedSearchFromUrl.current = true;
-    startTransition(() => setQuery(q));
-    void search(q, { bypassClientThrottle: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- bootstrap once when auth resolves
-  }, [isSignedIn]);
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -753,7 +768,7 @@ export default function Home() {
   async function addToWatchlist(product: QuantProduct) {
     if (!isSignedIn) {
       setActionNotice({
-        message: "Sign in to activate price monitoring for this listing.",
+        message: "Watching locally. Sign in to sync across devices.",
         tone: "info",
       });
       return;
@@ -878,18 +893,6 @@ export default function Home() {
                 </p>
               </header>
 
-              <div className="qa-ref-hero__row qa-ref-hero__row--metrics">
-                <LivingIntelligencePresence
-                  variant="nodes"
-                  refreshKey={`${products.length}-${universalDecision?.memoryIdentity ?? ""}-${livingPresenceEpoch}`}
-                />
-              </div>
-
-              <div className="qa-ref-hero__vein" aria-hidden>
-                <span className="qa-ref-hero__vein-line" />
-                <span className="qa-ref-hero__vein-node" />
-              </div>
-
               <div className="qa-ref-hero__row qa-ref-hero__row--search">
                 <div className="qa-ref-hero__search-panel">
                   <div className="qa-ref-hero__console-head">
@@ -944,7 +947,7 @@ export default function Home() {
 
                 {!isSignedIn && (
                   <div className="qa-ref-guest-banner qa-ref-hero__guest">
-                    <p>Sign in to keep memory.</p>
+                    <p>Sign in to sync memory across devices.</p>
                     <SignInButton mode="modal" forceRedirectUrl="/dashboard">
                       <button type="button" className="qa-ref-btn qa-ref-btn--ghost">
                         Sign in
@@ -1034,16 +1037,11 @@ export default function Home() {
               <div className="qa-living-skeleton__row" />
               <div className="qa-living-skeleton__row qa-living-skeleton__row--short" />
             </div>
-            <LivingIntelligencePresence variant="strip" refreshKey={livingPresenceEpoch} />
           </div>
         ) : null}
 
         {!loading && (products.length > 0 || universalDecision) ? (
           <div className="mx-auto max-w-7xl px-4 sm:px-6 mb-4">
-            <LivingIntelligencePresence
-              variant="strip"
-              refreshKey={`${livingPresenceEpoch}-${universalDecision?.generatedAt ?? ""}`}
-            />
             <DecisionUpdatesPanel signedIn={Boolean(isSignedIn)} compact />
           </div>
         ) : null}

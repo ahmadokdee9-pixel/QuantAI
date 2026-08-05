@@ -86,6 +86,7 @@ export default function InstantDecisionCard({
   const reduceMotion = useReducedMotion();
   const [transparencyOpen, setTransparencyOpen] = useState(false);
   const [watchFlash, setWatchFlash] = useState(false);
+  const [depthOpen, setDepthOpen] = useState(false);
 
   const model = useMemo(
     () =>
@@ -226,28 +227,6 @@ export default function InstantDecisionCard({
 
       <DecisionNarrativePanel narrative={model.narrative} compact={compact} />
 
-      <DecisionConsensusPanel consensus={model.consensus} compact={compact} />
-
-      <div className="qa-instant-decision__grid">
-        <section className="qa-instant-decision__block">
-          <h3 className="qa-instant-decision__block-title">Why</h3>
-          <ul className="qa-instant-decision__list">
-            {model.topReasons.map((reason) => (
-              <li key={reason}>{reason}</li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="qa-instant-decision__block">
-          <h3 className="qa-instant-decision__block-title">Risks</h3>
-          <ul className="qa-instant-decision__list qa-instant-decision__list--risk">
-            {model.risks.map((risk) => (
-              <li key={risk}>{risk}</li>
-            ))}
-          </ul>
-        </section>
-      </div>
-
       {model.betterAlternatives.length > 0 && model.action !== "BUY" ? (
         <section className="qa-instant-decision__block qa-instant-decision__block--full">
           <h3 className="qa-instant-decision__block-title">
@@ -279,54 +258,129 @@ export default function InstantDecisionCard({
         </section>
       ) : null}
 
-      {model.waitIntelligence.relevant ? (
-        <section className="qa-instant-decision__block qa-instant-decision__block--full qa-instant-decision__wait">
-          <h3 className="qa-instant-decision__block-title">Wait intelligence</h3>
-          <p className="qa-instant-decision__wait-headline">{model.waitIntelligence.headline}</p>
-          {model.waitIntelligence.points.length > 0 ? (
-            <ul className="qa-instant-decision__list">
-              {model.waitIntelligence.points.map((point) => (
-                <li key={point}>{point}</li>
-              ))}
-            </ul>
-          ) : null}
-        </section>
+      {!compact ? (
+        <button
+          type="button"
+          className="qa-decision-narrative__toggle"
+          aria-expanded={depthOpen}
+          onClick={() => setDepthOpen((v) => !v)}
+        >
+          {depthOpen ? "Less context" : "Why · Risks · Timeline"}
+          <ChevronDown
+            className={`size-3.5 opacity-55 transition-transform ${depthOpen ? "rotate-180" : ""}`}
+            strokeWidth={1.75}
+            aria-hidden
+          />
+        </button>
       ) : null}
 
-      <section className="qa-instant-decision__block qa-instant-decision__block--full">
-        <h3 className="qa-instant-decision__block-title">Decision timeline</h3>
-        <div className="qa-instant-decision__timeline">
-          {model.timeline.map((slot) => (
-            <div
-              key={slot.horizon}
-              className={`qa-instant-decision__horizon ${stanceClass(slot.stance)}`}
-            >
-              <span className="qa-instant-decision__horizon-when">{slot.horizon}</span>
-              <span className="qa-instant-decision__horizon-stance">{slot.stance}</span>
-              <span className="qa-instant-decision__horizon-note">{slot.note}</span>
+      {depthOpen || compact ? (
+        <>
+          <div className="qa-instant-decision__grid">
+            <section className="qa-instant-decision__block">
+              <h3 className="qa-instant-decision__block-title">Why</h3>
+              <ul className="qa-instant-decision__list">
+                {model.topReasons.map((reason) => (
+                  <li key={reason}>{reason}</li>
+                ))}
+              </ul>
+            </section>
+
+            <section className="qa-instant-decision__block">
+              <h3 className="qa-instant-decision__block-title">Risks</h3>
+              <ul className="qa-instant-decision__list qa-instant-decision__list--risk">
+                {model.risks.map((risk) => (
+                  <li key={risk}>{risk}</li>
+                ))}
+              </ul>
+            </section>
+          </div>
+
+          {model.waitIntelligence.relevant ? (
+            <section className="qa-instant-decision__block qa-instant-decision__block--full qa-instant-decision__wait">
+              <h3 className="qa-instant-decision__block-title">Wait intelligence</h3>
+              <p className="qa-instant-decision__wait-headline">{model.waitIntelligence.headline}</p>
+              {model.waitIntelligence.points.length > 0 ? (
+                <ul className="qa-instant-decision__list">
+                  {model.waitIntelligence.points.map((point) => (
+                    <li key={point}>{point}</li>
+                  ))}
+                </ul>
+              ) : null}
+            </section>
+          ) : null}
+
+          <section className="qa-instant-decision__block qa-instant-decision__block--full">
+            <h3 className="qa-instant-decision__block-title">Decision timeline</h3>
+            <div className="qa-instant-decision__timeline">
+              {model.timeline.map((slot) => (
+                <div
+                  key={slot.horizon}
+                  className={`qa-instant-decision__horizon ${stanceClass(slot.stance)}`}
+                >
+                  <span className="qa-instant-decision__horizon-when">{slot.horizon}</span>
+                  <span className="qa-instant-decision__horizon-stance">{slot.stance}</span>
+                  <span className="qa-instant-decision__horizon-note">{slot.note}</span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
+          </section>
 
-      <DecisionAnalystPanels analyst={model.analyst} compact={compact} />
-
-      <DecisionHistorySection thread={livingThread} compact={compact} />
+          <DecisionConsensusPanel consensus={model.consensus} compact={compact} />
+          <DecisionAnalystPanels analyst={model.analyst} compact={compact} />
+          <DecisionHistorySection thread={livingThread} compact={compact} />
+        </>
+      ) : null}
 
       <div className="qa-instant-decision__actions">
-        {model.action === "BUY" || model.action === "COMPARE" ? (
+        {model.action === "BUY" ? (
           <a
             href={offerUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="qa-ui-btn-primary qa-instant-decision__cta"
           >
-            {model.action === "BUY" ? "Buy" : "Inspect"}
+            Buy
             <ExternalLink className="size-3.5 opacity-75" strokeWidth={1.75} aria-hidden />
           </a>
         ) : null}
 
-        {addToWatchlist ? (
+        {model.action === "COMPARE" && onPrimeCompare ? (
+          <button
+            type="button"
+            className="qa-ui-btn-primary qa-instant-decision__cta"
+            onClick={() => {
+              const alt = model.betterAlternatives[0];
+              if (alt) onPrimeCompare([leader.link, alt.link]);
+              else onPrimeCompare([leader.link]);
+            }}
+          >
+            Compare
+          </button>
+        ) : null}
+
+        {model.action === "WAIT" || model.action === "AVOID" ? (
+          addToWatchlist ? (
+            <button
+              type="button"
+              onClick={handleWatch}
+              className="qa-ui-btn-primary qa-instant-decision__cta qa-instant-decision__cta--watch"
+              disabled={watching && !watchFlash}
+            >
+              {watching || watchFlash ? (
+                <>
+                  <Check className="size-3.5" strokeWidth={2} aria-hidden />
+                  Watching
+                </>
+              ) : (
+                <>
+                  <Bell className="size-3.5" strokeWidth={1.75} aria-hidden />
+                  Watch
+                </>
+              )}
+            </button>
+          ) : null
+        ) : addToWatchlist ? (
           <button
             type="button"
             onClick={handleWatch}
@@ -347,16 +401,16 @@ export default function InstantDecisionCard({
           </button>
         ) : null}
 
-        {model.action === "COMPARE" && model.betterAlternatives[0] && onPrimeCompare ? (
-          <button
-            type="button"
+        {model.action === "COMPARE" ? (
+          <a
+            href={offerUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             className="qa-ui-btn-ghost qa-instant-decision__cta"
-            onClick={() =>
-              onPrimeCompare([leader.link, model.betterAlternatives[0]!.link])
-            }
           >
-            Compare
-          </button>
+            Inspect
+            <ExternalLink className="size-3.5 opacity-75" strokeWidth={1.75} aria-hidden />
+          </a>
         ) : null}
       </div>
 

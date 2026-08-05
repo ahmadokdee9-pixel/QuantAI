@@ -1,6 +1,7 @@
 "use client";
 
 import type { DecisionDomain } from "@/lib/universalDecision/types";
+import { useState } from "react";
 
 const LABELS: Record<string, string> = {
   product: "Product",
@@ -26,33 +27,52 @@ export default function DomainDecisionIndicator({
   onCorrectDomain,
   onConfirmClarification,
 }: Props) {
+  const [correctOpen, setCorrectOpen] = useState(false);
   if (!domain && !clarifyingQuestion) return null;
+
+  const highConfidence = confidence != null && confidence >= 75;
+  const showChips =
+    Boolean(clarifyingQuestion) || !highConfidence || correctOpen || !domain;
 
   return (
     <div className="qa-domain-indicator" role="status" aria-live="polite">
       {domain ? (
         <div className="qa-domain-indicator__row">
-          <span className="qa-domain-indicator__label">Detected</span>
           <span className="qa-domain-indicator__domain">{LABELS[domain] || domain}</span>
           {confidence != null ? (
             <span className="qa-domain-indicator__conf">{Math.round(confidence)}%</span>
           ) : null}
-          <span className="qa-domain-indicator__sep" aria-hidden>
-            ·
-          </span>
-          <span className="qa-domain-indicator__correct-label">Not right?</span>
-          <div className="qa-domain-indicator__chips">
-            {enabledDomains.map((d) => (
+          {!clarifyingQuestion ? (
+            <>
+              <span className="qa-domain-indicator__sep" aria-hidden>
+                ·
+              </span>
               <button
-                key={d}
                 type="button"
-                className={`qa-domain-indicator__chip${d === domain ? " qa-domain-indicator__chip--active" : ""}`}
-                onClick={() => onCorrectDomain(d)}
+                className="qa-domain-indicator__correct-label"
+                aria-expanded={highConfidence ? correctOpen : true}
+                onClick={() => {
+                  if (highConfidence) setCorrectOpen((v) => !v);
+                }}
               >
-                {LABELS[d] || d}
+                {highConfidence && correctOpen ? "Hide" : "Wrong domain?"}
               </button>
-            ))}
-          </div>
+            </>
+          ) : null}
+          {showChips ? (
+            <div className="qa-domain-indicator__chips">
+              {enabledDomains.map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  className={`qa-domain-indicator__chip${d === domain ? " qa-domain-indicator__chip--active" : ""}`}
+                  onClick={() => onCorrectDomain(d)}
+                >
+                  {LABELS[d] || d}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
       ) : null}
 

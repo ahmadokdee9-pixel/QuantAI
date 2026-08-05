@@ -985,7 +985,7 @@ export default function ProductResultsSurface({
         </AnimatePresence>
       )}
 
-      {searchIntelligence && (
+      {searchIntelligence && !decisionLeader ? (
         <motion.div
           initial={reduceMotion || mobilePerf ? { opacity: 1, y: 0 } : { opacity: 0.88, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -1005,7 +1005,7 @@ export default function ProductResultsSurface({
             />
           </div>
         </motion.div>
-      )}
+      ) : null}
 
       {compareProducts.length > 0 ? (
         <div className="pointer-events-none h-20 sm:h-24" aria-hidden />

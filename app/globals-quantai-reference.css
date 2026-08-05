@@ -11915,6 +11915,21 @@
   color: rgba(51, 65, 85, 0.55);
 }
 
+button.qa-domain-indicator__correct-label {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+}
+
+button.qa-domain-indicator__correct-label:hover {
+  color: rgba(30, 41, 59, 0.85);
+}
+
 .qa-domain-indicator__domain {
   font-size: 12px;
   font-weight: 700;

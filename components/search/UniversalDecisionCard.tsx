@@ -50,6 +50,7 @@ export default function UniversalDecisionCard({
   const reduceMotion = useReducedMotion();
   const [transparencyOpen, setTransparencyOpen] = useState(false);
   const [watchFlash, setWatchFlash] = useState(false);
+  const [depthOpen, setDepthOpen] = useState(false);
   const modifier = verdictModifier(decision.action);
   const leader = decision.leader;
 
@@ -199,79 +200,97 @@ export default function UniversalDecisionCard({
 
       <DecisionNarrativePanel narrative={narrative} compact={compact} />
 
-      <DecisionConsensusPanel consensus={consensus} compact={compact} />
+      {!compact ? (
+        <button
+          type="button"
+          className="qa-decision-narrative__toggle"
+          aria-expanded={depthOpen}
+          onClick={() => setDepthOpen((v) => !v)}
+        >
+          {depthOpen ? "Less context" : "Why · Risks · Timing"}
+          <ChevronDown
+            className={`size-3.5 opacity-55 transition-transform ${depthOpen ? "rotate-180" : ""}`}
+            strokeWidth={1.75}
+            aria-hidden
+          />
+        </button>
+      ) : null}
 
-      <div className="qa-instant-decision__grid">
-        <div className="qa-instant-decision__block">
-          <h3 className="qa-instant-decision__block-title">Why</h3>
-          <ul className="qa-instant-decision__list">
-            {decision.reasons.slice(0, 4).map((r) => (
-              <li key={r}>{r}</li>
-            ))}
-          </ul>
-        </div>
-        <div className="qa-instant-decision__block">
-          <h3 className="qa-instant-decision__block-title">Risks</h3>
-          <ul className="qa-instant-decision__list qa-instant-decision__list--risk">
-            {decision.risks.slice(0, 4).map((r) => (
-              <li key={r}>{r}</li>
-            ))}
-          </ul>
-        </div>
-        {decision.alternatives.length > 0 ? (
-          <div className="qa-instant-decision__block qa-instant-decision__block--full">
-            <h3 className="qa-instant-decision__block-title">Alternatives</h3>
-            <div className="qa-instant-decision__alts">
-              {decision.alternatives.map((alt) => (
-                <a
-                  key={alt.id}
-                  className="qa-instant-decision__alt"
-                  href={alt.link || "#"}
-                  target={alt.link ? "_blank" : undefined}
-                  rel={alt.link ? "noopener noreferrer" : undefined}
-                  onClick={(e) => {
-                    if (!alt.link) e.preventDefault();
-                  }}
-                >
-                  <span className="qa-instant-decision__alt-title">{alt.title}</span>
-                  <span className="qa-instant-decision__alt-meta">
-                    {alt.price != null ? `${alt.currency || ""} ${alt.price}` : alt.subtitle || ""}
-                  </span>
-                  <span className="qa-instant-decision__alt-why">{alt.why}</span>
-                </a>
-              ))}
+      {depthOpen || compact ? (
+        <>
+          <div className="qa-instant-decision__grid">
+            <div className="qa-instant-decision__block">
+              <h3 className="qa-instant-decision__block-title">Why</h3>
+              <ul className="qa-instant-decision__list">
+                {decision.reasons.slice(0, 4).map((r) => (
+                  <li key={r}>{r}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="qa-instant-decision__block">
+              <h3 className="qa-instant-decision__block-title">Risks</h3>
+              <ul className="qa-instant-decision__list qa-instant-decision__list--risk">
+                {decision.risks.slice(0, 4).map((r) => (
+                  <li key={r}>{r}</li>
+                ))}
+              </ul>
+            </div>
+            {decision.alternatives.length > 0 ? (
+              <div className="qa-instant-decision__block qa-instant-decision__block--full">
+                <h3 className="qa-instant-decision__block-title">Alternatives</h3>
+                <div className="qa-instant-decision__alts">
+                  {decision.alternatives.map((alt) => (
+                    <a
+                      key={alt.id}
+                      className="qa-instant-decision__alt"
+                      href={alt.link || "#"}
+                      target={alt.link ? "_blank" : undefined}
+                      rel={alt.link ? "noopener noreferrer" : undefined}
+                      onClick={(e) => {
+                        if (!alt.link) e.preventDefault();
+                      }}
+                    >
+                      <span className="qa-instant-decision__alt-title">{alt.title}</span>
+                      <span className="qa-instant-decision__alt-meta">
+                        {alt.price != null ? `${alt.currency || ""} ${alt.price}` : alt.subtitle || ""}
+                      </span>
+                      <span className="qa-instant-decision__alt-why">{alt.why}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            <div className="qa-instant-decision__block qa-instant-decision__block--full">
+              <h3 className="qa-instant-decision__block-title">Timing</h3>
+              <div className="qa-instant-decision__timeline">
+                <div className="qa-instant-decision__horizon qa-instant-decision__horizon--act">
+                  <span>Today</span>
+                  <p>{decision.timing.today}</p>
+                </div>
+                <div className="qa-instant-decision__horizon qa-instant-decision__horizon--hold">
+                  <span>This Week</span>
+                  <p>{decision.timing.thisWeek}</p>
+                </div>
+                <div className="qa-instant-decision__horizon qa-instant-decision__horizon--reassess">
+                  <span>This Month</span>
+                  <p>{decision.timing.thisMonth}</p>
+                </div>
+              </div>
             </div>
           </div>
-        ) : null}
-        <div className="qa-instant-decision__block qa-instant-decision__block--full">
-          <h3 className="qa-instant-decision__block-title">Timing</h3>
-          <div className="qa-instant-decision__timeline">
-            <div className="qa-instant-decision__horizon qa-instant-decision__horizon--act">
-              <span>Today</span>
-              <p>{decision.timing.today}</p>
-            </div>
-            <div className="qa-instant-decision__horizon qa-instant-decision__horizon--hold">
-              <span>This Week</span>
-              <p>{decision.timing.thisWeek}</p>
-            </div>
-            <div className="qa-instant-decision__horizon qa-instant-decision__horizon--reassess">
-              <span>This Month</span>
-              <p>{decision.timing.thisMonth}</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <DomainEvidenceModules
-        domain={decision.domain}
-        evidence={decision.evidence}
-        freshness={decision.sourceFreshness}
-        insufficientEvidence={decision.insufficientEvidence}
-      />
+          <DomainEvidenceModules
+            domain={decision.domain}
+            evidence={decision.evidence}
+            freshness={decision.sourceFreshness}
+            insufficientEvidence={decision.insufficientEvidence}
+          />
 
-      <DecisionAnalystPanels analyst={analyst} compact={compact} />
-
-      <DecisionHistorySection thread={livingThread} compact={compact} />
+          <DecisionConsensusPanel consensus={consensus} compact={compact} />
+          <DecisionAnalystPanels analyst={analyst} compact={compact} />
+          <DecisionHistorySection thread={livingThread} compact={compact} />
+        </>
+      ) : null}
 
       <div className="qa-instant-decision__actions">
         {leader?.link ? (
