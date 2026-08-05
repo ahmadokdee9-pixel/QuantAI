@@ -24,7 +24,9 @@ const BRAND_PATTERNS: { re: RegExp; name: string }[] = [
   { re: /\bjbl\b/i, name: "jbl" },
   { re: /\bbeats\b/i, name: "beats" },
   { re: /\bsennheiser\b/i, name: "sennheiser" },
-  { re: /\bdyson\b|\bphilips\b|\bbosch\b|\bmiele\b|\bsiemens\b/i, name: "appliance-brand" },
+  // Named appliance brands — must not collapse to "appliance-brand" or exact_sku brand evidence fails (H-01).
+  { re: /\bdyson\b/i, name: "dyson" },
+  { re: /\bphilips\b|\bbosch\b|\bmiele\b|\bsiemens\b/i, name: "appliance-brand" },
   { re: /\bnike\b|(?:نايك|نايكي)/i, name: "nike" },
   { re: /\badidas\b|(?:اديداس|أديداس)/i, name: "adidas" },
   { re: /\bpuma\b/i, name: "puma" },
@@ -35,6 +37,8 @@ const BRAND_PATTERNS: { re: RegExp; name: string }[] = [
 
 const MODEL_PATTERNS = [
   /\b(?:iphone|ايفون|آيفون|ipad|macbook|galaxy|pixel|thinkpad|surface|switch|airpods|wh-?1000xm\d|xm\d)\s+[a-z0-9][a-z0-9+.\s-]{0,18}\b/gi,
+  // Stick vacuums / footwear lines used by exact_sku identity (H-01).
+  /\b(?:v\d{1,2}(?:\s*detect)?|pegasus\s*\d+|vomero\s*\d+)\b/gi,
   /\b(?:adidas\s+)?(?:samba|gazelle|superstar|campus)\b/gi,
   /\b(?:nike\s+)?(?:air\s+force\s+1|air\s+max|dunk|jordan\s*\d*)\b/gi,
   /\b(?:airpods?\s+(?:pro|max|\d(?:st|nd|rd)?\s*gen(?:eration)?))\b/gi,

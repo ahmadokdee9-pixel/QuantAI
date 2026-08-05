@@ -224,18 +224,33 @@ function relationFromCommercialText(blob: string): { relation: StructuredIdentit
   return { relation: null, reasons };
 }
 
-function hasModelEvidence(identity: ProductIdentity, canonicalQuery?: CanonicalQueryContract): boolean {
-  const model = canonicalQuery?.model?.toLowerCase().replace(/\s+/g, "");
+function hasModelEvidence(
+  identity: ProductIdentity,
+  canonicalQuery?: CanonicalQueryContract,
+  listingBlobText?: string
+): boolean {
+  const modelRaw = canonicalQuery?.model?.toLowerCase().trim() ?? "";
+  const model = modelRaw.replace(/\s+/g, "");
   if (!model) return identity.models.length > 0 || identity.identifiers.length > 0;
   const identityModels = identity.models.map((m) => m.toLowerCase().replace(/\s+/g, ""));
   const iphoneVersion = model.match(/^iphone(\d{1,2})(?:pro|max|plus|mini|e)?$/)?.[1];
   if (iphoneVersion) {
     return identityModels.some((m) => m === model || m.startsWith(`iphone${iphoneVersion}`));
   }
-  return identityModels.some((m) => {
-    if (/^\d{1,3}(gb|tb)?$/.test(m)) return false;
-    return m.includes(model) || model.includes(m);
-  });
+  if (
+    identityModels.some((m) => {
+      if (/^\d{1,3}(gb|tb)?$/.test(m)) return false;
+      return m.includes(model) || model.includes(m);
+    })
+  ) {
+    return true;
+  }
+  // Fallback: listing title/blob carries model tokens (e.g. "Pegasus 41", "V15").
+  const blob = String(listingBlobText || "").toLowerCase();
+  if (!blob) return false;
+  const tokens = modelRaw.split(/\s+/).filter((t) => t.length >= 1 && !/^(nike|adidas|dyson|apple|samsung)$/i.test(t));
+  if (tokens.length === 0) return false;
+  return tokens.every((t) => blob.includes(t));
 }
 
 function hasBrandEvidence(identity: ProductIdentity, canonicalQuery?: CanonicalQueryContract): boolean {
@@ -311,6 +326,10 @@ function categoryEvidence(p: QuantProduct, canonicalQuery?: CanonicalQueryContra
     if (/\b(robot vacuum|robotstofzuiger|stofzuiger robot|roomba|roborock|irobot)\b/i.test(query)) {
       return /\b(robot vacuum|robotstofzuiger|stofzuiger robot|roomba|roborock|irobot|dreame|ecovacs|deebot|eufy|shark|xiaomi|stofzuiger)\b/i.test(blob);
     }
+    // Stick/cordless vacuums (e.g. Dyson V15) — English titles often omit the word "vacuum".
+    if (/\b(dyson)\b/i.test(query) && /\b(v\d{1,2}|vacuum|stofzuiger|detect|cordless)\b/i.test(query)) {
+      return /\b(dyson|v\d{1,2}|vacuum|stofzuiger|steelstofzuiger|detect|absolute|complete|cordless|stick)\b/i.test(blob);
+    }
     if (/\b(baby stroller|stroller|pram|buggy|kinderwagen)\b|عربة/i.test(query)) {
       return /\b(baby stroller|stroller|pram|buggy|pushchair|car seat|kinderwagen|bugaboo|cybex|joolz|uppababy|maxi[-\s]?cosi|babypark|prenatal)\b|عربة/i.test(blob);
     }
@@ -320,7 +339,7 @@ function categoryEvidence(p: QuantProduct, canonicalQuery?: CanonicalQueryContra
     if (/\b(air fryer|airfryer|fryer|friteuse|heteluchtfriteuse)\b/i.test(query)) {
       return /\b(air fryer|airfryer|fryer|friteuse|heteluchtfriteuse|ninja|philips|tefal|cosori)\b/i.test(blob);
     }
-    return /\b(home|kitchen|coffee|machine|espresso|koffie|air fryer|airfryer|fryer|heteluchtfriteuse|friteuse|appliance|robot vacuum|robotstofzuiger|stofzuiger|roomba|roborock|irobot|stroller|pram|buggy|kinderwagen|babypark|prenatal|huis|keuken|apparaat|عربة)\b/i.test(blob);
+    return /\b(home|kitchen|coffee|machine|espresso|koffie|air fryer|airfryer|fryer|heteluchtfriteuse|friteuse|appliance|robot vacuum|robotstofzuiger|stofzuiger|steelstofzuiger|roomba|roborock|irobot|dyson|stroller|pram|buggy|kinderwagen|babypark|prenatal|huis|keuken|apparaat|عربة)\b/i.test(blob);
   }
   if (category === "watch") {
     const watchCue = /\b(watch|horloge|wristwatch|timepiece|chronograph)\b/i.test(blob);
@@ -379,7 +398,7 @@ export function assessStructuredProductIdentity(args: {
   }
 
   const brand = hasBrandEvidence(identity, canonicalQuery);
-  const model = hasModelEvidence(identity, canonicalQuery);
+  const model = hasModelEvidence(identity, canonicalQuery, blob);
   const category = categoryEvidence(product, canonicalQuery);
   if (brand) reasons.push("brand_evidence");
   if (model) reasons.push("model_or_identifier_evidence");

@@ -91,8 +91,19 @@ function detectLanguages(raw: string): ("arabic" | "english")[] {
   return out.length ? out : ["english"];
 }
 
+/**
+ * Canonical understanding envelope — must stay a clean, non-duplicated query string.
+ * Listing-match expansion (bilingual/translit) is for scoring only via `matchExpansion`.
+ * Using expandQueryForListingMatch here previously triplicated Latin queries
+ * (e.g. "dyson v15" → "dyson v15 dyson v15 dyson v15"), corrupting brand/model extraction
+ * and emptying trays behind the hard identity gate (H-01).
+ */
 function buildEnvelope(raw: string): string {
-  return expandQueryForListingMatch(fixCommonCommerceTypos(normalizeEasternDigitsInString(raw)));
+  return fixCommonCommerceTypos(normalizeEasternDigitsInString(raw))
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}€$£\s+-]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function detectConstraints(envelope: string): SemanticQueryUnderstanding["constraints"] {
@@ -348,6 +359,6 @@ export function buildSearchQueryUnderstanding(rawQuery: string): SemanticQueryUn
     semanticKeywords: uniq(semanticKeywords).slice(0, 36),
     constraints,
     comparisonIntent,
-    matchExpansion: envelope,
+    matchExpansion: expandQueryForListingMatch(raw),
   };
 }

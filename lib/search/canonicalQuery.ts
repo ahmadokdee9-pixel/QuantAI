@@ -146,11 +146,12 @@ function detectModel(envelope: string, brand: string | null): string | null {
     /(?:ايفون|آيفون)\s*(\d{1,2}(?:\s*(?:pro|max|plus|mini|e))?)/i,
     /\bairpods?\s*(pro|pro\s*\d|max|\d)?\b/i,
     /\badidas\s+(samba|gazelle|superstar|campus)\b/i,
-    /\bnike\s+(air\s+force\s+1|dunk|air\s+max|jordan\s*\d*)\b/i,
+    /\bnike\s+(air\s+force\s+1|dunk|air\s+max|jordan\s*\d*|pegasus\s*\d+)\b/i,
     /\b(gaming\s+monitor|monitor)\s*(\d{2,3}\s?hz|4k|qhd|oled)?\b/i,
     /\b(?:ysl|yves\s+saint\s+laurent)\s+libre\b/i,
     /\blibre\s+(?:edp|eau\s+de\s+parfum)\b/i,
-    /\b(vomero|pegasus|ultraboost)\b/i,
+    // Capture line versions (Pegasus 41 / Vomero 5) — bare "pegasus" alone is too weak for exact_sku.
+    /\b((?:vomero|pegasus|ultraboost)(?:\s*\d+)?)\b/i,
   ];
   for (const rx of patterns) {
     const match = envelope.match(rx);
@@ -159,7 +160,9 @@ function detectModel(envelope: string, brand: string | null): string | null {
       const version = match[1]?.replace(/\s+/g, " ").trim();
       return version ? `iphone ${version}` : "iphone";
     }
-    return match[0].replace(/\s+/g, " ").trim();
+    // Prefer capture group when present (avoids "nike pegasus 41" model strings).
+    const captured = (match[1] || match[0]).replace(/\s+/g, " ").trim();
+    return captured;
   }
   if (brand) {
     if (/\b(like|similar|alternative|cheaper|dupe|مثل|شبيه|بديل|زي|شبه|ارخص|أرخص)\b/i.test(envelope)) {
@@ -170,14 +173,25 @@ function detectModel(envelope: string, brand: string | null): string | null {
         return anchor.replace(/\s+/g, " ").trim();
       }
       const named = envelope.match(
-        /\b(vomero|pegasus|ultraboost|samba|gazelle|air\s+force|dunk|jordan|libre|common\s+projects)\b/i
+        /\b((?:vomero|pegasus|ultraboost)(?:\s*\d+)?|samba|gazelle|air\s+force|dunk|jordan|libre|common\s+projects)\b/i
       )?.[0];
       if (named) return named.replace(/\s+/g, " ").trim();
       return null;
     }
-    const afterBrand = envelope.match(new RegExp(`\\b${brand.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s+([a-z0-9][a-z0-9\\s+-]{1,32})`, "i"))?.[1];
-    const model = afterBrand?.replace(/\s+/g, " ").trim() ?? null;
+    const brandEsc = brand.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const afterBrand = envelope.match(
+      new RegExp(
+        `\\b${brandEsc}\\s+([a-z0-9][a-z0-9+.-]{0,24}(?:\\s+[a-z0-9][a-z0-9+.-]{0,16}){0,2})`,
+        "i"
+      )
+    )?.[1];
+    let model = afterBrand?.replace(/\s+/g, " ").trim() ?? null;
     if (model && /\b(like|similar|cheaper|but|alternative)\b/i.test(model)) return null;
+    // Strip accidental brand re-injection if envelope was historically duplicated.
+    if (model) {
+      const brandRx = new RegExp(`\\b${brandEsc}\\b`, "ig");
+      model = model.replace(brandRx, " ").replace(/\s+/g, " ").trim() || null;
+    }
     return model;
   }
   return null;
