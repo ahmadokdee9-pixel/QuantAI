@@ -1,0 +1,95 @@
+{
+  "issue": "H-02",
+  "at": "2026-08-05T22:22:24.774Z",
+  "base": "https://www.quantaihq.com",
+  "probes": {
+    "warm": {
+      "q": "Dyson V15",
+      "status": 200,
+      "ms": 10534,
+      "success": true,
+      "products": 18,
+      "titles": [
+        "Dyson V15 Detect Absolute Extra - Turbo-zuigmond Met Led-verlichting & Zachte Borstel & Eigen Merk",
+        "Dyson V7 / V8 / V10 / V11 / V15 Zuigmond met LED en zachte borstel",
+        "Dyson cycloon v22 v15 detect extra Stofzuiger",
+        "972346-05 Dyson Cycloon V15"
+      ],
+      "opReason": null,
+      "unrelated": true,
+      "error": null
+    },
+    "nonsense": [
+      {
+        "i": 1,
+        "q": "asdfghjkl qwerty nonexistent product xyzzy",
+        "status": 502,
+        "ms": 1061,
+        "success": false,
+        "products": 0,
+        "titles": [],
+        "opReason": "upstream_fail_empty",
+        "unrelated": false,
+        "error": "SEARCH_FAILED"
+      },
+      {
+        "i": 2,
+        "q": "asdfghjkl qwerty nonexistent product xyzzy",
+        "status": 429,
+        "ms": 535,
+        "success": false,
+        "products": 0,
+        "titles": [],
+        "opReason": "GUEST_HOURLY",
+        "unrelated": false,
+        "error": "RATE_LIMIT"
+      },
+      {
+        "i": 3,
+        "q": "asdfghjkl qwerty nonexistent product xyzzy",
+        "status": 429,
+        "ms": 252,
+        "success": false,
+        "products": 0,
+        "titles": [],
+        "opReason": "GUEST_HOURLY",
+        "unrelated": false,
+        "error": "RATE_LIMIT"
+      },
+      {
+        "i": 4,
+        "q": "asdfghjkl qwerty nonexistent product xyzzy",
+        "status": 429,
+        "ms": 380,
+        "success": false,
+        "products": 0,
+        "titles": [],
+        "opReason": "GUEST_HOURLY",
+        "unrelated": false,
+        "error": "RATE_LIMIT"
+      },
+      {
+        "i": 5,
+        "q": "asdfghjkl qwerty nonexistent product xyzzy",
+        "status": 429,
+        "ms": 263,
+        "success": false,
+        "products": 0,
+        "titles": [],
+        "opReason": "GUEST_HOURLY",
+        "unrelated": false,
+        "error": "RATE_LIMIT"
+      }
+    ],
+    "nikeControl": {
+      "products": 22,
+      "success": true
+    },
+    "criticalControl": {
+      "status": 400,
+      "success": false,
+      "code": "QUERY_HOSTILE"
+    }
+  },
+  "verdict": "PASS"
+}
