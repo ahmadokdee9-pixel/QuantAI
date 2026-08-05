@@ -348,6 +348,7 @@
     "test:decision-audit": "npx --yes tsx scripts/decision-audit.mjs",
     "test:decision-drift": "npx --yes tsx scripts/decision-drift.mjs",
     "test:decision-integrity": "npx --yes tsx scripts/decision-integrity.mjs",
+    "test:critical-decision-run": "npx --yes tsx scripts/test-critical-decision-run.mjs",
     "test:decision-stability": "npx --yes tsx scripts/decision-stability.mjs",
     "test:decision-replay": "npx --yes tsx scripts/decision-replay.mjs",
     "test:decision-confidence": "npx --yes tsx scripts/decision-confidence.mjs",
