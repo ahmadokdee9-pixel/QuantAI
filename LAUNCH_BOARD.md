@@ -7,9 +7,9 @@
 **Rule:** When this list is empty → **Public Beta READY**.  
 **Rule:** Execute **one High issue at a time**. Stop at VERIFIED before starting the next.
 
-**Status:** `NOT READY` — **10 PB blockers** open · **6 High** remaining  
-**Plan status:** Wave 1 DONE · Critical C-01/C-02 DONE · **Wave 2 OPEN** — H-01 VERIFIED/REMOVED  
-**Last updated:** 2026-08-05 (H-01 verified — see `docs/wave1/H01_VERIFICATION_REPORT.md`)
+**Status:** `NOT READY` — **10 PB blockers** open · **5 High** remaining  
+**Plan status:** Wave 1 DONE · Critical C-01/C-02 DONE · **Wave 2 OPEN** — H-01 ✓ · H-06 ✓  
+**Last updated:** 2026-08-05 (H-06 verified — see `docs/wave1/H06_VERIFICATION_REPORT.md`)
 
 ---
 
@@ -17,25 +17,25 @@
 
 **Objective:** Eliminate confirmed High production defects. No features. No UX polish. No unrelated refactors.
 
-**H-01:** VERIFIED and **deleted forever** (2026-08-05). Evidence: `docs/wave1/H01_VERIFICATION_REPORT.md` · Independent QA: `docs/wave1/H01_INDEPENDENT_QA.json`.
+**H-01:** VERIFIED and **deleted forever** (2026-08-05). Evidence: `docs/wave1/H01_VERIFICATION_REPORT.md`.  
+**H-06:** VERIFIED and **deleted forever** (2026-08-05). Evidence: `docs/wave1/H06_VERIFICATION_REPORT.md` · Independent QA: `docs/wave1/H06_INDEPENDENT_QA.json`.
 
 ### Remaining High queue (ranked — execute in this order)
 
 | Rank | ID | Maps to | Effort | Why this order |
 |-----:|----|---------|--------|----------------|
-| 1 | **H-06** | PB-01 (partial) | S–M | Production risk under guest load; stale intelligence |
-| 2 | **H-02** | PB-04 (quality) | M | Trust damage; empty-search spine cleared (H-01 ✓) |
-| 3 | **H-05** | PB-07 | M | Exploitability (missing CSP) |
-| 4 | **H-04** | PB-11 | S | Auth funnel 404; fast win after search/security pressure |
-| 5 | **H-07** | PB-09 | M–L | Bounce risk; heavier; after functional Highs |
-| 6 | **H-03** | PB-03 (config/billing) | S–M | Monetization; may be env SoT — after product reliability |
+| 1 | **H-02** | PB-04 (quality) | M | Trust damage; empty-search spine cleared (H-01 ✓) |
+| 2 | **H-05** | PB-07 | M | Exploitability (missing CSP) |
+| 3 | **H-04** | PB-11 | S | Auth funnel 404; fast win after search/security pressure |
+| 4 | **H-07** | PB-09 | M–L | Bounce risk; heavier; after functional Highs |
+| 5 | **H-03** | PB-03 (config/billing) | S–M | Monetization; may be env SoT — after product reliability |
 
-**Next to execute (after explicit approval only):** **H-06**  
+**Next to execute (after explicit approval only):** **H-02**  
 **Protocol per issue:** Reproduce → Failing regression → Fix → Build → Deploy → Prod verify → Independent QA → Remove from board → STOP
 
-**Wave 2 est. completion (High only):** ~7–11 eng-days sequential remaining  
+**Wave 2 est. completion (High only):** ~6–10 eng-days sequential remaining  
 **Public Beta Go/No-Go:** **NO-GO** until High queue + remaining PB blockers clear  
-**Remaining High count:** **6**
+**Remaining High count:** **5**
 
 ---
 
@@ -56,7 +56,7 @@
 
 | ID | Priority | Dependencies | Effort | Notes |
 |----|----------|--------------|--------|-------|
-| **PB-01** | P0 | PB-02 ✓, PB-10 ✓ | M | Economic envelope (auth/ceilings/kill) — overlaps H-06 |
+| **PB-01** | P0 | PB-02 ✓, PB-10 ✓ | M | Economic envelope (auth/ceilings/kill) — H-06 ✓ (guest capacity partial) |
 | **PB-04** | P0 | PB-10 ✓ | M | Search yield SLO — H-01 ✓ · **owns H-02** |
 | **PB-03** | P0 | Stripe, Clerk | M | Plan SoT — **owns H-03** |
 | **PB-07** | P1 | — | M | CSP/XSS — **owns H-05** |
@@ -75,8 +75,8 @@
 PB-02 + PB-10 deleted forever.
 
 ### Wave 2 — High Hardening — OPEN
-H-01 deleted. Execute remaining ranked High queue (H-06 → … → H-03). One at a time.  
-PB-01 full economic envelope may absorb H-06 when that rank is reached.
+H-01 + H-06 deleted. Execute remaining ranked High queue (H-02 → … → H-03). One at a time.  
+PB-01 full economic envelope remains for auth/ceilings/kill beyond H-06.
 
 ### Wave 3+ — Remaining PB not covered by High queue
 PB-08, PB-05, PB-12, PB-13, residual PB-01/PB-03 scope after High mapping.
@@ -95,7 +95,7 @@ PB-08, PB-05, PB-12, PB-13, residual PB-01/PB-03 scope after High mapping.
 | **Effort** | M (1.5–2.5d) |
 | **Dependencies** | PB-02 ✓, PB-10 ✓ (Wave 1 done) |
 | **Owner** | Eng / Security |
-| **Wave** | 2 (after / with H-06) |
+| **Wave** | 2–3 (H-06 guest capacity ✓; auth/ceilings/kill remain) |
 | **Verification** | Unauth → 401/403; ceiling → 429; kill switch works; auth path 200 |
 | **Definition of Done** | Auth + shared ceilings + kill switch + smoke on paid public paths |
 
@@ -241,4 +241,4 @@ PB-08, PB-05, PB-12, PB-13, residual PB-01/PB-03 scope after High mapping.
 4. STOP. Await approval for the next High.  
 5. Open count = 0 → **PUBLIC BETA READY**.
 
-**Do not start the next High (H-06) until Release Director approval is explicit.**
+**Do not start the next High (H-02) until Release Director approval is explicit.**

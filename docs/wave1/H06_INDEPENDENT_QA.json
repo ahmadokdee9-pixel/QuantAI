@@ -1,0 +1,218 @@
+{
+  "issue": "H-06",
+  "at": "2026-08-05T22:09:55.541Z",
+  "base": "https://www.quantaihq.com",
+  "probes": {
+    "burst": [
+      {
+        "i": 1,
+        "status": 200,
+        "ms": 8477,
+        "success": true,
+        "products": 12,
+        "trayHeadline": null,
+        "opReason": null,
+        "capacityHit": false,
+        "error": null,
+        "code": null
+      },
+      {
+        "i": 2,
+        "status": 200,
+        "ms": 8871,
+        "success": true,
+        "products": 12,
+        "trayHeadline": null,
+        "opReason": null,
+        "capacityHit": false,
+        "error": null,
+        "code": null
+      },
+      {
+        "i": 3,
+        "status": 200,
+        "ms": 8998,
+        "success": true,
+        "products": 12,
+        "trayHeadline": null,
+        "opReason": null,
+        "capacityHit": false,
+        "error": null,
+        "code": null
+      },
+      {
+        "i": 4,
+        "status": 200,
+        "ms": 8610,
+        "success": true,
+        "products": 12,
+        "trayHeadline": null,
+        "opReason": null,
+        "capacityHit": false,
+        "error": null,
+        "code": null
+      },
+      {
+        "i": 5,
+        "status": 200,
+        "ms": 8081,
+        "success": true,
+        "products": 12,
+        "trayHeadline": null,
+        "opReason": null,
+        "capacityHit": false,
+        "error": null,
+        "code": null
+      },
+      {
+        "i": 6,
+        "status": 200,
+        "ms": 8979,
+        "success": true,
+        "products": 12,
+        "trayHeadline": null,
+        "opReason": null,
+        "capacityHit": false,
+        "error": null,
+        "code": null
+      },
+      {
+        "i": 7,
+        "status": 200,
+        "ms": 8183,
+        "success": true,
+        "products": 12,
+        "trayHeadline": null,
+        "opReason": null,
+        "capacityHit": false,
+        "error": null,
+        "code": null
+      },
+      {
+        "i": 8,
+        "status": 200,
+        "ms": 8528,
+        "success": true,
+        "products": 12,
+        "trayHeadline": null,
+        "opReason": null,
+        "capacityHit": false,
+        "error": null,
+        "code": null
+      },
+      {
+        "i": 9,
+        "status": 200,
+        "ms": 8962,
+        "success": true,
+        "products": 12,
+        "trayHeadline": null,
+        "opReason": null,
+        "capacityHit": false,
+        "error": null,
+        "code": null
+      },
+      {
+        "i": 10,
+        "status": 200,
+        "ms": 8881,
+        "success": true,
+        "products": 12,
+        "trayHeadline": null,
+        "opReason": null,
+        "capacityHit": false,
+        "error": null,
+        "code": null
+      },
+      {
+        "i": 11,
+        "status": 200,
+        "ms": 9037,
+        "success": true,
+        "products": 12,
+        "trayHeadline": null,
+        "opReason": null,
+        "capacityHit": false,
+        "error": null,
+        "code": null
+      },
+      {
+        "i": 12,
+        "status": 200,
+        "ms": 8290,
+        "success": true,
+        "products": 12,
+        "trayHeadline": null,
+        "opReason": null,
+        "capacityHit": false,
+        "error": null,
+        "code": null
+      },
+      {
+        "i": 13,
+        "status": 200,
+        "ms": 8134,
+        "success": true,
+        "products": 12,
+        "trayHeadline": null,
+        "opReason": null,
+        "capacityHit": false,
+        "error": null,
+        "code": null
+      },
+      {
+        "i": 14,
+        "status": 200,
+        "ms": 8279,
+        "success": true,
+        "products": 12,
+        "trayHeadline": null,
+        "opReason": null,
+        "capacityHit": false,
+        "error": null,
+        "code": null
+      },
+      {
+        "i": 15,
+        "status": 200,
+        "ms": 8397,
+        "success": true,
+        "products": 12,
+        "trayHeadline": null,
+        "opReason": null,
+        "capacityHit": false,
+        "error": null,
+        "code": null
+      },
+      {
+        "i": 16,
+        "status": 200,
+        "ms": 8946,
+        "success": true,
+        "products": 12,
+        "trayHeadline": null,
+        "opReason": null,
+        "capacityHit": false,
+        "error": null,
+        "code": null
+      }
+    ],
+    "dysonControl": {
+      "status": 200,
+      "ms": 11535,
+      "success": true,
+      "products": 18,
+      "trayHeadline": null,
+      "opReason": null,
+      "capacityHit": false,
+      "error": null,
+      "code": null
+    },
+    "criticalControl": {
+      "status": 400,
+      "success": false,
+      "code": "QUERY_HOSTILE"
+    }
+  },
+  "verdict": "PASS"
+}
