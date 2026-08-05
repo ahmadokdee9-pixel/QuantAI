@@ -26,6 +26,7 @@ import { runLiveCommerceDiscovery, type LiveCommerceDiscoveryMeta } from "@/lib/
 import { applyHardIdentityGate, buildIdentityDebugSummary, recoverSafeIdentityBreadth } from "@/lib/intelligence/productIdentity";
 import { intentMatchEnvelope } from "@/lib/intelligence/searchIntentV2";
 import {
+  decideGuestRateLimitServe,
   enforceAuthSearchLimits,
   enforceGuestSearchLimits,
   MAX_SEARCH_QUERY_LENGTH,
@@ -667,34 +668,42 @@ async function handleSearch(
       const guestId = requestIdentifier(opts?.headers);
       const limited = await enforceGuestSearchLimits(guestId);
       if (!limited.ok) {
+        let hasCachedTray = false;
+        let hasStaleTray = false;
+        let cachedTray: SearchPipelineTray | null = null;
+        let staleTray: SearchPipelineTray | null = null;
         try {
-          const cachedTray = await loadPipelineWithInflightDedupe(`guest:${pipelineKey}`, () =>
+          cachedTray = await loadPipelineWithInflightDedupe(`guest:${pipelineKey}`, () =>
             getCachedGuestSearchPipeline(pipelineKey)
           );
-          if (cachedTray.products.length > 0) {
-            guestOperationalDegraded = {
-              degraded: true,
-              reason: `guest_rate_limit_${limited.code.toLowerCase()}_cached_tray`,
-              retryAfter: limited.retryAfter,
-            };
-            preloadedGuestTray = cachedTray;
-          }
+          hasCachedTray = Boolean(cachedTray.products.length > 0);
         } catch {
-          // no cached tray — fall through to rate-limit response
+          cachedTray = null;
         }
-        if (!guestOperationalDegraded) {
-          const staleTray = getGuestStaleTray(pipelineKey);
-          if (staleTray?.products.length) {
-            guestOperationalDegraded = {
-              degraded: true,
-              reason: `guest_rate_limit_${limited.code.toLowerCase()}_stale_tray`,
-              retryAfter: limited.retryAfter,
-              stale: true,
-            };
-            preloadedGuestTray = staleTray;
-          }
-        }
-        if (!guestOperationalDegraded) {
+        staleTray = getGuestStaleTray(pipelineKey);
+        hasStaleTray = Boolean(staleTray?.products.length);
+
+        const serve = decideGuestRateLimitServe({
+          limited: true,
+          hasCachedTray,
+          hasStaleTray,
+          limitCode: limited.code,
+        });
+
+        if (serve.action === "serve_cache_clean" && cachedTray) {
+          // H-06: warm guest cache under soft limit is a normal cache serve — no capacity banner.
+          preloadedGuestTray = cachedTray;
+          markRateLimited429({ servedDegraded: false, emptyOn429: false });
+        } else if (serve.action === "serve_stale_degraded" && staleTray) {
+          guestOperationalDegraded = {
+            degraded: true,
+            reason: serve.reason,
+            retryAfter: limited.retryAfter,
+            stale: true,
+          };
+          preloadedGuestTray = staleTray;
+          markRateLimited429({ servedDegraded: true, emptyOn429: false });
+        } else {
           markRateLimited429({ servedDegraded: false, emptyOn429: true });
           return jsonSearch(
             {
@@ -724,7 +733,6 @@ async function handleSearch(
             }
           );
         }
-        markRateLimited429({ servedDegraded: true, emptyOn429: false });
       }
     }
 

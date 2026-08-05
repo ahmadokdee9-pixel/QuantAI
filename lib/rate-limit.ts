@@ -58,6 +58,15 @@ export function getRateLimitStatus(): RateLimitStatus {
   };
 }
 
+function envInt(name: string, fallback: number): number {
+  const n = Number(process.env[name]);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
+}
+
+/** Keep in sync with `guestSearchHourlyMax` / burst helpers in searchAbuseProtection. */
+const GUEST_SEARCH_HOURLY_MAX = envInt("GUEST_SEARCH_HOURLY_MAX", 40);
+const GUEST_SEARCH_BURST_PER_MIN = envInt("GUEST_SEARCH_BURST_PER_MIN", 12);
+
 /** Shopping search: per authenticated user, sliding window (only when Upstash is configured). */
 export const searchRatelimit = redis
   ? new Ratelimit({
@@ -67,12 +76,21 @@ export const searchRatelimit = redis
     })
   : null;
 
-/** Guest shopping search — stricter than signed-in hourly cap. */
+/** Guest shopping search — stricter than signed-in hourly cap (env-tunable). */
 export const guestSearchRatelimit = redis
   ? new Ratelimit({
       redis,
-      limiter: Ratelimit.slidingWindow(12, "1 h"),
+      limiter: Ratelimit.slidingWindow(GUEST_SEARCH_HOURLY_MAX, "1 h"),
       prefix: "quantai:search:guest",
+    })
+  : null;
+
+/** Guest burst — shared across instances (env-tunable). */
+export const guestSearchBurstRatelimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(GUEST_SEARCH_BURST_PER_MIN, "1 m"),
+      prefix: "quantai:search:guest:burst",
     })
   : null;
 
@@ -116,7 +134,8 @@ const memoryBuckets = new Map<string, { count: number; resetAt: number }>();
 
 const MEMORY_LIMITS: Record<string, { max: number; windowMs: number }> = {
   "quantai:search": { max: 45, windowMs: 60 * 60 * 1000 },
-  "quantai:search:guest": { max: 12, windowMs: 60 * 60 * 1000 },
+  "quantai:search:guest": { max: GUEST_SEARCH_HOURLY_MAX, windowMs: 60 * 60 * 1000 },
+  "quantai:search:guest:burst": { max: GUEST_SEARCH_BURST_PER_MIN, windowMs: 60 * 1000 },
   "quantai:ai-chat": { max: 35, windowMs: 60 * 60 * 1000 },
   "quantai:compare-verdict": { max: 25, windowMs: 60 * 60 * 1000 },
   "quantai:copilot": { max: 40, windowMs: 60 * 60 * 1000 },

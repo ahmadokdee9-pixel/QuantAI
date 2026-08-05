@@ -5,6 +5,7 @@
 
 import {
   enforceLimit,
+  guestSearchBurstRatelimit,
   guestSearchRatelimit,
   searchRatelimit,
   type RateLimitResult,
@@ -24,16 +25,46 @@ function envInt(name: string, fallback: number): number {
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
 }
 
+/** Mild shopping sessions + burst probes must not trip capacity UX (H-06). */
 export function guestSearchHourlyMax(): number {
-  return envInt("GUEST_SEARCH_HOURLY_MAX", 12);
+  return envInt("GUEST_SEARCH_HOURLY_MAX", 40);
 }
 
 export function guestSearchDailyMax(): number {
-  return envInt("GUEST_SEARCH_DAILY_MAX", 20);
+  return envInt("GUEST_SEARCH_DAILY_MAX", 80);
 }
 
 export function guestSearchBurstPerMinute(): number {
-  return envInt("GUEST_SEARCH_BURST_PER_MIN", 4);
+  return envInt("GUEST_SEARCH_BURST_PER_MIN", 12);
+}
+
+/**
+ * H-06: when a guest soft-limit trips, warm pipeline cache is a normal cache serve.
+ * Only true stale fallback is capacity-degraded; otherwise hard 429.
+ */
+export type GuestRateLimitServeDecision =
+  | { action: "allow_live"; degraded?: false }
+  | { action: "serve_cache_clean"; degraded?: false }
+  | { action: "serve_stale_degraded"; degraded: true; reason: string }
+  | { action: "reject_429"; degraded?: false };
+
+export function decideGuestRateLimitServe(args: {
+  limited: boolean;
+  hasCachedTray: boolean;
+  hasStaleTray: boolean;
+  limitCode?: SearchLimitCode;
+}): GuestRateLimitServeDecision {
+  if (!args.limited) return { action: "allow_live" };
+  if (args.hasCachedTray) return { action: "serve_cache_clean" };
+  if (args.hasStaleTray) {
+    const code = (args.limitCode ?? "GUEST_HOURLY").toLowerCase();
+    return {
+      action: "serve_stale_degraded",
+      degraded: true,
+      reason: `guest_rate_limit_${code}_stale_tray`,
+    };
+  }
+  return { action: "reject_429" };
 }
 
 export function authSearchBurstPerMinute(): number {
@@ -42,7 +73,6 @@ export function authSearchBurstPerMinute(): number {
 
 export const MAX_SEARCH_QUERY_LENGTH = envInt("SEARCH_QUERY_MAX_LENGTH", 220);
 
-const guestBurstBuckets = new Map<string, { count: number; resetAt: number }>();
 const guestDailyBuckets = new Map<string, { count: number; resetAt: number }>();
 const authBurstBuckets = new Map<string, { count: number; resetAt: number }>();
 
@@ -115,16 +145,14 @@ export function authHourlyLimitMessage(retryAfter: number): string {
   return `Hourly intelligence throughput limit reached.${wait}`;
 }
 
-/** Guest: burst/min → daily cap → hourly cap (Upstash or memory). */
+/** Guest: burst/min → daily cap → hourly cap (shared Upstash in production). */
 export async function enforceGuestSearchLimits(guestId: string): Promise<SearchLimitDenied | { ok: true }> {
   const id = guestId.slice(0, 128) || "unknown";
 
-  const burst = slidingWindowLimit(
-    guestBurstBuckets,
-    id,
-    guestSearchBurstPerMinute(),
-    60 * 1000
-  );
+  const burst = await enforceLimit(guestSearchBurstRatelimit, id, {
+    memoryPrefix: "quantai:search:guest:burst",
+    memoryMax: guestSearchBurstPerMinute(),
+  });
   if (!burst.ok) {
     return {
       ok: false,
