@@ -56,11 +56,11 @@ export default function HeroIntelligenceCanvas() {
   const verdictActive = activeSignal === SIGNALS.length + 1;
 
   return (
-    <aside className="qa-ref-hero-canvas" aria-label="Commerce intelligence mesh">
+    <aside className="qa-ref-hero-canvas" aria-label="Decision pathway">
       <div className="qa-ref-hero-canvas__head">
         <span className="qa-ref-hero-canvas__pulse" aria-hidden />
-        <p className="qa-ref-hero-canvas__kicker">Live intelligence network</p>
-        <span className="qa-ref-hero-canvas__status">Signal flow active</span>
+        <p className="qa-ref-hero-canvas__kicker">Decision pathway</p>
+        <span className="qa-ref-hero-canvas__status">Observing</span>
       </div>
 
       <svg

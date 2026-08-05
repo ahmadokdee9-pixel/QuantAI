@@ -1421,6 +1421,18 @@ body.qa-ui-v1 {
   box-shadow: 0 10px 26px rgba(14, 16, 24, 0.24);
 }
 
+.qa-ui-v1 .qa-ui-btn-primary:focus-visible,
+.qa-ui-v1 .qa-ui-btn-secondary:focus-visible,
+.qa-ui-v1 .qa-ui-btn-ghost:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(91, 111, 217, 0.28);
+}
+
+.qa-ui-v1 .qa-ui-btn-primary:active:not(:disabled),
+.qa-ui-v1 .qa-ui-btn-secondary:active:not(:disabled) {
+  transform: translateY(0.5px);
+}
+
 .qa-ui-v1 .qa-ui-btn-secondary {
   display: inline-flex;
   align-items: center;

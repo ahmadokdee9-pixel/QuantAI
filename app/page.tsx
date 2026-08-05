@@ -872,10 +872,10 @@ export default function Home() {
               <div className="qa-ref-hero__surface-depth" aria-hidden />
 
               <header className="qa-ref-hero__row qa-ref-hero__row--exec">
-                <h1 className="qa-ref-hero__exec-title">Institutional Commerce Decision Engine</h1>
+                <h1 className="qa-ref-hero__exec-title">Decision Intelligence, refined</h1>
                 <p className="qa-ref-hero__exec-lead">
-                  Understand before acting. Reason before deciding. Evidence before confidence.
-                  Memory before repetition. Consensus before commitment.
+                  Calm reasoning over market evidence. Precision before commitment.
+                  Continuity as conditions change.
                 </p>
               </header>
 
@@ -945,7 +945,7 @@ export default function Home() {
 
                 {!isSignedIn && (
                   <div className="qa-ref-guest-banner qa-ref-hero__guest">
-                    <p>Guest mode — sign in for full intelligence synthesis and institutional decision memory.</p>
+                    <p>Guest mode — sign in to retain decision memory and deeper continuity.</p>
                     <SignInButton mode="modal" forceRedirectUrl="/dashboard">
                       <button type="button" className="qa-ref-btn qa-ref-btn--ghost">
                         Sign in
@@ -1114,21 +1114,14 @@ export default function Home() {
             className="qa-ref-section qa-ref-section--pricing scroll-mt-24 qa-ref-flow-node"
           >
             <div className="qa-ref-section-intro qa-ref-section-intro--intel-layers">
-              <p className="qa-ref-kicker">Decision maturity</p>
-              <h2 className="qa-ref-h2">Depth of reasoning, not volume of tools</h2>
+              <p className="qa-ref-kicker">Access</p>
+              <h2 className="qa-ref-h2">Clarity scales with commitment</h2>
               <p className="qa-ref-lead qa-ref-lead--narrow">
-                Access deeper evidence, stronger continuity, and clearer commitment thresholds as
-                decisions grow more important.
-              </p>
-              <p className="qa-ref-intel-layers__capabilities">
-                <span>Evidence before confidence</span>
-                <span>Memory before repetition</span>
-                <span>Consensus before commitment</span>
-                <span>Narrative over noise</span>
-                <span>Continuity over snapshots</span>
+                Stronger continuity, deeper evidence, and clearer thresholds as decisions
+                become more consequential.
               </p>
               <Link href="/pricing" className="qa-ref-link mt-4 inline-flex items-center gap-2">
-                Compare all plans
+                View access levels
                 <ArrowRight className="size-4" aria-hidden />
               </Link>
             </div>

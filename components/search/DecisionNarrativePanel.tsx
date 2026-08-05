@@ -43,7 +43,7 @@ export default function DecisionNarrativePanel({ narrative, compact = false }: P
         transition={
           reduceMotion
             ? { duration: 0 }
-            : { duration: 0.22, delay: Math.min(index * 0.035, 0.18) }
+            : { duration: 0.26, ease: [0.22, 1, 0.36, 1], delay: Math.min(index * 0.03, 0.15) }
         }
       >
         <h4 className="qa-decision-narrative__title">{block.title}</h4>

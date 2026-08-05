@@ -72,7 +72,7 @@ export default function DecisionConsensusPanel({ consensus, compact = false }: P
             initial={reduceMotion ? false : { height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={reduceMotion ? undefined : { height: 0, opacity: 0 }}
-            transition={{ duration: reduceMotion ? 0 : 0.22 }}
+            transition={{ duration: reduceMotion ? 0 : 0.26, ease: [0.22, 1, 0.36, 1] }}
           >
             <div className="qa-instant-decision__grid">
               <div>

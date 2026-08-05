@@ -110,13 +110,13 @@ export default function GlobalCommerceIntelligenceNetwork() {
   return (
     <article className="qa-ref-gcin" aria-labelledby="qa-ref-gcin-title">
       <header className="qa-ref-gcin__intro">
-        <p className="qa-ref-kicker">Intelligence architecture</p>
+        <p className="qa-ref-kicker">How a decision is formed</p>
         <h2 id="qa-ref-gcin-title" className="qa-ref-h2 qa-ref-gcin__title">
-          How QuantAI Builds A Decision
+          Evidence in. Judgment out.
         </h2>
         <p className="qa-ref-lead qa-ref-lead--narrow qa-ref-gcin__lead">
-          Five market signals enter the intelligence core. Each dimension is validated, synthesized, and
-          resolved into a single actionable verdict.
+          Market signals are validated independently, reconciled without noise, and resolved
+          into one clear commitment posture.
         </p>
       </header>
 
@@ -210,7 +210,7 @@ export default function GlobalCommerceIntelligenceNetwork() {
             />
 
             {!reduceMotion &&
-              INFLOW_ROUTES.flatMap((route, ri) =>
+              INFLOW_ROUTES.flatMap((route) =>
                 [0, 1, 2].map((p) => (
                   <circle
                     key={`${route.id}-p-${p}`}
