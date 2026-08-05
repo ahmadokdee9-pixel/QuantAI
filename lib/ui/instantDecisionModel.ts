@@ -5,8 +5,12 @@
 
 import { buildProductAnalystBrief } from "@/lib/decisionAnalyst";
 import type { AnalystDecisionBrief } from "@/lib/decisionAnalyst/types";
+import { buildDecisionConsensus } from "@/lib/decisionConsensus";
+import type { DecisionConsensusBrief } from "@/lib/decisionConsensus/types";
 import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
+import { buildLocalLivingPresence } from "@/lib/decisionMemory/livingPresence";
 import type { LivingDecisionThread } from "@/lib/livingDecision/types";
+import { listLocalMissionsDashboard } from "@/lib/missions/clientMissions";
 import type { QuantProduct } from "@/lib/shoppingScore";
 import { getStoreTrustScore } from "@/lib/shoppingScore";
 import type { PrimaryVerdict } from "@/lib/ui/decisionLanguage";
@@ -54,6 +58,8 @@ export type InstantDecisionViewModel = {
   timeline: DecisionTimelineSlot[];
   /** World-class analyst layer — scores, signals, Past/Now/Next. */
   analyst: AnalystDecisionBrief;
+  /** Agreement across independent intelligence modules. */
+  consensus: DecisionConsensusBrief;
   product: {
     title: string;
     store: string;
@@ -559,6 +565,45 @@ export function buildInstantDecisionViewModel(args: {
     });
   }
 
+  let presence = null;
+  let missionPendingCritical: number | null = null;
+  let missionLinked: boolean | null = null;
+  try {
+    if (typeof window !== "undefined") {
+      presence = buildLocalLivingPresence();
+      const dash = listLocalMissionsDashboard();
+      missionPendingCritical = dash.totals.criticalChanges;
+      const link = leader.link;
+      const q = (brief?.recommendation?.title || leader.title || "").toLowerCase();
+      missionLinked = dash.missions.some((m) =>
+        m.decisions.some(
+          (d) =>
+            (d.productLink && d.productLink === link) ||
+            (d.searchQuery &&
+              q &&
+              (d.searchQuery.toLowerCase().includes(q.slice(0, 18)) ||
+                q.includes(d.searchQuery.toLowerCase().slice(0, 18))))
+        )
+      );
+      if (dash.totals.activeMissions === 0) {
+        missionLinked = null;
+        missionPendingCritical = null;
+      }
+    }
+  } catch {
+    presence = null;
+  }
+
+  const consensus = buildDecisionConsensus({
+    action,
+    confidence,
+    analyst,
+    livingThread,
+    presence,
+    missionPendingCritical,
+    missionLinked,
+  });
+
   return {
     action,
     actionDetail,
@@ -570,6 +615,7 @@ export function buildInstantDecisionViewModel(args: {
     waitIntelligence,
     timeline: buildTimeline(action, confidence, waitIntelligence),
     analyst,
+    consensus,
     product: {
       title: leader.title,
       store: leader.store,

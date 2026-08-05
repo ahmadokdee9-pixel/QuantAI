@@ -22,6 +22,7 @@ import type { LivingDecisionThread } from "@/lib/livingDecision/types";
 import DecisionHistorySection from "@/components/decisionMemory/DecisionHistorySection";
 import WhatsChangedBadges from "@/components/decisionMemory/WhatsChangedBadges";
 import DecisionAnalystPanels from "@/components/search/DecisionAnalystPanels";
+import DecisionConsensusPanel from "@/components/search/DecisionConsensusPanel";
 import EnginePresenceLine from "@/components/search/EnginePresenceLine";
 import { thesisContinuityHeadline } from "@/lib/decisionThesis/snapshot";
 
@@ -231,6 +232,8 @@ export default function InstantDecisionCard({
           </div>
         </div>
       </div>
+
+      <DecisionConsensusPanel consensus={model.consensus} compact={compact} />
 
       <div className="qa-instant-decision__grid">
         <section className="qa-instant-decision__block">

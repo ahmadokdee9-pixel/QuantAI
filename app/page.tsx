@@ -874,8 +874,8 @@ export default function Home() {
               <header className="qa-ref-hero__row qa-ref-hero__row--exec">
                 <h1 className="qa-ref-hero__exec-title">Institutional Commerce Decision Engine</h1>
                 <p className="qa-ref-hero__exec-lead">
-                  A living intelligence engine — observing evidence, reasoning in Instant Decisions,
-                  remembering outcomes, and updating as the market moves.
+                  Decisions form when independent intelligence layers agree — evidence, Instant
+                  Decision, memory, and living continuity — then update as the market moves.
                 </p>
               </header>
 

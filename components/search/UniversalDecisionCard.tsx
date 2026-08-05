@@ -9,6 +9,9 @@ import { useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Bell, Check, ChevronDown, ExternalLink, Shield } from "lucide-react";
 import { buildUniversalAnalystBrief } from "@/lib/decisionAnalyst";
+import { buildDecisionConsensus } from "@/lib/decisionConsensus";
+import { buildLocalLivingPresence } from "@/lib/decisionMemory/livingPresence";
+import { listLocalMissionsDashboard } from "@/lib/missions/clientMissions";
 import type { UniversalDecision } from "@/lib/universalDecision/types";
 import { actionCommitmentLabel } from "@/lib/universalDecision/actions";
 import DomainEvidenceModules from "@/components/search/DomainEvidenceModules";
@@ -16,6 +19,7 @@ import type { LivingDecisionThread } from "@/lib/livingDecision/types";
 import DecisionHistorySection from "@/components/decisionMemory/DecisionHistorySection";
 import WhatsChangedBadges from "@/components/decisionMemory/WhatsChangedBadges";
 import DecisionAnalystPanels from "@/components/search/DecisionAnalystPanels";
+import DecisionConsensusPanel from "@/components/search/DecisionConsensusPanel";
 import EnginePresenceLine from "@/components/search/EnginePresenceLine";
 import { thesisContinuityHeadline } from "@/lib/decisionThesis/snapshot";
 
@@ -54,6 +58,46 @@ export default function UniversalDecisionCard({
     }
     return decision.analyst ?? buildUniversalAnalystBrief({ decision });
   }, [decision, livingThread]);
+
+  const consensus = useMemo(() => {
+    let presence = null;
+    let missionPendingCritical: number | null = null;
+    let missionLinked: boolean | null = null;
+    try {
+      if (typeof window !== "undefined") {
+        presence = buildLocalLivingPresence();
+        const dash = listLocalMissionsDashboard();
+        missionPendingCritical = dash.totals.criticalChanges;
+        const link = decision.leader?.link || null;
+        const q = (decision.leader?.title || decision.query || "").toLowerCase();
+        missionLinked = dash.missions.some((m) =>
+          m.decisions.some(
+            (d) =>
+              (d.productLink && link && d.productLink === link) ||
+              (d.searchQuery &&
+                q &&
+                (d.searchQuery.toLowerCase().includes(q.slice(0, 18)) ||
+                  q.includes(d.searchQuery.toLowerCase().slice(0, 18))))
+          )
+        );
+        if (dash.totals.activeMissions === 0) {
+          missionLinked = null;
+          missionPendingCritical = null;
+        }
+      }
+    } catch {
+      presence = null;
+    }
+    return buildDecisionConsensus({
+      action: decision.action,
+      confidence: decision.confidence,
+      analyst,
+      livingThread,
+      presence,
+      missionPendingCritical,
+      missionLinked,
+    });
+  }, [decision, analyst, livingThread]);
 
   const executiveSummary = analyst.executiveDecisionSummary || decision.executiveSummary;
 
@@ -150,6 +194,8 @@ export default function UniversalDecisionCard({
           </div>
         </div>
       ) : null}
+
+      <DecisionConsensusPanel consensus={consensus} compact={compact} />
 
       <div className="qa-instant-decision__grid">
         <div className="qa-instant-decision__block">
