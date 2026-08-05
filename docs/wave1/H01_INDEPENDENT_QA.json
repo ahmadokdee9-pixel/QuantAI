@@ -1,0 +1,59 @@
+{
+  "issue": "H-01",
+  "at": "2026-08-05T21:08:16.128Z",
+  "base": "https://www.quantaihq.com",
+  "deploymentHint": "www.quantaihq.com production",
+  "probes": {
+    "dyson": {
+      "q": "Dyson V15",
+      "status": 200,
+      "ms": 8481,
+      "success": true,
+      "products": 18,
+      "titles": [
+        "Brosendaal Filter geschikt voor Dyson V15 voor alle V15 modellen",
+        "Dyson cycloon v22 v15 detect extra Stofzuiger",
+        "972346-05 Dyson Cycloon V15"
+      ],
+      "stages": null,
+      "hardGate": null,
+      "recovery": null
+    },
+    "nike": {
+      "q": "Nike Pegasus 41",
+      "status": 200,
+      "ms": 8310,
+      "success": true,
+      "products": 24,
+      "titles": [
+        "Nike Men`s Air Zoom Pegasus 41 Olive - Volt - White Running Shoes 11.5",
+        "Nike Pegasus 41 GORE-TEX Men's Shoes",
+        "nike pegasus 41 women's road running shoes"
+      ],
+      "stages": null,
+      "hardGate": null,
+      "recovery": null
+    },
+    "macbookControl": {
+      "q": "MacBook Pro 14",
+      "status": 200,
+      "ms": 8962,
+      "success": true,
+      "products": 27,
+      "titles": [
+        "MacBook Pro 14\" (2023) - Apple M3 Pro met 12‐core CPU en 18-core GPU - 18GB RAM - SSD 1000GB - Standaarddisplay - QWERTY - Nederlands",
+        "Apple MacBook Pro M1 Pro",
+        "Apple MacBook Pro 14\" (2021) - Apple M1 Pro - 16GB RAM - 1TB SSD - Space Gray (goede staat)"
+      ],
+      "stages": null,
+      "hardGate": null,
+      "recovery": null
+    },
+    "criticalControl": {
+      "status": 400,
+      "success": false,
+      "code": "QUERY_HOSTILE"
+    }
+  },
+  "verdict": "PASS"
+}
