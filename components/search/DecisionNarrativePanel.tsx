@@ -44,14 +44,15 @@ export default function DecisionNarrativePanel({ narrative, compact = false }: P
     return (
       <motion.article
         key={block.id}
+        role="listitem"
         className="qa-decision-narrative__block"
-        initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+        initial={reduceMotion ? false : { opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={reduceMotion ? undefined : { opacity: 0, y: -4 }}
+        exit={reduceMotion ? undefined : { opacity: 0, y: -2 }}
         transition={
           reduceMotion
             ? { duration: 0 }
-            : { duration: 0.26, ease: [0.22, 1, 0.36, 1], delay: Math.min(index * 0.03, 0.15) }
+            : { duration: 0.24, ease: [0.22, 1, 0.36, 1], delay: Math.min(index * 0.025, 0.12) }
         }
       >
         <h4 className="qa-decision-narrative__title">{block.title}</h4>
@@ -69,7 +70,7 @@ export default function DecisionNarrativePanel({ narrative, compact = false }: P
       className={`qa-instant-decision__block qa-instant-decision__block--full qa-decision-narrative${
         compact ? " qa-decision-narrative--compact" : ""
       }`}
-      aria-label="Decision narrative"
+      aria-label="Decision reasoning"
     >
       <header className="qa-decision-narrative__head">
         <h3 className="qa-instant-decision__block-title">Reasoning</h3>
@@ -78,7 +79,7 @@ export default function DecisionNarrativePanel({ narrative, compact = false }: P
         ) : null}
       </header>
 
-      <div className="qa-decision-narrative__blocks">
+      <div className="qa-decision-narrative__blocks" role="list">
         {preview.map((b, i) => renderBlock(b, i))}
         <AnimatePresence initial={false}>
           {open && !compact

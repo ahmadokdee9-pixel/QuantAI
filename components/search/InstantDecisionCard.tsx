@@ -119,7 +119,7 @@ export default function InstantDecisionCard({
       initial={reduceMotion ? false : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={
-        reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 280, damping: 36, mass: 0.85 }
+        reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 260, damping: 38, mass: 0.9 }
       }
     >
       <header className="qa-instant-decision__header">

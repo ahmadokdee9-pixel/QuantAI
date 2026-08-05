@@ -138,9 +138,9 @@ export default function HeroSearchCommand({
   return (
     <motion.div
       className="qa-ref-neural-root"
-      initial={lite ? false : { opacity: 0, y: 8 }}
+      initial={lite ? false : { opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: lite ? 0 : 0.42, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: lite ? 0 : 0.36, ease: [0.22, 1, 0.36, 1] }}
     >
       <motion.div className="qi-command-ambient-breath" aria-hidden />
       <motion.div
