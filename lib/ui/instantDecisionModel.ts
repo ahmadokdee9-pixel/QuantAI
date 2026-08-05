@@ -7,6 +7,8 @@ import { buildProductAnalystBrief } from "@/lib/decisionAnalyst";
 import type { AnalystDecisionBrief } from "@/lib/decisionAnalyst/types";
 import { buildDecisionConsensus } from "@/lib/decisionConsensus";
 import type { DecisionConsensusBrief } from "@/lib/decisionConsensus/types";
+import { buildDecisionNarrative } from "@/lib/decisionNarrative";
+import type { DecisionNarrativeBrief } from "@/lib/decisionNarrative/types";
 import type { DecisionBriefDTO } from "@/lib/intelligence/decisionBriefEngine";
 import { buildLocalLivingPresence } from "@/lib/decisionMemory/livingPresence";
 import type { LivingDecisionThread } from "@/lib/livingDecision/types";
@@ -60,6 +62,8 @@ export type InstantDecisionViewModel = {
   analyst: AnalystDecisionBrief;
   /** Agreement across independent intelligence modules. */
   consensus: DecisionConsensusBrief;
+  /** Structured analyst narrative over existing intelligence. */
+  narrative: DecisionNarrativeBrief;
   product: {
     title: string;
     store: string;
@@ -604,6 +608,18 @@ export function buildInstantDecisionViewModel(args: {
     missionLinked,
   });
 
+  const narrative = buildDecisionNarrative({
+    action,
+    confidence,
+    analyst,
+    consensus,
+    livingThread,
+    presence,
+    missionLinked,
+    missionPendingCritical,
+    productTitle: leader.title,
+  });
+
   return {
     action,
     actionDetail,
@@ -616,6 +632,7 @@ export function buildInstantDecisionViewModel(args: {
     timeline: buildTimeline(action, confidence, waitIntelligence),
     analyst,
     consensus,
+    narrative,
     product: {
       title: leader.title,
       store: leader.store,

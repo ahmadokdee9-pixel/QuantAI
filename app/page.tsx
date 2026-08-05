@@ -874,8 +874,8 @@ export default function Home() {
               <header className="qa-ref-hero__row qa-ref-hero__row--exec">
                 <h1 className="qa-ref-hero__exec-title">Institutional Commerce Decision Engine</h1>
                 <p className="qa-ref-hero__exec-lead">
-                  Decisions form when independent intelligence layers agree — evidence, Instant
-                  Decision, memory, and living continuity — then update as the market moves.
+                  Understand before acting. Reason before deciding. Evidence before confidence.
+                  Memory before repetition. Consensus before commitment.
                 </p>
               </header>
 
@@ -1114,18 +1114,18 @@ export default function Home() {
             className="qa-ref-section qa-ref-section--pricing scroll-mt-24 qa-ref-flow-node"
           >
             <div className="qa-ref-section-intro qa-ref-section-intro--intel-layers">
-              <p className="qa-ref-kicker">Intelligence layers</p>
-              <h2 className="qa-ref-h2">Commerce Intelligence Access Layers</h2>
+              <p className="qa-ref-kicker">Decision maturity</p>
+              <h2 className="qa-ref-h2">Depth of reasoning, not volume of tools</h2>
               <p className="qa-ref-lead qa-ref-lead--narrow">
-                Three progressively deeper intelligence layers designed for trust validation, market analysis,
-                and executive-grade purchase decisions.
+                Access deeper evidence, stronger continuity, and clearer commitment thresholds as
+                decisions grow more important.
               </p>
               <p className="qa-ref-intel-layers__capabilities">
-                <span>Trust Analysis</span>
-                <span>Price Validation</span>
-                <span>Seller Intelligence</span>
-                <span>Market Context</span>
-                <span>Decision Confidence</span>
+                <span>Evidence before confidence</span>
+                <span>Memory before repetition</span>
+                <span>Consensus before commitment</span>
+                <span>Narrative over noise</span>
+                <span>Continuity over snapshots</span>
               </p>
               <Link href="/pricing" className="qa-ref-link mt-4 inline-flex items-center gap-2">
                 Compare all plans

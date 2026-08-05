@@ -12712,6 +12712,94 @@
   }
 }
 
+/* Decision Narrative — premium reading rhythm inside Instant Decision */
+.qa-decision-narrative {
+  margin: 0.7rem 0 0.35rem;
+  padding: 0.7rem 0.8rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.42) 0%,
+    rgba(15, 23, 42, 0.22) 100%
+  );
+}
+
+.qa-decision-narrative__head {
+  margin-bottom: 0.55rem;
+}
+
+.qa-decision-narrative__lead {
+  margin: 0.25rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  color: rgba(226, 232, 240, 0.92);
+}
+
+.qa-decision-narrative__blocks {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.qa-decision-narrative__block {
+  padding-top: 0.45rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.qa-decision-narrative__blocks > .qa-decision-narrative__block:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.qa-decision-narrative__title {
+  margin: 0 0 0.2rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.88);
+}
+
+.qa-decision-narrative__line {
+  margin: 0.12rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.42;
+  color: rgba(203, 213, 225, 0.92);
+}
+
+.qa-decision-narrative__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.65rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(165, 243, 252, 0.85);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.qa-decision-narrative__toggle:hover {
+  color: #a5f3fc;
+}
+
+.qa-decision-narrative--compact .qa-decision-narrative__lead {
+  font-size: 0.8rem;
+}
+
+.qa-decision-narrative--compact .qa-decision-narrative__line {
+  font-size: 0.74rem;
+}
+
+.qa-ref-hero__exec-lead {
+  max-width: 38rem;
+  line-height: 1.55;
+  letter-spacing: 0.01em;
+}
+
 @keyframes qa-living-presence-value {
   0%,
   100% {
@@ -12738,6 +12826,10 @@
   .qa-decision-consensus--changed,
   .qa-decision-consensus--changed .qa-decision-consensus__dot {
     animation: none !important;
+  }
+
+  .qa-decision-narrative__block {
+    transition: none !important;
   }
 
   .qa-instant-decision__confidence-track .qa-ui-confidence-fill,

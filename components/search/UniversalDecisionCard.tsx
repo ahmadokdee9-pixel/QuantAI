@@ -10,6 +10,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Bell, Check, ChevronDown, ExternalLink, Shield } from "lucide-react";
 import { buildUniversalAnalystBrief } from "@/lib/decisionAnalyst";
 import { buildDecisionConsensus } from "@/lib/decisionConsensus";
+import { buildDecisionNarrative } from "@/lib/decisionNarrative";
 import { buildLocalLivingPresence } from "@/lib/decisionMemory/livingPresence";
 import { listLocalMissionsDashboard } from "@/lib/missions/clientMissions";
 import type { UniversalDecision } from "@/lib/universalDecision/types";
@@ -20,6 +21,7 @@ import DecisionHistorySection from "@/components/decisionMemory/DecisionHistoryS
 import WhatsChangedBadges from "@/components/decisionMemory/WhatsChangedBadges";
 import DecisionAnalystPanels from "@/components/search/DecisionAnalystPanels";
 import DecisionConsensusPanel from "@/components/search/DecisionConsensusPanel";
+import DecisionNarrativePanel from "@/components/search/DecisionNarrativePanel";
 import EnginePresenceLine from "@/components/search/EnginePresenceLine";
 import { thesisContinuityHeadline } from "@/lib/decisionThesis/snapshot";
 
@@ -59,7 +61,7 @@ export default function UniversalDecisionCard({
     return decision.analyst ?? buildUniversalAnalystBrief({ decision });
   }, [decision, livingThread]);
 
-  const consensus = useMemo(() => {
+  const { consensus, narrative } = useMemo(() => {
     let presence = null;
     let missionPendingCritical: number | null = null;
     let missionLinked: boolean | null = null;
@@ -88,7 +90,7 @@ export default function UniversalDecisionCard({
     } catch {
       presence = null;
     }
-    return buildDecisionConsensus({
+    const nextConsensus = buildDecisionConsensus({
       action: decision.action,
       confidence: decision.confidence,
       analyst,
@@ -97,6 +99,18 @@ export default function UniversalDecisionCard({
       missionPendingCritical,
       missionLinked,
     });
+    const nextNarrative = buildDecisionNarrative({
+      action: decision.action,
+      confidence: decision.confidence,
+      analyst,
+      consensus: nextConsensus,
+      livingThread,
+      presence,
+      missionLinked,
+      missionPendingCritical,
+      productTitle: decision.leader?.title || decision.query,
+    });
+    return { consensus: nextConsensus, narrative: nextNarrative };
   }, [decision, analyst, livingThread]);
 
   const executiveSummary = analyst.executiveDecisionSummary || decision.executiveSummary;
@@ -194,6 +208,8 @@ export default function UniversalDecisionCard({
           </div>
         </div>
       ) : null}
+
+      <DecisionNarrativePanel narrative={narrative} compact={compact} />
 
       <DecisionConsensusPanel consensus={consensus} compact={compact} />
 

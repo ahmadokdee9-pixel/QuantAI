@@ -23,6 +23,7 @@ import DecisionHistorySection from "@/components/decisionMemory/DecisionHistoryS
 import WhatsChangedBadges from "@/components/decisionMemory/WhatsChangedBadges";
 import DecisionAnalystPanels from "@/components/search/DecisionAnalystPanels";
 import DecisionConsensusPanel from "@/components/search/DecisionConsensusPanel";
+import DecisionNarrativePanel from "@/components/search/DecisionNarrativePanel";
 import EnginePresenceLine from "@/components/search/EnginePresenceLine";
 import { thesisContinuityHeadline } from "@/lib/decisionThesis/snapshot";
 
@@ -232,6 +233,8 @@ export default function InstantDecisionCard({
           </div>
         </div>
       </div>
+
+      <DecisionNarrativePanel narrative={model.narrative} compact={compact} />
 
       <DecisionConsensusPanel consensus={model.consensus} compact={compact} />
 
