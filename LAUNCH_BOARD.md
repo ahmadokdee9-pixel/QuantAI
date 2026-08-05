@@ -8,8 +8,8 @@
 **Rule:** Execute by waves only. Verify production after every wave. Do not polish.
 
 **Status:** `NOT READY` — **10 blockers** open  
-**Plan status:** Wave 1 DONE · Wave 2 LOCKED (await explicit approval)  
-**Last updated:** 2026-08-05 (Wave 1 verified — see `docs/wave1/WAVE1_VERIFICATION_REPORT.md`)
+**Plan status:** Wave 1 DONE · Critical QA C-01/C-02 HARDENED · Wave 2 LOCKED  
+**Last updated:** 2026-08-05 (Critical Hardening verified — see `docs/wave1/CRITICAL_HARDENING_VERIFICATION_REPORT.md`)
 
 ---
 

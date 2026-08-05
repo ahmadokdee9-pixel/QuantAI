@@ -1,0 +1,276 @@
+{
+  "c01": [
+    {
+      "i": 1,
+      "status": 400,
+      "success": false,
+      "code": "QUERY_HOSTILE",
+      "error": "query rejected: hostile markup",
+      "action": null,
+      "hit": true
+    },
+    {
+      "i": 2,
+      "status": 400,
+      "success": false,
+      "code": "QUERY_HOSTILE",
+      "error": "query rejected: hostile markup",
+      "action": null,
+      "hit": true
+    },
+    {
+      "i": 3,
+      "status": 400,
+      "success": false,
+      "code": "QUERY_HOSTILE",
+      "error": "query rejected: hostile markup",
+      "action": null,
+      "hit": true
+    },
+    {
+      "i": 4,
+      "status": 400,
+      "success": false,
+      "code": "QUERY_HOSTILE",
+      "error": "query rejected: hostile markup",
+      "action": null,
+      "hit": true
+    },
+    {
+      "i": 5,
+      "status": 400,
+      "success": false,
+      "code": "QUERY_HOSTILE",
+      "error": "query rejected: hostile markup",
+      "action": null,
+      "hit": true
+    },
+    {
+      "i": 6,
+      "status": 400,
+      "success": false,
+      "code": "QUERY_HOSTILE",
+      "error": "query rejected: hostile markup",
+      "action": null,
+      "hit": true
+    },
+    {
+      "i": 7,
+      "status": 400,
+      "success": false,
+      "code": "QUERY_HOSTILE",
+      "error": "query rejected: hostile markup",
+      "action": null,
+      "hit": true
+    },
+    {
+      "i": 8,
+      "status": 400,
+      "success": false,
+      "code": "QUERY_HOSTILE",
+      "error": "query rejected: hostile markup",
+      "action": null,
+      "hit": true
+    },
+    {
+      "i": 9,
+      "status": 400,
+      "success": false,
+      "code": "QUERY_HOSTILE",
+      "error": "query rejected: hostile markup",
+      "action": null,
+      "hit": true
+    },
+    {
+      "i": 10,
+      "status": 400,
+      "success": false,
+      "code": "QUERY_HOSTILE",
+      "error": "query rejected: hostile markup",
+      "action": null,
+      "hit": true
+    }
+  ],
+  "c02": [
+    {
+      "i": 1,
+      "status": 422,
+      "success": false,
+      "code": "PRODUCT_PIPELINE_REQUIRED",
+      "decision": null,
+      "routed": true,
+      "hit": true,
+      "bad": false
+    },
+    {
+      "i": 2,
+      "status": 422,
+      "success": false,
+      "code": "PRODUCT_PIPELINE_REQUIRED",
+      "decision": null,
+      "routed": true,
+      "hit": true,
+      "bad": false
+    },
+    {
+      "i": 3,
+      "status": 422,
+      "success": false,
+      "code": "PRODUCT_PIPELINE_REQUIRED",
+      "decision": null,
+      "routed": true,
+      "hit": true,
+      "bad": false
+    },
+    {
+      "i": 4,
+      "status": 422,
+      "success": false,
+      "code": "PRODUCT_PIPELINE_REQUIRED",
+      "decision": null,
+      "routed": true,
+      "hit": true,
+      "bad": false
+    },
+    {
+      "i": 5,
+      "status": 422,
+      "success": false,
+      "code": "PRODUCT_PIPELINE_REQUIRED",
+      "decision": null,
+      "routed": true,
+      "hit": true,
+      "bad": false
+    },
+    {
+      "i": 6,
+      "status": 422,
+      "success": false,
+      "code": "PRODUCT_PIPELINE_REQUIRED",
+      "decision": null,
+      "routed": true,
+      "hit": true,
+      "bad": false
+    },
+    {
+      "i": 7,
+      "status": 422,
+      "success": false,
+      "code": "PRODUCT_PIPELINE_REQUIRED",
+      "decision": null,
+      "routed": true,
+      "hit": true,
+      "bad": false
+    },
+    {
+      "i": 8,
+      "status": 422,
+      "success": false,
+      "code": "PRODUCT_PIPELINE_REQUIRED",
+      "decision": null,
+      "routed": true,
+      "hit": true,
+      "bad": false
+    },
+    {
+      "i": 9,
+      "status": 422,
+      "success": false,
+      "code": "PRODUCT_PIPELINE_REQUIRED",
+      "decision": null,
+      "routed": true,
+      "hit": true,
+      "bad": false
+    },
+    {
+      "i": 10,
+      "status": 422,
+      "success": false,
+      "code": "PRODUCT_PIPELINE_REQUIRED",
+      "decision": null,
+      "routed": true,
+      "hit": true,
+      "bad": false
+    }
+  ],
+  "valid": [
+    {
+      "domain": "hotel",
+      "status": 200,
+      "success": true,
+      "action": "BUY",
+      "candidates": 12,
+      "code": null
+    },
+    {
+      "domain": "flight",
+      "status": 200,
+      "success": true,
+      "action": "WAIT",
+      "candidates": 11,
+      "code": null
+    },
+    {
+      "domain": "subscription",
+      "status": 200,
+      "success": true,
+      "action": "WAIT",
+      "candidates": 1,
+      "code": null
+    }
+  ],
+  "search": {
+    "status": 200,
+    "success": true,
+    "products": 26
+  },
+  "health": {
+    "ok": true,
+    "ready": true,
+    "ts": "2026-08-05T10:01:29.534Z",
+    "services": {
+      "clerk": true,
+      "supabase": true,
+      "serpapi": true,
+      "openai": true,
+      "stripe": false,
+      "upstash": true
+    },
+    "rateLimit": {
+      "backend": "upstash",
+      "shared": true,
+      "productionStrict": true,
+      "compliant": true
+    },
+    "ops": {
+      "hour": "2026-08-05T10",
+      "search_ok": 1,
+      "search_empty": 0,
+      "api_5xx": 0,
+      "upstream_cost": 0,
+      "rate_limit": 0,
+      "emptySearchRatePct": 0
+    },
+    "warnings": []
+  },
+  "billing": {
+    "status": 401
+  },
+  "auth": {
+    "status": 404,
+    "clerk": "protect-rewrite, dev-browser-missing"
+  },
+  "summary": {
+    "c01": "10/10",
+    "c02": "10/10",
+    "c01Pass": true,
+    "c02Pass": true,
+    "validHotel": true,
+    "validFlight": true,
+    "validSub": true,
+    "searchOk": true,
+    "rateLimitActive": true,
+    "billingNot5xx": true,
+    "authProtect": true
+  }
+}
