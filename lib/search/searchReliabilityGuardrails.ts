@@ -134,13 +134,11 @@ type StaleTrayEntry = {
 };
 
 const staleGuestTrayByKey = new Map<string, StaleTrayEntry>();
-let latestGuestTray: StaleTrayEntry | null = null;
 const STALE_TTL_MS = envInt("SEARCH_STALE_GUEST_TTL_MS", 15 * 60 * 1000);
 
 export function saveGuestStaleTray(cacheKey: string, tray: SearchPipelineTray): void {
   const entry: StaleTrayEntry = { tray, savedAtMs: Date.now() };
   staleGuestTrayByKey.set(cacheKey, entry);
-  latestGuestTray = entry;
 }
 
 function freshEnough(entry: StaleTrayEntry | null): entry is StaleTrayEntry {
@@ -148,9 +146,18 @@ function freshEnough(entry: StaleTrayEntry | null): entry is StaleTrayEntry {
   return Date.now() - entry.savedAtMs <= STALE_TTL_MS;
 }
 
+/**
+ * Same-query stale recovery only (H-02).
+ * Never fall back to another query's tray — that served unrelated products
+ * (e.g. prior Dyson) for nonsense / upstream-failing queries.
+ */
 export function getGuestStaleTray(cacheKey: string): SearchPipelineTray | null {
   const specific = staleGuestTrayByKey.get(cacheKey) ?? null;
   if (freshEnough(specific)) return specific.tray;
-  if (freshEnough(latestGuestTray)) return latestGuestTray.tray;
   return null;
+}
+
+/** Test helper — clears in-memory guest stale trays. */
+export function __resetGuestStaleTraysForTests(): void {
+  staleGuestTrayByKey.clear();
 }
