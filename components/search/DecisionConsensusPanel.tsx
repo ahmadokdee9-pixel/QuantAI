@@ -72,11 +72,11 @@ export default function DecisionConsensusPanel({ consensus, compact = false }: P
             initial={reduceMotion ? false : { height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={reduceMotion ? undefined : { height: 0, opacity: 0 }}
-            transition={{ duration: reduceMotion ? 0 : 0.26, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: reduceMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
             <div className="qa-instant-decision__grid">
               <div>
-                <h4 className="qa-instant-decision__block-title">Why consensus exists</h4>
+                <h4 className="qa-instant-decision__block-title">Why</h4>
                 <ul className="qa-instant-decision__list">
                   {consensus.whyConsensus.map((line) => (
                     <li key={line}>{line}</li>
@@ -84,7 +84,7 @@ export default function DecisionConsensusPanel({ consensus, compact = false }: P
                 </ul>
               </div>
               <div>
-                <h4 className="qa-instant-decision__block-title">Engines that agree</h4>
+                <h4 className="qa-instant-decision__block-title">Agree</h4>
                 {consensus.enginesAgree.length ? (
                   <ul className="qa-instant-decision__list">
                     {consensus.enginesAgree.map((line) => (
@@ -92,11 +92,11 @@ export default function DecisionConsensusPanel({ consensus, compact = false }: P
                     ))}
                   </ul>
                 ) : (
-                  <p className="qa-instant-decision__horizon-note">No agreeing modules yet.</p>
+                  <p className="qa-instant-decision__horizon-note">None yet.</p>
                 )}
               </div>
               <div>
-                <h4 className="qa-instant-decision__block-title">Engines that disagree</h4>
+                <h4 className="qa-instant-decision__block-title">Disagree</h4>
                 {consensus.enginesDisagree.length ? (
                   <ul className="qa-instant-decision__list qa-instant-decision__list--risk">
                     {consensus.enginesDisagree.map((line) => (
@@ -104,11 +104,11 @@ export default function DecisionConsensusPanel({ consensus, compact = false }: P
                     ))}
                   </ul>
                 ) : (
-                  <p className="qa-instant-decision__horizon-note">No disagreeing modules.</p>
+                  <p className="qa-instant-decision__horizon-note">None.</p>
                 )}
               </div>
               <div>
-                <h4 className="qa-instant-decision__block-title">Missing evidence</h4>
+                <h4 className="qa-instant-decision__block-title">Missing</h4>
                 <ul className="qa-instant-decision__list qa-instant-decision__list--risk">
                   {consensus.missingEvidence.map((line) => (
                     <li key={line}>{line}</li>

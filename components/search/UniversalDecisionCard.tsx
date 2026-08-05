@@ -125,15 +125,15 @@ export default function UniversalDecisionCard({
     <motion.section
       className={`qa-ref-exec-brief qa-instant-decision qa-instant-decision--${modifier}${compact ? " qa-instant-decision--compact" : ""}`}
       aria-label="Instant decision"
-      initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+      initial={reduceMotion ? false : { opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
       transition={
-        reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 260, damping: 38, mass: 0.9 }
+        reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 240, damping: 40, mass: 0.95 }
       }
     >
       <header className="qa-instant-decision__header">
-        <p className="qa-ref-exec-brief__kicker">Instant Decision</p>
-        <p className="qa-instant-decision__question">What should I do?</p>
+        <p className="qa-ref-exec-brief__kicker">Decision</p>
+        <p className="qa-instant-decision__question">What now?</p>
         {livingThread?.recentChanges?.length ? (
           <WhatsChangedBadges changes={livingThread.recentChanges} />
         ) : null}
@@ -170,9 +170,7 @@ export default function UniversalDecisionCard({
           </div>
         </div>
         {decision.contextualVerb !== decision.action ? (
-          <p className="qa-instant-decision__action-detail">
-            Commitment sense: {decision.contextualVerb}
-          </p>
+          <p className="qa-instant-decision__action-detail">{decision.contextualVerb}</p>
         ) : null}
       </div>
 
@@ -283,8 +281,8 @@ export default function UniversalDecisionCard({
             rel="noopener noreferrer"
             className="qa-ui-btn-primary qa-instant-decision__cta"
           >
-            Inspect option
-            <ExternalLink className="size-3.5 opacity-80" strokeWidth={1.75} aria-hidden />
+            Inspect
+            <ExternalLink className="size-3.5 opacity-75" strokeWidth={1.75} aria-hidden />
           </a>
         ) : null}
         {decision.watchable && onWatch ? (
@@ -297,12 +295,12 @@ export default function UniversalDecisionCard({
             {watching || watchFlash ? (
               <>
                 <Check className="size-3.5" strokeWidth={2} aria-hidden />
-                Watching decision
+                Watching
               </>
             ) : (
               <>
                 <Bell className="size-3.5" strokeWidth={1.75} aria-hidden />
-                Watch decision
+                Watch
               </>
             )}
           </button>
@@ -316,10 +314,10 @@ export default function UniversalDecisionCard({
           onClick={() => setTransparencyOpen((v) => !v)}
           aria-expanded={transparencyOpen}
         >
-          <Shield className="size-3.5 opacity-70" strokeWidth={1.75} aria-hidden />
-          Decision transparency
+          <Shield className="size-3.5 opacity-65" strokeWidth={1.75} aria-hidden />
+          Sources
           <ChevronDown
-            className={`size-3.5 opacity-60 transition-transform ${transparencyOpen ? "rotate-180" : ""}`}
+            className={`size-3.5 opacity-55 transition-transform ${transparencyOpen ? "rotate-180" : ""}`}
             strokeWidth={1.75}
             aria-hidden
           />
@@ -331,11 +329,11 @@ export default function UniversalDecisionCard({
               initial={reduceMotion ? false : { height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={reduceMotion ? undefined : { height: 0, opacity: 0 }}
+              transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.16, 1, 0.3, 1] }}
             >
               <p className="qa-instant-decision__transparency-lead">
-                Domain confidence {decision.domainConfidence}% · Trust: {decision.trust.label}
-                {decision.trust.score != null ? ` (${decision.trust.score})` : ""}. Facts vs
-                inference are labeled; confidence is capped by verified facts, not text volume.
+                Confidence {decision.domainConfidence}% · {decision.trust.label}
+                {decision.trust.score != null ? ` (${decision.trust.score})` : ""}.
               </p>
               <ul className="qa-instant-decision__systems">
                 {[...decision.trust.notes, ...analyst.evidenceSystems].map((n) => (

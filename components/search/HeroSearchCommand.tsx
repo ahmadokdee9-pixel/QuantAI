@@ -186,7 +186,7 @@ export default function HeroSearchCommand({
         />
 
         <div className="relative z-[2] flex flex-col gap-3 p-4 sm:gap-3.5 sm:p-5">
-          <div className="qa-ref-neural-stages" aria-hidden={loading ? undefined : true}>
+          <div className={`qa-ref-neural-stages${loading ? "" : " qa-ref-neural-stages--idle"}`} aria-hidden={loading ? undefined : true}>
             {(loading
               ? ["Observing", "Scanning", "Reasoning", "Deciding"]
               : ["Observe", "Scan", "Reason", "Decide"]
@@ -201,10 +201,10 @@ export default function HeroSearchCommand({
             aria-live="polite"
           >
             {loading
-              ? "Reading evidence · forming judgment"
+              ? "Reading evidence"
               : focused
-                ? "Ready when you are"
-                : "Describe the decision. QuantAI observes the market and returns a commitment posture."}
+                ? "Ready"
+                : "Describe the decision."}
           </p>
           <div className="flex flex-col gap-2.5 sm:flex-row sm:items-stretch sm:gap-3">
             <label className="sr-only" htmlFor={`${baseId}-q`}>

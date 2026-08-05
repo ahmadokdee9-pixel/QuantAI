@@ -944,7 +944,7 @@ export default function Home() {
 
                 {!isSignedIn && (
                   <div className="qa-ref-guest-banner qa-ref-hero__guest">
-                    <p>Quiet mode — sign in to keep memory across sessions.</p>
+                    <p>Sign in to keep memory.</p>
                     <SignInButton mode="modal" forceRedirectUrl="/dashboard">
                       <button type="button" className="qa-ref-btn qa-ref-btn--ghost">
                         Sign in

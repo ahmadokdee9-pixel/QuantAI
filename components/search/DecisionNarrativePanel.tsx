@@ -52,7 +52,7 @@ export default function DecisionNarrativePanel({ narrative, compact = false }: P
         transition={
           reduceMotion
             ? { duration: 0 }
-            : { duration: 0.24, ease: [0.22, 1, 0.36, 1], delay: Math.min(index * 0.025, 0.12) }
+            : { duration: 0.28, ease: [0.16, 1, 0.3, 1], delay: Math.min(index * 0.02, 0.1) }
         }
       >
         <h4 className="qa-decision-narrative__title">{block.title}</h4>
@@ -95,7 +95,7 @@ export default function DecisionNarrativePanel({ narrative, compact = false }: P
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
         >
-          {open ? "Less detail" : "More detail"}
+          {open ? "Less" : "More"}
           <ChevronDown
             className={`size-3.5 opacity-60 transition-transform ${open ? "rotate-180" : ""}`}
             strokeWidth={1.75}
