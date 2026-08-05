@@ -175,7 +175,7 @@ PB-08, PB-05, PB-12, PB-13, residual PB-01/PB-03 scope after High mapping.
 | **Effort** | M (2–3d) |
 | **Dependencies** | PB-10 ✓ |
 | **Owner** | Eng |
-| **Wave** | 2 rank H-02 (H-01 ✓) |
+| **Wave** | 2 (H-01 ✓ · H-02 ✓; residual SLO) |
 | **Verification** | Canary non-empty rate meets SLO; alert on breach |
 | **Definition of Done** | Written SLO + alert + recovery path |
 
@@ -241,4 +241,4 @@ PB-08, PB-05, PB-12, PB-13, residual PB-01/PB-03 scope after High mapping.
 4. STOP. Await approval for the next High.  
 5. Open count = 0 → **PUBLIC BETA READY**.
 
-**Do not start the next High (H-02) until Release Director approval is explicit.**
+**Do not start the next High (H-05) until Release Director approval is explicit.**
