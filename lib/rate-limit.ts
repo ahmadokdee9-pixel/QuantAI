@@ -2,8 +2,8 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
 function redisClient(): Redis | null {
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
   if (!url || !token) return null;
   return new Redis({ url, token });
 }
@@ -11,6 +11,52 @@ function redisClient(): Redis | null {
 const redis = redisClient();
 
 export type RateLimitResult = { ok: true } | { ok: false; retryAfter: number };
+
+/**
+ * Vercel Production (and explicit REQUIRE_UPSTASH) must not silently use
+ * per-instance memory limits — they are not shared across instances.
+ */
+export function productionRequiresSharedRateLimit(): boolean {
+  if (process.env.QUANTAI_REQUIRE_UPSTASH === "true") return true;
+  return process.env.VERCEL_ENV === "production";
+}
+
+export function sharedRateLimitConfigured(): boolean {
+  return Boolean(redis);
+}
+
+export type RateLimitStatus = {
+  backend: "upstash" | "memory" | "fail_closed";
+  shared: boolean;
+  productionStrict: boolean;
+  compliant: boolean;
+};
+
+export function getRateLimitStatus(): RateLimitStatus {
+  const productionStrict = productionRequiresSharedRateLimit();
+  if (redis) {
+    return {
+      backend: "upstash",
+      shared: true,
+      productionStrict,
+      compliant: true,
+    };
+  }
+  if (productionStrict) {
+    return {
+      backend: "fail_closed",
+      shared: false,
+      productionStrict,
+      compliant: false,
+    };
+  }
+  return {
+    backend: "memory",
+    shared: false,
+    productionStrict,
+    compliant: true,
+  };
+}
 
 /** Shopping search: per authenticated user, sliding window (only when Upstash is configured). */
 export const searchRatelimit = redis
@@ -65,7 +111,7 @@ export const guestCopilotRatelimit = redis
     })
   : null;
 
-/** In-memory fallback when Redis is absent — protects production from unlimited abuse. */
+/** In-memory fallback when Redis is absent — local/preview only (never silent in Production). */
 const memoryBuckets = new Map<string, { count: number; resetAt: number }>();
 
 const MEMORY_LIMITS: Record<string, { max: number; windowMs: number }> = {
@@ -100,8 +146,8 @@ function memoryLimit(
   };
 }
 
-export function rateLimitBackend(): "upstash" | "memory" {
-  return redis ? "upstash" : "memory";
+export function rateLimitBackend(): "upstash" | "memory" | "fail_closed" {
+  return getRateLimitStatus().backend;
 }
 
 export async function enforceLimit(
@@ -110,11 +156,39 @@ export async function enforceLimit(
   opts?: { memoryPrefix?: string; memoryMax?: number }
 ): Promise<RateLimitResult> {
   if (limiter) {
-    const { success, reset } = await limiter.limit(identifier);
-    if (success) return { ok: true };
-    const retryAfter = Math.max(0, Math.ceil((reset - Date.now()) / 1000));
-    return { ok: false, retryAfter };
+    try {
+      const { success, reset } = await limiter.limit(identifier);
+      if (success) return { ok: true };
+      const retryAfter = Math.max(0, Math.ceil((reset - Date.now()) / 1000));
+      return { ok: false, retryAfter };
+    } catch (err) {
+      if (productionRequiresSharedRateLimit()) {
+        console.error(
+          JSON.stringify({
+            ts: new Date().toISOString(),
+            level: "error",
+            event: "rate_limit.upstash_error",
+            message: err instanceof Error ? err.message : "upstash_limit_failed",
+          })
+        );
+        return { ok: false, retryAfter: 30 };
+      }
+      // Non-strict environments: fall through to memory.
+    }
   }
+
+  if (productionRequiresSharedRateLimit()) {
+    console.error(
+      JSON.stringify({
+        ts: new Date().toISOString(),
+        level: "error",
+        event: "rate_limit.fail_closed",
+        reason: "upstash_missing_in_production",
+      })
+    );
+    return { ok: false, retryAfter: 60 };
+  }
+
   const prefix = opts?.memoryPrefix ?? "quantai:search";
   return memoryLimit(prefix, identifier, opts?.memoryMax);
 }

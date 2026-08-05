@@ -237,6 +237,7 @@ import { buildWatchTasteCanaryMeta } from "@/lib/taste/watchTasteApply";
 import { TASTE_GRAMMAR_PIPELINE_CACHE_KEY } from "@/lib/taste/verticalTasteFlags";
 import { buildDegradedTrayNotice, buildEmptyTrayExplanation } from "@/lib/search/trayDiagnostics";
 import { logSearchEvent } from "@/lib/log/productionLog";
+import { recordOpsSignal } from "@/lib/ops/productionSignals";
 import type { DealClusterDTO } from "@/lib/deals/types";
 import type { SearchIntelligenceDTO } from "@/lib/intelligence/searchDecisionTypes";
 import type { SearchEntitlementsDTO } from "@/lib/subscription/entitlements";
@@ -601,8 +602,11 @@ async function handleSearch(
     error: string,
     message: string,
     extras?: Record<string, unknown>
-  ) =>
-    jsonSearch(
+  ) => {
+    if (status >= 500) {
+      recordOpsSignal("api_5xx", { route: "search", error, status });
+    }
+    return jsonSearch(
       {
         success: false,
         error,
@@ -618,6 +622,7 @@ async function handleSearch(
       },
       { status }
     );
+  };
 
   try {
     markSearchRequest();

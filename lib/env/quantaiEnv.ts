@@ -194,12 +194,12 @@ export function assertQuantaiEnvOnBoot(): void {
     console.info(message);
   }
 
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.VERCEL_ENV === "production" || process.env.QUANTAI_REQUIRE_UPSTASH === "true") {
     const hasUpstash =
       Boolean(envValue("UPSTASH_REDIS_REST_URL")) && Boolean(envValue("UPSTASH_REDIS_REST_TOKEN"));
     if (!hasUpstash) {
-      console.warn(
-        "[QuantAI env] UPSTASH_REDIS_REST_URL/TOKEN not set — guest search rate limits use in-memory fallback (not shared across instances)."
+      console.error(
+        "[QuantAI env] UPSTASH_REDIS_REST_URL/TOKEN missing in Production — rate limits FAIL-CLOSED (no silent in-memory fallback)."
       );
     }
   }

@@ -57,8 +57,27 @@ if (base) {
       fail("production_health_upstash_false");
       console.error("  Set UPSTASH_REDIS_* on Vercel Production and redeploy");
     }
+    if (json?.rateLimit?.backend === "upstash" && json?.rateLimit?.shared === true) {
+      pass("production_rateLimit_backend_upstash_shared");
+    } else if (process.env.REQUIRE_UPSTASH === "true") {
+      fail(
+        `production_rateLimit_not_shared backend=${json?.rateLimit?.backend} shared=${json?.rateLimit?.shared}`
+      );
+    } else {
+      console.warn(
+        `[WARN] rateLimit.backend=${json?.rateLimit?.backend ?? "missing"} shared=${json?.rateLimit?.shared}`
+      );
+    }
+    if (json?.ready === false && process.env.REQUIRE_UPSTASH === "true") {
+      fail("production_health_ready_false");
+    }
+    if (json?.ops && typeof json.ops.hour === "string") {
+      pass(`production_ops_hour_snapshot hour=${json.ops.hour}`);
+    } else {
+      console.warn("[WARN] ops hour snapshot missing (counters appear after first search)");
+    }
     const warnings = json?.warnings ?? [];
-    if (warnings.some((w) => String(w).includes("UPSTASH"))) {
+    if (warnings.some((w) => String(w).includes("UPSTASH") || String(w).includes("rate_limit"))) {
       console.warn("[WARN]", warnings.join("; "));
     }
   } catch (e) {
