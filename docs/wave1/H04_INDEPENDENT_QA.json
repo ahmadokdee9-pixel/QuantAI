@@ -1,0 +1,177 @@
+{
+  "issue": "H-04",
+  "at": "2026-08-10T23:47:15.186Z",
+  "base": "https://www.quantaihq.com",
+  "probes": {
+    "signIn": {
+      "final": {
+        "i": 3,
+        "status": 200,
+        "url": "/sign-in",
+        "loc": null,
+        "clerkReason": "session-token-and-uat-missing",
+        "csp": true,
+        "title": "QuantAI — Premium AI shopping intelligence"
+      },
+      "steps": [
+        {
+          "i": 0,
+          "status": 307,
+          "url": "/sign-in",
+          "loc": "https://guiding-bug-29.clerk.accounts.dev/v1/client/handshake?redirect_url=https%3A%2F%2Fwww.quantaihq.com%2Fsign-in&__clerk_api_version=2025-11-10&suffixed_cookies=false&__clerk_hs_reason=dev-browser-missing&format=nonce",
+          "clerkReason": "dev-browser-missing",
+          "csp": false
+        },
+        {
+          "i": 1,
+          "status": 307,
+          "url": "https://guiding-bug-29.clerk.accounts.dev/v1/client/handshake?redirect_url=https%3A%2F%2Fwww.quantaihq.com%2Fsign-in&__clerk_api_version=2025-11-10&suffixed_cookies=false&__clerk_hs_reason=dev-browser-missing&format=nonce",
+          "loc": "/sign-in?__clerk_handshake=eyJhbGciOiJSUzI1NiIsImNhdCI6ImNsX0I3ZDRQRDExMUFBQSIsImtpZCI6Imluc18zRE0yZWRoOVo4WURZU2tJMkpXZDBVQlNhVTgiLCJ0eXAiOiJKV1QifQ.eyJoYW5kc2hha2UiOlsiX19jbGllbnRfdWF0PTsgUGF0aD0vOyBFeHBpcmVzPVRodSwgMDEgSmFuIDE5NzAgMDA6MDA6MDAgR01UOyBTZWN1cmU7IFNhbWVTaXRlPU5vbmUiLCJfX2NsaWVudF91YXQ9MDsgUGF0aD0vOyBEb21haW49cXVhbnRhaWhxLmNvbTsgTWF4LUFnZT0zMTUzNjAwMDA7IFNlY3VyZTsgU2FtZVNpdGU9Tm9uZSIsIl9fc2Vzc2lvbj07IFBhdGg9LzsgRXhwaXJlcz1UaHUsIDAxIEphbiAxOTcwIDAwOjAwOjAwIEdNVDsgU2VjdXJlOyBTYW1lU2l0ZT1Ob25lIiwiX19jbGVya19kYl9qd3Q9ZHZiXzNIa0lTMmVCTmFLelVsWldkWkNjeWxiQW15ODsgUGF0aD0vOyBFeHBpcmVzPVR1ZSwgMTAgQXVnIDIwMjcgMjM6NDc6MTUgR01UOyBTZWN1cmU7IFNhbWVTaXRlPU5vbmUiXX0.ghteniybMPiPUFAYSIa_vWZ9Q3AClwjcCp43_7-NsblTqoVAR6q1RPl8iMwbsHgIxmVZFI_w--lYNWMV920Y7Rdwj-Dm6sE24TP8-CX9dW3kJY27rhMO9Swg0Wgr7HXYmyLPYAaQQbGKSPbuJ92DxdFTw3vCBCKPPtfewja1YVMMzq4hCmI0v3jaLI0nldC_0KRH5WEXVHVthEoqXwacZRNNI7CNHUH-O5SdV4Ybh3BpvsadeS1kvMOsE3zMyKd0r_MkTSviW-JEonqrXE35BznIU1JAFZraI35lCUpDLTt5budzp3z_9zTZ1kyqDyUFx9AsiIGzKlnGPEcP8vgUMQ",
+          "clerkReason": null,
+          "csp": false
+        },
+        {
+          "i": 2,
+          "status": 307,
+          "url": "/sign-in?__clerk_handshake=eyJhbGciOiJSUzI1NiIsImNhdCI6ImNsX0I3ZDRQRDExMUFBQSIsImtpZCI6Imluc18zRE0yZWRoOVo4WURZU2tJMkpXZDBVQlNhVTgiLCJ0eXAiOiJKV1QifQ.eyJoYW5kc2hha2UiOlsiX19jbGllbnRfdWF0PTsgUGF0aD0vOyBFeHBpcmVzPVRodSwgMDEgSmFuIDE5NzAgMDA6MDA6MDAgR01UOyBTZWN1cmU7IFNhbWVTaXRlPU5vbmUiLCJfX2NsaWVudF91YXQ9MDsgUGF0aD0vOyBEb21haW49cXVhbnRhaWhxLmNvbTsgTWF4LUFnZT0zMTUzNjAwMDA7IFNlY3VyZTsgU2FtZVNpdGU9Tm9uZSIsIl9fc2Vzc2lvbj07IFBhdGg9LzsgRXhwaXJlcz1UaHUsIDAxIEphbiAxOTcwIDAwOjAwOjAwIEdNVDsgU2VjdXJlOyBTYW1lU2l0ZT1Ob25lIiwiX19jbGVya19kYl9qd3Q9ZHZiXzNIa0lTMmVCTmFLelVsWldkWkNjeWxiQW15ODsgUGF0aD0vOyBFeHBpcmVzPVR1ZSwgMTAgQXVnIDIwMjcgMjM6NDc6MTUgR01UOyBTZWN1cmU7IFNhbWVTaXRlPU5vbmUiXX0.ghteniybMPiPUFAYSIa_vWZ9Q3AClwjcCp43_7-NsblTqoVAR6q1RPl8iMwbsHgIxmVZFI_w--lYNWMV920Y7Rdwj-Dm6sE24TP8-CX9dW3kJY27rhMO9Swg0Wgr7HXYmyLPYAaQQbGKSPbuJ92DxdFTw3vCBCKPPtfewja1YVMMzq4hCmI0v3jaLI0nldC_0KRH5WEXVHVthEoqXwacZRNNI7CNHUH-O5SdV4Ybh3BpvsadeS1kvMOsE3zMyKd0r_MkTSviW-JEonqrXE35BznIU1JAFZraI35lCUpDLTt5budzp3z_9zTZ1kyqDyUFx9AsiIGzKlnGPEcP8vgUMQ",
+          "loc": "/sign-in",
+          "clerkReason": "session-token-missing",
+          "csp": false
+        },
+        {
+          "i": 3,
+          "status": 200,
+          "url": "/sign-in",
+          "loc": null,
+          "clerkReason": "session-token-and-uat-missing",
+          "csp": true
+        }
+      ]
+    },
+    "protected": [
+      {
+        "path": "/dashboard",
+        "final": {
+          "i": 4,
+          "status": 200,
+          "url": "/sign-in?redirect_url=https%3A%2F%2Fwww.quantaihq.com%2Fdashboard",
+          "loc": null,
+          "clerkReason": "session-token-and-uat-missing",
+          "csp": true,
+          "title": "QuantAI — Premium AI shopping intelligence"
+        },
+        "hops": 5,
+        "loop": false
+      },
+      {
+        "path": "/decisions",
+        "final": {
+          "i": 4,
+          "status": 200,
+          "url": "/sign-in?redirect_url=https%3A%2F%2Fwww.quantaihq.com%2Fdecisions",
+          "loc": null,
+          "clerkReason": "session-token-and-uat-missing",
+          "csp": true,
+          "title": "QuantAI — Premium AI shopping intelligence"
+        },
+        "hops": 5,
+        "loop": false
+      },
+      {
+        "path": "/watchlist",
+        "final": {
+          "i": 4,
+          "status": 200,
+          "url": "/sign-in?redirect_url=https%3A%2F%2Fwww.quantaihq.com%2Fwatchlist",
+          "loc": null,
+          "clerkReason": "session-token-and-uat-missing",
+          "csp": true,
+          "title": "QuantAI — Premium AI shopping intelligence"
+        },
+        "hops": 5,
+        "loop": false
+      },
+      {
+        "path": "/saved",
+        "final": {
+          "i": 4,
+          "status": 200,
+          "url": "/sign-in?redirect_url=https%3A%2F%2Fwww.quantaihq.com%2Fsaved",
+          "loc": null,
+          "clerkReason": "session-token-and-uat-missing",
+          "csp": true,
+          "title": "QuantAI — Premium AI shopping intelligence"
+        },
+        "hops": 5,
+        "loop": false
+      },
+      {
+        "path": "/agent",
+        "final": {
+          "i": 4,
+          "status": 200,
+          "url": "/sign-in?redirect_url=https%3A%2F%2Fwww.quantaihq.com%2Fagent",
+          "loc": null,
+          "clerkReason": "session-token-and-uat-missing",
+          "csp": true,
+          "title": "QuantAI — Premium AI shopping intelligence"
+        },
+        "hops": 5,
+        "loop": false
+      },
+      {
+        "path": "/billing",
+        "final": {
+          "i": 4,
+          "status": 200,
+          "url": "/sign-in?redirect_url=https%3A%2F%2Fwww.quantaihq.com%2Fbilling",
+          "loc": null,
+          "clerkReason": "session-token-and-uat-missing",
+          "csp": true,
+          "title": "QuantAI — Premium AI shopping intelligence"
+        },
+        "hops": 5,
+        "loop": false
+      },
+      {
+        "path": "/feed",
+        "final": {
+          "i": 4,
+          "status": 200,
+          "url": "/sign-in?redirect_url=https%3A%2F%2Fwww.quantaihq.com%2Ffeed",
+          "loc": null,
+          "clerkReason": "session-token-and-uat-missing",
+          "csp": true,
+          "title": "QuantAI — Premium AI shopping intelligence"
+        },
+        "hops": 5,
+        "loop": false
+      }
+    ],
+    "nonDocumentProtect": {
+      "status": 404,
+      "reason": "protect-rewrite, dev-browser-missing"
+    },
+    "home": {
+      "status": 200,
+      "csp": true
+    },
+    "search": {
+      "status": 200,
+      "success": true,
+      "products": 22
+    },
+    "decision": {
+      "status": 400,
+      "success": false,
+      "code": "QUERY_HOSTILE"
+    },
+    "rateLimit": {
+      "backend": "upstash",
+      "shared": true,
+      "productionStrict": true,
+      "compliant": true
+    }
+  },
+  "verdict": "PASS"
+}

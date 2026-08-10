@@ -7,9 +7,9 @@
 **Rule:** When this list is empty → **Public Beta READY**.  
 **Rule:** Execute **one High issue at a time**. Stop at VERIFIED before starting the next.
 
-**Status:** `NOT READY` — **10 PB blockers** open · **3 High** remaining  
-**Plan status:** Wave 1 DONE · Critical C-01/C-02 DONE · **Wave 2 OPEN** — H-01 ✓ · H-06 ✓ · H-02 ✓ · H-05 ✓  
-**Last updated:** 2026-08-11 (H-05 verified — see `docs/wave1/H05_VERIFICATION_REPORT.md`)
+**Status:** `NOT READY` — **9 PB blockers** open · **2 High** remaining  
+**Plan status:** Wave 1 DONE · Critical C-01/C-02 DONE · **Wave 2 OPEN** — H-01 ✓ · H-06 ✓ · H-02 ✓ · H-05 ✓ · H-04 ✓  
+**Last updated:** 2026-08-11 (H-04 verified — see `docs/wave1/H04_VERIFICATION_REPORT.md`)
 
 ---
 
@@ -20,22 +20,22 @@
 **H-01:** VERIFIED and **deleted forever** (2026-08-05). Evidence: `docs/wave1/H01_VERIFICATION_REPORT.md`.  
 **H-06:** VERIFIED and **deleted forever** (2026-08-05). Evidence: `docs/wave1/H06_VERIFICATION_REPORT.md`.  
 **H-02:** VERIFIED and **deleted forever** (2026-08-05). Evidence: `docs/wave1/H02_VERIFICATION_REPORT.md`.  
-**H-05:** VERIFIED and **deleted forever** (2026-08-11). Evidence: `docs/wave1/H05_VERIFICATION_REPORT.md` · Independent QA: `docs/wave1/H05_INDEPENDENT_QA.json`.
+**H-05:** VERIFIED and **deleted forever** (2026-08-11). Evidence: `docs/wave1/H05_VERIFICATION_REPORT.md` · Independent QA: `docs/wave1/H05_INDEPENDENT_QA.json`.  
+**H-04:** VERIFIED and **deleted forever** (2026-08-11). Evidence: `docs/wave1/H04_VERIFICATION_REPORT.md` · Independent QA: `docs/wave1/H04_INDEPENDENT_QA.json`.
 
 ### Remaining High queue (ranked — execute in this order)
 
 | Rank | ID | Maps to | Effort | Why this order |
 |-----:|----|---------|--------|----------------|
-| 1 | **H-04** | PB-11 | S | Auth funnel 404; fast win after search/security pressure |
-| 2 | **H-07** | PB-09 | M–L | Bounce risk; heavier; after functional Highs |
-| 3 | **H-03** | PB-03 (config/billing) | S–M | Monetization; may be env SoT — after product reliability |
+| 1 | **H-07** | PB-09 | M–L | Bounce risk; heavier; after functional Highs |
+| 2 | **H-03** | PB-03 (config/billing) | S–M | Monetization; may be env SoT — after product reliability |
 
-**Next to execute (after explicit approval only):** **H-04**  
+**Next to execute (after explicit approval only):** **H-07**  
 **Protocol per issue:** Reproduce → Failing regression → Fix → Build → Deploy → Prod verify → Independent QA → Remove from board → STOP
 
-**Wave 2 est. completion (High only):** ~4–7 eng-days sequential remaining  
+**Wave 2 est. completion (High only):** ~3–6 eng-days sequential remaining  
 **Public Beta Go/No-Go:** **NO-GO** until High queue + remaining PB blockers clear  
-**Remaining High count:** **3**
+**Remaining High count:** **2**
 
 ---
 
@@ -61,7 +61,6 @@
 | **PB-03** | P0 | Stripe, Clerk | M | Plan SoT — **owns H-03** |
 | **PB-07** | P1 | — | M | CSP/XSS — H-05 ✓ (CSP live; residual XSS review optional) |
 | **PB-08** | P1 | PB-01 | S | Prompt/outbound review |
-| **PB-11** | P1 | Clerk | S | Guest auth UX — **owns H-04** |
 | **PB-09** | P1 | — | M | Payload weight — **owns H-07** |
 | **PB-05** | P1 | — | S | Identity |
 | **PB-12** | P1 | — | M | A11y baseline |
@@ -75,7 +74,7 @@
 PB-02 + PB-10 deleted forever.
 
 ### Wave 2 — High Hardening — OPEN
-H-01 + H-06 + H-02 + H-05 deleted. Execute remaining ranked High queue (H-04 → H-07 → H-03). One at a time.  
+H-01 + H-06 + H-02 + H-05 + H-04 deleted. Execute remaining ranked High queue (H-07 → H-03). One at a time.  
 PB-01 full economic envelope remains for auth/ceilings/kill beyond H-06.
 
 ### Wave 3+ — Remaining PB not covered by High queue
@@ -130,22 +129,6 @@ PB-08, PB-05, PB-12, PB-13, residual PB-01/PB-03 scope after High mapping.
 | **Wave** | 3 |
 | **Verification** | Allowlist enforced; injection cases fail closed |
 | **Definition of Done** | Review complete; remaining vectors mitigated |
-
----
-
-### PB-11 — Guest auth UX (no silent 404)
-
-| Field | Value |
-|-------|--------|
-| **Severity** | P1 |
-| **Business impact** | Signup abandonment |
-| **User impact** | Protected routes 404 instead of sign-in |
-| **Effort** | S (0.5d) |
-| **Dependencies** | Clerk protect |
-| **Owner** | Eng |
-| **Wave** | 2 rank H-04 |
-| **Verification** | Unauth → sign-in redirect; post-auth land correct |
-| **Definition of Done** | Known destinations never silent-404 |
 
 ---
 
@@ -241,4 +224,4 @@ PB-08, PB-05, PB-12, PB-13, residual PB-01/PB-03 scope after High mapping.
 4. STOP. Await approval for the next High.  
 5. Open count = 0 → **PUBLIC BETA READY**.
 
-**Do not start the next High (H-04) until Release Director approval is explicit.**
+**Do not start the next High (H-07) until Release Director approval is explicit.**
