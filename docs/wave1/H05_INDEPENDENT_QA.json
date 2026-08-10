@@ -1,0 +1,49 @@
+{
+  "issue": "H-05",
+  "at": "2026-08-10T23:29:48.916Z",
+  "base": "https://www.quantaihq.com",
+  "probes": {
+    "headers": [
+      {
+        "path": "/",
+        "status": 200,
+        "hasCsp": true,
+        "cspPreview": "base-uri 'self'; connect-src 'self' https://clerk-telemetry.com https://*.clerk-telemetry.com https://api.stripe.com https://maps.googleapis.com https://img.clerk.com https://images.clerkstage.dev guiding-bug-29.clerk.ac"
+      },
+      {
+        "path": "/pricing",
+        "status": 200,
+        "hasCsp": true,
+        "cspPreview": "base-uri 'self'; connect-src 'self' https://clerk-telemetry.com https://*.clerk-telemetry.com https://api.stripe.com https://maps.googleapis.com https://img.clerk.com https://images.clerkstage.dev guiding-bug-29.clerk.ac"
+      },
+      {
+        "path": "/sign-in",
+        "status": 404,
+        "hasCsp": true,
+        "cspPreview": "base-uri 'self'; connect-src 'self' https://clerk-telemetry.com https://*.clerk-telemetry.com https://api.stripe.com https://maps.googleapis.com https://img.clerk.com https://images.clerkstage.dev guiding-bug-29.clerk.ac"
+      },
+      {
+        "path": "/api/health",
+        "status": 200,
+        "hasCsp": true,
+        "cspPreview": "base-uri 'self'; connect-src 'self' https://clerk-telemetry.com https://*.clerk-telemetry.com https://api.stripe.com https://maps.googleapis.com https://img.clerk.com https://images.clerkstage.dev guiding-bug-29.clerk.ac"
+      }
+    ],
+    "search": {
+      "status": 200,
+      "success": true,
+      "products": 22
+    },
+    "decisionHostile": {
+      "status": 400,
+      "success": false,
+      "code": "QUERY_HOSTILE"
+    },
+    "clerk": {
+      "authStatus": "signed-out",
+      "cspHasClerkHost": true,
+      "cspHasProtect": true
+    }
+  },
+  "verdict": "PASS"
+}
