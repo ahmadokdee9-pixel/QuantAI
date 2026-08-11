@@ -4,7 +4,7 @@
 **Scope:** H-03 only (monetization / plan entitlement source of truth)  
 **Result:** **PASS**  
 **Rollback used:** No  
-**Rollback tag:** `rollback-h03-*` @ pre-fix HEAD  
+**Rollback tag:** `rollback-h03-20260811-022845` @ `33d265f`  
 **Commit:** `29acd44`  
 **Deployment:** https://www.quantaihq.com  
 **Other Highs:** Untouched (none remain)  
