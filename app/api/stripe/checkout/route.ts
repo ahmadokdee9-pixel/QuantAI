@@ -37,14 +37,12 @@ export async function POST(req: Request) {
       email = undefined;
     }
 
+    // H-03: billing failures fail closed — no soft "placeholder" success that looks like checkout.
     if (!stripe || !priceId) {
-      return jsonOk({
-        ok: false as const,
-        mode: "placeholder" as const,
-        redirectUrl: `${appUrl()}/billing?plan=${body.plan}`,
-        message:
-          "Stripe is not fully configured. Set STRIPE_SECRET_KEY and STRIPE_PRICE_ID_PRO / STRIPE_PRICE_ID_PREMIUM.",
-      });
+      return jsonErr(
+        503,
+        "Stripe is not configured. Set STRIPE_SECRET_KEY and STRIPE_PRICE_ID_PRO / STRIPE_PRICE_ID_PREMIUM."
+      );
     }
 
     try {

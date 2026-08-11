@@ -6,7 +6,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 /**
  * Customer Portal — requires STRIPE_SECRET_KEY and a Stripe customer id per user
- * (or STRIPE_CUSTOMER_ID_PLACEHOLDER for single-account testing). Placeholder returns billing page as JSON.
+ * (or STRIPE_CUSTOMER_ID_PLACEHOLDER for single-account testing). Fail-closed with 503 when unavailable.
  */
 export async function POST() {
   try {
@@ -26,14 +26,12 @@ export async function POST() {
       customerId = typeof data?.stripe_customer_id === "string" ? data.stripe_customer_id : "";
     }
 
+    // H-03: portal failures fail closed — no soft placeholder success.
     if (!stripe || !customerId) {
-      return jsonOk({
-        ok: false as const,
-        mode: "placeholder" as const,
-        redirectUrl: `${appUrl()}/billing?focus=manage`,
-        message:
-          "Set STRIPE_SECRET_KEY and persist Stripe customer IDs per user (or STRIPE_CUSTOMER_ID_PLACEHOLDER for single-account testing).",
-      });
+      return jsonErr(
+        503,
+        "Billing portal unavailable. Stripe must be configured and a Stripe customer id must exist for this user."
+      );
     }
 
     try {

@@ -75,14 +75,13 @@ export async function POST(req: Request) {
             .eq("stripe_customer_id", customerId)
             .maybeSingle();
           if (data?.user_id) {
-            const canceled =
-              event.type === "customer.subscription.deleted" ||
-              status === "canceled" ||
-              status === "unpaid" ||
-              status === "incomplete_expired";
-            const nextTier = canceled
-              ? "free"
-              : metaPlan ?? (tierFromPrice !== "free" ? tierFromPrice : data.subscription_tier ?? "free");
+            // H-03: only active/trialing keep paid tier; failed/canceled/expired → free.
+            const paidOk =
+              event.type !== "customer.subscription.deleted" &&
+              (status === "active" || status === "trialing");
+            const nextTier = paidOk
+              ? metaPlan ?? (tierFromPrice !== "free" ? tierFromPrice : data.subscription_tier ?? "free")
+              : "free";
             await supabaseAdmin
               .from("user_billing_state")
               .update({

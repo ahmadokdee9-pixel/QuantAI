@@ -1,6 +1,6 @@
 /**
  * Stripe activation: set STRIPE_SECRET_KEY and price IDs for Checkout + Customer Portal.
- * Clerk remains source of truth for tier until webhooks sync `publicMetadata.subscriptionTier`.
+ * Entitlement SoT is Supabase `user_billing_state` (synced by Stripe webhooks) — not Clerk metadata.
  */
 
 export type QuantStripePlanKey = "pro" | "premium";

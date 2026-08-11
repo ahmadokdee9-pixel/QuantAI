@@ -7,7 +7,7 @@ import { entitlementsForTier } from "@/lib/subscription/entitlements";
 import { planDefinition, QUANT_PLANS } from "@/lib/subscription/plans";
 import { resolveServerSubscriptionTier } from "@/lib/subscription/resolveTier";
 
-/** Stripe-ready: tier from Clerk `publicMetadata`; billing portal URL wired later. */
+/** Subscription + entitlements — tier from `user_billing_state` SoT (fail-closed). */
 export async function GET() {
   try {
     const user = await currentUser();
@@ -16,7 +16,8 @@ export async function GET() {
     }
 
     const { userId } = await auth();
-    let tier = await resolveServerSubscriptionTier(userId, user);
+    // H-03: single SoT via resolveServerSubscriptionTier (billing state, fail-closed).
+    const tier = await resolveServerSubscriptionTier(userId, user);
     let billingState: Record<string, unknown> | null = null;
     if (userId && supabaseAdmin) {
       const { data } = await supabaseAdmin
@@ -24,14 +25,7 @@ export async function GET() {
         .select("subscription_tier, status, stripe_customer_id, current_period_end, updated_at")
         .eq("user_id", userId)
         .maybeSingle();
-      if (data) {
-        billingState = data;
-        const status = typeof data.status === "string" ? data.status : "";
-        const storedTier = data.subscription_tier;
-        if ((status === "active" || status === "trialing") && (storedTier === "pro" || storedTier === "premium")) {
-          tier = storedTier;
-        }
-      }
+      if (data) billingState = data;
     }
     const plan = planDefinition(tier);
     const entitlements = entitlementsForTier(tier);

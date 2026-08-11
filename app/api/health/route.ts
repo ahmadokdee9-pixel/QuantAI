@@ -10,12 +10,16 @@ export async function GET() {
   const redisConfigured = rateLimit.shared;
   const ops = await readOpsHourSnapshot();
 
+  const stripeConfigured = Boolean(process.env.STRIPE_SECRET_KEY?.trim());
   const warnings = [
     !redisConfigured && process.env.VERCEL_ENV === "production"
       ? "UPSTASH_REDIS not configured — rate limits fail-closed in Production (no silent in-memory fallback)"
       : null,
     !rateLimit.compliant
       ? "rate_limit_non_compliant — shared Upstash required for this environment"
+      : null,
+    !stripeConfigured && process.env.VERCEL_ENV === "production"
+      ? "STRIPE_SECRET_KEY not configured — checkout fail-closed; paid entitlements require user_billing_state SoT"
       : null,
   ].filter(Boolean);
 
@@ -34,8 +38,14 @@ export async function GET() {
       supabase: supabaseAdminConfigured,
       serpapi: Boolean(process.env.SERPAPI_KEY?.trim()),
       openai: Boolean(process.env.OPENAI_API_KEY?.trim()),
-      stripe: Boolean(process.env.STRIPE_SECRET_KEY?.trim()),
+      stripe: stripeConfigured,
       upstash: redisConfigured,
+    },
+    monetization: {
+      stripeConfigured,
+      entitlementSoT: "user_billing_state",
+      unpaidDefault: "free",
+      clerkMetadataGrantsPremium: false,
     },
     rateLimit: {
       backend: rateLimit.backend,
