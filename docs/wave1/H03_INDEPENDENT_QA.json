@@ -1,0 +1,73 @@
+{
+  "issue": "H-03",
+  "at": "2026-08-11T00:41:11.829Z",
+  "base": "https://www.quantaihq.com",
+  "probes": {
+    "unitMatrix": "PASS",
+    "health": {
+      "stripe": false,
+      "monetization": {
+        "stripeConfigured": false,
+        "entitlementSoT": "user_billing_state",
+        "unpaidDefault": "free",
+        "clerkMetadataGrantsPremium": false
+      },
+      "rateLimit": {
+        "backend": "upstash",
+        "shared": true,
+        "productionStrict": true,
+        "compliant": true
+      },
+      "warnings": [
+        "STRIPE_SECRET_KEY not configured — checkout fail-closed; paid entitlements require user_billing_state SoT"
+      ]
+    },
+    "guestBilling": {
+      "status": 401,
+      "body": {
+        "success": false,
+        "error": "Unauthorized"
+      }
+    },
+    "guestCheckout": {
+      "status": 401
+    },
+    "guestPortal": {
+      "status": 401
+    },
+    "webhook": {
+      "status": 503
+    },
+    "protectedRoute": {
+      "status": 307,
+      "loc": "https://guiding-bug-29.clerk.accounts.dev/v1/client/handshake?redirect_url=https%3A%2F%2Fwww.quantaihq.com%2Fdashboard&__clerk_api_version=2025-11-10&suffixed_cookies=false&__clerk_hs_reason=dev-browser-missing&format=nonce",
+      "reason": "dev-browser-missing"
+    },
+    "home": {
+      "status": 307,
+      "csp": false
+    },
+    "search": {
+      "status": 200,
+      "success": true,
+      "products": 29,
+      "entitlements": {
+        "tier": "free",
+        "intelligenceLevel": "summary",
+        "searchesPerDay": 20,
+        "aiIntelligencePerDay": 12,
+        "watchlistMax": 8,
+        "savedProductsMax": 15,
+        "compareMax": 3,
+        "premiumAlerts": false,
+        "advancedAdvisor": false
+      }
+    },
+    "decision": {
+      "status": 400,
+      "success": false
+    },
+    "signedInMatrix": "Covered by scripts/test-h03-entitlement-sot.mjs (active/canceled/unpaid/past_due/invalid)"
+  },
+  "verdict": "PASS"
+}

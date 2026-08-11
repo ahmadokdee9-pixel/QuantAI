@@ -7,13 +7,14 @@
 **Rule:** When this list is empty → **Public Beta READY**.  
 **Rule:** Execute **one High issue at a time**. Stop at VERIFIED before starting the next.
 
-**Status:** `NOT READY` — **8 PB blockers** open · **1 High** remaining  
-**Plan status:** Wave 1 DONE · Critical C-01/C-02 DONE · **Wave 2 OPEN** — H-01 ✓ · H-06 ✓ · H-02 ✓ · H-05 ✓ · H-04 ✓ · H-07 ✓  
-**Last updated:** 2026-08-11 (H-07 verified — see `docs/wave1/H07_VERIFICATION_REPORT.md`)
+**Status:** `NOT READY` — **8 PB blockers** open · **0 High** remaining · **0 Critical**  
+**Plan status:** Wave 1 DONE · Critical C-01/C-02 DONE · **Wave 2 CLOSED** — all Highs verified  
+**Last updated:** 2026-08-11 (H-03 verified — see `docs/wave1/H03_VERIFICATION_REPORT.md`)  
+**Core development:** **FROZEN** — no new core features without production evidence proving the need.
 
 ---
 
-## Wave 2 — High Hardening (OPEN)
+## Wave 2 — High Hardening (CLOSED)
 
 **Objective:** Eliminate confirmed High production defects. No features. No UX polish. No unrelated refactors.
 
@@ -22,20 +23,21 @@
 **H-02:** VERIFIED and **deleted forever** (2026-08-05). Evidence: `docs/wave1/H02_VERIFICATION_REPORT.md`.  
 **H-05:** VERIFIED and **deleted forever** (2026-08-11). Evidence: `docs/wave1/H05_VERIFICATION_REPORT.md` · Independent QA: `docs/wave1/H05_INDEPENDENT_QA.json`.  
 **H-04:** VERIFIED and **deleted forever** (2026-08-11). Evidence: `docs/wave1/H04_VERIFICATION_REPORT.md` · Independent QA: `docs/wave1/H04_INDEPENDENT_QA.json`.  
-**H-07:** VERIFIED and **deleted forever** (2026-08-11). Evidence: `docs/wave1/H07_VERIFICATION_REPORT.md` · Independent QA: `docs/wave1/H07_INDEPENDENT_QA.json`.
+**H-07:** VERIFIED and **deleted forever** (2026-08-11). Evidence: `docs/wave1/H07_VERIFICATION_REPORT.md` · Independent QA: `docs/wave1/H07_INDEPENDENT_QA.json`.  
+**H-03:** VERIFIED and **deleted forever** (2026-08-11). Evidence: `docs/wave1/H03_VERIFICATION_REPORT.md` · Independent QA: `docs/wave1/H03_INDEPENDENT_QA.json`.
 
-### Remaining High queue (ranked — execute in this order)
+### Remaining High queue
 
 | Rank | ID | Maps to | Effort | Why this order |
 |-----:|----|---------|--------|----------------|
-| 1 | **H-03** | PB-03 (config/billing) | S–M | Monetization; may be env SoT — after product reliability |
+| — | — | — | — | **Empty — Wave 2 complete** |
 
-**Next to execute (after explicit approval only):** **H-03**  
-**Protocol per issue:** Reproduce → Failing regression → Fix → Build → Deploy → Prod verify → Independent QA → Remove from board → STOP
-
-**Wave 2 est. completion (High only):** ~1–2 eng-days sequential remaining  
-**Public Beta Go/No-Go:** **NO-GO** until High queue + remaining PB blockers clear  
-**Remaining High count:** **1**
+**Next High:** none  
+**Critical count:** **0**  
+**Remaining High count:** **0**  
+**Wave 2 status:** **CLOSED**  
+**Public Beta Go/No-Go:** **NO-GO** until remaining PB blockers below clear  
+**Next gate:** Final Launch Audit → then Revenue Mode (measure / monetize / retain) — no speculative features
 
 ---
 
@@ -46,7 +48,7 @@
 | Private Alpha | Approved |
 | Closed Beta | Approved |
 | Critical Hardening | Approved (C-01/C-02) |
-| **Wave 2 High** | OPEN — execute one-by-one from ranked queue |
+| **Wave 2 High** | **CLOSED** (Critical = 0 · High = 0) |
 | **Public Beta** | All PB blockers below = DONE (list empty) |
 | Global / Enterprise | Out of scope |
 
@@ -58,10 +60,9 @@
 |----|----------|--------------|--------|-------|
 | **PB-01** | P0 | PB-02 ✓, PB-10 ✓ | M | Economic envelope (auth/ceilings/kill) — H-06 ✓ (guest capacity partial) |
 | **PB-04** | P0 | PB-10 ✓ | M | Search yield SLO — H-01 ✓ · H-02 ✓ (residual SLO/alert work may remain) |
-| **PB-03** | P0 | Stripe, Clerk | M | Plan SoT — **owns H-03** |
+| **PB-03** | P0 | Stripe env | S | H-03 ✓ SoT/fail-closed live; residual: set `STRIPE_*` in Vercel for live checkout |
 | **PB-07** | P1 | — | M | CSP/XSS — H-05 ✓ (CSP live; residual XSS review optional) |
 | **PB-08** | P1 | PB-01 | S | Prompt/outbound review |
-| **PB-09** | P1 | — | M | Payload weight — **owns H-07** |
 | **PB-05** | P1 | — | S | Identity |
 | **PB-12** | P1 | — | M | A11y baseline |
 | **PB-13** | P1 | Legal | S | Legal pages |
@@ -73,12 +74,11 @@
 ### Wave 1 — DONE
 PB-02 + PB-10 deleted forever.
 
-### Wave 2 — High Hardening — OPEN
-H-01 + H-06 + H-02 + H-05 + H-04 + H-07 deleted. Execute remaining ranked High queue (H-03). One at a time.  
-PB-01 full economic envelope remains for auth/ceilings/kill beyond H-06.
+### Wave 2 — High Hardening — **CLOSED**
+All Highs (H-01…H-07) verified and deleted. Core development frozen pending Final Launch Audit + Revenue Mode.
 
 ### Wave 3+ — Remaining PB not covered by High queue
-PB-08, PB-05, PB-12, PB-13, residual PB-01/PB-03 scope after High mapping.
+PB-08, PB-05, PB-12, PB-13, residual PB-01/PB-03/PB-04 scope after High mapping.
 
 ---
 
@@ -155,12 +155,12 @@ PB-08, PB-05, PB-12, PB-13, residual PB-01/PB-03 scope after High mapping.
 | **Severity** | P0 |
 | **Business impact** | Soft gates + fail-open = no monetization + cost leak |
 | **User impact** | Wrong plan access |
-| **Effort** | M (2–3d) |
-| **Dependencies** | Stripe webhooks; Clerk plan sync |
+| **Effort** | S residual (env) |
+| **Dependencies** | Stripe webhooks; Clerk identity |
 | **Owner** | Eng / Billing |
-| **Wave** | 2 rank H-03 / Wave 5 |
-| **Verification** | API entitlement matrix; unsynced ≠ Premium; cap → 429 |
-| **Definition of Done** | Single SoT; server gates; AI fail-closed |
+| **Wave** | 2 (H-03 ✓ SoT/fail-closed) |
+| **Verification** | API entitlement matrix; unsynced ≠ Premium; checkout 503 without Stripe |
+| **Definition of Done** | Single SoT ✓; server gates ✓; AI fail-closed ✓; residual: live Stripe keys in Vercel |
 
 ---
 
@@ -202,10 +202,10 @@ PB-08, PB-05, PB-12, PB-13, residual PB-01/PB-03 scope after High mapping.
 
 ## Completion protocol
 
-1. Explicit approval for the next ranked High issue only.  
-2. Reproduce → test → fix → build → deploy → verify → independent QA.  
-3. Delete that High (and mapped PB if fully satisfied) forever.  
-4. STOP. Await approval for the next High.  
-5. Open count = 0 → **PUBLIC BETA READY**.
+1. Wave 2 High queue is **empty** (Critical = 0 · High = 0).  
+2. **Freeze core development.**  
+3. Run Final Launch Audit against remaining PB blockers + production evidence.  
+4. Enter Revenue Mode: measure activation/retention/conversion — no speculative features.  
+5. Open PB count = 0 → **PUBLIC BETA READY**.
 
-**Do not start the next High (H-03) until Release Director approval is explicit.**
+**Do not start new core feature development without production evidence and Release Director approval.**
