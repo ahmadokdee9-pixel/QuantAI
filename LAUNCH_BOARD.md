@@ -7,9 +7,9 @@
 **Rule:** When this list is empty → **Public Beta READY**.  
 **Rule:** Execute **one High issue at a time**. Stop at VERIFIED before starting the next.
 
-**Status:** `NOT READY` — **9 PB blockers** open · **2 High** remaining  
-**Plan status:** Wave 1 DONE · Critical C-01/C-02 DONE · **Wave 2 OPEN** — H-01 ✓ · H-06 ✓ · H-02 ✓ · H-05 ✓ · H-04 ✓  
-**Last updated:** 2026-08-11 (H-04 verified — see `docs/wave1/H04_VERIFICATION_REPORT.md`)
+**Status:** `NOT READY` — **8 PB blockers** open · **1 High** remaining  
+**Plan status:** Wave 1 DONE · Critical C-01/C-02 DONE · **Wave 2 OPEN** — H-01 ✓ · H-06 ✓ · H-02 ✓ · H-05 ✓ · H-04 ✓ · H-07 ✓  
+**Last updated:** 2026-08-11 (H-07 verified — see `docs/wave1/H07_VERIFICATION_REPORT.md`)
 
 ---
 
@@ -21,21 +21,21 @@
 **H-06:** VERIFIED and **deleted forever** (2026-08-05). Evidence: `docs/wave1/H06_VERIFICATION_REPORT.md`.  
 **H-02:** VERIFIED and **deleted forever** (2026-08-05). Evidence: `docs/wave1/H02_VERIFICATION_REPORT.md`.  
 **H-05:** VERIFIED and **deleted forever** (2026-08-11). Evidence: `docs/wave1/H05_VERIFICATION_REPORT.md` · Independent QA: `docs/wave1/H05_INDEPENDENT_QA.json`.  
-**H-04:** VERIFIED and **deleted forever** (2026-08-11). Evidence: `docs/wave1/H04_VERIFICATION_REPORT.md` · Independent QA: `docs/wave1/H04_INDEPENDENT_QA.json`.
+**H-04:** VERIFIED and **deleted forever** (2026-08-11). Evidence: `docs/wave1/H04_VERIFICATION_REPORT.md` · Independent QA: `docs/wave1/H04_INDEPENDENT_QA.json`.  
+**H-07:** VERIFIED and **deleted forever** (2026-08-11). Evidence: `docs/wave1/H07_VERIFICATION_REPORT.md` · Independent QA: `docs/wave1/H07_INDEPENDENT_QA.json`.
 
 ### Remaining High queue (ranked — execute in this order)
 
 | Rank | ID | Maps to | Effort | Why this order |
 |-----:|----|---------|--------|----------------|
-| 1 | **H-07** | PB-09 | M–L | Bounce risk; heavier; after functional Highs |
-| 2 | **H-03** | PB-03 (config/billing) | S–M | Monetization; may be env SoT — after product reliability |
+| 1 | **H-03** | PB-03 (config/billing) | S–M | Monetization; may be env SoT — after product reliability |
 
-**Next to execute (after explicit approval only):** **H-07**  
+**Next to execute (after explicit approval only):** **H-03**  
 **Protocol per issue:** Reproduce → Failing regression → Fix → Build → Deploy → Prod verify → Independent QA → Remove from board → STOP
 
-**Wave 2 est. completion (High only):** ~3–6 eng-days sequential remaining  
+**Wave 2 est. completion (High only):** ~1–2 eng-days sequential remaining  
 **Public Beta Go/No-Go:** **NO-GO** until High queue + remaining PB blockers clear  
-**Remaining High count:** **2**
+**Remaining High count:** **1**
 
 ---
 
@@ -74,7 +74,7 @@
 PB-02 + PB-10 deleted forever.
 
 ### Wave 2 — High Hardening — OPEN
-H-01 + H-06 + H-02 + H-05 + H-04 deleted. Execute remaining ranked High queue (H-07 → H-03). One at a time.  
+H-01 + H-06 + H-02 + H-05 + H-04 + H-07 deleted. Execute remaining ranked High queue (H-03). One at a time.  
 PB-01 full economic envelope remains for auth/ceilings/kill beyond H-06.
 
 ### Wave 3+ — Remaining PB not covered by High queue
@@ -129,22 +129,6 @@ PB-08, PB-05, PB-12, PB-13, residual PB-01/PB-03 scope after High mapping.
 | **Wave** | 3 |
 | **Verification** | Allowlist enforced; injection cases fail closed |
 | **Definition of Done** | Review complete; remaining vectors mitigated |
-
----
-
-### PB-09 — Cut critical-path payload weight
-
-| Field | Value |
-|-------|--------|
-| **Severity** | P1 |
-| **Business impact** | Bounce on slow first load |
-| **User impact** | Weak mobile first impression |
-| **Effort** | M (2–3d) |
-| **Dependencies** | None |
-| **Owner** | Eng |
-| **Wave** | 2 rank H-07 |
-| **Verification** | Weight before/after recorded; Decide flow no regression |
-| **Definition of Done** | Measurable critical-path reduction shipped |
 
 ---
 
@@ -224,4 +208,4 @@ PB-08, PB-05, PB-12, PB-13, residual PB-01/PB-03 scope after High mapping.
 4. STOP. Await approval for the next High.  
 5. Open count = 0 → **PUBLIC BETA READY**.
 
-**Do not start the next High (H-07) until Release Director approval is explicit.**
+**Do not start the next High (H-03) until Release Director approval is explicit.**

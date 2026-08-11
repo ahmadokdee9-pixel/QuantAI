@@ -1,0 +1,58 @@
+{
+  "issue": "H-07",
+  "at": "2026-08-11T00:14:08.826Z",
+  "base": "https://www.quantaihq.com",
+  "probes": {
+    "before": {
+      "htmlBytes": 87563,
+      "fontBytes": 208648,
+      "nonGeistFontBytes": 138908,
+      "geistFontBytes": 69740,
+      "cssBytesUncompressed": 607715,
+      "jsBytesUncompressed": 2922440,
+      "arabicInCssStack": true,
+      "fontshareInGlobals": true
+    },
+    "after": {
+      "htmlBytes": 83986,
+      "fontBytes": 69740,
+      "nonGeistFontBytes": 0,
+      "geistFontBytes": 69740,
+      "cssBytesUncompressed": 600554,
+      "jsBytesUncompressed": 2919882,
+      "arabicInCssStack": false
+    },
+    "home": {
+      "status": 200,
+      "csp": true,
+      "htmlBytes": 83986
+    },
+    "css": {
+      "path": "/_next/static/chunks/0j52vgvj.7v6b.css",
+      "bytes": 477,
+      "fontshare": false
+    },
+    "search": {
+      "status": 200,
+      "success": true,
+      "products": 29
+    },
+    "decision": {
+      "status": 400,
+      "success": false,
+      "code": "QUERY_HOSTILE"
+    },
+    "rateLimit": {
+      "backend": "upstash",
+      "shared": true,
+      "productionStrict": true,
+      "compliant": true
+    },
+    "authControl": {
+      "status": 307,
+      "loc": "https://guiding-bug-29.clerk.accounts.dev/v1/client/handshake?redirect_url=https%3A%2F%2Fwww.quantaihq.com%2Fdashboard&__clerk_api_version=2025-11-10&suffixed_cookies=false&__clerk_hs_reason=dev-browser-missing&format=nonce",
+      "reason": "dev-browser-missing"
+    }
+  },
+  "verdict": "PASS"
+}
