@@ -1,19 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
-import { IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import QuantShell from "@/components/shell/QuantShell";
 import { appUrl } from "@/lib/stripe/config";
 
 const fontLatin = GeistSans;
-
-const fontArabic = IBM_Plex_Sans_Arabic({
-  subsets: ["arabic"],
-  variable: "--font-quantai-ar",
-  display: "swap",
-  weight: ["400", "500", "600", "700"],
-});
 
 const defaultSite = appUrl();
 
@@ -61,7 +53,7 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang="en" className={`qa-ui-v1 qa-ref-os--intel-v1 ${fontLatin.variable} ${fontArabic.variable} scroll-smooth`}>
+      <html lang="en" className={`qa-ui-v1 qa-ref-os--intel-v1 ${fontLatin.variable} scroll-smooth`}>
         <body className="qa-ui-v1 qa-dna-os qa-iconic-os min-h-dvh min-h-[100dvh] overflow-x-hidden pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-[env(safe-area-inset-top)] font-sans antialiased">
           <QuantShell>
             <div id="qa-main">{children}</div>

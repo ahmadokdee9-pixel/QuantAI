@@ -1,10 +1,10 @@
-@import url("https://api.fontshare.com/v2/css?f[]=satoshi@500,600,700,800&display=swap");
 @import "tailwindcss";
 
 :root {
   --background: #f7f8ff;
   --foreground: #0b0f19;
-  --font-qa-display: "Satoshi", var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  /* H-07: use already-loaded Geist — no render-blocking Fontshare/Satoshi cascade */
+  --font-qa-display: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --qi-cyan: #22d3ee;
   --qi-violet: #a78bfa;
   --qi-emerald: #34d399;
@@ -29,7 +29,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans:
-    var(--font-geist-sans, var(--font-quantai)), var(--font-quantai-ar), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    var(--font-geist-sans, var(--font-quantai)), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     "Helvetica Neue", sans-serif;
 }
 

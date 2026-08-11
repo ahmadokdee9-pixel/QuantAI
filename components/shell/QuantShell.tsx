@@ -2,8 +2,6 @@
 
 import dynamic from "next/dynamic";
 import { CockpitProvider } from "@/components/cockpit/cockpitContext";
-import CommandPalette from "@/components/cockpit/CommandPalette";
-import FloatingIntelDock from "@/components/cockpit/FloatingIntelDock";
 import { CopilotProvider } from "@/components/copilot/CopilotContext";
 
 const CopilotDrawer = dynamic(() => import("@/components/copilot/CopilotDrawer"), {
@@ -12,6 +10,17 @@ const CopilotDrawer = dynamic(() => import("@/components/copilot/CopilotDrawer")
 });
 
 const OnboardingWelcome = dynamic(() => import("@/components/onboarding/OnboardingWelcome"), {
+  ssr: false,
+  loading: () => null,
+});
+
+/** H-07: defer cockpit chrome off the marketing critical path (framer-motion + icons). */
+const CommandPalette = dynamic(() => import("@/components/cockpit/CommandPalette"), {
+  ssr: false,
+  loading: () => null,
+});
+
+const FloatingIntelDock = dynamic(() => import("@/components/cockpit/FloatingIntelDock"), {
   ssr: false,
   loading: () => null,
 });

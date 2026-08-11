@@ -1,0 +1,30 @@
+{
+  "capturedAt": "2026-08-10T23:55:00.000Z",
+  "base": "https://www.quantaihq.com",
+  "lighthouse": {
+    "file": "docs/wave1/lighthouse-h07-before.json",
+    "performance": 0.77,
+    "lcpMs": 3945.968,
+    "lcpDisplay": "3.9 s",
+    "fcpDisplay": "2.9 s",
+    "tbtDisplay": "0 ms",
+    "speedIndexDisplay": "6.7 s",
+    "totalByteWeightDisplay": "Total size was 335 KiB"
+  },
+  "priorConfirmedBaseline": {
+    "source": "docs/wave1/lighthouse-reverify.json",
+    "performance": 0.47,
+    "lcpMs": 9899.73,
+    "note": "Aug 5 independent QA confirmation of H-07"
+  },
+  "criticalPathMeasure": {
+    "htmlBytes": 87563,
+    "fontBytes": 208648,
+    "nonGeistFontBytes": 138908,
+    "geistFontBytes": 69740,
+    "cssBytesUncompressed": 607715,
+    "jsBytesUncompressed": 2922440,
+    "arabicInCssStack": true,
+    "fontshareInGlobals": true
+  }
+}
