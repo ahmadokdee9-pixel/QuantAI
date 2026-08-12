@@ -51,8 +51,9 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // `dynamic` required so Clerk strict CSP nonces apply to Next/Clerk scripts.
   return (
-    <ClerkProvider>
+    <ClerkProvider dynamic>
       <html lang="en" className={`qa-ui-v1 qa-ref-os--intel-v1 ${fontLatin.variable} scroll-smooth`}>
         <body className="qa-ui-v1 qa-dna-os qa-iconic-os min-h-dvh min-h-[100dvh] overflow-x-hidden pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-[env(safe-area-inset-top)] font-sans antialiased">
           <QuantShell>

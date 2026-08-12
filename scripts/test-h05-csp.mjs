@@ -32,6 +32,14 @@ console.log("=== H-05 CSP wiring ===\n");
 }
 
 {
+  const layout = readFileSync(new URL("../app/layout.tsx", import.meta.url), "utf8");
+  check(
+    /<ClerkProvider\s+dynamic[\s>]/.test(layout) || /<ClerkProvider\s+dynamic\s*\/>/.test(layout),
+    "ClerkProvider sets dynamic so strict CSP nonces reach scripts (interaction integrity)"
+  );
+}
+
+{
   check(
     (QUANTAI_CSP_CUSTOM_DIRECTIVES["object-src"] || []).includes("'none'"),
     "object-src is 'none'"
